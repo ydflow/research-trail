@@ -27,7 +27,7 @@ export class BackendManager extends EventEmitter {
     this.emit('status', this.snapshot());
   }
   private safeError(text: string) {
-    return text.replaceAll(this.token, '[redacted]').slice(-1800);
+    return (this.token ? text.replaceAll(this.token, '[redacted]') : text).slice(-1800);
   }
 
   retry(): Promise<BackendState> {
