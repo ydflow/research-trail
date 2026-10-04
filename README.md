@@ -6,9 +6,10 @@
 
 ## 当前状态
 
-截至 2026-10-04：**第 0 步验收通过；第 1 步代码完成，自动化验证通过，待用户手动验收**。现在可运行最小 Electron / React 窗口和 Python 3.12 / FastAPI 健康服务；行情、Agent 和会话存储均未实现。
+截至 2026-10-04：**第0步验收通过；第1步代码完成、自动化通过；第2步自动化复验通过，用户本轮确认按已验收步骤发布**。可运行 Electron / React 桌面与 Python 3.12 / FastAPI 服务，切换四只股票的固定模拟行情与日 K 线。用户逐项手动操作与学习记录尚未填写；Agent 和会话存储尚未实现。
 
-- 默认分支 `main`；本次源码交付包含第0步项目资料和第1步桌面健康链，提交记录以Git历史为准。
+- 默认分支 `main`；初始公开提交为 `55b1a3d`，第2步按功能分支/PR保留导入、Python新实现、修复与桌面适配提交。
+- 第2步公开复用依据为用户本轮确认的原作者授权，保留适配来源与依赖声明；发布检查和授权记录见EVIDENCE第9—10节，最终提交/PR状态以Git与发布回执为准。
 - 公开仓库：[ydflow/research-trail](https://github.com/ydflow/research-trail)。仅上传源码、测试、文档、依赖清单与锁文件；不包含运行数据或截图。
 - 首版 `v0.1.0`、完整版本 `v1.0.0` 都是计划，不是已发布版本。
 - Folio 功能和测试属于参考项目，不代表研迹已实现或用户已完成的贡献。
@@ -27,7 +28,11 @@ React 页面
 
 Python 统一管理业务状态，前端维护显示缓存。假模型和模拟行情分别实现，后续分别替换为真实连接。真实数据来源与模型回答不能混为一谈。
 
-第 1 步已实现：React → 四个白名单 preload 接口 → Electron 主进程 → 带令牌的本机健康请求 → Python。其余业务链仍是计划。端口和令牌只在主进程和后端之间使用，不传给页面；Python 无 reload worker，直接作为 Electron 子进程启动。
+当前真实调用链：股票选择 → `MarketPanel` → preload 的 `marketSnapshot` → Electron 主进程 → 带令牌的 `/market/snapshot/{symbol}` → Python `FixtureMarketProvider` → 同一份 `MarketSnapshot` → 行情卡片与 K 线。`marketSymbols` 获取四股票目录；加上第1步四个健康接口，桥共六个命名操作。端口和令牌只在主进程和后端之间使用，不传给页面；Python 无 reload worker，直接作为 Electron 子进程启动。
+
+Pydantic 是业务契约来源。离线导出 OpenAPI 后，`openapi-typescript` 生成 `packages/contracts/generated.ts`，页面通过类型别名消费，未手写第二份 Quote/Kline。`bun run check` 同时检查契约是否过期。
+
+模拟数据支持 `AAPL.US`、`NVDA.US`、`MSFT.US`、`TSLA.US`，每只10根日线；价格是本项目编写的示例，不是历史交易所记录。固定市场时间为 **2024-01-16 21:00 UTC**，每次请求另记 `fetched_at`。未知代码返回404及明确错误；重新查询只更新获取时间，价格与市场时间不变。界面明确显示“模拟数据”。模型 Provider 与行情 Provider 独立，本步没有模型或 Agent。
 
 ## 开发与学习路线
 
@@ -35,7 +40,8 @@ Python 统一管理业务状态，前端维护显示缓存。假模型和模拟�
 | --- | --- | --- |
 | 0 | 项目约定、本地 Git、路线与学习大纲 | 验收通过 |
 | 1 | 桌面启动、Python 健康通信、重试与退出清理 | 代码完成/待验收；自动化通过 |
-| 2—7 | 模拟行情、会话保存、假模型工具、取消恢复、首版验收 | 未开始 |
+| 2 | 模拟行情与K线、股票选择、OpenAPI类型 | 验收通过；自动化复验及用户发布确认，手动记录待补 |
+| 3—7 | 会话保存、假模型工具、取消恢复、首版验收 | 未开始 |
 | 8—13 | 设置与凭证、真实模型/行情、市场工作台、组合及对比 | 未开始 |
 | 14—20 | 能力技能、研究策略/报告/恢复、论点、筛选与事件 | 未开始 |
 | 21—24 | 提醒与 Today、评测、研究结果校准、Windows 交付 | 未开始 |
@@ -66,12 +72,12 @@ research-trail/
 ├─ start-dev.cmd
 ├─ scripts/            # 构建与开发启动器
 ├─ tests/              # Electron 实窗自动化
-├─ apps/desktop/       # main、preload、React 健康页
-├─ services/backend/   # Python 健康服务、测试、uv.lock
-└─ packages/contracts/ # 空目录，类型契约按步骤建立
+├─ apps/desktop/       # main、preload、React 健康与行情页
+├─ services/backend/   # Python 健康/行情、Pydantic契约、测试、uv.lock
+└─ packages/contracts/ # 生成的 openapi.json 与 generated.ts
 ```
 
-空目录不由 Git 单独追踪；后续新增真实文件后才会出现在提交中。
+参考组件的适配来源和依赖声明见 EVIDENCE.md 第8节及 docs/third-party。
 
 ## CMD 一条命令启动
 
@@ -81,7 +87,7 @@ research-trail/
 "D:\folio\research-trail\start-dev.cmd"
 ```
 
-脚本依次执行 `bun install --frozen-lockfile`、`uv sync --project services\backend --frozen`，然后打开 Vite + Electron；Electron 再启动本项目虚拟环境中的 Python。React 修改支持热更新，main/preload/Python 修改后关闭窗口重新运行脚本。
+脚本依次执行 `bun install --frozen-lockfile`、`uv sync --project services\backend --frozen`，离线生成 OpenAPI/TypeScript 契约，然后打开 Vite + Electron；Electron 再启动本项目虚拟环境中的 Python。React 修改支持热更新，main/preload/Python 修改后关闭窗口重新运行脚本。
 
 正常界面显示“连接就绪”和“运行正常”；点击“重新检查”会做真实健康请求。启动失败或后端退出时显示原因与“重试启动”。关闭窗口会通知 Python 退出，终端随后结束 Vite；不按进程名称结束其他项目。
 
@@ -90,6 +96,9 @@ research-trail/
 1. 执行上面一条命令，确认真实桌面窗口出现并显示健康。
 2. 点击“重新检查”，观察检查时间更新。
 3. 关闭窗口，确认启动命令结束。故障、重试与两实例隔离已通过自动化；用户可按 practice.md 在本机复验。
+4. 分别选择四只股票，确认卡片代码与图表代码相同，最后收盘等于卡片价格；所有数据带模拟标签。
+5. 输入 `ZZZZ.US` 查询，确认明确错误且不保留其他股票的卡片/图表。
+6. 选择有效股票，记下价格与两种时间；点击“重新查询”，确认获取时间更新，固定市场时间和价格不变。
 
 ## 可重复的 CMD 检查
 
@@ -107,10 +116,12 @@ bun run test:desktop
 
 检查记录见 EVIDENCE.md。Electron 自动化会打开并关闭测试窗口；它验证开发源码，不代表安装包验收。没有配置或调用真实模型、行情或账户。
 
+修改 Python 契约后执行 `bun run contracts:generate`，再执行上述检查。生成器使用 TypeScript 5.9.3 编译器 API，与其 peer 约束兼容。
+
 ## 来源与公开边界
 
 参考目录：`D:\folio\主分支和简历skill\folio-main`，只读。原 ZIP 记录来源 commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`；它是来源标识，不等于本地解压目录有 Git 历史。
 
-当前未导入 Folio 业务代码或图片，第 1 步为本项目新实现。复用时记录出处、保留版权与适用许可。只查到上游 `skills/LICENSE` 的 MIT 文本，整项目授权未核实；本仓库不自行声明全仓 MIT。详细记录见 [证据文档](docs/EVIDENCE.md)。
+第1步为本项目新实现；第2步局部适配 Folio 的 Watchlist、QuoteCard、FinancialKLineChart，保留逐文件来源说明，未导入原 TypeScript 后端、图片或完整工作台。用户本轮确认已获原作者复用授权，并明确授权本步公开上传；依该确认执行本步公开范围，未独立取得授权原文，不由 `skills/LICENSE` 推定 Folio 全仓 MIT。图表库 klinecharts 10.0.3 的 Apache-2.0 LICENSE、NOTICE 及所带第三方许可保存在 `docs/third-party/klinecharts`。详细记录见 [证据文档](docs/EVIDENCE.md)。
 
 模型密钥、真实账户资料、运行数据库和私人日志不纳入版本控制。项目目标是研究与只读分析，计划不包含交易下单或盈利承诺。

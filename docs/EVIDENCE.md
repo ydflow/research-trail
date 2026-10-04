@@ -6,7 +6,7 @@
 
 执行第0步前：目标目录不存在，没有本地 Git、提交或业务文件。用户确认先在当前聊天完成第0步，之后再交接。此前保存到父目录的交接草稿和提示词手册不算第0步完成。
 
-第0步验收时创建七份材料和本地 main Git，文档/仓库验收通过；当时第1—24步未开始。以下第0步检查保留为历史记录；第1步新进度见第6节，本次首次源码上传检查见第7节。
+第0步验收时创建七份材料和本地 main Git，文档/仓库验收通过；当时第1—24步未开始。以下第0步检查保留为历史记录；第1步见第6节，首次源码上传见第7节，第2步见第8节。
 
 | 类别 | 本步实际动作 | 责任边界 |
 | --- | --- | --- |
@@ -152,3 +152,86 @@ QA 使用 Playwright Electron：本会话未提供 Browser 插件技能，且验
 - 未验证：用户桌面人工操作、学习练习、真实模型/行情/账户、安装包与干净机器启动。第2—24步未开始；不打标签、不建Release、不配置定时评测。
 
 提交SHA和上传结果由Git历史、远程main以及本次交付回执共同确认，不在同一提交正文中虚构其自身SHA。
+
+## 8. 第2步：固定模拟行情、K线与生成契约（2026-10-04）
+
+授权：用户明确要求仅执行第2步；四股票固定示例、Pydantic/OpenAPI/TypeScript契约、必要界面局部复用、未知错误、固定市场时间与获取时间分开。本轮没有Agent、数据库、模型或真实行情接入，没有Git/GitHub写入。
+
+执行前基线：Git根 `D:/folio/research-trail`，main，HEAD `55b1a3df6b31a2fb0c51c340d1c6ce30960ba0b8`，工作区干净；origin为 `https://github.com/ydflow/research-trail.git`。本步改动保留工作区，未暂存、提交、推送、PR、合并、标签或Release。已公开的初始提交不含本步组件适配。
+
+### 复用来源、依赖检查与责任
+
+固定来源仍为 Folio 0.4.0-beta.2，ZIP提交标识 `ba5dcdfd31b162f5edb8b908f7f099a560389326`，本机只读目录见第2节。下表为局部适配，不是原组件完整导入。
+
+| 研迹文件（apps/desktop/src/renderer/market） | 上游路径（packages/ui/src/components） | 保留/改动 |
+| --- | --- | --- |
+| Watchlist.tsx | stock/Watchlist.tsx | 复用股票行名称/代码与选中布局、输入转大写；改原角色div为原生button，用Python目录；移除Jotai、原客户端、30秒轮询、增删自选、图标与国际化依赖 |
+| QuoteCard.tsx | agent/structured/QuoteCard.tsx | 复用数值/成交量格式、价格变化与指标布局；改用生成的Quote类型、中文与原生dl；去掉原core/i18n/MetricGrid依赖；两种时间在快照层明确展示 |
+| FinancialKLineChart.tsx | chart/FinancialKLineChart.tsx | 复用init/dispose、loader、秒转毫秒、symbol、ResizeObserver；改生成Kline类型、原生CSS、UTC、日线、固定示例视区；不搬指标和多周期UI |
+
+每个适配文件开头保留上游URL、原路径、ZIP标识及本节索引。以上原文件未发现额外文件头版权文本；没有删除已有声明或伪造作者。仍只核实上游skills/LICENSE的MIT范围，不能据此给UI代码或本仓库整体标MIT。本机复用按用户本步指令实施；第三方整项目授权尚未核实，本步尚未公开，未来上传前须按实际授权核定这些适配文件的公开范围。
+
+移植前检查：Watchlist依赖React、Jotai、i18n、lucide、原client/atoms和primitives；QuoteCard依赖原core/i18n/MetricGrid；FinancialKLineChart核心依赖React与klinecharts。仅新增前端运行依赖 **klinecharts 10.0.3**；未加入Folio工作区包、原TypeScript后端、Pi、Jotai、Tailwind、账户或Agent代码。该库npm包声明Apache-2.0，LICENSE/NOTICE及附带Lightweight Charts许可按原文复制到 `docs/third-party/klinecharts`，含原版权声明。
+
+参考 `workspace/ChartView.tsx` 的过期响应取消思路，研迹实现自己的快照请求effect与取消标记；原文件未整体导入。参考 `demo-market-data.ts` 存在未知代码价格回退及Date.now市场时间，研迹不导入该TS数据实现，Python示例表为本轮独立编写。
+
+### Python新实现、前端适配与修复
+
+- `research_trail/market.py`：Pydantic Quote/Kline/MarketSnapshot/MarketSymbol/MarketError契约、独立MarketProvider协议和FixtureMarketProvider。只含AAPL.US、NVDA.US、MSFT.US、TSLA.US；每只10根编写的日线，非交易所历史数据。固定市场时间2024-01-16 21:00 UTC，获取时间单独使用本次UTC时刻。无随机数、网络数据或模型调用。
+- 契约验证：拒绝非有限数值、负成交量、错误OHLC范围、无时区时间、逆序/重复时间、卡片与最后K线不一致、错误昨收与涨跌计算。重复查询返回新的对象，避免调用方修改影响后续示例。
+- `app.py`：行情目录和快照HTTP接口统一校验启动令牌；未知代码返回404与UNKNOWN_SYMBOL，不生成报价。运行时docs/OpenAPI路由继续关闭。
+- `export_openapi.py`、`scripts/contracts.mjs`：离线调用app.openapi()，不启动socket或读取运行凭证；由openapi-typescript 7.13.0生成openapi.json/generated.ts。bridge与页面用类型别名消费生成文件，健康生命周期类型仍是桌面传输层类型。
+- main/preload：增加marketSymbols/marketSnapshot两个命名操作，桥共六项；IPC来源检查保留，main检查股票格式后带令牌请求本机，限制3秒和256KiB响应。renderer仍无Node、文件、进程、数据库、令牌或任意HTTP地址接口。
+- MarketPanel：同一个快照更新卡片/图表；切换时隐藏旧结果，错误时清空；较早请求晚到时忽略。后台健康轮询不刷新示例。重复查询只有获取时间变化。
+- 修复：原TypeScript 7.0.2缺少生成器所需ts.factory API，生成失败后调整为生成器peer范围兼容的5.9.3；类型/生成/build实测通过。图表库barSpace默认最大50，按该范围适配示例，补检查最后蜡烛绘制坐标在画布内。main的错误脱敏在尚无令牌时也保持可读。
+
+真实调用链：CMD → 契约生成/Vite/Electron → Watchlist选择 → MarketPanel → preload.marketSnapshot → IPC来源校验 → BackendManager.marketSnapshot → 本机带令牌GET /market/snapshot/{symbol} → FixtureMarketProvider → Pydantic快照 → QuoteCard与FinancialKLineChart。类型链为Pydantic → 离线OpenAPI → openapi-typescript → generated.ts → market-types.ts；不是人工维护第二份行情结构。
+
+### 验证记录与边界
+
+| 检查 | 实际结果 | 覆盖/限制 |
+| --- | --- | --- |
+| 契约一致性、TypeScript | 通过 | bun run check；生成结果可重复，前端消费生成类型 |
+| 开发构建 | 通过 | bun run build；main/preload与React；非安装包 |
+| Python测试 | 22通过、1上游弃用提示 | 原4项生命周期/健康加18项行情：四股票、重复固定、独立对象、未知404、三路授权、8种非法/不一致契约、OpenAPI；不作为上游测试成绩 |
+| Electron实窗 | 6通过 | 原4项回归加四股票/真实chart.getDataList及loader/视区/绘制坐标/未知清空/重复时间/退出测试，以及测试专用主进程延迟制造旧响应晚到；后者未加入生产行为 |
+| 根CMD启动 | 通过 | 实际cmd.exe执行start-dev.cmd，锁依赖同步与契约生成，真实Vite/Electron和Python报告healthy；验证结束仅停止已核对的本次启动器PID，所属Electron/Python随后退出，异常停止终端返回255为预期 |
+| 画面检查 | 通过 | Playwright Electron截图，宽窗口与600×620，模拟标签、代码/价格、十根示例、UTC两种时间、错误可读；无横向溢出。截图在仓库外本机验证目录 |
+| 桌面人工、用户练习 | 待用户 | README验收清单、practice第2步小改动和三题；没有代填 |
+| 模拟数据 | 通过 | Python固定Fixture与真实本机HTTP；不等同真实金融数据 |
+| 假模型/真实模型/Agent | 未执行 | 本步无模型Provider、Agent或模型调用 |
+| 真实行情/账户、安装包、干净机器、CI | 未执行 | 未接外部服务、未打包或新增CI |
+
+本步状态：代码完成/待验收；用户手动验收仍待完成。README、ROADMAP、tutorial C02和practice已更新；第3—24步未开始。停止在第2步，不自动提交或上传。
+
+收尾审核：Git可交付清单48个文本文件，本地Markdown链接/围栏、常见密钥签名、生成契约路由、无@finagent业务依赖、依赖声明字节一致性检查通过；git diff --check通过，暂存为空，HEAD仍为55b1a3d。最终Python22项与Electron6项通过；测试结束未发现属于本项目的Electron/Python残留。该签名检查不替代未来上传时按实际差异重新审核。
+
+## 9. 第2步发布前复验与公开范围阻塞（2026-10-04）
+
+用户本轮明确授权将当前已验收步骤按功能分支/PR上传，检查通过且无未解决阻塞才合并，保留提交并同步main。本节是发布准备记录，未把该授权写成已经完成远程发布，也未补填用户逐项手动验收或学习记录。
+
+- 账号/仓库实测：`gh api user`返回ydflow；`gh repo view ydflow/research-trail`确认公开仓库、默认main、完整目标名和URL。origin fetch/push均为 `https://github.com/ydflow/research-trail.git`；远程main和本地HEAD均为 `55b1a3df6b31a2fb0c51c340d1c6ce30960ba0b8`，目标属于本项目。PR列表为空；未切换账号。
+- 差异审核：16个已追踪文件变化、15个新增文本文件，均与第2步有关。发布候选清单共48个文本文件、245636字节（本节追加前统计）；常见密钥签名、运行库/日志/缓存/截图、Markdown链接与代码围栏检查无异常。依赖、构建输出和本机截图不在候选清单。暂存为空，git diff --check通过。签名检查不保证覆盖所有秘密，实际源码及数据来源另经人工式阅读核对。
+- 重新验证：`bun run check`契约及TypeScript通过；`bun run build`通过；Python22项通过、1条上游TestClient弃用提示；Electron实窗6项通过，覆盖固定行情、错误、晚到响应、生命周期和退出隔离。测试结束未发现本项目Electron/Python残留。真实模型/行情/账户、安装包、干净机器、CI及逐项用户手动记录仍未验证。
+- 公开范围阻塞：GitHub API实查固定提交的递归树只有 `skills/LICENSE`，仓库当前license元数据为空；[固定来源树](https://github.com/helsome/folio/tree/ba5dcdfd31b162f5edb8b908f7f099a560389326)中的 [skills/README.md](https://github.com/helsome/folio/blob/ba5dcdfd31b162f5edb8b908f7f099a560389326/skills/README.md)明确该目录为Longbridge技能的MIT导入。没有查到覆盖第8节三个UI适配文件的公开复用许可。已保留出处，但出处说明不能替代适用授权事实。
+- 按AGENTS第5节“公开范围按实际授权事实记录”，停在GitHub写入边界，待用户提供覆盖UI的原作者授权依据，或确认将三个组件改为本项目独立实现、保留调查与历史来源记录后重新验收。没有自行改写已验收UI或发布不完整的后端子集。
+- 本轮结果：未创建功能分支/新提交/PR，未推送、合并、打标签、创建Release或定时评测。当前提交SHA仍是初始main；本步发布未完成，第3步未执行。
+
+## 10. 用户补充授权与第2步发布准备（2026-10-04）
+
+本节记录第9节检查点后的进展，第9节的“未创建分支/新提交”和公开范围阻塞是当时状态。
+
+用户先选择“已有公开复用授权”，随后在针对三组件修改后公开上传的询问中明确陈述其为Folio核心贡献者、已获原作者授权，可以复用相关代码，并再次维持本轮公开发布指令。按用户明确陈述及本轮授权，将当前Watchlist、QuoteCard、FinancialKLineChart的局部适配纳入本步公开范围。此处是用户授权确认记录，未独立核验原始授权文件，不将整项目自行标MIT，不宣称获得原作者署名或整个上游历史的作者身份。依赖原LICENSE/NOTICE与逐文件来源继续保留，公开范围阻塞解除。
+
+本地功能分支为 `feat/step-2-fixture-market`，与已公开main基线正常分叉；当前作者沿用ydflow及现有noreply邮箱，日期为真实提交时间。将一次尚未推送的桌面提交拆分为修复与接入两项，拆分前后代码tree相同；没有修改已公开历史或强推。
+
+| 提交 | 类型与责任 |
+| --- | --- |
+| f6138f33ed5f582081c53f24a447b90832e8ffed | 上游UI局部适配和依赖声明；保留ZIP来源，不伪装为原作者历史 |
+| f46d989a887aec910ae07ef114a41a281ac3cd84 | Python固定Provider、Pydantic/OpenAPI契约、生成类型和依赖兼容适配的新实现 |
+| 66acba728cf3830731f3d17792a379ffd7f6c67d | 修复尚无启动令牌时错误脱敏破坏文案的问题 |
+| e2613e12548d9632c9d41a630b9c764c64649889 | 新增白名单行情通信、快照界面接入、显示样式及本项目实窗测试 |
+
+发布前复验仍为契约/TypeScript/构建通过、Python22项和Electron实窗6项通过，1条上游TestClient弃用提示。工作区实际实现未因提交整理而改变。README与路线将第2步标为验收通过，依据为自动化复验和用户当前“已验收”发布确认；未补写用户逐项点击记录或学习答案。真实模型/行情/账户、安装包、干净机器及CI未执行。
+
+本记录在推送前生成。后续按用户授权核验账号与目标后推送分支、创建PR；检查无未解决阻塞才采用保留提交的merge方式并同步main。最终PR、合并SHA及同步结果由Git/GitHub与发布回执确认，不在本提交中虚构自己的SHA。未执行第3步，不打标签、不创建Release、不配置付费评测。
