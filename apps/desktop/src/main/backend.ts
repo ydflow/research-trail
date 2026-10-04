@@ -4,9 +4,10 @@ import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { Agent, get, request as httpRequest } from 'node:http';
-import type { BackendState } from '../bridge';
+import type { BackendState, RunStreamUpdate } from '../bridge';
 import type { MarketError, MarketResult, MarketSnapshot, MarketSymbol } from '../market-types';
-import type { SessionDTO, MessageDTO, RunDTO, StreamEvent } from '../conversation-types';
+import type { SessionDTO, MessageDTO, RunDTO, StreamEvent, SessionSnapshot } from '../conversation-types';
+import { RunSubscription } from './run-stream';
 
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -19,6 +20,7 @@ export class BackendManager extends EventEmitter {
   private monitor?: ReturnType<typeof setInterval>;
   private checking = false;
   private quitting = false;
+  private readonly subscriptions = new Map<string, RunSubscription>();
   // Health traffic must stay on loopback even when dependency downloads use a proxy.
   private readonly localAgent = new Agent({ keepAlive: true, proxyEnv: {} });
 
@@ -26,6 +28,7 @@ export class BackendManager extends EventEmitter {
   snapshot(): BackendState { return { ...this.state }; }
   private update(state: BackendState) {
     this.state = state;
+    if (state.phase !== 'healthy') this.stopSubscriptions();
     this.emit('status', this.snapshot());
   }
   private safeError(text: string) {
@@ -218,6 +221,19 @@ export class BackendManager extends EventEmitter {
     return this.business<RunDTO>(`/sessions/${this.id(id)}/runs`, 'POST', { input, kind: 'fake_agent', scenario });
   }
   cancelRun(id: unknown, runId: unknown) { return this.business<RunDTO>(`/sessions/${this.id(id)}/runs/${this.id(runId)}/cancel`, 'POST'); }
+  sessionSnapshot(id: unknown) { return this.business<SessionSnapshot>(`/sessions/${this.id(id)}/snapshot`); }
+  subscribeRun(key: unknown, id: unknown, runId: unknown, after: unknown, update: (value: RunStreamUpdate) => void) {
+    const subscriptionId = this.id(key), sessionId = this.id(id), run = this.id(runId);
+    if (typeof after !== 'number' || !Number.isSafeInteger(after) || after < 0) throw new Error('事件游标必须是非负整数。');
+    if (this.state.phase !== 'healthy' || !this.port || this.quitting) throw new Error('本地服务尚未就绪。');
+    if (this.subscriptions.has(subscriptionId) || this.subscriptions.size >= 4) throw new Error('事件订阅数量超出限制。');
+    const subscription = new RunSubscription({ port: this.port, token: this.token, agent: this.localAgent,
+      sessionId, runId: run, after, update, closed: () => this.subscriptions.delete(subscriptionId) });
+    this.subscriptions.set(subscriptionId, subscription);
+    subscription.start();
+  }
+  unsubscribeRun(key: unknown) { this.subscriptions.get(this.id(key))?.stop(); }
+  stopSubscriptions() { for (const subscription of this.subscriptions.values()) subscription.stop(); }
   getRun(id: unknown, runId: unknown) { return this.business<RunDTO>(`/sessions/${this.id(id)}/runs/${this.id(runId)}`); }
   async runEvents(id: unknown, runId: unknown, after: unknown = 0): Promise<StreamEvent[]> {
     const sessionId = this.id(id), run = this.id(runId);
@@ -255,6 +271,7 @@ export class BackendManager extends EventEmitter {
   }
 
   private async stopChild() {
+    this.stopSubscriptions();
     if (this.monitor) clearInterval(this.monitor);
     this.monitor = undefined;
     const child = this.child;

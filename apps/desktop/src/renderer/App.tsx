@@ -11,7 +11,8 @@ const labels = { idle: '尚未启动', starting: '启动中', healthy: '运行�
 export function App() {
   const [state, setState] = useState<BackendState>({ phase: 'idle', detail: '等待本地服务启动。' });
   const [busy, setBusy] = useState(false);
-  const [view, setView] = useState<'market' | 'sessions'>('market');
+  const [view, setView] = useState<'market' | 'sessions'>(() => sessionStorage.getItem('research-trail.view') === 'sessions' ? 'sessions' : 'market');
+  useEffect(() => { sessionStorage.setItem('research-trail.view', view); }, [view]);
   useEffect(() => {
     const bridge = window.researchTrail;
     if (!bridge) { setState(unavailable); return; }

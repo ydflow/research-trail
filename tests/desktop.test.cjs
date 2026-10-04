@@ -52,7 +52,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       node: typeof window.require,
       process: typeof window.process,
     })), { bridge: ['checkHealth', 'marketSnapshot', 'marketSymbols', 'onStatus', 'retryBackend', 'status',
-      'listSessions', 'createSession', 'getSession', 'deleteSession', 'sessionMessages', 'sessionRuns', 'startRun', 'startAgentRun', 'cancelRun', 'getRun', 'runEvents'].sort(), node: 'undefined', process: 'undefined' });
+      'listSessions', 'createSession', 'getSession', 'deleteSession', 'sessionMessages', 'sessionRuns', 'sessionSnapshot', 'startRun', 'startAgentRun', 'cancelRun', 'getRun', 'runEvents', 'subscribeRun'].sort(), node: 'undefined', process: 'undefined' });
     assert.deepEqual(await first.app.evaluate(({ BrowserWindow }) => {
       const pref = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();
       return { sandbox: pref.sandbox, nodeIntegration: pref.nodeIntegration, contextIsolation: pref.contextIsolation };
@@ -501,4 +501,140 @@ test('run lifecycle cancels, times out, deletes active session and marks backend
     await instance.app.close(); instance = undefined;
     for (const pid of final) await expect.poll(() => alive(pid)).toBe(false);
   } finally { if (instance) await instance.app.close(); }
+});
+
+test('snapshot first, real stream reconnect, active refresh and session unsubscribe restore without duplicate messages', { timeout: 90000 }, async () => {
+  const instance = await launch();
+  let closed = false;
+  try {
+    const errors = [];
+    instance.page.on('pageerror', (error) => errors.push(error.message));
+    instance.page.on('console', (message) => { if (['error', 'warning'].includes(message.type())) errors.push(message.text()); });
+    await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    // Test-only main HTTP observation and disconnect; real Python remains live.
+    await instance.app.evaluate(() => {
+      const http = process.getBuiltinModule('node:http'), original = http.request;
+      globalThis.streamQa = [];
+      http.request = function (...args) {
+        const req = original.apply(this, args), url = String(args[0]);
+        const item = { url, method: args[1]?.method || 'GET', cursor: args[1]?.headers?.['Last-Event-ID'], req };
+        if (url.includes('/sessions/')) globalThis.streamQa.push(item);
+        return req;
+      };
+    });
+    await instance.page.getByRole('button', { name: '会话与事件', exact: true }).click();
+    for (const title of ['流甲会话', '流乙会话']) {
+      await instance.page.getByLabel('会话标题', { exact: true }).fill(title);
+      await instance.page.getByRole('button', { name: '创建会话', exact: true }).click();
+      await expect(instance.page.getByTestId('current-session')).toHaveText(title);
+    }
+    const list = await instance.page.evaluate(() => window.researchTrail.listSessions());
+    const a = list.find((item) => item.title === '流甲会话'), b = list.find((item) => item.title === '流乙会话');
+    await instance.page.getByRole('button', { name: /流甲会话/ }).click();
+    await expect(instance.page.getByTestId('current-session')).toHaveText(a.title);
+    const start = async (text) => {
+      await instance.page.getByLabel('模拟工具时序', { exact: true }).selectOption('delayed');
+      await instance.page.getByLabel('测试输入', { exact: true }).fill(text);
+      await instance.page.getByRole('button', { name: '运行规则演示', exact: true }).click();
+      await expect(instance.page.getByTestId('run-state')).toContainText('运行中');
+      await expect(instance.page.getByTestId('stream-state')).toContainText('事件已连接');
+      return (await instance.page.evaluate((id) => window.researchTrail.sessionRuns(id), a.id))[0];
+    };
+    const first = await start('查询AAPL.US行情');
+    await expect(instance.page.getByTestId('event-list')).toContainText('tool_started');
+    await instance.app.evaluate(() => {
+      const item = globalThis.streamQa.findLast((item) => item.url.includes('follow=true') && !item.req.destroyed);
+      if (!item) throw new Error('Expected real live SSE request');
+      item.req.destroy(new Error('test-only stream disconnect'));
+    });
+    await expect(instance.page.getByTestId('stream-state')).toContainText('中断');
+    if (process.env.RESEARCH_TRAIL_QA_DIR) await instance.page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, 'stream-reconnecting.png'), fullPage: true });
+    await expect(instance.page.getByTestId('run-state')).toContainText('已完成');
+    await expect(instance.page.getByTestId('message-history').locator('article')).toHaveCount(2);
+    await expect(instance.page.getByTestId('event-list').locator('li')).toHaveCount(8);
+    await expect(instance.page.getByTestId('tool-result')).toHaveCount(1);
+    const trace = await instance.app.evaluate(() => globalThis.streamQa.map(({ url, method, cursor }) => ({ url, method, cursor })));
+    const streams = trace.filter((item) => item.url.includes(first.id) && item.url.includes('follow=true'));
+    assert.equal(streams.length, 2);
+    assert.match(streams[1].cursor, new RegExp(`${first.id}:\\d+$`));
+    assert.equal(streams[1].cursor, streams[0].cursor);
+    const snapshotIndex = trace.findIndex((item) => item.url.endsWith(`/sessions/${a.id}/snapshot`));
+    assert.ok(snapshotIndex >= 0 && snapshotIndex < trace.findIndex((item) => item.url.includes('follow=true')));
+    const fetched = await instance.page.getByTestId('tool-fetched-at').textContent();
+    await instance.page.getByTestId('tool-activity-toggle').click();
+    await expect(instance.page.getByTestId('tool-activity-call')).toContainText('已返回');
+    if (process.env.RESEARCH_TRAIL_QA_DIR) await instance.page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, 'stream-restored-history.png'), fullPage: true });
+    await instance.page.reload();
+    await expect(instance.page.getByTestId('current-session')).toHaveText(a.title);
+    await expect(instance.page.getByTestId('message-history').locator('article')).toHaveCount(2);
+    await expect(instance.page.getByTestId('tool-fetched-at')).toHaveText(fetched);
+    for (let n = 0; n < 2; n++) {
+      await instance.page.getByRole('button', { name: '重新读取事件', exact: true }).click();
+      await expect(instance.page.getByRole('button', { name: '重新读取事件', exact: true })).toBeEnabled();
+      await expect(instance.page.getByTestId('event-list').locator('li')).toHaveCount(8);
+      await expect(instance.page.getByTestId('message-history').locator('article')).toHaveCount(2);
+    }
+    const second = await start('查看NVDA.US的K线');
+    await instance.page.reload();
+    await expect(instance.page.getByTestId('current-session')).toHaveText(a.title);
+    await expect(instance.page.getByTestId('stream-state')).toContainText('事件已连接');
+    await instance.page.getByRole('button', { name: /流乙会话/ }).click();
+    await expect(instance.page.getByTestId('current-session')).toHaveText(b.title);
+    await expect(instance.page.getByTestId('message-history').locator('article')).toHaveCount(0);
+    await expect.poll(() => instance.app.evaluate(() => globalThis.streamQa.filter((item) => item.url.includes('follow=true') && !item.req.destroyed).length)).toBe(0);
+    await expect.poll(() => instance.page.evaluate(({ sid, rid }) => window.researchTrail.getRun(sid, rid).then((run) => run.status), { sid: a.id, rid: second.id })).toBe('completed');
+    await expect(instance.page.getByTestId('current-session')).toHaveText(b.title);
+    await expect(instance.page.getByTestId('message-history').locator('article')).toHaveCount(0);
+    assert.equal(await instance.page.getByTestId('tool-result').count(), 0);
+    await instance.page.getByRole('button', { name: /流甲会话/ }).click();
+    await expect(instance.page.getByTestId('message-history').locator('article')).toHaveCount(4);
+    const saved = await instance.page.evaluate((id) => window.researchTrail.sessionSnapshot(id), a.id);
+    const kline = saved.events.find((item) => item.run_id === second.id && item.type === 'tool_result').payload.result.data;
+    await expect(instance.page.getByTestId('agent-kline-summary')).toContainText(kline.klines.at(-1).close.toFixed(2));
+    assert.equal(await instance.app.evaluate(() => globalThis.streamQa.filter((item) => item.method === 'POST' && /\/runs$/.test(item.url)).length), 2);
+    assert.equal(saved.runs.length, 2); assert.equal(saved.messages.length, 4);
+    const ids = await instance.page.getByTestId('message-history').locator('article').evaluateAll((items) => items.map((item) => item.dataset.messageId));
+    assert.equal(new Set(ids).size, 4);
+    await instance.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(600, 620));
+    assert.equal(await instance.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    await instance.page.evaluate(() => window.scrollTo(0, 0));
+    await screenshot(instance.page, 'stream-compact.png');
+    assert.match(instance.page.url(), /dist\/renderer\/index\.html$/);
+    assert.equal(await instance.page.title(), '研迹 · ResearchTrail');
+    assert.equal(await instance.page.locator('vite-error-overlay').count(), 0); assert.deepEqual(errors, []);
+    const owned = children(instance.pid);
+    await instance.app.close(); closed = true;
+    for (const pid of owned) await expect.poll(() => alive(pid)).toBe(false);
+  } finally { if (!closed) await instance.app.close(); }
+});
+
+test('late earlier session snapshot cannot overwrite selected session', { timeout: 45000 }, async () => {
+  const instance = await launch();
+  try {
+    await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    const samples = await instance.page.evaluate(async () => {
+      const bridge = window.researchTrail;
+      const a = await bridge.createSession('慢快照甲'), b = await bridge.createSession('快快照乙');
+      await bridge.startRun(a.id, '只属于慢甲'); await bridge.startRun(b.id, '只属于快乙');
+      return [await bridge.sessionSnapshot(a.id), await bridge.sessionSnapshot(b.id)];
+    });
+    await instance.app.evaluate(({ ipcMain }, samples) => {
+      globalThis.snapshotQa = [];
+      ipcMain.removeHandler('sessions:snapshot');
+      ipcMain.handle('sessions:snapshot', async (_event, id) => {
+        await new Promise((done) => setTimeout(done, id === samples[0].session.id ? 600 : 10));
+        globalThis.snapshotQa.push(id); return samples.find((sample) => sample.session.id === id);
+      });
+    }, samples);
+    await instance.page.getByRole('button', { name: '会话与事件', exact: true }).click();
+    await expect(instance.page.getByTestId('current-session')).toHaveText('快快照乙');
+    await instance.app.evaluate(() => { globalThis.snapshotQa = []; });
+    await instance.page.getByRole('button', { name: /慢快照甲/ }).click();
+    await instance.page.getByRole('button', { name: /快快照乙/ }).click();
+    await expect.poll(() => instance.app.evaluate(() => globalThis.snapshotQa)).toEqual([samples[1].session.id, samples[0].session.id]);
+    await expect(instance.page.getByTestId('current-session')).toHaveText('快快照乙');
+    await expect(instance.page.getByTestId('message-history')).toContainText('只属于快乙');
+    await expect(instance.page.getByTestId('message-history')).not.toContainText('只属于慢甲');
+    await expect(instance.page.getByTestId('event-list').locator('li')).toHaveCount(7);
+  } finally { await instance.app.close(); }
 });

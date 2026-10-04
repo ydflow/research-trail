@@ -1,76 +1,73 @@
 import { useEffect, useState } from 'react';
-import type { MessageDTO, RunDTO, SessionDTO, StreamEvent } from '../conversation-types';
-import { eventDetail, mergeEvents, messageView, runStatus } from './session-adapter';
+import type { SessionDTO, SessionSnapshot } from '../conversation-types';
+import { applySessionEvent, eventDetail, messageView, runStatus, toolViews } from './session-adapter';
 import { ToolResultCards } from './ToolResultCards';
+import { ToolActivity } from './ToolActivity';
 
 export function SessionPanel({ available }: { available: boolean }) {
   const [sessions, setSessions] = useState<SessionDTO[]>([]);
+  const [initialSelection] = useState(() => sessionStorage.getItem('research-trail.session') || '');
   const [selected, setSelected] = useState('');
-  const [current, setCurrent] = useState<SessionDTO>();
-  const [messages, setMessages] = useState<MessageDTO[]>([]);
-  const [runs, setRuns] = useState<RunDTO[]>([]);
-  const [runId, setRunId] = useState('');
-  const [run, setRun] = useState<RunDTO>();
-  const [events, setEvents] = useState<StreamEvent[]>([]);
+  const [snapshot, setSnapshot] = useState<SessionSnapshot>();
+  const [runId, setRunId] = useState(() => sessionStorage.getItem('research-trail.run') || '');
   const [title, setTitle] = useState('');
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [revision, setRevision] = useState(0);
+  const [stream, setStream] = useState('等待数据库快照');
   const [scenario, setScenario] = useState<'normal' | 'delayed' | 'timeout'>('normal');
 
   useEffect(() => {
     let active = true;
-    setSessions([]); setSelected(''); setError('');
     if (available && window.researchTrail) {
       void window.researchTrail.listSessions().then((items) => {
-        if (active) { setSessions(items); setSelected(items[0]?.id || ''); }
+        if (active) { setSessions(items); setSelected((previous) => items.some((item) => item.id === (previous || initialSelection)) ? previous || initialSelection : items[0]?.id || ''); }
       }).catch((e: Error) => { if (active) setError(e.message); });
     }
     return () => { active = false; };
-  }, [available]);
+  }, [available, initialSelection]);
+
+  useEffect(() => { if (selected) sessionStorage.setItem('research-trail.session', selected); }, [selected]);
+  useEffect(() => { sessionStorage.setItem('research-trail.run', runId); }, [runId]);
 
   useEffect(() => {
     let active = true;
-    setCurrent(undefined); setMessages([]); setRuns([]); setRunId(''); setRun(undefined); setEvents([]);
+    const unsubscribe: (() => void)[] = [];
+    setSnapshot((previous) => previous?.session.id === selected ? previous : undefined);
     setLoading(Boolean(available && selected));
+    setStream(available ? '读取数据库快照…' : '后端断开，已显示内容保留；请重试启动');
     if (available && selected && window.researchTrail) {
       const bridge = window.researchTrail;
-      void Promise.all([bridge.getSession(selected), bridge.sessionMessages(selected), bridge.sessionRuns(selected)])
-        .then(([session, history, items]) => {
-          if (active) { setCurrent(session); setMessages(history); setRuns(items); setRunId(items[0]?.id || ''); }
-        }).catch((e: Error) => { if (active) setError(e.message); })
-        .finally(() => { if (active) setLoading(false); });
+      void bridge.sessionSnapshot(selected).then((saved) => {
+        if (!active) return;
+        setSnapshot(saved);
+        setRunId((previous) => saved.runs.some((item) => item.id === previous) ? previous : saved.runs[0]?.id || '');
+        setLoading(false); setStream('历史已同步');
+        // Events committed between snapshot and subscription are replayed by SSE.
+        for (const record of saved.runs.filter((item) => item.status === 'running')) {
+          unsubscribe.push(bridge.subscribeRun(selected, record.id, record.last_sequence, (update) => {
+            if (!active) return;
+            if (update.kind === 'connection') { setStream(update.detail); return; }
+            setSnapshot((previous) => previous?.session.id === selected ? applySessionEvent(previous, update.event) : previous);
+            if (update.event.type === 'run_completed') {
+              // Python determines the terminal state; UI refreshes its cache.
+              setRevision((value) => value + 1);
+              void bridge.listSessions().then((items) => { if (active) setSessions(items); }).catch(() => {});
+            }
+          }));
+        }
+      }).catch((e: Error) => { if (active) { setError(e.message); setLoading(false); setStream('快照读取失败'); } });
     }
-    return () => { active = false; };
+    return () => { active = false; for (const stop of unsubscribe) stop(); };
   }, [available, selected, revision]);
 
-  useEffect(() => {
-    let active = true;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    setRun(undefined); setEvents([]);
-    if (available && selected && runId && window.researchTrail) {
-      const bridge = window.researchTrail;
-      const read = async () => {
-        try {
-          // Finite committed SSE snapshots; no automatic stream reconnection.
-          const [record, items] = await Promise.all([bridge.getRun(selected, runId), bridge.runEvents(selected, runId)]);
-          if (!active) return;
-          setRun(record); setEvents(items);
-          if (record.status === 'running') timer = setTimeout(() => void read(), 200);
-          else {
-            const [history, list, sessionList, finalEvents] = await Promise.all([bridge.sessionMessages(selected), bridge.sessionRuns(selected), bridge.listSessions(), bridge.runEvents(selected, runId)]);
-            if (active) { setMessages(history); setRuns(list); setSessions(sessionList); setEvents(finalEvents); }
-            if (active && list.some((item) => item.status === 'running')) timer = setTimeout(() => void read(), 200);
-          }
-        } catch (e) { if (active) setError((e as Error).message); }
-      };
-      void read();
-    }
-    return () => { active = false; if (timer) clearTimeout(timer); };
-  }, [available, selected, runId]);
-
+  const current = snapshot?.session.id === selected ? snapshot.session : undefined;
+  const messages = current ? snapshot!.messages : [];
+  const runs = current ? snapshot!.runs : [];
+  const run = runs.find((item) => item.id === runId);
+  const events = current ? snapshot!.events.filter((event) => event.run_id === runId) : [];
   const perform = async (work: () => Promise<void>) => {
     setBusy(true); setError('');
     try { await work(); } catch (e) { setError((e as Error).message); }
@@ -79,20 +76,21 @@ export function SessionPanel({ available }: { available: boolean }) {
   const disabled = busy || loading || !available;
   const execute = (agent: boolean) => void perform(async () => {
     const bridge = window.researchTrail!;
-    await (agent ? bridge.startAgentRun(current!.id, input, scenario) : bridge.startRun(current!.id, input));
-    setInput(''); setSessions(await bridge.listSessions()); setRevision((v) => v + 1);
+    const record = await (agent ? bridge.startAgentRun(current!.id, input, scenario) : bridge.startRun(current!.id, input));
+    setInput(''); setRunId(record.id); setSessions(await bridge.listSessions()); setRevision((value) => value + 1);
   });
+
   return <section className="session-panel" aria-label="持久化会话">
     <div className="market-heading"><h2>研究会话</h2><span className="mock-badge">规则演示／假模型</span></div>
-    <p className="market-note">确定性规则调用Python数据工具，不是真实LLM。历史由本地服务保存，重读不重复执行。</p>
-    {!available && <p className="market-message">连接后端后可查看会话历史。</p>}
+    <p className="market-note">确定性规则调用Python数据工具，不是真实LLM。先读数据库快照，再订阅事件；查看历史不会重新执行。</p>
+    <p className="stream-state" role="status" data-testid="stream-state">事件连接：{stream}</p>
     {error && <p className="market-error" role="alert">{error}</p>}
     <form className="session-form" onSubmit={(e) => {
       e.preventDefault();
       void perform(async () => {
         const bridge = window.researchTrail!;
         const item = await bridge.createSession(title.trim() || '新会话');
-        setSessions(await bridge.listSessions()); setSelected(item.id); setTitle(''); setInput('');
+        setSessions(await bridge.listSessions()); setSelected(item.id); setTitle(''); setInput(''); setRunId('');
       });
     }}>
       <label htmlFor="session-title">会话标题</label>
@@ -103,30 +101,31 @@ export function SessionPanel({ available }: { available: boolean }) {
       <aside className="session-list" aria-label="会话列表">
         {sessions.length === 0 && <p className="market-note">还没有会话。</p>}
         {sessions.map((item) => <button key={item.id} aria-pressed={selected === item.id} disabled={busy || !available}
-          onClick={() => { setSelected(item.id); setInput(''); setError(''); }}>
+          onClick={() => { setSelected(item.id); setInput(''); setError(''); setRunId(''); }}>
           <strong>{item.title}</strong><span>{item.message_count} 条消息</span>
         </button>)}
       </aside>
       <div className="session-content">
         {loading && <p className="market-message">读取历史…</p>}
-        {current && current.id === selected && <>
+        {current && <>
           <div className="market-heading"><h3 data-testid="current-session">{current.title}</h3>
             <button className="secondary" disabled={disabled} onClick={() => void perform(async () => {
               const bridge = window.researchTrail!;
               await bridge.deleteSession(current.id);
-              const items = await bridge.listSessions(); setSessions(items); setSelected(items[0]?.id || '');
+              const items = await bridge.listSessions(); setSessions(items); setSelected(items[0]?.id || ''); setRunId('');
             })}>删除当前会话</button>
           </div>
           <div className="message-history" data-testid="message-history" aria-label="消息历史">
             {messages.length === 0 && <p className="market-note">暂无消息。试试“查询AAPL.US行情”或“查看NVDA.US的K线”。</p>}
-            {messages.map(messageView).map((message) => <article key={message.id} className={`message ${message.role}`}>
+            {messages.map(messageView).map((message) => <article key={message.id} className={`message ${message.role}`} data-message-id={message.id}>
               <div>{message.label}<time>{new Date(message.timestamp).toLocaleString('zh-CN', { hour12: false })}</time></div>
               <p>{message.content || '等待运行结果…'}</p>
             </article>)}
           </div>
           <form className="run-form" onSubmit={(e) => { e.preventDefault(); execute(true); }}>
             <label htmlFor="run-input">测试输入</label>
-            <textarea id="run-input" maxLength={2000} rows={2} value={input} onChange={(e) => setInput(e.target.value)} disabled={disabled} />
+            <textarea id="run-input" maxLength={2000} rows={2} value={input} onChange={(e) => setInput(e.target.value)} disabled={disabled}
+              placeholder="查询AAPL.US行情 / 查看NVDA.US的K线" />
             <label htmlFor="tool-scenario">模拟工具时序</label>
             <select id="tool-scenario" value={scenario} disabled={disabled} onChange={(e) => setScenario(e.target.value as typeof scenario)}>
               <option value="normal">正常 · 无额外延迟</option>
@@ -141,27 +140,27 @@ export function SessionPanel({ available }: { available: boolean }) {
           {runs.length > 0 && <div className="event-section">
             <label htmlFor="run-select">运行记录</label>
             <select id="run-select" value={runId} disabled={disabled} onChange={(e) => setRunId(e.target.value)}>
-              {runs.map((item) => <option key={item.id} value={item.id}>{item.input} · {new Date(item.started_at).toLocaleTimeString('zh-CN')}</option>)}
+              {runs.map((item) => <option key={item.id} value={item.id}>{item.input} · {runStatus(item.status)} · {new Date(item.started_at).toLocaleTimeString('zh-CN')}</option>)}
             </select>
-            {run && run.id === runId && <>
-              <p className={run.status === 'failed' ? 'market-error' : 'market-note'} data-testid="run-state">
+            {run && <>
+              <p className={run.error ? 'market-error' : 'market-note'} data-testid="run-state">
                 {run.kind === 'fake_agent' ? run.model_label : '固定测试'} · {runStatus(run.status)} · {run.last_sequence} 个持久化事件
               </p>
               {run.error && <p role="alert" className="market-error" data-testid="run-error">{run.error.code}：{run.error.message}</p>}
               <button className="secondary" disabled={disabled || run.status !== 'running'} onClick={() => void perform(async () => {
-                const record = await window.researchTrail!.cancelRun(selected, runId);
-                setRun(record); setRevision((v) => v + 1);
+                await window.researchTrail!.cancelRun(selected, runId); setRevision((value) => value + 1);
               })}>取消运行</button>
               {run.status === 'interrupted' && <p className="market-note">保存内容已保留。请在输入框重新发起；不会自动调用工具或模型。</p>}
+              <ToolActivity key={run.id} toolCalls={toolViews(events, run)} />
             </>}
             <ToolResultCards events={events} runId={runId} />
-            <button className="secondary" disabled={disabled || !run} onClick={() => void perform(async () => {
-              const items = await window.researchTrail!.runEvents(selected, runId);
-              setEvents((previous) => mergeEvents(previous, items));
-            })}>重新读取事件</button>
-            <ol className="event-list" data-testid="event-list">
-              {events.map((event) => <li key={`${event.run_id}:${event.sequence}`}><span>#{event.sequence} {event.type}</span><p>{eventDetail(event)}</p></li>)}
-            </ol>
+            <button className="secondary" disabled={disabled || !run} onClick={() => { setError(''); setRevision((value) => value + 1); }}>重新读取事件</button>
+            <details className="event-details" open>
+              <summary>已保存的过程事件（{events.length}）</summary>
+              <ol className="event-list" data-testid="event-list">
+                {events.map((event) => <li key={`${event.run_id}:${event.sequence}`}><span>#{event.sequence} {event.type}</span><p>{eventDetail(event)}</p></li>)}
+              </ol>
+            </details>
           </div>}
         </>}
       </div>
