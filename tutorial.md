@@ -6,7 +6,7 @@
 
 - 参考根：`D:\folio\主分支和简历skill\folio-main`。
 - 参考来源：ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`；本地无Git，不能保证逐文件无本地变化。
-- 新项目根：`D:\folio\research-trail`，当前有第1—6步健康、模拟行情、持久化、规则Agent、运行生命周期及快照/SSE续读源码。
+- 新项目根：`D:\folio\research-trail`，当前有第1—6步业务及第7步验收脚本/离线CI文件，源码首版可发布仅指假模型＋模拟数据本机验证通过。
 - 本次覆盖：入口、界面/客户端、模型与数据、持久化/事件、组合、技能、研究、监控、评测与打包的阅读路线。
 - C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；真实LLM和C06—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
 - 前置知识：Python函数/类与异步、HTTP/JSON、TypeScript接口、React状态、进程与IPC、SQLite基本操作；按课程需要补，不要求先学完全部框架。
@@ -20,6 +20,19 @@
 ```
 
 研迹已实现界面→Electron桥→Python健康/行情/会话API→SQLite，以及规则Agent→Python工具→数据Provider→持久事件/卡片。
+
+## 第7步：怎样证明首版能工作，而不是只会构建？
+
+这是第1—6步的验收调用链，没有新增业务。先阅读README的CMD准备命令，再读`check.cmd`→`scripts/verify.mjs`：入口只运行检查，不安装依赖，失败立即返回非零。
+
+1. 契约检查调用`research_trail.export_openapi`，从Pydantic导出本机JSON，再与生成TS逐字比较。类型检查仅证明静态契约能编译，不证明真实窗口和接口可用。
+2. pytest用临时数据库：改变fixture影响工具回答、未知代码失败、取消和超时竞争、硬退出重启中断、快照和持久事件先存后发。网络策略由`scripts/offline/sitecustomize.py`经PYTHONPATH继承到真实Python子进程；只允许本机地址。
+3. Node测试验证`scripts/offline/network.cjs`阻止外部TCP/DNS、允许本机、子进程继承，以及完整帧水位/续读去重。Playwright会删除Electron的NODE_OPTIONS，因此`tests/desktop.test.cjs`在离线模式用`-r scripts/offline/electron.cjs`加载同一策略及桌面资源保护，并检查策略实际生效。普通CMD启动也用该离线分支；Electron接口在其模块加载器就绪后才访问，不能在NODE_OPTIONS的过早阶段require。
+4. 构建后运行真实Electron集成，观察页面/按钮/画布/消息/连接和进程退出。构建与实窗是两条证据；错误、取消、刷新和重启均要看实际DOM/持久记录，不能只看退出码。
+5. `scripts/verify-clean.mjs`只读git清单，将源码导出到仓库外带空格目录，重新安装锁定依赖，并通过`prepare-electron.mjs`在允许下载的准备阶段显式准备二进制。离线验收先检查该文件存在，缺失即失败，不让首次require触发补装。重复同一离线检查，再由副本自己的`tests/clean-start.cjs`真正调用根CMD启动器。两次打开共用一个独立数据库：重启前后完整快照必须相同，已保存获取时间不变，原运行不能被自动重执行。
+6. GitHub Actions先获取工具/依赖，再调用同一个check.cmd。准备阶段需要网络；验收阶段不联网调用真实服务，FakeModelProvider只是本机规则函数。工作流静态检查、本机通过、远程CI通过是不同记录，第7步开发轮与发布轮分别见EVIDENCE第20、21节。
+
+“干净源码”表示没有拷贝现成node_modules/.venv/dist/runtime；本机已有Node/Bun/uv/Python下载缓存仍可复用。它不证明没有这些工具的机器或安装包能运行。首版可发布仅限假模型和模拟行情源码，不能写成真实LLM/实时行情或投资效果成绩。用户操作与练习仍由用户本人记录。
 
 ## C01：窗口为何能打开，页面从哪里来？
 
@@ -38,10 +51,10 @@
 
 1. `start-dev.cmd`把工作目录切到项目根，按bun.lock和uv.lock同步依赖，再运行 `scripts/dev.mjs`。uv创建Python3.12虚拟环境，真正的服务由Electron启动，避免让uv包装进程成为无法定位的后端。
 2. 开发启动器先执行 `scripts/build.mjs`，把main/preload编译成两个CJS文件，然后在本机启动随机端口的Vite。它启动Electron并传入开发页面地址。React改动支持热更新；主进程和Python修改后重启。
-3. `apps/desktop/src/main/index.ts`等待Electron就绪，创建沙箱窗口、注册三个请求通道、加载preload和页面，然后显示窗口并调用 `BackendManager.retry()`。
+3. `apps/desktop/src/main/index.ts`等待Electron就绪，创建沙箱窗口、注册白名单通道、加载preload和页面，然后显示窗口并调用 `BackendManager.retry()`。第1步最初只有健康相关通道；截至第6步桥共19个命名操作，后续行情/会话/运行见C03—C05。
 4. `main/backend.ts`生成随机令牌，直接启动 `services/backend/.venv/Scripts/python.exe -m research_trail`。Python在 `research_trail/__main__.py`绑定127.0.0.1的端口0：0表示让操作系统分配端口。它把同一socket交给Uvicorn，避免“先找空端口、再抢占端口”的竞态。
 5. Python用stdout发一行就绪JSON，只有端口，没有令牌。Electron收到后请求 `/health`，在请求头携令牌。`research_trail/app.py`的 `create_app()`用常量时间比较检查令牌，正确才返回服务名和Python版本。
-6. Electron将健康结果转换为桌面状态。`preload/index.ts`仅提供四个命名接口；React的 `App.tsx`订阅状态，更新标题、状态行和检查时间。页面没有后端端口或令牌，也不能随意指定URL、读文件或调用进程。
+6. Electron将健康结果转换为桌面状态。`preload/index.ts`通过命名接口访问健康信息；React的 `App.tsx`订阅状态，更新标题、状态行和检查时间。第1步最初四个接口，当前19项白名单见bridge.ts；页面没有后端端口或令牌，也不能随意指定URL、读文件或调用进程。
 7. 健康时按钮调用checkHealth；失败时调用retryBackend。重试先关闭旧子进程，再使用新令牌启动新服务。重复点击由前端禁用和后端复用同一重试Promise共同处理。
 8. 关窗触发before-quit，先写stdin的shutdown通知，等Python结束；超时才结束持有的Python子进程。Electron崩溃时管道EOF也会让Python退出。随后dev启动器关闭Vite。没有按python.exe或electron.exe名称批量结束进程。
 

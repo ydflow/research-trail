@@ -6,27 +6,28 @@
 
 ## 当前状态
 
-截至 2026-10-04：**第0/2/3/4/5/6步验收通过；第1步代码完成、自动化通过**。桌面支持模拟行情、持久会话、规则Agent、取消/超时/中断，以及快照恢复和SSE续读。界面明确标注“规则演示／假模型”，没有真实LLM。第6步依据完整发布复验及用户本轮已验收发布确认；逐项手动与学习记录待填写。
+截至 2026-10-04：**第0/2/3/4/5/6/7步验收通过；第1步代码完成、自动化通过**。首版源码标记为**可发布（仅假模型＋模拟数据）**：完整本机检查和干净源码实窗流程已通过。桌面支持模拟行情、持久会话、规则Agent、取消/超时/中断，以及快照恢复和SSE续读。界面明确标注“规则演示／假模型”，没有真实LLM。用户逐项亲自操作和学习记录仍待填写；本轮按功能分支/PR交付第7步，结果见EVIDENCE第21节。
 
 - 默认分支 `main`；初始公开提交为 `55b1a3d`，第2步按功能分支/PR保留导入、Python新实现、修复与桌面适配提交。
 - 第2步公开复用依据为用户本轮确认的原作者授权，保留适配来源与依赖声明；交付见 [PR #1](https://github.com/ydflow/research-trail/pull/1)，发布检查和授权记录见EVIDENCE第9—11节，最终提交/合并状态以Git与发布回执为准。
 - 公开仓库：[ydflow/research-trail](https://github.com/ydflow/research-trail)。仅上传源码、测试、文档、依赖清单与锁文件；不包含运行数据或截图。
 - 第2步已普通合并，main基线为 `0e1dfd5ccf7e99c66d58188dcac9497ddd6e2bd8`；第3步以 [PR #2](https://github.com/ydflow/research-trail/pull/2) 交付，开发与发布验证见EVIDENCE第12—13节，最终提交和合并状态以Git与发布回执为准。
 - 第3步合并基线为 `7f925dee768ff33c076582dd9d41055aca9a5932`；第4步以 [PR #3](https://github.com/ydflow/research-trail/pull/3) 交付，开发及发布复验见EVIDENCE第14—15节，按功能分支/PR保留提交，最终远程状态以GitHub和发布回执为准。
-- 第5步开发基线为 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`；以 [PR #4](https://github.com/ydflow/research-trail/pull/4) 普通合并，第6步发布基线为`a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677`。第6步以 [PR #5](https://github.com/ydflow/research-trail/pull/5) 交付，开发与发布证据见EVIDENCE第18—19节，最终提交/合并状态以GitHub和发布回执为准；第7—24步未开始。
-- 首版 `v0.1.0`、完整版本 `v1.0.0` 都是计划，不是已发布版本。
+- 第5步开发基线为 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`；以 [PR #4](https://github.com/ydflow/research-trail/pull/4) 普通合并，第6步发布基线为`a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677`。第6步 [PR #5](https://github.com/ydflow/research-trail/pull/5)已普通合并，第7步发布基线为`f51b802d61896f9da30cd1f6df331c90e75e24b9`。第7步开发与发布证据见EVIDENCE第20—21节；第8—24步未开始。
+- 首版 `v0.1.0`源码验收通过、可发布，仅验证假模型与模拟数据；详见 [首版清单](docs/ACCEPTANCE-v0.1.0.md)。这不是已经发布的版本；没有标签、Release或安装包，完整版本 `v1.0.0`仍为计划。
 - Folio 功能和测试属于参考项目，不代表研迹已实现或用户已完成的贡献。
 
 ## 架构与当前边界
 
 ```text
 React 页面
-  → Electron 白名单通信桥
-    → 本机 Python / FastAPI 服务
-      ├─ 模型与只读工具
-      ├─ 行情 / 账户数据提供商
-      ├─ 研究 / 提醒 / 评测
-      └─ SQLite：会话、运行、事件及业务记录
+  → preload：19个命名操作，无任意文件/进程/URL能力
+    → Electron main：随机端口/令牌、所属Python进程、SSE续读
+      → 本机 Python / FastAPI：鉴权与Pydantic契约
+        ├─ 行情：FixtureMarketProvider（四股票固定示例）
+        ├─ 运行：RunManager → FakeModelProvider → ToolRegistry → 行情工具
+        └─ Store / SQLAlchemy / SQLite：会话、消息、运行、事件
+            → 事务提交 → 快照/SSE → main校验 → React显示缓存
 ```
 
 Python 统一管理业务状态，前端维护显示缓存。假模型和模拟行情分别实现，后续分别替换为真实连接。真实数据来源与模型回答不能混为一谈。
@@ -61,8 +62,8 @@ Pydantic 是业务契约来源。离线导出 OpenAPI 后，`openapi-typescript`
 | 3 | SQLite会话/消息/运行/事件、有限SSE读取 | 验收通过；29项Python、8项实窗复验及用户发布确认，手动记录待补 |
 | 4 | Python工具注册、最小规则Agent、过程与结果卡片 | 验收通过；自动复验＋用户发布确认 |
 | 5 | 运行取消、超时竞争、删除与重启中断 | 验收通过；67项Python、10项实窗复验＋用户发布确认 |
-| 6 | 会话界面、数据库快照恢复、SSE续读和去重 | 代码完成/待验收；自动验证见EVIDENCE第18节 |
-| 7 | 首版验收、离线CI、干净源码启动 | 未开始 |
+| 6 | 会话界面、数据库快照恢复、SSE续读和去重 | 验收通过；第6步发布复验见EVIDENCE第19节 |
+| 7 | 首版验收、离线CI、干净源码启动 | 验收通过；源码可发布，仅假模型＋模拟数据；远程CI未执行 |
 | 8—13 | 设置与凭证、真实模型/行情、市场工作台、组合及对比 | 未开始 |
 | 14—20 | 能力技能、研究策略/报告/恢复、论点、筛选与事件 | 未开始 |
 | 21—24 | 提醒与 Today、评测、研究结果校准、Windows 交付 | 未开始 |
@@ -76,6 +77,7 @@ Pydantic 是业务契约来源。离线导出 OpenAPI 后，`openapi-typescript`
 - [来源与验收证据](docs/EVIDENCE.md)：来源、个人动作、实际检查与未验证事项。
 - [源码学习大纲](tutorial.md)：按调用链阅读参考源码，随后映射到 Python 实现。
 - [阅读引导与练习](practice.md)：课程练习和用户回答位置。
+- [v0.1.0验收与亲自操作清单](docs/ACCEPTANCE-v0.1.0.md)：首版范围、检查证据、发布准备和未验证内容。
 
 ## 目录
 
@@ -104,6 +106,17 @@ research-trail/
 
 本机需有 Bun、uv 和 Node.js 24；Python 3.12 由 uv 管理。首次同步依赖或下载 Electron 需要网络。脚本只在本项目同步锁定依赖，不修改系统执行策略。
 
+本轮验证工具版本：Node.js 24.19.0、Bun 1.4.2、uv 0.12.8、Python 3.12.14。从源码准备依赖（普通CMD，不在已有应用运行期间操作）：
+
+```cmd
+cd /d "D:\folio\research-trail"
+call bun install --frozen-lockfile
+uv sync --project services\backend --frozen
+call bun run prepare:desktop
+```
+
+这三步允许下载锁定依赖和Electron二进制；当前Electron包可能在首次require时才准备二进制，故提前显式检查。缺工具时先安装工具，不依赖其他项目的node_modules或虚拟环境。`start-dev.cmd`会同步依赖，然后启动；空格路径受支持。
+
 ```cmd
 "D:\folio\research-trail\start-dev.cmd"
 ```
@@ -111,6 +124,8 @@ research-trail/
 脚本依次执行 `bun install --frozen-lockfile`、`uv sync --project services\backend --frozen`，离线生成 OpenAPI/TypeScript 契约，然后打开 Vite + Electron；Electron 再启动本项目虚拟环境中的 Python。React 修改支持热更新，main/preload/Python 修改后关闭窗口重新运行脚本。
 
 正常界面显示“连接就绪”和“运行正常”；点击“重新检查”会做真实健康请求。启动失败或后端退出时显示原因与“重试启动”。关闭窗口会通知 Python 退出，终端随后结束 Vite；不按进程名称结束其他项目。
+
+依赖和Electron二进制准备完成后可离线启动：同一CMD先`set "RESEARCH_TRAIL_OFFLINE=1"`，再运行start-dev.cmd；两种安装器都使用`--offline`，缺Electron二进制在打开窗口前明确失败，不补装。恢复常规模式执行`set "RESEARCH_TRAIL_OFFLINE="`。该标志用于开发/验收，不代表安装包或操作系统网络沙箱；统一验收还会加载专用网络拦截策略。
 
 ### 手动验收（待用户完成）
 
@@ -139,15 +154,25 @@ cd /d "D:\folio\research-trail"
 git status --short --branch
 git symbolic-ref --short HEAD
 git remote -v
-type README.md
-bun run check
-bun run build
-uv run --directory services\backend --frozen python -m pytest -q
-bun run test:stream
-bun run test:desktop
+call check.cmd
 ```
 
-检查记录见 EVIDENCE.md。Electron 自动化会打开并关闭测试窗口；它验证开发源码，不代表安装包验收。没有配置或调用真实模型、行情或账户。
+`check.cmd`与`bun run verify`是同一个完整验收入口：离线契约一致性→前端类型→pytest→临时库重复迁移→离线策略/SSE/适配→构建→真实Electron集成。失败立即返回非零，不把某一通过项当作整体验收成功。不会安装或下载依赖，不读取日常数据库；请先准备依赖。子进程环境去除模型凭证和代理，仅允许Node/Python及桌面资源的本机通信，外部TCP/DNS请求会被拦截。FakeModelProvider的确定性函数仍被测试；没有真实模型调用。
+
+单项定位命令仍保留：`bun run check`、`bun run build`、`uv run --directory services\backend --frozen python -m pytest -q`、`bun run test:stream`、`bun run test:desktop`。普通单项命令不自动加载完整离线策略，首版以统一入口为准。
+
+检查记录见 EVIDENCE.md和首版清单。Electron自动化会打开并关闭真实窗口，并观察DOM、画布、连接状态及进程退出；不代表用户亲自勾选或安装包验收。
+
+干净源码复验（本机工具已安装，耗时更长）：
+
+```cmd
+cd /d "D:\folio\research-trail"
+call bun run verify:clean
+```
+
+只读git文件清单，将当前源码（包含工作区中未被忽略的源码）复制到`%TEMP%\research-trail-clean-*\clean source`；不带.git、node_modules、.venv、构建输出和日常数据。随后按上面三条README命令安装锁定依赖并准备Electron二进制，再执行同一离线验收，最后从根start-dev.cmd打开真实Vite/Electron，做选股→建会话→行情→取消→关闭/重启历史检查。临时源码和隔离历史留在仓库外供核查，不修改原运行库；可自行删除已关闭的该临时目录。验证可复用本机下载缓存，不能称为无工具的干净机器安装。
+
+GitHub Actions文件为`.github/workflows/offline-checks.yml`：Windows、只读权限、无定时任务/业务密钥；依赖准备阶段需要网络，验收阶段用同一check.cmd，仅本机通信、不调用真实模型/行情。Action引用固定SHA，工具版本与本次本机一致。[setup-bun官方说明](https://github.com/oven-sh/setup-bun)和[setup-uv官方说明](https://github.com/astral-sh/setup-uv)记录下载/安装行为，因此不把整个GitHub作业称为断网。第7步开发轮仅本地静态检查，远程CI结果单独记录在EVIDENCE第21节，不由本地通过推定远程通过。
 
 修改 Python 契约后执行 `bun run contracts:generate`，再执行上述检查。生成器使用 TypeScript 5.9.3 编译器 API，与其 peer 约束兼容。
 
@@ -167,6 +192,6 @@ uv run --directory services\backend --frozen python -m alembic -c alembic.ini ch
 
 参考目录：`D:\folio\主分支和简历skill\folio-main`，只读。原 ZIP 记录来源 commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`；它是来源标识，不等于本地解压目录有 Git 历史。
 
-第1步为本项目新实现；第2步局部适配Folio的Watchlist、QuoteCard、FinancialKLineChart；第6步局部适配ToolActivity折叠工具时间线及耗时格式，保留逐文件来源说明。没有导入原TypeScript后端、图片、完整侧栏或Markdown/引用系统。按用户此前确认的原作者复用授权及本轮发布指令，将本步局部组件适配纳入公开范围；授权事实保留在第9—11节，未独立取得授权原文，不由`skills/LICENSE`推定Folio全仓MIT。图表库klinecharts的Apache-2.0 LICENSE、NOTICE及所带许可保存在`docs/third-party/klinecharts`。详细记录见 [证据文档](docs/EVIDENCE.md)。
+第1步为本项目新实现；第2步局部适配Folio的Watchlist、QuoteCard、FinancialKLineChart；第6步局部适配ToolActivity折叠工具时间线及耗时格式，保留逐文件来源说明。没有导入原TypeScript后端、图片、完整侧栏或Markdown/引用系统。按用户此前确认的原作者复用授权及第6步发布指令，相关局部组件适配已纳入公开范围；第7步没有新组件导入。授权事实保留在第9—11节，未独立取得授权原文，不由`skills/LICENSE`推定Folio全仓MIT。图表库klinecharts的Apache-2.0 LICENSE、NOTICE及所带许可保存在`docs/third-party/klinecharts`。详细记录见 [证据文档](docs/EVIDENCE.md)。
 
 模型密钥、真实账户资料、运行数据库和私人日志不纳入版本控制。项目目标是研究与只读分析，计划不包含交易下单或盈利承诺。
