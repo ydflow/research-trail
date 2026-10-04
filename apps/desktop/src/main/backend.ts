@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { Agent, get } from 'node:http';
 import type { BackendState } from '../bridge';
+import type { MarketError, MarketResult, MarketSnapshot, MarketSymbol } from '../market-types';
 
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -89,7 +90,7 @@ export class BackendManager extends EventEmitter {
         try {
           const health = await this.fetchHealth();
           if (this.quitting || this.child !== child) return this.snapshot();
-          this.update({ phase: 'healthy', detail: '本地服务已连接，可以开始下一步。', ...health });
+          this.update({ phase: 'healthy', detail: '本地服务已连接。', ...health });
           this.monitor = setInterval(() => { void this.check(); }, 3000);
           return this.snapshot();
         } catch { await delay(100); }
@@ -128,13 +129,62 @@ export class BackendManager extends EventEmitter {
     return { checkedAt: new Date().toISOString(), pythonVersion: body.python_version as string };
   }
 
+  private async marketRequest(path: string): Promise<{ status: number; body: unknown }> {
+    if (this.state.phase !== 'healthy' || !this.port || this.quitting) throw new Error('本地服务尚未就绪，请检查后端连接。');
+    const child = this.child;
+    const port = this.port;
+    const token = this.token;
+    const result = await new Promise<{ status: number; body: unknown }>((resolve, reject) => {
+      const request = get(`http://127.0.0.1:${port}${path}`, {
+        agent: this.localAgent, headers: { 'X-ResearchTrail-Token': token },
+      }, (response) => {
+        let data = '';
+        response.setEncoding('utf8');
+        response.on('data', (chunk: string) => {
+          data += chunk;
+          if (data.length > 262144) request.destroy(new Error('行情响应过大。'));
+        });
+        response.on('error', reject);
+        response.on('end', () => {
+          try { resolve({ status: response.statusCode || 0, body: JSON.parse(data) }); }
+          catch { reject(new Error('行情接口返回了无效 JSON。')); }
+        });
+      });
+      const timer = setTimeout(() => request.destroy(new Error('行情请求超过 3 秒。')), 3000);
+      request.once('close', () => clearTimeout(timer));
+      request.once('error', reject);
+    });
+    if (this.child !== child || this.state.phase !== 'healthy' || this.quitting) throw new Error('查询期间后端连接已变化，请重新查询。');
+    return result;
+  }
+
+  async marketSymbols(): Promise<MarketSymbol[]> {
+    const result = await this.marketRequest('/market/symbols');
+    if (result.status !== 200 || !Array.isArray(result.body)) throw new Error('无法读取模拟股票列表。');
+    return result.body as MarketSymbol[];
+  }
+
+  async marketSnapshot(symbol: unknown): Promise<MarketResult> {
+    if (typeof symbol !== 'string' || !/^[A-Z0-9]{1,6}\.US$/.test(symbol)) {
+      return { ok: false, error: { code: 'INVALID_SYMBOL', message: '代码格式无效，请使用 AAPL.US 等格式。' } };
+    }
+    try {
+      const result = await this.marketRequest(`/market/snapshot/${encodeURIComponent(symbol)}`);
+      if (result.status === 404) return { ok: false, error: result.body as MarketError };
+      if (result.status !== 200) throw new Error(`行情接口返回 HTTP ${result.status}。`);
+      return { ok: true, data: result.body as MarketSnapshot };
+    } catch (error) {
+      return { ok: false, error: { code: 'UNAVAILABLE', message: this.safeError((error as Error).message) } };
+    }
+  }
+
   async check(): Promise<BackendState> {
     if (this.checking || this.restartTask || this.state.phase !== 'healthy') return this.snapshot();
     const child = this.child;
     this.checking = true;
     try {
       const health = await this.fetchHealth();
-      if (this.child === child && this.state.phase === 'healthy') this.update({ phase: 'healthy', detail: '本地服务已连接，可以开始下一步。', ...health });
+      if (this.child === child && this.state.phase === 'healthy') this.update({ phase: 'healthy', detail: '本地服务已连接。', ...health });
     } catch (error) {
       if (this.child === child && this.state.phase === 'healthy') {
         this.update({ phase: 'failed', detail: `本地服务连接中断。${this.safeError((error as Error).message)} 请点击重试启动。` });

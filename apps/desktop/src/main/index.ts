@@ -36,6 +36,8 @@ app.whenReady().then(async () => {
   ipcMain.handle('backend:status', (event) => { assertSender(event); return backend.snapshot(); });
   ipcMain.handle('backend:check', (event) => { assertSender(event); return backend.check(); });
   ipcMain.handle('backend:retry', (event) => { assertSender(event); return backend.retry(); });
+  ipcMain.handle('market:symbols', (event) => { assertSender(event); return backend.marketSymbols(); });
+  ipcMain.handle('market:snapshot', (event, symbol: unknown) => { assertSender(event); return backend.marketSnapshot(symbol); });
   backend.on('status', (state) => {
     if (window && !window.isDestroyed()) window.webContents.send('backend:changed', state);
   });

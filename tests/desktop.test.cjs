@@ -49,7 +49,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       bridge: Object.keys(window.researchTrail).sort(),
       node: typeof window.require,
       process: typeof window.process,
-    })), { bridge: ['checkHealth', 'onStatus', 'retryBackend', 'status'], node: 'undefined', process: 'undefined' });
+    })), { bridge: ['checkHealth', 'marketSnapshot', 'marketSymbols', 'onStatus', 'retryBackend', 'status'], node: 'undefined', process: 'undefined' });
     assert.deepEqual(await first.app.evaluate(({ BrowserWindow }) => {
       const pref = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();
       return { sandbox: pref.sandbox, nodeIntegration: pref.nodeIntegration, contextIsolation: pref.contextIsolation };
@@ -130,6 +130,7 @@ test('Vite development renderer, CSP, bridge and hot reload', { timeout: 45000 }
     instance.page.on('pageerror', (error) => errors.push(error.message));
     instance.page.on('console', (message) => { if (['error', 'warning'].includes(message.type())) errors.push(message.text()); });
     await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    await expect(instance.page.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-symbol', 'AAPL.US');
     assert.equal(instance.page.url(), url);
     assert.equal(await instance.page.locator('vite-error-overlay').count(), 0);
     assert.equal(await instance.page.evaluate(() => getComputedStyle(document.documentElement).fontFamily.includes('Microsoft YaHei')), true);
@@ -148,4 +149,90 @@ test('Vite development renderer, CSP, bridge and hot reload', { timeout: 45000 }
     if (instance) await instance.app.close();
     await server.close();
   }
+});
+
+test('four fixture stocks, actual canvas loader, unknown symbol, repeat provenance and shutdown', { timeout: 60000 }, async () => {
+  const instance = await launch();
+  let closed = false;
+  try {
+    const errors = [];
+    instance.page.on('pageerror', (error) => errors.push(error.message));
+    const expected = { 'AAPL.US': '189.43', 'NVDA.US': '880.12', 'MSFT.US': '412.60', 'TSLA.US': '175.22' };
+    await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    for (const [symbol, price] of Object.entries(expected)) {
+      await instance.page.getByRole('button', { name: symbol, exact: true }).click();
+      await expect(instance.page.getByTestId('quote-card')).toHaveAttribute('data-symbol', symbol);
+      await expect(instance.page.getByTestId('quote-price')).toHaveText(price);
+      await expect(instance.page.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-symbol', symbol);
+      await expect(instance.page.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-close', String(Number(price)));
+      await expect(instance.page.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-count', '10');
+      await expect(instance.page.getByTestId('chart-canvas')).toHaveAttribute('data-visible-from', '0');
+      await expect(instance.page.getByTestId('chart-canvas')).toHaveAttribute('data-visible-to', '10');
+      const geometry = await instance.page.getByTestId('chart-canvas').evaluate((el) => ({
+        x: Number(el.dataset.lastX), y: Number(el.dataset.lastY), width: el.clientWidth, height: el.clientHeight,
+      }));
+      assert.ok(geometry.x >= 0 && geometry.x < geometry.width && geometry.y >= 0 && geometry.y < geometry.height, JSON.stringify(geometry));
+      assert.ok(await instance.page.getByTestId('chart-canvas').locator('canvas').count() > 0);
+      await expect(instance.page.getByTestId('market-time')).toHaveText('2024-01-16 21:00:00.000 UTC');
+    }
+    const before = await instance.page.getByTestId('fetched-at').textContent();
+    await instance.page.getByRole('button', { name: '重新查询', exact: true }).click();
+    await expect(instance.page.getByTestId('fetched-at')).not.toHaveText(before);
+    await expect(instance.page.getByTestId('quote-price')).toHaveText('175.22');
+    await expect(instance.page.getByTestId('market-time')).toHaveText('2024-01-16 21:00:00.000 UTC');
+    await expect(instance.page.getByText('模拟数据 · 固定示例')).toBeVisible();
+    await expect(instance.page.getByTestId('chart-canvas')).toHaveAttribute('data-visible-to', '10');
+    await instance.page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    if (process.env.RESEARCH_TRAIL_QA_DIR) {
+      mkdirSync(process.env.RESEARCH_TRAIL_QA_DIR, { recursive: true });
+      await instance.page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, 'market-tsla.png'), fullPage: true });
+    }
+    await instance.page.getByLabel('查询代码', { exact: true }).fill('ZZZZ.US');
+    await instance.page.getByRole('button', { name: '查询', exact: true }).click();
+    await expect(instance.page.getByRole('alert')).toContainText('未知股票代码：ZZZZ.US');
+    assert.equal(await instance.page.getByTestId('quote-card').count(), 0);
+    assert.equal(await instance.page.getByTestId('chart-canvas').count(), 0);
+    await screenshot(instance.page, 'market-unknown.png');
+    assert.equal((await instance.page.evaluate(() => window.researchTrail.marketSnapshot('../health'))).error.code, 'INVALID_SYMBOL');
+    assert.equal((await instance.page.evaluate(() => window.researchTrail.marketSnapshot({ url: '/health' }))).error.code, 'INVALID_SYMBOL');
+    await instance.page.getByRole('button', { name: 'AAPL.US', exact: true }).click();
+    await expect(instance.page.getByTestId('quote-price')).toHaveText('189.43');
+    await instance.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(600, 620));
+    assert.equal(await instance.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+    if (process.env.RESEARCH_TRAIL_QA_DIR) {
+      await instance.page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, 'market-compact.png'), fullPage: true });
+    }
+    assert.deepEqual(errors, []);
+    const owned = children(instance.pid);
+    await instance.app.close(); closed = true;
+    for (const pid of owned) await expect.poll(() => alive(pid)).toBe(false);
+  } finally { if (!closed) await instance.app.close(); }
+});
+
+test('late earlier response cannot overwrite the latest stock selection', { timeout: 45000 }, async () => {
+  const instance = await launch();
+  try {
+    await expect(instance.page.getByTestId('quote-price')).toHaveText('189.43');
+    const samples = await instance.page.evaluate(async () => ({
+      aapl: await window.researchTrail.marketSnapshot('AAPL.US'),
+      tsla: await window.researchTrail.marketSnapshot('TSLA.US'),
+    }));
+    // Test-only main-process delay; production code and real backend data remain unchanged.
+    await instance.app.evaluate(({ ipcMain }, samples) => {
+      globalThis.marketTestCompleted = [];
+      ipcMain.removeHandler('market:snapshot');
+      ipcMain.handle('market:snapshot', async (_event, symbol) => {
+        await new Promise((resolve) => setTimeout(resolve, symbol === 'AAPL.US' ? 600 : 10));
+        globalThis.marketTestCompleted.push(symbol);
+        return symbol === 'AAPL.US' ? samples.aapl : samples.tsla;
+      });
+    }, samples);
+    await instance.page.getByRole('button', { name: 'AAPL.US', exact: true }).click();
+    await instance.page.getByRole('button', { name: 'TSLA.US', exact: true }).click();
+    await expect(instance.page.getByTestId('quote-price')).toHaveText('175.22');
+    await expect.poll(() => instance.app.evaluate(() => globalThis.marketTestCompleted)).toEqual(['TSLA.US', 'AAPL.US']);
+    await expect(instance.page.getByTestId('quote-card')).toHaveAttribute('data-symbol', 'TSLA.US');
+    await expect(instance.page.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-symbol', 'TSLA.US');
+    await expect(instance.page.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-close', '175.22');
+  } finally { await instance.app.close(); }
 });
