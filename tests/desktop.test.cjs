@@ -31,7 +31,10 @@ async function screenshot(page, name) {
 }
 async function launch(extraEnv = {}) {
   const databasePath = extraEnv.RESEARCH_TRAIL_DB_PATH || resolve(mkdtempSync(resolve(tmpdir(), 'research-trail-qa-')), 'test.sqlite3');
-  const app = await electron.launch({ args: [desktop], cwd: root, env: { ...env, RESEARCH_TRAIL_DB_PATH: databasePath, ...extraEnv } });
+  // Playwright deliberately removes NODE_OPTIONS from Electron's environment.
+  // Load the same offline guard explicitly, before the application entry point.
+  const args = env.RESEARCH_TRAIL_OFFLINE === '1' ? ['-r', resolve(root, 'scripts/offline/electron.cjs'), desktop] : [desktop];
+  const app = await electron.launch({ args, cwd: root, env: { ...env, RESEARCH_TRAIL_DB_PATH: databasePath, ...extraEnv } });
   const page = await app.firstWindow();
   return { app, page, pid: await app.evaluate(() => process.pid), databasePath };
 }
@@ -44,6 +47,21 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
     const errors = [];
     first.page.on('pageerror', (error) => errors.push(error.message));
     await expect(first.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    if (process.env.RESEARCH_TRAIL_OFFLINE === '1') {
+      assert.equal(await first.app.evaluate(() => globalThis[Symbol.for('research-trail.offline')]), true);
+      assert.equal(await first.app.evaluate(() => {
+        const socket = new (process.getBuiltinModule('node:net').Socket)();
+        try { socket.connect({ host: '203.0.113.1', port: 443 }); return false; }
+        catch (error) { return error.message.includes('Offline verification'); }
+        finally { socket.destroy(); }
+      }), true);
+      assert.equal(await first.app.evaluate(async ({ BrowserWindow }) => {
+        try {
+          await BrowserWindow.getAllWindows()[0].webContents.session.fetch('http://203.0.113.1/');
+          return false;
+        } catch (error) { return error.message.includes('ERR_BLOCKED_BY_CLIENT'); }
+      }), true);
+    }
     assert.equal(await first.page.title(), '研迹 · ResearchTrail');
     assert.equal(await first.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()), true);
     assert.match(first.page.url(), /dist\/renderer\/index\.html$/);

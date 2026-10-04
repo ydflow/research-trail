@@ -1,6 +1,7 @@
 {
   "name": "research-trail",
   "private": true,
+  "packageManager": "bun@1.4.2",
   "trustedDependencies": ["electron", "esbuild"],
   "workspaces": ["apps/desktop"],
   "scripts": {
@@ -10,7 +11,10 @@
     "contracts:generate": "node scripts/contracts.mjs",
     "contracts:check": "node scripts/contracts.mjs --check",
     "test:desktop": "node --test tests/desktop.test.cjs",
-    "test:stream": "node --test tests/stream.test.cjs"
+    "test:stream": "node --test tests/stream.test.cjs",
+    "verify": "node scripts/verify.mjs",
+    "verify:clean": "node scripts/verify-clean.mjs",
+    "prepare:desktop": "node scripts/prepare-electron.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

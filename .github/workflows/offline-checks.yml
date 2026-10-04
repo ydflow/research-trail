@@ -1,0 +1,50 @@
+name: Fixture desktop acceptance
+
+on:
+  push:
+    branches: [main, 'feat/**', 'fix/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fixture-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-fixture:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: cmd
+    steps:
+      # Checkout/runtime/locked dependency preparation requires network.
+      # The acceptance command below does no installs or external service calls.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24.19.0'
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: '1.4.2'
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          version: '0.12.8'
+          enable-cache: false
+      - name: Prepare locked dependencies (network allowed)
+        run: |
+          call bun install --frozen-lockfile
+          if errorlevel 1 exit /b 1
+          uv python install 3.12.14
+          if errorlevel 1 exit /b 1
+          uv sync --project services\backend --frozen
+          if errorlevel 1 exit /b 1
+          call bun run prepare:desktop
+          if errorlevel 1 exit /b 1
+      - name: Offline fixture acceptance (loopback only, no real model)
+        run: call check.cmd
