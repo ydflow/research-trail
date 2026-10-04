@@ -537,6 +537,21 @@ test('snapshot first, real stream reconnect, active refresh and session unsubscr
         const req = original.apply(this, args), url = String(args[0]);
         const item = { url, method: args[1]?.method || 'GET', cursor: args[1]?.headers?.['Last-Event-ID'], req };
         if (url.includes('/sessions/')) globalThis.streamQa.push(item);
+        if (url.includes('follow=true')) {
+          // The initial snapshot may end before or after tool_started. Observe
+          // complete frames after the production decoder, not the start cursor.
+          item.lastReceivedCursor = item.cursor;
+          let buffer = '';
+          req.on('response', (response) => response.on('data', (chunk) => {
+            buffer = (buffer + chunk.toString()).replaceAll('\r\n', '\n');
+            let end;
+            while ((end = buffer.indexOf('\n\n')) >= 0) {
+              const frame = buffer.slice(0, end); buffer = buffer.slice(end + 2);
+              const id = frame.match(/^id: ([^\n]+)$/m);
+              if (id) item.lastReceivedCursor = id[1];
+            }
+          }));
+        }
         return req;
       };
     });
@@ -560,10 +575,14 @@ test('snapshot first, real stream reconnect, active refresh and session unsubscr
     };
     const first = await start('查询AAPL.US行情');
     await expect(instance.page.getByTestId('event-list')).toContainText('tool_started');
-    await instance.app.evaluate(() => {
+    const disconnectedCursor = await instance.app.evaluate(() => {
       const item = globalThis.streamQa.findLast((item) => item.url.includes('follow=true') && !item.req.destroyed);
       if (!item) throw new Error('Expected real live SSE request');
+      // Capture and destroy in one main-process turn: no frame can advance the
+      // expected waterline between separate renderer/main evaluation requests.
+      const cursor = item.lastReceivedCursor;
       item.req.destroy(new Error('test-only stream disconnect'));
+      return cursor;
     });
     await expect(instance.page.getByTestId('stream-state')).toContainText('中断');
     if (process.env.RESEARCH_TRAIL_QA_DIR) await instance.page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, 'stream-reconnecting.png'), fullPage: true });
@@ -575,7 +594,7 @@ test('snapshot first, real stream reconnect, active refresh and session unsubscr
     const streams = trace.filter((item) => item.url.includes(first.id) && item.url.includes('follow=true'));
     assert.equal(streams.length, 2);
     assert.match(streams[1].cursor, new RegExp(`${first.id}:\\d+$`));
-    assert.equal(streams[1].cursor, streams[0].cursor);
+    assert.equal(streams[1].cursor, disconnectedCursor);
     const snapshotIndex = trace.findIndex((item) => item.url.endsWith(`/sessions/${a.id}/snapshot`));
     assert.ok(snapshotIndex >= 0 && snapshotIndex < trace.findIndex((item) => item.url.includes('follow=true')));
     const fetched = await instance.page.getByTestId('tool-fetched-at').textContent();
