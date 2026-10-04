@@ -1,13 +1,13 @@
-:root { font-family: "Microsoft YaHei", "Segoe UI", sans-serif; color: #163e39; background: #fff; font-synthesis: none; text-rendering: optimizeLegibility; --muted: #67736e; --accent: #14685a; --border: #e6ece9; }
+:root { font-family: "Microsoft YaHei", "Segoe UI", sans-serif; color: #163e39; background: #fff; font-synthesis: none; text-rendering: optimizeLegibility; --muted: #67736e; --accent: #14685a; --border: #e6ece9; --positive: #14685a; --negative: #a24333; --text-muted: #67736e; }
 * { box-sizing: border-box; }
 body { margin: 0; }
 .shell { min-height: 100vh; display: flex; flex-direction: column; }
 header { display: flex; align-items: baseline; gap: 12px; margin: 0 24px; padding: 38px 36px 24px; border-bottom: 1px solid var(--border); }
 .brand { font-size: 26px; font-weight: 700; letter-spacing: -.8px; }
 .english { color: var(--muted); font-size: 15px; }
-main { width: min(660px, calc(100% - 96px)); margin: 114px auto 70px; }
-h1 { font-size: 40px; letter-spacing: -1px; line-height: 1.25; font-weight: 700; margin: 0 0 18px; }
-.detail { font-size: 17px; color: var(--muted); line-height: 1.8; margin: 0 0 44px; overflow-wrap: anywhere; white-space: pre-wrap; }
+main { width: min(980px, calc(100% - 96px)); margin: 36px auto 48px; }
+h1 { font-size: 24px; line-height: 1.25; font-weight: 700; margin: 0 0 12px; }
+.detail { font-size: 14px; color: var(--muted); line-height: 1.8; margin: 0 0 18px; overflow-wrap: anywhere; white-space: pre-wrap; }
 .health-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 0 0 20px; border-bottom: 1px solid var(--border); font-size: 18px; color: var(--muted); }
 .health-name { color: #163e39; display: inline-flex; align-items: center; gap: 22px; }
 .dot { width: 14px; height: 14px; border-radius: 50%; background: #a8b5ae; flex-shrink: 0; }
@@ -16,10 +16,43 @@ h1 { font-size: 40px; letter-spacing: -1px; line-height: 1.25; font-weight: 700;
 .failed { color: #a24333; }
 .failed .dot { background: #c46450; }
 .starting .dot { background: #bb903e; }
-.timestamp { color: var(--muted); font-size: 15px; margin: 18px 0 36px; }
+.timestamp { color: var(--muted); font-size: 13px; margin: 12px 0 18px; }
 button { min-width: 158px; min-height: 46px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent); color: white; padding: 10px 25px; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; transition: background .15s; }
 button:hover:not(:disabled) { background: #105347; }
 button:disabled { opacity: .65; cursor: wait; }
 button:focus-visible { outline: 3px solid #89bdaf; outline-offset: 4px; }
 footer { color: var(--muted); font-size: 15px; margin-top: auto; padding: 20px 60px 44px; }
-@media (max-width: 660px) { header { margin: 0 16px; padding: 24px 12px 20px; } main { width: calc(100% - 56px); margin-top: 70px; } h1 { font-size: 34px; } footer { padding: 20px 28px 28px; } .health-row { font-size: 16px; } }
+.connection { padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+.connection button { min-height: 36px; padding: 7px 18px; font-size: 14px; }
+.market-panel { padding-top: 30px; }
+.market-heading, .chart-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+h2, h3 { margin: 0; font-size: 20px; }
+.mock-badge { display: inline-block; border: 1px solid #dfc898; color: #725721; background: #fff8e9; border-radius: 5px; font-size: 12px; padding: 4px 8px; }
+.market-note, .market-message, .data-times, .chart-summary { color: var(--muted); font-size: 13px; line-height: 1.8; }
+.stock-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 22px 0 18px; }
+.stock-row { min-width: 0; text-align: left; background: #fff; color: #163e39; border: 1px solid var(--border); padding: 14px; min-height: 68px; }
+.stock-row strong, .stock-row span { display: block; }
+.stock-row span { font-size: 12px; font-weight: 400; color: var(--muted); margin-top: 6px; }
+.stock-row[aria-pressed="true"] { border-color: var(--accent); background: #eef7f3; }
+.stock-row:hover:not(:disabled) { background: #eef7f3; }
+.symbol-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+.symbol-form input { font: inherit; min-width: 0; width: 220px; border: 1px solid #bccbc4; border-radius: 5px; padding: 9px; }
+.symbol-form button, .refresh-market { min-width: 80px; min-height: 36px; font-size: 13px; padding: 7px 15px; }
+.refresh-market { margin: 18px 0; background: #fff; color: var(--accent); }
+.refresh-market:hover:not(:disabled) { background: #eef7f3; }
+.market-error { color: var(--negative); line-height: 1.8; overflow-wrap: anywhere; }
+.quote-card { border-top: 1px solid var(--border); padding: 22px 0; }
+.quote-card > div:first-child { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.quote-card h2 span { font-size: 14px; font-weight: 400; color: var(--muted); margin-left: 8px; }
+.price-line { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; margin: 18px 0 22px; font-variant-numeric: tabular-nums; }
+.price-line strong { font-size: 36px; }
+.price-line > span { font-size: 14px; }
+.positive { color: var(--positive); } .negative { color: var(--negative); }
+.metrics { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 0; }
+.metrics dt { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.metrics dd { margin: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
+.chart-heading { padding: 16px 0; border-top: 1px solid var(--border); }
+.chart-heading h3 { font-size: 16px; } .chart-heading span { color: var(--muted); font-size: 12px; }
+.chart-canvas { height: 310px; width: 100%; }
+.chart-summary { margin-top: 4px; }
+@media (max-width: 660px) { header { margin: 0 16px; padding: 24px 12px 20px; } main { width: calc(100% - 56px); margin-top: 28px; } footer { padding: 20px 28px 28px; } .health-row { font-size: 16px; } .stock-list { grid-template-columns: repeat(2, 1fr); } .metrics { grid-template-columns: repeat(3, 1fr); row-gap: 18px; } .chart-canvas { height: 270px; } }

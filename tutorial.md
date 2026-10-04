@@ -6,9 +6,9 @@
 
 - 参考根：`D:\folio\主分支和简历skill\folio-main`。
 - 参考来源：ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`；本地无Git，不能保证逐文件无本地变化。
-- 新项目根：`D:\folio\research-trail`，当前仅有第1步桌面与健康服务源码。
+- 新项目根：`D:\folio\research-trail`，当前有第1步桌面健康链与第2步固定模拟行情源码。
 - 本次覆盖：入口、界面/客户端、模型与数据、持久化/事件、组合、技能、研究、监控、评测与打包的阅读路线。
-- C01已展开第1步真实流程，C02—C17仍为大纲。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
+- C01、C02已展开第1/2步真实流程，C03—C17仍为大纲。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
 - 前置知识：Python函数/类与异步、HTTP/JSON、TypeScript接口、React状态、进程与IPC、SQLite基本操作；按课程需要补，不要求先学完全部框架。
 
 主链先建立整体印象：
@@ -19,7 +19,7 @@
   → 事件与结果 → 界面
 ```
 
-研迹第1步已实现界面→Electron桥→Python健康API。后续事件、业务与SQLite仍是计划。
+研迹已实现界面→Electron桥→Python健康/固定行情API。事件、会话与SQLite仍是计划。
 
 ## C01：窗口为何能打开，页面从哪里来？
 
@@ -59,14 +59,27 @@ React ← preload白名单 ← 状态/事件 ← 主进程健康检查
 
 ## C02：股票查询如何变成行情卡片？
 
-状态：大纲。关联步骤2/11。
+状态：第2步已展开，用户练习待完成；完整行情工作台仍属步骤11。
 
 - 主链：选择股票 → 客户端行情请求 → 数据能力 → Quote/Kline → 卡片与图表。
 - 必读1：`packages/ui/src/client.tsx` / `FinagentClient.market`：输入symbol/KlineRequest，定义UI可消费结果。
 - 必读2：`packages/core/src/index.ts` / `Quote`、`Kline`：字段和时间约定；随后看`packages/shared/src/capabilities/manifests/market-quote.ts`、`market-kline.ts`的能力声明。
-- 必读3：`packages/shared/src/agent/demo-market-data.ts` / `withDemoDataFallback`：模拟来源与固定数据，不是LLM生成的行情。
+- 必读3：`packages/shared/src/agent/demo-market-data.ts` / `withDemoDataFallback`：参考示例来源；它包含当前时间与未知股票回退，研迹不沿用这两种行为。
 - 验证选读：`packages/ui/src/components/workspace/ChartView.tsx`、`packages/shared/src/kernel/quote-provenance-acceptance.test.ts`。
 - 暂缓：真实Provider由C06；Agent调用该工具由C05。
+
+### 研迹的真实流程：点击 NVDA.US 后发生什么？
+
+1. `renderer/market/Watchlist.tsx`把选择传给 `MarketPanel`。页面清空旧快照，调用 `window.researchTrail.marketSnapshot('NVDA.US')`，只管理显示状态。
+2. preload只将这项命名操作转成IPC。main核对来源，`BackendManager.marketSnapshot`检查代码格式、连接状态，再携启动令牌请求Python的 `/market/snapshot/NVDA.US`；页面不能指定任意URL或获得令牌。
+3. `research_trail/app.py`的授权依赖先验证令牌，随后调用独立 `FixtureMarketProvider.snapshot`。价格表只含四股票，未知代码抛 `UnknownSymbolError`，接口返回404和 `MarketError`，没有随机价格或实时回退。
+4. `market.py`构造 `Quote`、`Kline`、`MarketSnapshot`。Pydantic验证有限数值、OHLC范围、时间带时区、K线有序，以及最新收盘与卡片价格一致。固定市场时间是2024-01-16 21:00 UTC；`fetched_at`用本次UTC获取时刻。示例价格是编写的功能测试数据。
+5. 一个快照同时驱动 `QuoteCard`和 `FinancialKLineChart`，避免分开查询串股票。React effect的取消标记忽略已过期响应；后端连接变化也隐藏旧快照。未知错误显示在页面并移除卡片与图表。
+6. 图表适配自Folio的生命周期与loader：init、秒转毫秒、setSymbol/setPeriod、resetData、ResizeObserver、dispose。本步只用日线，无指标UI。图表使用UTC；固定示例自动适配视区。
+
+类型生成另有一条开发链：`market.py` Pydantic → `create_app().openapi()`离线导出 → `scripts/contracts.mjs`调用openapi-typescript → `packages/contracts/openapi.json`与`generated.ts` → `src/market-types.ts`引用类型 → 页面和桥。导出不会启动监听服务，也不读取运行令牌；运行时 `/openapi.json`仍关闭。`bun run check`比对生成文件，契约变动后需重新生成，不能手工修改generated.ts。
+
+“重新查询”会再走HTTP，但它读取同一固定示例，只有获取时间变化。行情Provider不调用模型，也不依赖未来的Agent；模型回答不是价格来源。小练习与三题见practice.md第2步。
 
 ## C03：创建会话和消息如何保存？
 

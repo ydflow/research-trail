@@ -5,6 +5,8 @@ const bridge: ResearchTrailBridge = {
   status: () => ipcRenderer.invoke('backend:status'),
   checkHealth: () => ipcRenderer.invoke('backend:check'),
   retryBackend: () => ipcRenderer.invoke('backend:retry'),
+  marketSymbols: () => ipcRenderer.invoke('market:symbols'),
+  marketSnapshot: (symbol) => ipcRenderer.invoke('market:snapshot', symbol),
   onStatus(callback) {
     const listener = (_event: unknown, state: BackendState) => callback(state);
     ipcRenderer.on('backend:changed', listener);

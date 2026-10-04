@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { BackendState, ResearchTrailBridge } from '../bridge';
+import { MarketPanel } from './market/MarketPanel';
 
 declare global { interface Window { researchTrail?: ResearchTrailBridge } }
 const unavailable: BackendState = { phase: 'failed', detail: '桌面通信桥不可用。请通过 start-dev.cmd 打开研迹桌面应用。' };
@@ -31,7 +32,8 @@ export function App() {
   return (
     <div className="shell">
       <header><span className="brand">研迹</span><span className="english">ResearchTrail</span></header>
-      <main aria-live="polite" aria-busy={pending}>
+      <main>
+      <section className="connection" aria-live="polite" aria-busy={pending}>
         <h1>{titles[state.phase]}</h1>
         <p className="detail">{state.detail}</p>
         <div className={`health-row ${state.phase}`}>
@@ -40,6 +42,8 @@ export function App() {
         </div>
         <p className="timestamp">上次检查：{state.checkedAt ? new Date(state.checkedAt).toLocaleTimeString('zh-CN', { hour12: false }) : '尚未完成'}</p>
         <button onClick={action} disabled={pending}>{pending ? '正在处理…' : state.phase === 'healthy' ? '重新检查' : '重试启动'}</button>
+      </section>
+      <MarketPanel available={state.phase === 'healthy'} />
       </main>
       <footer>每次研究，都有据可查。</footer>
     </div>
