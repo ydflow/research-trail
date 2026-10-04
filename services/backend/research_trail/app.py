@@ -9,7 +9,8 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from .conversation import CreateSession, SessionDTO, MessageDTO, StartRun, RunDTO, EventPage
 from .database import Database, default_database_path
-from .store import Store, MissingRecord
+from .store import Store, MissingRecord, ActiveRun
+from .lifecycle import DatabaseLease, RunManager
 from .market import FixtureMarketProvider, MarketError, MarketProvider, MarketSnapshot, MarketSymbol, UnknownSymbolError
 from .agent import AgentRunner
 from .model_provider import FakeModelProvider, ModelProvider
@@ -23,18 +24,30 @@ class Health(BaseModel):
 
 
 def create_app(token: str, market_provider: MarketProvider | None = None, *,
-               database_path: Path | str | None = None, model_provider: ModelProvider | None = None) -> FastAPI:
+               database_path: Path | str | None = None, model_provider: ModelProvider | None = None,
+               run_timings=None) -> FastAPI:
     if len(token) < 32:
         raise ValueError("启动令牌缺失或过短；请由 Electron 启动服务。")
     @asynccontextmanager
     async def lifespan(app):
         database = Database(database_path if database_path is not None else default_database_path())
+        lease = None
+        manager = None
         try:
+            lease = DatabaseLease(database.path)
             database.migrate()
             app.state.store = Store(database)
+            app.state.store.recover_interrupted()
+            manager = app.state.manager = RunManager(app.state.store, runner, run_timings)
             yield
         finally:
-            database.close()
+            try:
+                if manager:
+                    manager.shutdown()
+            finally:
+                database.close()
+                if lease:
+                    lease.close()
 
     # Schema export only constructs the app; it never opens a database.
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
@@ -48,6 +61,10 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     @app.exception_handler(MissingRecord)
     async def missing_record(_request, error):
         return JSONResponse(status_code=404, content={"detail": str(error)})
+
+    @app.exception_handler(ActiveRun)
+    async def active_run(_request, error):
+        return JSONResponse(status_code=409, content={"detail": str(error)})
 
     protected = [Depends(authorize)]
 
@@ -65,7 +82,7 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
 
     @app.delete("/sessions/{session_id}", status_code=204, dependencies=protected)
     def delete_session(session_id: str):
-        app.state.store.delete_session(session_id)
+        app.state.manager.delete_session(session_id)
         return Response(status_code=204)
 
     @app.get("/sessions/{session_id}/messages", response_model=list[MessageDTO], dependencies=protected)
@@ -79,12 +96,16 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     @app.post("/sessions/{session_id}/runs", response_model=RunDTO, status_code=201, dependencies=protected)
     def start_run(session_id: str, body: StartRun):
         if body.kind == "fake_agent":
-            return app.state.store.start_agent(session_id, body.input, runner)
+            return app.state.manager.start(session_id, body.input, body.scenario)
         return app.state.store.start_fixture(session_id, body.input)
 
     @app.get("/sessions/{session_id}/runs/{run_id}", response_model=RunDTO, dependencies=protected)
     def run(session_id: str, run_id: str):
         return app.state.store.run(session_id, run_id)
+
+    @app.post("/sessions/{session_id}/runs/{run_id}/cancel", response_model=RunDTO, dependencies=protected)
+    def cancel_run(session_id: str, run_id: str):
+        return app.state.manager.cancel(session_id, run_id)
 
     def event_page(session_id, run_id, after_sequence, limit=500):
         try:

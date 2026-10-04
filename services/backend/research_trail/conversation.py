@@ -36,6 +36,7 @@ class SessionDTO(DTO):
 class StartRun(DTO):
     input: str = Field(min_length=1, max_length=2000)
     kind: Literal["fixture", "fake_agent"] = "fixture"
+    scenario: Literal["normal", "delayed", "timeout"] = "normal"
 
     @field_validator("input")
     @classmethod
@@ -111,20 +112,22 @@ class RunDTO(DTO):
     id: str
     session_id: str
     kind: Literal["fixture", "fake_agent"]
-    status: Literal["completed", "failed"]
+    status: Literal["running", "completed", "failed", "cancelled", "timed_out", "interrupted"]
     model_label: Literal["规则演示／假模型"] | None = None
     error: ErrorPayload | None = None
     input: str
     answer: str
     assistant_message_id: str
     started_at: AwareDatetime
-    completed_at: AwareDatetime
+    completed_at: AwareDatetime | None
     last_sequence: int = Field(ge=1)
 
     @model_validator(mode="after")
     def terminal_consistency(self):
-        if (self.status == "failed") != (self.error is not None):
-            raise ValueError("Failed runs require an error; completed runs cannot carry one")
+        if (self.status in ("failed", "timed_out", "interrupted")) != (self.error is not None):
+            raise ValueError("Failed, timed-out and interrupted runs require an error")
+        if (self.status == "running") != (self.completed_at is None):
+            raise ValueError("Only running records have no completion time")
         if (self.kind == "fake_agent") != (self.model_label == MODEL_LABEL):
             raise ValueError("Rule agent runs require their explicit fake-model label")
         return self
@@ -149,7 +152,16 @@ class StatusPayload(DTO):
 
 
 class CompletedPayload(DTO):
-    stop_reason: Literal["completed", "error"]
+    stop_reason: Literal["completed", "error", "cancelled", "timeout", "interrupted"]
+
+
+class PartialText(DTO):
+    text: str
+
+
+class CancelledPayload(DTO):
+    reason: Literal["user"]
+    partial: PartialText
 
 
 class ToolStartedPayload(DTO):
@@ -220,9 +232,15 @@ class ErrorEvent(Envelope):
     payload: ErrorPayload
 
 
+class CancelledEvent(Envelope):
+    type: Literal["cancelled"]
+    message_id: str
+    payload: CancelledPayload
+
+
 StreamEvent = Annotated[RunStartedEvent | MessageStartedEvent | StatusEvent | TextDeltaEvent |
                         MessageCompletedEvent | RunCompletedEvent | ToolStartedEvent | ToolResultEvent |
-                        ErrorEvent, Field(discriminator="type")]
+                        ErrorEvent | CancelledEvent, Field(discriminator="type")]
 EVENT_ADAPTER = TypeAdapter(StreamEvent)
 
 

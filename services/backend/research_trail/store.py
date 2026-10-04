@@ -3,8 +3,7 @@ from uuid import uuid4
 
 from sqlalchemy import delete, func, select
 
-from .conversation import EVENT_ADAPTER, MODEL_LABEL, EventPage, MessageDTO, RunDTO, SessionDTO
-from .agent import AgentRunner, AgentOutcome
+from .conversation import EVENT_ADAPTER, MODEL_LABEL, ErrorPayload, EventPage, MessageDTO, RunDTO, SessionDTO
 from .database import Database
 from .models import EventRecord, MessageRecord, RunRecord, SessionRecord
 
@@ -17,6 +16,14 @@ def now():
 
 class MissingRecord(Exception):
     pass
+
+
+class ActiveRun(Exception):
+    pass
+
+
+class RunStopped(Exception):
+    """Control flow: persisted terminal/deletion prevents late worker writes."""
 
 
 class Store:
@@ -68,6 +75,8 @@ class Store:
     def delete_session(self, session_id):
         with self.database.write() as db:
             self.require_session(db, session_id)
+            if db.scalar(select(RunRecord.id).where(RunRecord.session_id == session_id, RunRecord.status == "running")):
+                raise ActiveRun("删除前必须取消活动运行。")
             db.execute(delete(SessionRecord).where(SessionRecord.id == session_id))
 
     def messages(self, session_id):
@@ -90,14 +99,12 @@ class Store:
     def start_fixture(self, session_id, text):
         return self._start_run(session_id, text)
 
-    def start_agent(self, session_id, text, runner: AgentRunner):
-        return self._start_run(session_id, text, runner)
-
-    def _start_run(self, session_id, text, runner: AgentRunner | None = None):
-        # Only bounded, synchronous offline runs in this step. Events are captured at
-        # each action, then all records commit together before any response/SSE.
+    def _start_run(self, session_id, text):
+        # Retain the atomic step 3 fixture communication test, without Agent work.
         with self.database.write() as db:
             session = self.require_session(db, session_id)
+            if db.scalar(select(RunRecord.id).where(RunRecord.session_id == session_id, RunRecord.status == "running")):
+                raise ActiveRun("当前会话已有活动运行，请先取消或等待结束。")
             message_sequence = (db.scalar(select(func.max(MessageRecord.sequence))
                                 .where(MessageRecord.session_id == session_id)) or 0) + 1
             run_id, user_id, assistant_id = (str(uuid4()) for _ in range(3))
@@ -116,22 +123,15 @@ class Store:
 
             emit("run_started", {"input": text, "started_at": started})
             emit("message_started", {}, True)
-            if runner is None:
-                emit("status", {"phase": "working", "detail": "固定测试事件；没有Agent或模型调用。"})
-                outcome = AgentOutcome("".join(FIXTURE_PARTS), "completed")
-                parts = FIXTURE_PARTS
-            else:
-                outcome = runner.run(text, emit)
-                parts = (outcome.answer,)
-            for part in parts:
+            emit("status", {"phase": "working", "detail": "固定测试事件；没有Agent或模型调用。"})
+            for part in FIXTURE_PARTS:
                 emit("text_delta", {"text": part}, True)
             emit("message_completed", {}, True)
-            emit("run_completed", {"stop_reason": "error" if outcome.status == "failed" else "completed"})
+            emit("run_completed", {"stop_reason": "completed"})
             completed = now()
-            record = RunRecord(id=run_id, session_id=session_id, kind="fake_agent" if runner else "fixture",
-                               status=outcome.status, input=text, answer=outcome.answer,
-                               model_label=MODEL_LABEL if runner else None,
-                               error=outcome.error.model_dump(mode="json") if outcome.error else None,
+            record = RunRecord(id=run_id, session_id=session_id, kind="fixture",
+                               status="completed", input=text, answer="".join(FIXTURE_PARTS),
+                               model_label=None, error=None,
                                assistant_message_id=assistant_id,
                                started_at=started, completed_at=completed, last_sequence=len(events))
             db.add(record)
@@ -146,6 +146,102 @@ class Store:
             db.flush()
             result = RunDTO.model_validate(record)
         return result
+
+    @staticmethod
+    def append_event(db, record, session, kind, payload, message=False):
+        timestamp = now()
+        record.last_sequence += 1
+        data = {"protocol_version": 1, "session_id": record.session_id, "run_id": record.id,
+                "sequence": record.last_sequence, "type": kind, "timestamp": timestamp, "payload": payload}
+        if message:
+            data["message_id"] = record.assistant_message_id
+        envelope = EVENT_ADAPTER.validate_python(data).model_dump(mode="json")
+        db.add(EventRecord(run_id=record.id, session_id=record.session_id, sequence=record.last_sequence,
+                           type=kind, timestamp=timestamp, envelope=envelope))
+        session.updated_at = timestamp
+
+    def begin_agent(self, session_id, text):
+        with self.database.write() as db:
+            session = self.require_session(db, session_id)
+            if db.scalar(select(RunRecord.id).where(RunRecord.session_id == session_id, RunRecord.status == "running")):
+                raise ActiveRun("当前会话已有活动运行，请先取消或等待结束。")
+            message_sequence = (db.scalar(select(func.max(MessageRecord.sequence))
+                                .where(MessageRecord.session_id == session_id)) or 0) + 1
+            started = now()
+            record = RunRecord(id=str(uuid4()), session_id=session_id, kind="fake_agent", status="running",
+                               model_label=MODEL_LABEL, error=None, input=text, answer="",
+                               assistant_message_id=str(uuid4()), started_at=started, completed_at=None,
+                               last_sequence=0)
+            self.append_event(db, record, session, "run_started", {"input": text, "started_at": started})
+            self.append_event(db, record, session, "message_started", {}, True)
+            db.add(record)
+            db.flush([record])
+            db.add_all([
+                MessageRecord(id=str(uuid4()), session_id=session_id, run_id=record.id, sequence=message_sequence,
+                              role="user", content=text, created_at=started),
+                MessageRecord(id=record.assistant_message_id, session_id=session_id, run_id=record.id,
+                              sequence=message_sequence + 1, role="assistant", content="", created_at=started),
+            ])
+            db.flush()
+            result = RunDTO.model_validate(record)
+        return result
+
+    def append_running(self, session_id, run_id, kind, payload):
+        if kind not in ("status", "text_delta", "tool_started", "tool_result"):
+            raise ValueError("终态事件只能通过finish写入")
+        with self.database.write() as db:
+            try:
+                record = self.require_run(db, session_id, run_id)
+            except MissingRecord:
+                raise RunStopped() from None
+            if record.status != "running":
+                raise RunStopped()
+            session = self.require_session(db, session_id)
+            self.append_event(db, record, session, kind, payload, kind == "text_delta")
+            if kind == "text_delta":
+                record.answer += payload["text"]
+                db.get(MessageRecord, record.assistant_message_id).content = record.answer
+
+    def finish(self, session_id, run_id, status, text="", error: ErrorPayload | None = None):
+        if status not in ("completed", "failed", "cancelled", "timed_out", "interrupted"):
+            raise ValueError("不是合法终态")
+        with self.database.write() as db:
+            record = self.require_run(db, session_id, run_id)
+            # BEGIN IMMEDIATE serializes every contender. Only running -> terminal
+            # can write a final message/event; retries return the winning record.
+            if record.status == "running":
+                session = self.require_session(db, session_id)
+                assistant = db.get(MessageRecord, record.assistant_message_id)
+                if error is not None:
+                    self.append_event(db, record, session, "error", error.model_dump(mode="json"))
+                if status == "cancelled":
+                    self.append_event(db, record, session, "cancelled",
+                                      {"reason": "user", "partial": {"text": record.answer}}, True)
+                if text:
+                    self.append_event(db, record, session, "text_delta", {"text": text}, True)
+                    record.answer += text
+                record.status, record.completed_at = status, now()
+                record.error = error.model_dump(mode="json") if error else None
+                assistant.content, assistant.created_at = record.answer, record.completed_at
+                self.append_event(db, record, session, "message_completed", {}, True)
+                reason = {"completed": "completed", "failed": "error", "cancelled": "cancelled",
+                          "timed_out": "timeout", "interrupted": "interrupted"}[status]
+                self.append_event(db, record, session, "run_completed", {"stop_reason": reason})
+                db.flush()
+            result = RunDTO.model_validate(record)
+        return result
+
+    def active_runs(self, session_id=None):
+        with self.database.sessions() as db:
+            query = select(RunRecord).where(RunRecord.status == "running")
+            if session_id is not None:
+                query = query.where(RunRecord.session_id == session_id)
+            return [RunDTO.model_validate(row) for row in db.scalars(query)]
+
+    def recover_interrupted(self):
+        for record in self.active_runs():
+            self.finish(record.session_id, record.id, "interrupted", "\n规则演示／假模型：运行中断，请重新发起。",
+                        ErrorPayload(code="BACKEND_INTERRUPTED", message="后端已退出；保存的内容保留，本次不自动重执行。"))
 
     def events(self, session_id, run_id, after_sequence=0, limit=500):
         with self.database.sessions() as db:

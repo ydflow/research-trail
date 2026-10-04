@@ -1,5 +1,6 @@
 import json
 import sqlite3
+import time
 from pathlib import Path
 
 from alembic import command
@@ -14,6 +15,7 @@ from research_trail.conversation import MODEL_LABEL, ToolArguments, ToolCall
 from research_trail.database import Database
 from research_trail.market import FixtureMarketProvider
 from research_trail.model_provider import FakeModelProvider
+from research_trail.lifecycle import RunManager
 from research_trail.store import Store
 from research_trail.tools import ToolExecutionError, ToolRegistry, market_tools
 
@@ -38,6 +40,11 @@ def run(c, sid, text):
     response = c.post(f"/sessions/{sid}/runs", json={"input": text, "kind": "fake_agent"})
     assert response.status_code == 201
     record = response.json()
+    deadline = time.monotonic() + 5
+    while record["status"] == "running" and time.monotonic() < deadline:
+        time.sleep(0.01)
+        record = c.get(f"/sessions/{sid}/runs/{record['id']}").json()
+    assert record["status"] != "running"
     events = c.get(f"/sessions/{sid}/runs/{record['id']}/event-log").json()["events"]
     assert record["model_label"] == MODEL_LABEL
     assert record["kind"] == "fake_agent"
@@ -244,7 +251,13 @@ def test_step3_database_upgrade_retains_history_and_adds_agent(tmp_path):
         assert upgraded.run(sid, old.id).model_dump(mode="json") == old.model_dump(mode="json")
         assert upgraded.events(sid, old.id).model_dump(mode="json") == events_before
         assert upgraded.messages(sid)[0].content == "第3步历史"
-        result = upgraded.start_agent(sid, "查询AAPL.US行情", AgentRunner(FakeModelProvider(), market_tools(FixtureMarketProvider())))
+        manager = RunManager(upgraded, AgentRunner(FakeModelProvider(), market_tools(FixtureMarketProvider())))
+        result = manager.start(sid, "查询AAPL.US行情", "normal")
+        deadline = time.monotonic() + 5
+        while result.status == "running" and time.monotonic() < deadline:
+            time.sleep(0.01)
+            result = upgraded.run(sid, result.id)
+        manager.shutdown()
         assert result.status == "completed" and upgraded.session(sid).message_count == 4
     finally:
         database.close()

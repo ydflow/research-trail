@@ -25,7 +25,8 @@ class AgentRunner:
         emit("error", error.model_dump(mode="json"))
         return AgentOutcome(f"{MODEL_LABEL}：运行失败。{error.message}", "failed", error)
 
-    def run(self, text: str, emit: Callable[[str, dict], None]) -> AgentOutcome:
+    def run(self, text: str, emit: Callable[[str, dict], None], *, before_tool=lambda: None,
+            after_tool=lambda: None) -> AgentOutcome:
         emit("status", {"phase": "working", "detail": f"{MODEL_LABEL}：识别明确的股票查询指令。"})
         try:
             planned = self.model.plan(text)
@@ -37,12 +38,15 @@ class AgentRunner:
 
         call_id = str(uuid4())
         emit("tool_started", {"call_id": call_id, "name": call.name, "input": call.arguments.model_dump()})
+        before_tool()
         try:
             data = self.tools.execute(call)
         except ToolExecutionError as error:
+            after_tool()
             emit("tool_result", {"call_id": call_id, "name": call.name,
                                  "result": ToolFailure(error=error.error).model_dump(mode="json")})
             return self.failed(error.error, emit)
+        after_tool()
         emit("tool_result", {"call_id": call_id, "name": call.name,
                              "result": ToolSuccess(data=data).model_dump(mode="json")})
         try:

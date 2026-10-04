@@ -34,9 +34,27 @@ class Database:
         cfg = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
         # The write lock also serializes version-table creation across two app instances.
         with self.engine.connect() as connection:
+            self.migration_transaction(connection, lambda: command.upgrade(cfg, "head"), cfg)
+
+    @staticmethod
+    def migration_transaction(connection, migrate, cfg=None):
+        # SQLite batch alters rebuild the parent table. Disable FK enforcement only
+        # on this isolated migration connection, then check integrity before commit.
+        connection.exec_driver_sql("PRAGMA foreign_keys=OFF")
+        connection.commit()
+        try:
             connection.exec_driver_sql("BEGIN IMMEDIATE")
-            cfg.attributes["connection"] = connection
-            command.upgrade(cfg, "head")
+            if cfg is not None:
+                cfg.attributes["connection"] = connection
+            migrate()
+            if connection.exec_driver_sql("PRAGMA foreign_key_check").fetchone() is not None:
+                raise RuntimeError("数据库迁移后的外键检查失败。")
+            connection.commit()
+        except BaseException:
+            connection.rollback()
+            raise
+        finally:
+            connection.exec_driver_sql("PRAGMA foreign_keys=ON")
             connection.commit()
 
     @contextmanager

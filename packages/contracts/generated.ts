@@ -139,6 +139,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sessions/{session_id}/runs/{run_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Run */
+        post: operations["cancel_run_sessions__session_id__runs__run_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sessions/{session_id}/runs/{run_id}/event-log": {
         parameters: {
             query?: never;
@@ -177,13 +194,50 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** CancelledEvent */
+        CancelledEvent: {
+            /** Message Id */
+            message_id: string;
+            payload: components["schemas"]["CancelledPayload"];
+            /**
+             * Protocol Version
+             * @default 1
+             * @constant
+             */
+            protocol_version: 1;
+            /** Run Id */
+            run_id: string;
+            /** Sequence */
+            sequence: number;
+            /** Session Id */
+            session_id: string;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "cancelled";
+        };
+        /** CancelledPayload */
+        CancelledPayload: {
+            partial: components["schemas"]["PartialText"];
+            /**
+             * Reason
+             * @constant
+             */
+            reason: "user";
+        };
         /** CompletedPayload */
         CompletedPayload: {
             /**
              * Stop Reason
              * @enum {string}
              */
-            stop_reason: "completed" | "error";
+            stop_reason: "completed" | "error" | "cancelled" | "timeout" | "interrupted";
         };
         /** CreateSession */
         CreateSession: {
@@ -236,7 +290,7 @@ export interface components {
         /** EventPage */
         EventPage: {
             /** Events */
-            events: (components["schemas"]["RunStartedEvent"] | components["schemas"]["MessageStartedEvent"] | components["schemas"]["StatusEvent"] | components["schemas"]["TextDeltaEvent"] | components["schemas"]["MessageCompletedEvent"] | components["schemas"]["RunCompletedEvent"] | components["schemas"]["ToolStartedEvent"] | components["schemas"]["ToolResultEvent"] | components["schemas"]["ErrorEvent"])[];
+            events: (components["schemas"]["RunStartedEvent"] | components["schemas"]["MessageStartedEvent"] | components["schemas"]["StatusEvent"] | components["schemas"]["TextDeltaEvent"] | components["schemas"]["MessageCompletedEvent"] | components["schemas"]["RunCompletedEvent"] | components["schemas"]["ToolStartedEvent"] | components["schemas"]["ToolResultEvent"] | components["schemas"]["ErrorEvent"] | components["schemas"]["CancelledEvent"])[];
             /** Last Sequence */
             last_sequence: number;
         };
@@ -460,6 +514,11 @@ export interface components {
              */
             type: "message_started";
         };
+        /** PartialText */
+        PartialText: {
+            /** Text */
+            text: string;
+        };
         /** Quote */
         Quote: {
             /** Change */
@@ -560,11 +619,8 @@ export interface components {
             answer: string;
             /** Assistant Message Id */
             assistant_message_id: string;
-            /**
-             * Completed At
-             * Format: date-time
-             */
-            completed_at: string;
+            /** Completed At */
+            completed_at: string | null;
             error?: components["schemas"]["ErrorPayload"] | null;
             /** Id */
             id: string;
@@ -590,7 +646,7 @@ export interface components {
              * Status
              * @enum {string}
              */
-            status: "completed" | "failed";
+            status: "running" | "completed" | "failed" | "cancelled" | "timed_out" | "interrupted";
         };
         /** RunStartedEvent */
         RunStartedEvent: {
@@ -647,6 +703,12 @@ export interface components {
              * @enum {string}
              */
             kind: "fixture" | "fake_agent";
+            /**
+             * Scenario
+             * @default normal
+             * @enum {string}
+             */
+            scenario: "normal" | "delayed" | "timeout";
         };
         /** StartedPayload */
         StartedPayload: {
@@ -1188,6 +1250,40 @@ export interface operations {
         };
     };
     run_sessions__session_id__runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                session_id: string;
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunDTO"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_run_sessions__session_id__runs__run_id__cancel_post: {
         parameters: {
             query?: never;
             header?: {
