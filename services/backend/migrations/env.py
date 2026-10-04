@@ -16,8 +16,6 @@ else:
     database = Database(default_database_path())
     try:
         with database.engine.connect() as connection:
-            connection.exec_driver_sql("BEGIN IMMEDIATE")
-            run(connection)
-            connection.commit()
+            database.migration_transaction(connection, lambda: run(connection))
     finally:
         database.close()

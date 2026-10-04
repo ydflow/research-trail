@@ -212,10 +212,12 @@ export class BackendManager extends EventEmitter {
     if (typeof input !== 'string' || input.length > 2000 || !input.trim()) throw new Error('测试输入需要1至2000个字符。');
     return this.business<RunDTO>(`/sessions/${this.id(id)}/runs`, 'POST', { input });
   }
-  startAgentRun(id: unknown, input: unknown) {
+  startAgentRun(id: unknown, input: unknown, scenario: unknown = 'normal') {
     if (typeof input !== 'string' || input.length > 2000 || !input.trim()) throw new Error('规则演示输入需要1至2000个字符。');
-    return this.business<RunDTO>(`/sessions/${this.id(id)}/runs`, 'POST', { input, kind: 'fake_agent' });
+    if (!['normal', 'delayed', 'timeout'].includes(scenario as string)) throw new Error('未知模拟工具时序。');
+    return this.business<RunDTO>(`/sessions/${this.id(id)}/runs`, 'POST', { input, kind: 'fake_agent', scenario });
   }
+  cancelRun(id: unknown, runId: unknown) { return this.business<RunDTO>(`/sessions/${this.id(id)}/runs/${this.id(runId)}/cancel`, 'POST'); }
   getRun(id: unknown, runId: unknown) { return this.business<RunDTO>(`/sessions/${this.id(id)}/runs/${this.id(runId)}`); }
   async runEvents(id: unknown, runId: unknown, after: unknown = 0): Promise<StreamEvent[]> {
     const sessionId = this.id(id), run = this.id(runId);
@@ -229,7 +231,7 @@ export class BackendManager extends EventEmitter {
       const data = fields.filter((line) => line.startsWith('data: ')).map((line) => line.slice(6)).join('\n');
       const event = JSON.parse(data) as StreamEvent;
       if (event.protocol_version !== 1 || event.session_id !== sessionId || event.run_id !== run ||
-          event.sequence !== sequence + 1 || !['run_started', 'message_started', 'status', 'text_delta', 'message_completed', 'run_completed', 'tool_started', 'tool_result', 'error'].includes(event.type) ||
+          event.sequence !== sequence + 1 || !['run_started', 'message_started', 'status', 'text_delta', 'message_completed', 'run_completed', 'tool_started', 'tool_result', 'error', 'cancelled'].includes(event.type) ||
           !fields.includes(`id: ${run}:${event.sequence}`) || !fields.includes(`event: ${event.type}`)) throw new Error('SSE事件身份、类型或序号不符合契约。');
       sequence = event.sequence;
       events.push(event);

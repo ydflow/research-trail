@@ -15,12 +15,13 @@ import pytest
 def servers():
     processes = []
 
-    def start():
+    def start(database_path=None):
         token = os.urandom(32).hex()
         process = subprocess.Popen(
             [sys.executable, "-m", "research_trail"],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            text=True, env={**os.environ, "RESEARCH_TRAIL_TOKEN": token},
+            text=True, env={**os.environ, "RESEARCH_TRAIL_TOKEN": token,
+                            "RESEARCH_TRAIL_DB_PATH": str(database_path or os.environ["RESEARCH_TRAIL_DB_PATH"])},
         )
         processes.append(process)
         lines = queue.Queue()
@@ -50,9 +51,9 @@ def servers():
                 process.wait(timeout=5)
 
 
-def test_random_ports_instance_tokens_and_owned_shutdown(servers):
+def test_random_ports_instance_tokens_and_owned_shutdown(servers, tmp_path):
     first, first_token, first_url = servers()
-    second, second_token, second_url = servers()
+    second, second_token, second_url = servers(tmp_path / "independent.sqlite3")
     assert first_url != second_url
     with httpx.Client(trust_env=False, timeout=2) as client:
         assert client.get(first_url).status_code == 401

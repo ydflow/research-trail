@@ -1,4 +1,4 @@
-from sqlalchemy import CheckConstraint, ForeignKey, ForeignKeyConstraint, Integer, JSON, String, Text, UniqueConstraint
+from sqlalchemy import CheckConstraint, ForeignKey, ForeignKeyConstraint, Index, Integer, JSON, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -16,7 +16,9 @@ class SessionRecord(Base):
 
 class RunRecord(Base):
     __tablename__ = "runs"
-    __table_args__ = (UniqueConstraint("id", "session_id"), CheckConstraint("last_sequence >= 1"))
+    __table_args__ = (UniqueConstraint("id", "session_id"), CheckConstraint("last_sequence >= 1", name="ck_runs_last_sequence"),
+                     Index("ix_runs_one_active_per_session", "session_id", unique=True,
+                           sqlite_where=text("status = 'running'")))
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     session_id: Mapped[str] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"), index=True)
     kind: Mapped[str] = mapped_column(String(20))
@@ -27,7 +29,7 @@ class RunRecord(Base):
     answer: Mapped[str] = mapped_column(Text)
     assistant_message_id: Mapped[str] = mapped_column(String(36))
     started_at: Mapped[str] = mapped_column(String(40))
-    completed_at: Mapped[str] = mapped_column(String(40))
+    completed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
     last_sequence: Mapped[int] = mapped_column(Integer)
 
 
@@ -37,6 +39,7 @@ class MessageRecord(Base):
         ForeignKeyConstraint(["run_id", "session_id"], ["runs.id", "runs.session_id"], ondelete="CASCADE"),
         CheckConstraint("role IN ('user', 'assistant')"),
         UniqueConstraint("session_id", "sequence"), CheckConstraint("sequence >= 1"),
+        Index("ix_messages_one_role_per_run", "run_id", "role", unique=True),
     )
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     session_id: Mapped[str] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"), index=True)

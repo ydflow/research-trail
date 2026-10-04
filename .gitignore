@@ -60,6 +60,7 @@ logs/
 *.sqlite-journal
 *.sqlite3-journal
 *.db-journal
+*.owner.lock
 
 # Models, local assets and scratch files
 models/

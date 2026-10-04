@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { MessageDTO, RunDTO, SessionDTO, StreamEvent } from '../conversation-types';
-import { eventDetail, mergeEvents, messageView } from './session-adapter';
+import { eventDetail, mergeEvents, messageView, runStatus } from './session-adapter';
 import { ToolResultCards } from './ToolResultCards';
 
 export function SessionPanel({ available }: { available: boolean }) {
@@ -18,6 +18,7 @@ export function SessionPanel({ available }: { available: boolean }) {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [revision, setRevision] = useState(0);
+  const [scenario, setScenario] = useState<'normal' | 'delayed' | 'timeout'>('normal');
 
   useEffect(() => {
     let active = true;
@@ -47,14 +48,27 @@ export function SessionPanel({ available }: { available: boolean }) {
 
   useEffect(() => {
     let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     setRun(undefined); setEvents([]);
     if (available && selected && runId && window.researchTrail) {
       const bridge = window.researchTrail;
-      void Promise.all([bridge.getRun(selected, runId), bridge.runEvents(selected, runId)])
-        .then(([record, items]) => { if (active) { setRun(record); setEvents(items); } })
-        .catch((e: Error) => { if (active) setError(e.message); });
+      const read = async () => {
+        try {
+          // Finite committed SSE snapshots; no automatic stream reconnection.
+          const [record, items] = await Promise.all([bridge.getRun(selected, runId), bridge.runEvents(selected, runId)]);
+          if (!active) return;
+          setRun(record); setEvents(items);
+          if (record.status === 'running') timer = setTimeout(() => void read(), 200);
+          else {
+            const [history, list, sessionList, finalEvents] = await Promise.all([bridge.sessionMessages(selected), bridge.sessionRuns(selected), bridge.listSessions(), bridge.runEvents(selected, runId)]);
+            if (active) { setMessages(history); setRuns(list); setSessions(sessionList); setEvents(finalEvents); }
+            if (active && list.some((item) => item.status === 'running')) timer = setTimeout(() => void read(), 200);
+          }
+        } catch (e) { if (active) setError((e as Error).message); }
+      };
+      void read();
     }
-    return () => { active = false; };
+    return () => { active = false; if (timer) clearTimeout(timer); };
   }, [available, selected, runId]);
 
   const perform = async (work: () => Promise<void>) => {
@@ -65,7 +79,7 @@ export function SessionPanel({ available }: { available: boolean }) {
   const disabled = busy || loading || !available;
   const execute = (agent: boolean) => void perform(async () => {
     const bridge = window.researchTrail!;
-    await (agent ? bridge.startAgentRun(current!.id, input) : bridge.startRun(current!.id, input));
+    await (agent ? bridge.startAgentRun(current!.id, input, scenario) : bridge.startRun(current!.id, input));
     setInput(''); setSessions(await bridge.listSessions()); setRevision((v) => v + 1);
   });
   return <section className="session-panel" aria-label="持久化会话">
@@ -107,15 +121,21 @@ export function SessionPanel({ available }: { available: boolean }) {
             {messages.length === 0 && <p className="market-note">暂无消息。试试“查询AAPL.US行情”或“查看NVDA.US的K线”。</p>}
             {messages.map(messageView).map((message) => <article key={message.id} className={`message ${message.role}`}>
               <div>{message.label}<time>{new Date(message.timestamp).toLocaleString('zh-CN', { hour12: false })}</time></div>
-              <p>{message.content}</p>
+              <p>{message.content || '等待运行结果…'}</p>
             </article>)}
           </div>
           <form className="run-form" onSubmit={(e) => { e.preventDefault(); execute(true); }}>
             <label htmlFor="run-input">测试输入</label>
             <textarea id="run-input" maxLength={2000} rows={2} value={input} onChange={(e) => setInput(e.target.value)} disabled={disabled} />
+            <label htmlFor="tool-scenario">模拟工具时序</label>
+            <select id="tool-scenario" value={scenario} disabled={disabled} onChange={(e) => setScenario(e.target.value as typeof scenario)}>
+              <option value="normal">正常 · 无额外延迟</option>
+              <option value="delayed">延迟演示 · 等待3秒，可取消</option>
+              <option value="timeout">超时演示 · 等待2秒，限时0.6秒</option>
+            </select>
             <div className="run-actions">
-              <button disabled={disabled || !input.trim()}>运行规则演示</button>
-              <button type="button" className="secondary" disabled={disabled || !input.trim()} onClick={() => execute(false)}>启动固定测试运行</button>
+              <button disabled={disabled || !input.trim() || runs.some((item) => item.status === 'running')}>运行规则演示</button>
+              <button type="button" className="secondary" disabled={disabled || !input.trim() || runs.some((item) => item.status === 'running')} onClick={() => execute(false)}>启动固定测试运行</button>
             </div>
           </form>
           {runs.length > 0 && <div className="event-section">
@@ -125,9 +145,14 @@ export function SessionPanel({ available }: { available: boolean }) {
             </select>
             {run && run.id === runId && <>
               <p className={run.status === 'failed' ? 'market-error' : 'market-note'} data-testid="run-state">
-                {run.kind === 'fake_agent' ? run.model_label : '固定测试'} · {run.status === 'failed' ? '运行失败' : '已完成'} · {run.last_sequence} 个持久化事件
+                {run.kind === 'fake_agent' ? run.model_label : '固定测试'} · {runStatus(run.status)} · {run.last_sequence} 个持久化事件
               </p>
               {run.error && <p role="alert" className="market-error" data-testid="run-error">{run.error.code}：{run.error.message}</p>}
+              <button className="secondary" disabled={disabled || run.status !== 'running'} onClick={() => void perform(async () => {
+                const record = await window.researchTrail!.cancelRun(selected, runId);
+                setRun(record); setRevision((v) => v + 1);
+              })}>取消运行</button>
+              {run.status === 'interrupted' && <p className="market-note">保存内容已保留。请在输入框重新发起；不会自动调用工具或模型。</p>}
             </>}
             <ToolResultCards events={events} runId={runId} />
             <button className="secondary" disabled={disabled || !run} onClick={() => void perform(async () => {

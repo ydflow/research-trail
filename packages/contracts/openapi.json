@@ -1,13 +1,87 @@
 {
   "components": {
     "schemas": {
+      "CancelledEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "message_id": {
+            "title": "Message Id",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/CancelledPayload"
+          },
+          "protocol_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Protocol Version",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 1,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "type": {
+            "const": "cancelled",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "run_id",
+          "sequence",
+          "timestamp",
+          "type",
+          "message_id",
+          "payload"
+        ],
+        "title": "CancelledEvent",
+        "type": "object"
+      },
+      "CancelledPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "partial": {
+            "$ref": "#/components/schemas/PartialText"
+          },
+          "reason": {
+            "const": "user",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "partial"
+        ],
+        "title": "CancelledPayload",
+        "type": "object"
+      },
       "CompletedPayload": {
         "additionalProperties": false,
         "properties": {
           "stop_reason": {
             "enum": [
               "completed",
-              "error"
+              "error",
+              "cancelled",
+              "timeout",
+              "interrupted"
             ],
             "title": "Stop Reason",
             "type": "string"
@@ -117,6 +191,7 @@
             "items": {
               "discriminator": {
                 "mapping": {
+                  "cancelled": "#/components/schemas/CancelledEvent",
                   "error": "#/components/schemas/ErrorEvent",
                   "message_completed": "#/components/schemas/MessageCompletedEvent",
                   "message_started": "#/components/schemas/MessageStartedEvent",
@@ -156,6 +231,9 @@
                 },
                 {
                   "$ref": "#/components/schemas/ErrorEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/CancelledEvent"
                 }
               ]
             },
@@ -582,6 +660,20 @@
         "title": "MessageStartedEvent",
         "type": "object"
       },
+      "PartialText": {
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "PartialText",
+        "type": "object"
+      },
       "Quote": {
         "additionalProperties": false,
         "properties": {
@@ -767,9 +859,16 @@
             "type": "string"
           },
           "completed_at": {
-            "format": "date-time",
-            "title": "Completed At",
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
           },
           "error": {
             "anyOf": [
@@ -825,8 +924,12 @@
           },
           "status": {
             "enum": [
+              "running",
               "completed",
-              "failed"
+              "failed",
+              "cancelled",
+              "timed_out",
+              "interrupted"
             ],
             "title": "Status",
             "type": "string"
@@ -947,6 +1050,16 @@
               "fake_agent"
             ],
             "title": "Kind",
+            "type": "string"
+          },
+          "scenario": {
+            "default": "normal",
+            "enum": [
+              "normal",
+              "delayed",
+              "timeout"
+            ],
+            "title": "Scenario",
             "type": "string"
           }
         },
@@ -1990,6 +2103,70 @@
           }
         },
         "summary": "Run"
+      }
+    },
+    "/sessions/{session_id}/runs/{run_id}/cancel": {
+      "post": {
+        "operationId": "cancel_run_sessions__session_id__runs__run_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDTO"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Run"
       }
     },
     "/sessions/{session_id}/runs/{run_id}/event-log": {

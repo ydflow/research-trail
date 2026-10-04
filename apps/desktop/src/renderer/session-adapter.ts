@@ -1,4 +1,9 @@
-import type { MessageDTO, StreamEvent } from '../conversation-types';
+import type { MessageDTO, RunDTO, StreamEvent } from '../conversation-types';
+
+export function runStatus(status: RunDTO['status']) {
+  return { running: '运行中', completed: '已完成', failed: '运行失败', cancelled: '已取消',
+    timed_out: '已超时', interrupted: '已中断' }[status];
+}
 
 // Display/legacy UI compatibility lives here, never in Python's business schema.
 // Folio UI timestamps were epoch milliseconds; the canonical DTO uses UTC ISO.
@@ -12,7 +17,8 @@ export function eventDetail(event: StreamEvent): string {
     case 'run_started': return event.payload.input;
     case 'status': return event.payload.detail;
     case 'text_delta': return event.payload.text;
-    case 'run_completed': return event.payload.stop_reason === 'error' ? '运行失败' : '运行已完成';
+    case 'run_completed': return { completed: '运行已完成', error: '运行失败', cancelled: '已取消', timeout: '已超时', interrupted: '已中断' }[event.payload.stop_reason];
+    case 'cancelled': return '主动取消；已保存内容保留';
     case 'message_started': return '回复开始';
     case 'message_completed': return '回复已保存';
     case 'tool_started': return `调用Python工具 ${event.payload.name}，参数 ${event.payload.input.symbol}`;

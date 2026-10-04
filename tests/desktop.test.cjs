@@ -52,7 +52,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       node: typeof window.require,
       process: typeof window.process,
     })), { bridge: ['checkHealth', 'marketSnapshot', 'marketSymbols', 'onStatus', 'retryBackend', 'status',
-      'listSessions', 'createSession', 'getSession', 'deleteSession', 'sessionMessages', 'sessionRuns', 'startRun', 'startAgentRun', 'getRun', 'runEvents'].sort(), node: 'undefined', process: 'undefined' });
+      'listSessions', 'createSession', 'getSession', 'deleteSession', 'sessionMessages', 'sessionRuns', 'startRun', 'startAgentRun', 'cancelRun', 'getRun', 'runEvents'].sort(), node: 'undefined', process: 'undefined' });
     assert.deepEqual(await first.app.evaluate(({ BrowserWindow }) => {
       const pref = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();
       return { sandbox: pref.sandbox, nodeIntegration: pref.nodeIntegration, contextIsolation: pref.contextIsolation };
@@ -413,5 +413,92 @@ test('rule agent invokes Python data tools, renders saved cards and exposes fail
     const replacement = children(instance.pid);
     await instance.app.close(); instance = undefined;
     for (const pid of replacement) await expect.poll(() => alive(pid)).toBe(false);
+  } finally { if (instance) await instance.app.close(); }
+});
+
+test('run lifecycle cancels, times out, deletes active session and marks backend crash interrupted', { timeout: 90000 }, async () => {
+  const databasePath = resolve(mkdtempSync(resolve(tmpdir(), 'research-trail-lifecycle-')), 'test.sqlite3');
+  let instance = await launch({ RESEARCH_TRAIL_DB_PATH: databasePath });
+  try {
+    const errors = [];
+    instance.page.on('pageerror', (error) => errors.push(error.message));
+    instance.page.on('console', (message) => { if (message.type() === 'error' || message.type() === 'warning') errors.push(message.text()); });
+    await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    await instance.page.getByRole('button', { name: '会话与事件', exact: true }).click();
+    await instance.page.getByLabel('会话标题', { exact: true }).fill('生命周期验收');
+    await instance.page.getByRole('button', { name: '创建会话', exact: true }).click();
+    await expect(instance.page.getByTestId('current-session')).toHaveText('生命周期验收');
+    let sid = (await instance.page.evaluate(() => window.researchTrail.listSessions()))[0].id;
+    const start = async (scenario, expected = '运行中') => {
+      await instance.page.getByLabel('模拟工具时序', { exact: true }).selectOption(scenario);
+      await instance.page.getByLabel('测试输入', { exact: true }).fill('查询AAPL.US行情');
+      await instance.page.getByRole('button', { name: '运行规则演示', exact: true }).click();
+      await expect(instance.page.getByTestId('run-state')).toContainText(expected);
+      return (await instance.page.evaluate((id) => window.researchTrail.sessionRuns(id), sid))[0];
+    };
+    const proof = async (record, status) => {
+      const result = await instance.page.evaluate(({ sid, rid }) => window.researchTrail.getRun(sid, rid), { sid, rid: record.id });
+      const trace = await instance.page.evaluate(({ sid, rid }) => window.researchTrail.runEvents(sid, rid), { sid, rid: record.id });
+      assert.equal(result.status, status);
+      assert.equal(trace.filter((e) => e.type === 'run_completed').length, 1);
+      assert.equal(trace.filter((e) => e.type === 'message_completed').length, 1);
+      assert.equal(trace.at(-1).type, 'run_completed');
+      assert.equal(trace.filter((e) => e.type === 'tool_result' && e.payload.result.ok).length, 0);
+      const messages = await instance.page.evaluate((id) => window.researchTrail.sessionMessages(id), sid);
+      assert.equal(messages.filter((m) => m.run_id === record.id).length, 2);
+      return trace;
+    };
+    await assert.rejects(instance.page.evaluate((id) => window.researchTrail.startAgentRun(id, '查询AAPL.US行情', 'shell'), sid), /未知模拟工具时序/);
+    const cancelled = await start('delayed');
+    await expect(instance.page.getByTestId('event-list')).toContainText('tool_started');
+    await expect(instance.page.getByRole('button', { name: '取消运行', exact: true })).toBeEnabled();
+    await instance.page.getByRole('button', { name: '取消运行', exact: true }).click();
+    await expect(instance.page.getByTestId('run-state')).toContainText('已取消');
+    await expect(instance.page.getByRole('button', { name: '取消运行', exact: true })).toBeDisabled();
+    const cancelTrace = await proof(cancelled, 'cancelled');
+    assert.equal(await instance.page.getByTestId('tool-result').count(), 0);
+    if (process.env.RESEARCH_TRAIL_QA_DIR) await instance.page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, 'lifecycle-cancelled.png'), fullPage: true });
+    const timedOut = await start('timeout', '已超时');
+    await expect(instance.page.getByTestId('run-error')).toContainText('TOOL_TIMEOUT');
+    await proof(timedOut, 'timed_out');
+    await instance.page.getByLabel('运行记录', { exact: true }).selectOption(cancelled.id);
+    await expect(instance.page.getByTestId('run-state')).toContainText('已取消');
+    const unchanged = await instance.page.evaluate(({ sid, rid }) => window.researchTrail.runEvents(sid, rid), { sid, rid: cancelled.id });
+    assert.deepEqual(unchanged, cancelTrace);
+    const other = await instance.page.evaluate(() => window.researchTrail.createSession('保留会话'));
+    const deleted = await start('delayed');
+    await instance.page.getByRole('button', { name: '删除当前会话', exact: true }).click();
+    await expect(instance.page.getByTestId('current-session')).toHaveText('保留会话');
+    await assert.rejects(instance.page.evaluate(({ sid, rid }) => window.researchTrail.getRun(sid, rid), { sid, rid: deleted.id }), /不存在或已删除/);
+    sid = other.id;
+    const interrupted = await start('delayed');
+    await expect(instance.page.getByTestId('event-list')).toContainText('tool_started');
+    const backend = children(instance.pid);
+    assert.equal(backend.length, 1);
+    process.kill(backend[0]);
+    await expect(instance.page.getByRole('heading', { name: '连接未就绪' })).toBeVisible();
+    await instance.page.getByRole('button', { name: '重试启动', exact: true }).click();
+    await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    await expect(instance.page.getByTestId('current-session')).toHaveText('保留会话');
+    await expect(instance.page.getByTestId('run-state')).toContainText('已中断');
+    await expect(instance.page.getByTestId('run-error')).toContainText('BACKEND_INTERRUPTED');
+    await expect(instance.page.getByText('保存内容已保留。请在输入框重新发起；不会自动调用工具或模型。', { exact: true })).toBeVisible();
+    await proof(interrupted, 'interrupted');
+    assert.equal((await instance.page.evaluate((id) => window.researchTrail.sessionRuns(id), sid)).length, 1);
+    await instance.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(600, 620));
+    assert.equal(await instance.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    if (process.env.RESEARCH_TRAIL_QA_DIR) {
+      await instance.page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, 'lifecycle-interrupted.png'), fullPage: true });
+      await instance.page.evaluate(() => window.scrollTo(0, 0));
+      await screenshot(instance.page, 'lifecycle-compact-viewport.png');
+    }
+    const explicit = await start('normal', '已完成');
+    await expect(instance.page.getByTestId('quote-price')).toHaveText('189.43');
+    assert.equal(explicit.status, 'completed');
+    assert.deepEqual(errors, []);
+    assert.equal(await instance.page.locator('vite-error-overlay').count(), 0);
+    const final = children(instance.pid);
+    await instance.app.close(); instance = undefined;
+    for (const pid of final) await expect.poll(() => alive(pid)).toBe(false);
   } finally { if (instance) await instance.app.close(); }
 });
