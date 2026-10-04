@@ -3,9 +3,10 @@ import { EventEmitter } from 'node:events';
 import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
-import { Agent, get } from 'node:http';
+import { Agent, get, request as httpRequest } from 'node:http';
 import type { BackendState } from '../bridge';
 import type { MarketError, MarketResult, MarketSnapshot, MarketSymbol } from '../market-types';
+import type { SessionDTO, MessageDTO, RunDTO, StreamEvent } from '../conversation-types';
 
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -129,37 +130,43 @@ export class BackendManager extends EventEmitter {
     return { checkedAt: new Date().toISOString(), pythonVersion: body.python_version as string };
   }
 
-  private async marketRequest(path: string): Promise<{ status: number; body: unknown }> {
+  private async localRequest(path: string, method = 'GET', payload?: unknown, sse = false): Promise<{ status: number; body: unknown }> {
     if (this.state.phase !== 'healthy' || !this.port || this.quitting) throw new Error('本地服务尚未就绪，请检查后端连接。');
     const child = this.child;
     const port = this.port;
     const token = this.token;
     const result = await new Promise<{ status: number; body: unknown }>((resolve, reject) => {
-      const request = get(`http://127.0.0.1:${port}${path}`, {
-        agent: this.localAgent, headers: { 'X-ResearchTrail-Token': token },
+      const dataOut = payload === undefined ? undefined : JSON.stringify(payload);
+      const request = httpRequest(`http://127.0.0.1:${port}${path}`, {
+        method, agent: this.localAgent, headers: { 'X-ResearchTrail-Token': token,
+          ...(dataOut === undefined ? {} : { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(dataOut) }) },
       }, (response) => {
         let data = '';
         response.setEncoding('utf8');
         response.on('data', (chunk: string) => {
           data += chunk;
-          if (data.length > 262144) request.destroy(new Error('行情响应过大。'));
+          if (data.length > 262144) request.destroy(new Error('本地接口响应过大。'));
         });
         response.on('error', reject);
         response.on('end', () => {
-          try { resolve({ status: response.statusCode || 0, body: JSON.parse(data) }); }
-          catch { reject(new Error('行情接口返回了无效 JSON。')); }
+          if (sse && response.statusCode === 200 && !response.headers['content-type']?.startsWith('text/event-stream')) {
+            reject(new Error('事件接口未返回SSE。')); return;
+          }
+          try { resolve({ status: response.statusCode || 0, body: response.statusCode === 204 ? undefined : sse && response.statusCode === 200 ? data : JSON.parse(data) }); }
+          catch { reject(new Error('本地接口返回了无效 JSON。')); }
         });
       });
-      const timer = setTimeout(() => request.destroy(new Error('行情请求超过 3 秒。')), 3000);
+      const timer = setTimeout(() => request.destroy(new Error('本地请求超过 3 秒。')), 3000);
       request.once('close', () => clearTimeout(timer));
       request.once('error', reject);
+      request.end(dataOut);
     });
     if (this.child !== child || this.state.phase !== 'healthy' || this.quitting) throw new Error('查询期间后端连接已变化，请重新查询。');
     return result;
   }
 
   async marketSymbols(): Promise<MarketSymbol[]> {
-    const result = await this.marketRequest('/market/symbols');
+    const result = await this.localRequest('/market/symbols');
     if (result.status !== 200 || !Array.isArray(result.body)) throw new Error('无法读取模拟股票列表。');
     return result.body as MarketSymbol[];
   }
@@ -169,13 +176,61 @@ export class BackendManager extends EventEmitter {
       return { ok: false, error: { code: 'INVALID_SYMBOL', message: '代码格式无效，请使用 AAPL.US 等格式。' } };
     }
     try {
-      const result = await this.marketRequest(`/market/snapshot/${encodeURIComponent(symbol)}`);
+      const result = await this.localRequest(`/market/snapshot/${encodeURIComponent(symbol)}`);
       if (result.status === 404) return { ok: false, error: result.body as MarketError };
       if (result.status !== 200) throw new Error(`行情接口返回 HTTP ${result.status}。`);
       return { ok: true, data: result.body as MarketSnapshot };
     } catch (error) {
       return { ok: false, error: { code: 'UNAVAILABLE', message: this.safeError((error as Error).message) } };
     }
+  }
+
+  private id(value: unknown): string {
+    if (typeof value !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value)) throw new Error('会话或运行ID格式无效。');
+    return value;
+  }
+
+  private async business<T>(path: string, method = 'GET', payload?: unknown): Promise<T> {
+    const result = await this.localRequest(path, method, payload);
+    if (result.status < 200 || result.status >= 300) {
+      const detail = (result.body as { detail?: unknown })?.detail;
+      throw new Error(typeof detail === 'string' ? detail : `请求不符合契约（HTTP ${result.status}）。请检查输入。`);
+    }
+    return result.body as T;
+  }
+
+  listSessions() { return this.business<SessionDTO[]>('/sessions'); }
+  createSession(title: unknown) {
+    if (typeof title !== 'string' || title.length > 80 || !title.trim()) throw new Error('标题需要1至80个字符。');
+    return this.business<SessionDTO>('/sessions', 'POST', { title });
+  }
+  getSession(id: unknown) { return this.business<SessionDTO>(`/sessions/${this.id(id)}`); }
+  deleteSession(id: unknown) { return this.business<void>(`/sessions/${this.id(id)}`, 'DELETE'); }
+  sessionMessages(id: unknown) { return this.business<MessageDTO[]>(`/sessions/${this.id(id)}/messages`); }
+  sessionRuns(id: unknown) { return this.business<RunDTO[]>(`/sessions/${this.id(id)}/runs`); }
+  startRun(id: unknown, input: unknown) {
+    if (typeof input !== 'string' || input.length > 2000 || !input.trim()) throw new Error('测试输入需要1至2000个字符。');
+    return this.business<RunDTO>(`/sessions/${this.id(id)}/runs`, 'POST', { input });
+  }
+  getRun(id: unknown, runId: unknown) { return this.business<RunDTO>(`/sessions/${this.id(id)}/runs/${this.id(runId)}`); }
+  async runEvents(id: unknown, runId: unknown, after: unknown = 0): Promise<StreamEvent[]> {
+    const sessionId = this.id(id), run = this.id(runId);
+    if (typeof after !== 'number' || !Number.isSafeInteger(after) || after < 0) throw new Error('事件游标必须是非负整数。');
+    const result = await this.localRequest(`/sessions/${sessionId}/runs/${run}/events?after_sequence=${after}`, 'GET', undefined, true);
+    if (result.status !== 200) throw new Error((result.body as { detail?: string }).detail || `事件读取失败（HTTP ${result.status}）。`);
+    const events: StreamEvent[] = [];
+    let sequence = after;
+    for (const frame of (result.body as string).replaceAll('\r\n', '\n').split('\n\n').filter(Boolean)) {
+      const fields = frame.split('\n');
+      const data = fields.filter((line) => line.startsWith('data: ')).map((line) => line.slice(6)).join('\n');
+      const event = JSON.parse(data) as StreamEvent;
+      if (event.protocol_version !== 1 || event.session_id !== sessionId || event.run_id !== run ||
+          event.sequence !== sequence + 1 || !['run_started', 'message_started', 'status', 'text_delta', 'message_completed', 'run_completed'].includes(event.type) ||
+          !fields.includes(`id: ${run}:${event.sequence}`) || !fields.includes(`event: ${event.type}`)) throw new Error('SSE事件身份、类型或序号不符合契约。');
+      sequence = event.sequence;
+      events.push(event);
+    }
+    return events;
   }
 
   async check(): Promise<BackendState> {

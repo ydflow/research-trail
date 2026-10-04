@@ -3,7 +3,8 @@ const assert = require('node:assert/strict');
 const { _electron: electron, expect } = require('@playwright/test');
 const { execFileSync } = require('node:child_process');
 const { resolve } = require('node:path');
-const { mkdirSync } = require('node:fs');
+const { mkdirSync, mkdtempSync } = require('node:fs');
+const { tmpdir } = require('node:os');
 const { createRequire } = require('node:module');
 const { pathToFileURL } = require('node:url');
 
@@ -29,9 +30,10 @@ async function screenshot(page, name) {
   await page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, name), fullPage: false });
 }
 async function launch(extraEnv = {}) {
-  const app = await electron.launch({ args: [desktop], cwd: root, env: { ...env, ...extraEnv } });
+  const databasePath = extraEnv.RESEARCH_TRAIL_DB_PATH || resolve(mkdtempSync(resolve(tmpdir(), 'research-trail-qa-')), 'test.sqlite3');
+  const app = await electron.launch({ args: [desktop], cwd: root, env: { ...env, RESEARCH_TRAIL_DB_PATH: databasePath, ...extraEnv } });
   const page = await app.firstWindow();
-  return { app, page, pid: await app.evaluate(() => process.pid) };
+  return { app, page, pid: await app.evaluate(() => process.pid), databasePath };
 }
 
 test('real window, isolated bridge, health, interruption/retry, scoped shutdown', { timeout: 90000 }, async () => {
@@ -49,7 +51,8 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       bridge: Object.keys(window.researchTrail).sort(),
       node: typeof window.require,
       process: typeof window.process,
-    })), { bridge: ['checkHealth', 'marketSnapshot', 'marketSymbols', 'onStatus', 'retryBackend', 'status'], node: 'undefined', process: 'undefined' });
+    })), { bridge: ['checkHealth', 'marketSnapshot', 'marketSymbols', 'onStatus', 'retryBackend', 'status',
+      'listSessions', 'createSession', 'getSession', 'deleteSession', 'sessionMessages', 'sessionRuns', 'startRun', 'getRun', 'runEvents'].sort(), node: 'undefined', process: 'undefined' });
     assert.deepEqual(await first.app.evaluate(({ BrowserWindow }) => {
       const pref = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();
       return { sandbox: pref.sandbox, nodeIntegration: pref.nodeIntegration, contextIsolation: pref.contextIsolation };
@@ -234,5 +237,85 @@ test('late earlier response cannot overwrite the latest stock selection', { time
     await expect(instance.page.getByTestId('quote-card')).toHaveAttribute('data-symbol', 'TSLA.US');
     await expect(instance.page.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-symbol', 'TSLA.US');
     await expect(instance.page.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-close', '175.22');
+  } finally { await instance.app.close(); }
+});
+
+test('persistent sessions, scoped messages, SSE replay, restart and deletion', { timeout: 90000 }, async () => {
+  let instance = await launch();
+  const databasePath = instance.databasePath;
+  const errors = [];
+  try {
+    instance.page.on('pageerror', (e) => errors.push(e.message));
+    await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    await instance.page.getByRole('button', { name: '会话与事件', exact: true }).click();
+    const createAndRun = async (title, input) => {
+      await instance.page.getByLabel('会话标题', { exact: true }).fill(title);
+      await instance.page.getByRole('button', { name: '创建会话', exact: true }).click();
+      await expect(instance.page.getByTestId('current-session')).toHaveText(title);
+      await instance.page.getByLabel('测试输入', { exact: true }).fill(input);
+      await instance.page.getByRole('button', { name: '启动固定测试运行', exact: true }).click();
+      await expect(instance.page.getByTestId('message-history')).toContainText(input);
+      await expect(instance.page.getByTestId('event-list').locator('li')).toHaveCount(7);
+    };
+    await createAndRun('甲会话', '只属于甲的输入');
+    await createAndRun('乙会话', '只属于乙的输入');
+    await expect(instance.page.getByTestId('message-history')).not.toContainText('只属于甲的输入');
+    const records = await instance.page.evaluate(() => window.researchTrail.listSessions());
+    const a = records.find((s) => s.title === '甲会话'), b = records.find((s) => s.title === '乙会话');
+    const runA = (await instance.page.evaluate((id) => window.researchTrail.sessionRuns(id), a.id))[0];
+    const runB = (await instance.page.evaluate((id) => window.researchTrail.sessionRuns(id), b.id))[0];
+    assert.equal(runA.kind, 'fixture');
+    const tail = await instance.page.evaluate(({ id, run }) => window.researchTrail.runEvents(id, run, 4), { id: a.id, run: runA.id });
+    assert.deepEqual(tail.map((e) => e.sequence), [5, 6, 7]);
+    await assert.rejects(instance.page.evaluate(({ id, run }) => window.researchTrail.runEvents(id, run), { id: b.id, run: runA.id }), /不属于当前会话/);
+    await assert.rejects(instance.page.evaluate(() => window.researchTrail.getSession('../health')), /ID格式无效/);
+    await assert.rejects(instance.page.evaluate(({ id, run }) => window.researchTrail.runEvents(id, run, -1), { id: b.id, run: runB.id }), /非负整数/);
+    await instance.page.getByRole('button', { name: /甲会话/ }).click();
+    await expect(instance.page.getByTestId('current-session')).toHaveText('甲会话');
+    await expect(instance.page.getByTestId('message-history')).not.toContainText('只属于乙的输入');
+    await expect(instance.page.getByTestId('event-list').locator('li')).toHaveCount(7);
+    for (let n = 0; n < 2; n++) {
+      await instance.page.getByRole('button', { name: '重新读取事件' }).click();
+      await expect(instance.page.getByRole('button', { name: '重新读取事件' })).toBeEnabled();
+      await expect(instance.page.getByTestId('event-list').locator('li')).toHaveCount(7);
+    }
+    assert.equal((await instance.page.evaluate((id) => window.researchTrail.getSession(id), a.id)).message_count, 2);
+    if (process.env.RESEARCH_TRAIL_QA_DIR) await instance.page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, 'sessions-events.png'), fullPage: true });
+    await instance.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(600, 620));
+    assert.equal(await instance.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    if (process.env.RESEARCH_TRAIL_QA_DIR) await instance.page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, 'sessions-compact.png'), fullPage: true });
+    const oldChildren = children(instance.pid);
+    await instance.app.close();
+    instance = undefined;
+    for (const pid of oldChildren) await expect.poll(() => alive(pid)).toBe(false);
+    instance = await launch({ RESEARCH_TRAIL_DB_PATH: databasePath });
+    instance.page.on('pageerror', (e) => errors.push(e.message));
+    await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    await instance.page.getByRole('button', { name: '会话与事件', exact: true }).click();
+    await instance.page.getByRole('button', { name: /甲会话/ }).click();
+    await expect(instance.page.getByTestId('current-session')).toHaveText('甲会话');
+    await expect(instance.page.getByTestId('message-history')).toContainText('只属于甲的输入');
+    await expect(instance.page.getByTestId('event-list').locator('li')).toHaveCount(7);
+    await instance.page.getByRole('button', { name: '删除当前会话', exact: true }).click();
+    await expect(instance.page.getByTestId('current-session')).toHaveText('乙会话');
+    await expect(instance.page.getByTestId('message-history')).toContainText('只属于乙的输入');
+    await expect(instance.page.getByRole('button', { name: /甲会话/ })).toHaveCount(0);
+    assert.equal((await instance.page.evaluate(({ id, run }) => window.researchTrail.getRun(id, run), { id: b.id, run: runB.id })).id, runB.id);
+    assert.deepEqual(errors, []);
+    const owned = children(instance.pid);
+    await instance.app.close(); instance = undefined;
+    for (const pid of owned) await expect.poll(() => alive(pid)).toBe(false);
+  } finally { if (instance) await instance.app.close(); }
+});
+
+test('database migration startup failure is visible and leaves no backend', { timeout: 45000 }, async () => {
+  const directory = mkdtempSync(resolve(tmpdir(), 'research-trail-invalid-db-'));
+  const instance = await launch({ RESEARCH_TRAIL_DB_PATH: directory });
+  try {
+    await expect(instance.page.getByRole('heading', { name: '连接未就绪' })).toBeVisible();
+    await expect(instance.page.getByText(/unable to open database file/)).toBeVisible();
+    await expect(instance.page.getByRole('button', { name: '重试启动' })).toBeEnabled();
+    await expect.poll(() => children(instance.pid)).toEqual([]);
+    await screenshot(instance.page, 'database-startup-failure.png');
   } finally { await instance.app.close(); }
 });

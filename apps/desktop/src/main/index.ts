@@ -38,6 +38,15 @@ app.whenReady().then(async () => {
   ipcMain.handle('backend:retry', (event) => { assertSender(event); return backend.retry(); });
   ipcMain.handle('market:symbols', (event) => { assertSender(event); return backend.marketSymbols(); });
   ipcMain.handle('market:snapshot', (event, symbol: unknown) => { assertSender(event); return backend.marketSnapshot(symbol); });
+  ipcMain.handle('sessions:list', (event) => { assertSender(event); return backend.listSessions(); });
+  ipcMain.handle('sessions:create', (event, title: unknown) => { assertSender(event); return backend.createSession(title); });
+  ipcMain.handle('sessions:get', (event, id: unknown) => { assertSender(event); return backend.getSession(id); });
+  ipcMain.handle('sessions:delete', (event, id: unknown) => { assertSender(event); return backend.deleteSession(id); });
+  ipcMain.handle('sessions:messages', (event, id: unknown) => { assertSender(event); return backend.sessionMessages(id); });
+  ipcMain.handle('sessions:runs', (event, id: unknown) => { assertSender(event); return backend.sessionRuns(id); });
+  ipcMain.handle('runs:start', (event, id: unknown, input: unknown) => { assertSender(event); return backend.startRun(id, input); });
+  ipcMain.handle('runs:get', (event, id: unknown, runId: unknown) => { assertSender(event); return backend.getRun(id, runId); });
+  ipcMain.handle('runs:events', (event, id: unknown, runId: unknown, after: unknown) => { assertSender(event); return backend.runEvents(id, runId, after); });
   backend.on('status', (state) => {
     if (window && !window.isDestroyed()) window.webContents.send('backend:changed', state);
   });
