@@ -451,3 +451,67 @@ Browser plugin not available：当前无Browser插件入口，按frontend-testin
 发布分支`feat/step-5-run-lifecycle`已推送，创建 [PR #4](https://github.com/ydflow/research-trail/pull/4)，base为main。已保留Python新实现`5c2791a1fe95b65e6e89bc10ad7e0f35784c6b52`、桌面接入`6b6c57a7d2ee5cb413623fc6ca2752af52c9e805`、验收文档`b094ecc034c7807111e262dfb2a3878951d97089`；无伪造上游作者或时间。创建后实查head与本地一致、28差异文件准确，MERGEABLE/CLEAN、非draft、无review或未解决讨论、检查列表为空；Actions工作流/标签/Release均为0，不能称远程CI通过。
 
 本段仅补PR链接和发布事实；没有改变已验证代码，无需重复业务测试。最终合并前再核对账号/仓库/远程、最终head、base及阻塞检查；只普通merge保留分支提交，不压缩、删除分支或绕过保护。合并SHA、本地main同步和最终工作区状态以GitHub、Git及交付回执为准。测试后实查没有本项目Electron/Python/开发启动器残留；公开候选仍为70个文本文件，来源及第三方声明保留。
+
+## 18. 第6步：会话快照、持续SSE与显示恢复（2026-10-04）
+
+用户要求仅执行第6步：完善会话侧栏、输入、历史、工具状态、卡片/取消，先快照后订阅，按运行ID与序号续读/去重，切换解除旧订阅及断开状态。没有研究、组合等新页面或下一步实现。本轮仅本地开发，不暂存、提交或上传；基线main、HEAD为`a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677`，执行前工作区干净，第5步已通过PR #4发布。
+
+### 参考、依赖和实际导入
+
+只读核对固定Folio ZIP `ba5dcdfd31b162f5edb8b908f7f099a560389326` 的`packages/ui/src/client.tsx`、`atoms/streamAtoms.ts`、`components/layout/Sidebar.tsx`、`components/chat/MessageList.tsx`/`TurnCard.tsx`和`components/agent/ToolActivity.tsx`。原侧栏含Jotai、国际化、lucide与额外业务导航，完整消息卡含Markdown/引用和研究展示；未导入这些文件或原TypeScript后端。侧栏、输入、消息容器继续使用研迹组件；行情/K线结果继续复用第2步已有局部适配。
+
+本步新增`apps/desktop/src/renderer/ToolActivity.tsx`：从Folio同名组件局部适配折叠工具时间线、按call.id列示和formatDuration格式，保留源URL/路径/固定提交注释。移除react-i18next、lucide、Tailwind和@finagent/core类型，改用已有React、研迹CSS、前端`ToolView`；新增取消/超时/中断显示，状态由Python记录投影。无新依赖或锁文件变化。streamAtoms按run/sequence去重的思路仅作参考，没有导入Jotai缓存或同时接入旧事件渠道。原作者复用授权保持第9—11节的用户确认口径，未独立取得授权原文，不宣称全仓MIT；第三方声明保留。本轮未发生公开发布。
+
+### Python业务真相与桌面适配
+
+- `SessionSnapshot`为Pydantic新契约，GET /sessions/{id}/snapshot返回本会话消息、运行和已保存事件；`Store.snapshot`显式BEGIN，固定同一WAL读事务，消息文本及各运行水位一致。OpenAPI重新生成前端类型；没有新的数据库表/迁移。
+- 原/events默认follow=false保留有限历史；follow=true重放游标后的已提交事件并持续等待新事件，活动流每100ms读取、10秒心跳。Last-Event-ID和query取较大水位，身份/负值/越界继续拒绝。终态末事件后正常关闭，终态/末序号响应头允许已读到终态末尾的客户端正确关闭空流。删除或断开结束订阅，不重建会话或执行工具。
+- main新增`RunSubscription`与`FrameDecoder`，仅本机带启动令牌HTTP。完整帧验证版本、session/run、类型、id和连续序号，重复帧忽略；半帧不推进游标，重连丢弃未完成片段。HTTP处理跨块UTF-8，解析器处理CRLF/多帧/心跳。断流从最后完整接收序号续读，250ms→4秒退避；400/401/404明确失败，不盲目重试。终态EOF不空转。
+- preload新增sessionSnapshot、subscribeRun，共19项命名桥；订阅ID仅由preload生成，用于过滤对应IPC。返回幂等解除函数，移除监听并关闭主进程请求；没有任意HTTP、路径、数据库、进程或令牌接口。main核对IPC来源/ID/非负安全整数、订阅数量，导航/页面销毁、后端状态变化和退出均清理。
+- SessionPanel先显示快照再订阅其中活动运行，即使正在查看旧运行也持续接收本会话活动数据。`applySessionEvent`按运行水位去重，只更新同一消息ID的未见文字；快照已有内容不再追加，不接旧消息事件渠道。收到run_completed再读Python快照取得终态，取消按钮仍调用第5步Python接口。effect清理使过期快照与事件失效，解除HTTP/IPC和重连计时器，切换不串数据。
+- sessionStorage仅记工作区、会话和运行选择，刷新先核对数据库中对象仍存在再恢复显示。后端断开时显示顶层健康及事件状态，保留已显示内容；重试后从Python读中断/历史，不自动重新调用。工具状态可折叠、卡片含原获取时间，未知意图/股票和取消错误继续明确区分。
+
+真实读链：页面加载→preload.sessionSnapshot→main→带令牌FastAPI→Store单一读事务→页面缓存→preload.subscribeRun→main HTTP SSE→Python已提交事件→主进程完整帧/游标→IPC订阅ID过滤→前端消息ID/运行序号投影；run_completed后回到快照。只有用户点击运行的POST会进入RunManager/工具，所有恢复/历史读取不经过AgentRunner。
+
+### 验证与桌面QA
+
+| 检查 | 实际结果 | 证明及限制 |
+| --- | --- | --- |
+| 契约/TypeScript/构建 | 通过 | contracts:generate、bun run check、build，无新依赖；开发构建，非安装包 |
+| Python完整回归 | 72通过、1条上游TestClient/httpx弃用提示 | 原67项＋本步5项；最终包含终态头/空流复验 |
+| 快照一致/隔离 | 通过 | 读事务期间另线程完成写入，快照仍为旧消息/运行/事件同一版本；会话隔离、鉴权/未知404，重复读相同 |
+| 实际HTTP持续流 | 通过 | 独立Python进程中，先读快照再订阅未来工具结果，每帧发送前可经HTTP查到已提交记录；完成自动关闭 |
+| 实际HTTP断流续读 | 通过 | 活动连接读1—4后关闭，离线期间取消，Last-Event-ID 4大于query 2，重连只读5—8；终态末尾再读为空、正常结束 |
+| 历史不重执行 | 通过 | 记录调用的Python模型/数据Provider各仅1次，三次快照/事件读取不增加；桌面刷新/切回/重复读保持原卡片获取时间及POST运行数 |
+| 桌面传输/适配测试 | 5通过，无跳过 | bun run test:stream：跨块CRLF/心跳/边界、半帧掉线、续读游标、重复帧、取消重连计时器、鉴权终止、单消息去重/跨会话拒绝及终态空流 |
+| Electron最终完整回归 | 12通过，无跳过 | 原10项＋活动刷新/单独断流续读/解除/历史去重、旧快照晚到两项；默认dist与Vite、取消/超时/删活动会话/后端重试及所属关闭回归通过 |
+| 页面身份/非空/overlay/console | 通过 | 实窗标题研迹，dist/renderer/index.html；真实侧栏、输入/消息/工具卡/状态响应；无Vite overlay、目标流程console error/warning及pageerror |
+| 图像与响应布局 | 通过 | 默认窗口与600×620，已查看全页断流提示/完整回复及工具卡、窄窗首屏；无横向溢出。窄窗后续内容需纵向滚动 |
+| 迁移重复执行 | 通过 | 临时库CLI两次upgrade、current=0003_lifecycle (head)、check无新操作；本步无新迁移 |
+| 根start-dev.cmd | 本轮未重复执行 | 入口未改；实窗Vite/Python启动与退出由原回归验证 |
+| 人工/学习、真实服务/安装包/CI | 未验证 | README第15—17项和practice第6步未代填；真实LLM/行情/账户、真实Provider阻塞取消、干净机器、其他OS、CI仍未执行 |
+
+新增桌面测试开发时修正了三处测试脚本问题：Electron evaluate中require不是全局，改用process.getBuiltinModule取内置HTTP；空会话提示本身含NVDA示例，改验证article为零；误把TSLA示例价格用于NVDA断言，改从Python保存的K线工具结果取末收对照。未修改fixture价格或放宽业务验收。最后完整12项全部通过。另补终态空流响应头与测试，避免已到末尾时反复重连；最终完整72项Python、5项传输测试及12项Electron均针对该实现。
+
+Browser plugin not available：本会话没有Browser插件/skill，依frontend-testing-debugging采用项目已有Playwright Electron工作流。React采用基本值effect依赖、独立列表读取、活动标志拦截过期结果、订阅退出清理与单一快照缓存，没有新增状态框架。参考组件的完整国际化/图标/引用展示是有意未移植范围，研迹保留中文规则/模拟标签、独立Python客户端边界。
+
+截图在仓库外`C:/Users/38905/.codex/visualizations/2026/10/04/01a1052d-756d-7d41-8501-1f906d4fa709/step6`：stream-reconnecting.png、stream-restored-history.png、stream-compact.png；测试数据库/锁在临时目录，不改日常库。没有性能或大型历史压力成绩：main继续保留256KiB普通响应/单帧限制；大历史分页、跨设备及长时重连压力未验证。真实外部网络/模型不在本步范围。
+
+README、ROADMAP、tutorial C04/C05和practice第6步已同步，状态代码完成/待验收。本轮未暂存、提交、上传或实现第7步；用户手动及学习记录待填，交付后停止。
+
+收尾审核：74个候选均为文本，本段追加前610282字节；本地Markdown链接/代码围栏、常见密钥签名及运行/账户/日志/缓存/图片候选检查无异常。git diff --check通过，21个已有文件修改、4个新增文件，全部属于第6步；暂存为空、main HEAD仍为a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677。最终进程实查未发现本项目Electron/Python/开发启动器残留，参考目录未写入；工作区外PROJECT_STATE同步本轮事实。
+
+## 19. 第6步发布复验与PR交付（2026-10-04）
+
+用户明确要求仅发布当前已验收的第6步，授权功能分支、PR以及检查通过且无未解决阻塞后的普通合并，保留提交记录并同步本地main。依据本轮完整复验及用户已验收发布确认，将第6步标为验收通过；第18节保留开发结束时的历史状态，未代填逐项手动、学习或用户回答。第7—24步未开始。
+
+- 身份/归属：gh api user实测ydflow；目标为公开、非fork的ydflow/research-trail，默认main，origin fetch/push均为https://github.com/ydflow/research-trail.git。fetch后的origin/main、本地main及GitHub main均为a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677，没有已有开放PR。每次GitHub写入前重新核验，不切换账号、覆盖无关仓库、删除或强推。
+- 实际范围：21个已有文件修改、4个新增文本文件，共25个，均属第6步。新增Folio ToolActivity局部适配单独记录上游来源；Python快照/持续SSE/生成契约及测试为本项目新实现；桌面白名单订阅、续读、显示缓存和回归为桌面接入。未新增依赖、迁移、原TS后端、完整页面或下一步功能；不制造不存在的修复提交，不伪造作者或时间。
+- 公开范围：按第9—11节用户确认的原作者复用授权及本轮明确发布指令，纳入第18节ToolActivity局部适配。源码来源注释和原第三方LICENSE/NOTICE保留；仅用户确认授权事实，未独立取得原始授权文件，不宣称全仓MIT。
+- 文件审核：文档更新前74个候选文本、610781字节；常见密钥特征、运行/账户/日志/缓存/二进制图片、本地Markdown链接（14处）及代码围栏无异常，git diff --check通过。环境、运行库/WAL/SHM/owner.lock、日志、账户、缓存、依赖/构建忽略实测有效。测试数据库及截图均在仓库外，没有上传私人数据。签名扫描与源码差异人工核对共同使用，不作为完整安全认证。
+- 后端复验：README规定的uv run --directory services/backend --frozen python -m pytest，72通过、1条上游TestClient/httpx弃用提示。覆盖一致快照、隔离、先持久化后流出、实际HTTP持续/断流续读、终态空流及历史不重执行，并保留全部生命周期回归。首次误用裸pytest导致模块查找失败，改回规定命令全通过，无代码/依赖修复。
+- 桌面复验：bun run test:stream 5通过、无跳过；bun run test:desktop真实Electron完整12通过、无跳过。断流续读不重复、活动刷新、会话切换解除请求、旧快照晚到、卡片/消息ID/获取时间不变及历史不重执行均通过，包含Vite和所属后端退出回归。
+- 契约/构建/迁移：bun run check、build通过；临时库CLI upgrade head两次、current=0003_lifecycle (head)、check无新升级操作通过。本步未新增迁移、未修改日常运行库；进程实查没有本项目Electron/Python/开发启动器残留。
+- 尚未验证：CI实查工作流数为0，不称CI通过。逐项手动和学习、真实LLM/行情/账户、真实外部Provider阻塞取消、安装包/干净机器、其他OS、迁移降级/离线SQL/备份恢复、大历史分页和长时重连压力未验证；普通响应/单帧继续限制256KiB。根start-dev.cmd未改，本轮未重复执行该入口。
+
+提交按上游组件适配、Python新实现、桌面接入、验收文档分别记录，使用当前ydflow作者配置与实际提交时间。后续PR链接、最终head和合并SHA由实际Git/GitHub及回执确认，不在合并前虚构结果；不打标签、创建Release或启用定时付费评测。

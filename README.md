@@ -6,14 +6,14 @@
 
 ## 当前状态
 
-截至 2026-10-04：**第0/2/3/4/5步验收通过；第1步代码完成、自动化通过**。桌面支持四股票模拟行情、SQLite会话历史、最小规则Agent，以及取消、超时和重启中断。界面明确标注“规则演示／假模型”，没有真实LLM。第5步状态依据发布复验及用户本轮已验收发布确认；逐项手动与学习记录待填写。
+截至 2026-10-04：**第0/2/3/4/5/6步验收通过；第1步代码完成、自动化通过**。桌面支持模拟行情、持久会话、规则Agent、取消/超时/中断，以及快照恢复和SSE续读。界面明确标注“规则演示／假模型”，没有真实LLM。第6步依据完整发布复验及用户本轮已验收发布确认；逐项手动与学习记录待填写。
 
 - 默认分支 `main`；初始公开提交为 `55b1a3d`，第2步按功能分支/PR保留导入、Python新实现、修复与桌面适配提交。
 - 第2步公开复用依据为用户本轮确认的原作者授权，保留适配来源与依赖声明；交付见 [PR #1](https://github.com/ydflow/research-trail/pull/1)，发布检查和授权记录见EVIDENCE第9—11节，最终提交/合并状态以Git与发布回执为准。
 - 公开仓库：[ydflow/research-trail](https://github.com/ydflow/research-trail)。仅上传源码、测试、文档、依赖清单与锁文件；不包含运行数据或截图。
 - 第2步已普通合并，main基线为 `0e1dfd5ccf7e99c66d58188dcac9497ddd6e2bd8`；第3步以 [PR #2](https://github.com/ydflow/research-trail/pull/2) 交付，开发与发布验证见EVIDENCE第12—13节，最终提交和合并状态以Git与发布回执为准。
 - 第3步合并基线为 `7f925dee768ff33c076582dd9d41055aca9a5932`；第4步以 [PR #3](https://github.com/ydflow/research-trail/pull/3) 交付，开发及发布复验见EVIDENCE第14—15节，按功能分支/PR保留提交，最终远程状态以GitHub和发布回执为准。
-- 第5步开发基线为 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`；以 [PR #4](https://github.com/ydflow/research-trail/pull/4) 交付，开发及发布复验见EVIDENCE第16—17节，按功能分支/PR保留提交，最终远程状态以GitHub和发布回执为准。第6—24步未开始。
+- 第5步开发基线为 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`；以 [PR #4](https://github.com/ydflow/research-trail/pull/4) 普通合并，第6步发布基线为`a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677`。第6步开发与发布证据见EVIDENCE第18—19节，最终提交/合并状态以GitHub和发布回执为准；第7—24步未开始。
 - 首版 `v0.1.0`、完整版本 `v1.0.0` 都是计划，不是已发布版本。
 - Folio 功能和测试属于参考项目，不代表研迹已实现或用户已完成的贡献。
 
@@ -31,11 +31,15 @@ React 页面
 
 Python 统一管理业务状态，前端维护显示缓存。假模型和模拟行情分别实现，后续分别替换为真实连接。真实数据来源与模型回答不能混为一谈。
 
-行情调用链：股票选择 → `MarketPanel` → preload 的 `marketSnapshot` → Electron 主进程 → 带令牌的 `/market/snapshot/{symbol}` → Python `FixtureMarketProvider` → 同一份 `MarketSnapshot` → 行情卡片与 K 线。桥现在共17个命名操作：健康/行情六项、会话五项、运行六项（本步新增cancelRun，startAgentRun只接受三种模拟时序）。端口和令牌只在主进程和后端之间使用，不传给页面；Python无reload worker，直接作为Electron子进程启动。
+行情调用链：股票选择 → `MarketPanel` → preload 的 `marketSnapshot` → Electron 主进程 → 带令牌的 `/market/snapshot/{symbol}` → Python `FixtureMarketProvider` → 同一份 `MarketSnapshot` → 行情卡片与 K 线。桥现在共19个命名操作：健康/行情六项、会话六项、运行七项（新增sessionSnapshot、subscribeRun）。订阅返回解除函数；页面不能指定URL、端口、令牌、文件或进程。Python无reload worker，直接作为Electron子进程启动。
 
-会话调用链：`SessionPanel` → preload白名单 → main → 带令牌的FastAPI → `Store` / SQLAlchemy事务 → SQLite。固定通信测试仍一次提交两条消息、一条运行和七事件。规则Agent改为先保存running记录及消息占位，再启动Python后台工作线程；每条事件事务提交后才能读取。main读取有限SSE并校验身份/顺序，页面只显示缓存。运行期间每200ms读取已保存状态，终态后停止；这不是长驻SSE订阅或自动流重连，后者留给第6步。
+会话调用链：`SessionPanel` → preload.sessionSnapshot → main → GET /sessions/{id}/snapshot → Store单一SQLite读事务。消息、运行、事件及各运行last_sequence来自同一快照；页面先显示它，再通过subscribeRun从活动运行的水位订阅SSE。订阅间隙提交的事件会重放，不丢失或重新调用工具。工作区/会话/运行选择只作为sessionStorage显示偏好，业务内容仍从Python数据库读取。
 
-规则Agent调用链：`startAgentRun` → POST /sessions/{id}/runs（kind=fake_agent）→ `RunManager.start` / `Store.begin_agent` → 后台`AgentRunner` → `FakeModelProvider.plan` → Python工具 → 第2步同一`MarketProvider.snapshot` → 结果/回复保存 → `Store.finish` → 有限SSE与结果卡片。POST返回已创建的running记录，不等待完成。默认无kind的API仍启动固定通信测试；主按钮选择fake_agent，次按钮保留原测试入口。
+持续流使用`/events?follow=true&after_sequence=N`，Last-Event-ID为run_id:N；默认follow=false保留有限历史读取。Python只发送已提交记录，活动流每100ms检查数据库并定期发心跳。main逐完整帧验证身份/序号，重复事件忽略；断流按最后完整收到序号退避重连（250ms至4秒）。拆开的UTF-8由HTTP解码、拆开的CRLF/半帧由解析器处理；半帧不推进游标。终态头和末事件区分正常结束与异常EOF，已到终态末尾不重连。
+
+页面用运行ID＋序号去重、同一message_id更新文字；快照里已有的text_delta不再追加，也不订阅旧消息渠道。run_completed后再读Python快照取得终态，前端不制造终态。切换会话、切页面、刷新、后端关闭及窗口退出均解除旧订阅，清理请求和重连定时器；过期快照/事件不写到新会话。界面保留侧栏、输入、历史、结果卡和取消入口，增加折叠Python工具状态与事件连接提示。
+
+规则Agent调用链：`startAgentRun` → POST /sessions/{id}/runs（kind=fake_agent）→ `RunManager.start` / `Store.begin_agent` → 后台`AgentRunner` → `FakeModelProvider.plan` → Python工具 → 第2步同一`MarketProvider.snapshot` → 结果/回复保存 → `Store.finish` → SSE及快照/结果卡片。POST返回已创建的running记录，不等待完成。默认无kind的API仍启动固定通信测试；主按钮选择fake_agent，次按钮保留原测试入口。
 
 支持输入“查询AAPL.US行情”“查看NVDA.US的K线”，同样可查四只示例股票。未知意图说明范围，不调用工具；未知股票保存UNKNOWN_SYMBOL、tool_result.ok=false及failed终态。正常成功8事件、工具失败9事件、未知意图6事件。工具开始/结果由call_id关联，SSE读取当前已提交记录，不模拟LLM打字。模型Provider与数据Provider分别注入。
 
@@ -57,7 +61,8 @@ Pydantic 是业务契约来源。离线导出 OpenAPI 后，`openapi-typescript`
 | 3 | SQLite会话/消息/运行/事件、有限SSE读取 | 验收通过；29项Python、8项实窗复验及用户发布确认，手动记录待补 |
 | 4 | Python工具注册、最小规则Agent、过程与结果卡片 | 验收通过；自动复验＋用户发布确认 |
 | 5 | 运行取消、超时竞争、删除与重启中断 | 验收通过；67项Python、10项实窗复验＋用户发布确认 |
-| 6—7 | 完整对话与事件重连、首版验收 | 未开始 |
+| 6 | 会话界面、数据库快照恢复、SSE续读和去重 | 代码完成/待验收；自动验证见EVIDENCE第18节 |
+| 7 | 首版验收、离线CI、干净源码启动 | 未开始 |
 | 8—13 | 设置与凭证、真实模型/行情、市场工作台、组合及对比 | 未开始 |
 | 14—20 | 能力技能、研究策略/报告/恢复、论点、筛选与事件 | 未开始 |
 | 21—24 | 提醒与 Today、评测、研究结果校准、Windows 交付 | 未开始 |
@@ -93,7 +98,7 @@ research-trail/
 └─ packages/contracts/ # 生成的 openapi.json 与 generated.ts
 ```
 
-参考组件的适配来源和依赖声明见 EVIDENCE.md 第8节及 docs/third-party。
+参考组件的适配来源和依赖声明见 EVIDENCE.md 第8/18节及 docs/third-party。
 
 ## CMD 一条命令启动
 
@@ -123,6 +128,9 @@ research-trail/
 12. 选择旧运行、重读事件、关窗再打开，确认原结果及获取时间保持不变。fixture改价练习见practice第4步，不能改Agent价格或测试预期。
 13. 第5步：选择“延迟演示”，运行查询后点击“取消运行”，确认已取消且无新成功卡片；重复读取不增加最终消息。选择“超时演示”再运行，确认TOOL_TIMEOUT和已超时。
 14. 延迟运行期间删除会话，确认列表消失、另一个会话仍在；再建会话延迟运行并关窗，重新打开确认“已中断”、保留历史，不自动执行。可在输入框手动重新发起。
+15. 第6步：选择已有会话和运行，刷新窗口后核对相同消息ID/条数、工具卡和获取时间；反复“重新读取事件”不会产生新回复或工具调用。再选择延迟运行，展开工具状态，核对执行中→已返回/取消/超时。
+16. 延迟运行期间切到另一会话，确认另一会话无旧消息或结果；原运行可继续在Python中完成，切回后读保存结果。切页或刷新会解除旧连接，再读快照建立新连接。
+17. 后端断开时核对顶层健康及事件连接提示，保存内容保留；“重试启动”后中断状态由Python恢复，不自动发起。SSE单独断流的续读由本机自动化强制关闭指定HTTP请求验证，不通过关闭后端冒充断流测试。
 
 ## 可重复的 CMD 检查
 
@@ -135,6 +143,7 @@ type README.md
 bun run check
 bun run build
 uv run --directory services\backend --frozen python -m pytest -q
+bun run test:stream
 bun run test:desktop
 ```
 
@@ -158,6 +167,6 @@ uv run --directory services\backend --frozen python -m alembic -c alembic.ini ch
 
 参考目录：`D:\folio\主分支和简历skill\folio-main`，只读。原 ZIP 记录来源 commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`；它是来源标识，不等于本地解压目录有 Git 历史。
 
-第1步为本项目新实现；第2步局部适配 Folio 的 Watchlist、QuoteCard、FinancialKLineChart，保留逐文件来源说明，未导入原 TypeScript 后端、图片或完整工作台。用户本轮确认已获原作者复用授权，并明确授权本步公开上传；依该确认执行本步公开范围，未独立取得授权原文，不由 `skills/LICENSE` 推定 Folio 全仓 MIT。图表库 klinecharts 10.0.3 的 Apache-2.0 LICENSE、NOTICE 及所带第三方许可保存在 `docs/third-party/klinecharts`。详细记录见 [证据文档](docs/EVIDENCE.md)。
+第1步为本项目新实现；第2步局部适配Folio的Watchlist、QuoteCard、FinancialKLineChart；第6步局部适配ToolActivity折叠工具时间线及耗时格式，保留逐文件来源说明。没有导入原TypeScript后端、图片、完整侧栏或Markdown/引用系统。按用户此前确认的原作者复用授权及本轮发布指令，将本步局部组件适配纳入公开范围；授权事实保留在第9—11节，未独立取得授权原文，不由`skills/LICENSE`推定Folio全仓MIT。图表库klinecharts的Apache-2.0 LICENSE、NOTICE及所带许可保存在`docs/third-party/klinecharts`。详细记录见 [证据文档](docs/EVIDENCE.md)。
 
 模型密钥、真实账户资料、运行数据库和私人日志不纳入版本控制。项目目标是研究与只读分析，计划不包含交易下单或盈利承诺。
