@@ -23,10 +23,13 @@ def main() -> None:
     port = listener.getsockname()[1]
     server = uvicorn.Server(uvicorn.Config(app, log_level="warning", access_log=False, timeout_graceful_shutdown=2))
 
+    database_lifespan = app.router.lifespan_context
+
     @asynccontextmanager
     async def lifespan(_app):
-        print(json.dumps({"type": "ready", "port": port}), flush=True)
-        yield
+        async with database_lifespan(_app):
+            print(json.dumps({"type": "ready", "port": port}), flush=True)
+            yield
 
     app.router.lifespan_context = lifespan
 

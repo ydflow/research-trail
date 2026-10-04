@@ -1,9 +1,14 @@
 [project]
 name = "research-trail-backend"
 version = "0.0.0"
-description = "ResearchTrail local health service (step 1)"
+description = "ResearchTrail local fixture market and persistent conversation service"
 requires-python = ">=3.12,<3.13"
-dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1"]
+dependencies = [
+    "alembic>=1.15,<2",
+    "fastapi>=0.115,<1",
+    "sqlalchemy>=2.0,<2.1",
+    "uvicorn>=0.34,<1",
+]
 
 [dependency-groups]
 dev = ["pytest>=8,<10", "httpx>=0.28,<1"]

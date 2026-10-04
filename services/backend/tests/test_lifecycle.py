@@ -3,6 +3,7 @@ import os
 import queue
 import subprocess
 import sys
+import sqlite3
 import threading
 import time
 
@@ -69,3 +70,33 @@ def test_owner_pipe_eof_stops_server(servers):
     process, _token, _url = servers()
     process.stdin.close()
     assert process.wait(timeout=5) == 0
+
+
+def test_real_sse_persist_before_send_and_process_restart(servers):
+    process, token, health_url = servers()
+    with httpx.Client(trust_env=False, timeout=3, headers={"X-ResearchTrail-Token": token}) as client:
+        base = health_url.removesuffix("/health")
+        sid = client.post(base + "/sessions", json={"title": "进程重启"}).json()["id"]
+        run = client.post(f"{base}/sessions/{sid}/runs", json={"input": "网络事件"}).json()
+        events = []
+        with client.stream("GET", f"{base}/sessions/{sid}/runs/{run['id']}/events") as response:
+            assert response.status_code == 200
+            for line in response.iter_lines():
+                if not line.startswith("data: "):
+                    continue
+                envelope = json.loads(line[6:])
+                with sqlite3.connect(os.environ["RESEARCH_TRAIL_DB_PATH"]) as db:
+                    saved = db.execute("SELECT envelope FROM events WHERE run_id=? AND sequence=?",
+                                       (run["id"], envelope["sequence"])).fetchone()
+                    assert json.loads(saved[0]) == envelope
+                events.append(envelope)
+        assert [e["sequence"] for e in events] == list(range(1, 8))
+    process.stdin.close()
+    assert process.wait(timeout=5) == 0
+    replacement, next_token, next_url = servers()
+    with httpx.Client(trust_env=False, timeout=3, headers={"X-ResearchTrail-Token": next_token}) as client:
+        base = next_url.removesuffix("/health")
+        assert client.get(f"{base}/sessions/{sid}/messages").json()[0]["content"] == "网络事件"
+        replay = client.get(f"{base}/sessions/{sid}/runs/{run['id']}/event-log?after_sequence=4").json()
+        assert replay["events"] == events[4:]
+        assert replacement.poll() is None
