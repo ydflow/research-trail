@@ -20,6 +20,7 @@ export interface ResearchTrailBridge {
   sessionMessages(sessionId: string): Promise<MessageDTO[]>;
   sessionRuns(sessionId: string): Promise<RunDTO[]>;
   startRun(sessionId: string, input: string): Promise<RunDTO>;
+  startAgentRun(sessionId: string, input: string): Promise<RunDTO>;
   getRun(sessionId: string, runId: string): Promise<RunDTO>;
   runEvents(sessionId: string, runId: string, afterSequence?: number): Promise<StreamEvent[]>;
   onStatus(callback: (state: BackendState) => void): () => void;

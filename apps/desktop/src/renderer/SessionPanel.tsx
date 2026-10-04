@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { MessageDTO, RunDTO, SessionDTO, StreamEvent } from '../conversation-types';
 import { eventDetail, mergeEvents, messageView } from './session-adapter';
+import { ToolResultCards } from './ToolResultCards';
 
 export function SessionPanel({ available }: { available: boolean }) {
   const [sessions, setSessions] = useState<SessionDTO[]>([]);
@@ -62,9 +63,14 @@ export function SessionPanel({ available }: { available: boolean }) {
     finally { setBusy(false); }
   };
   const disabled = busy || loading || !available;
+  const execute = (agent: boolean) => void perform(async () => {
+    const bridge = window.researchTrail!;
+    await (agent ? bridge.startAgentRun(current!.id, input) : bridge.startRun(current!.id, input));
+    setInput(''); setSessions(await bridge.listSessions()); setRevision((v) => v + 1);
+  });
   return <section className="session-panel" aria-label="持久化会话">
-    <div className="market-heading"><h2>研究会话</h2><span className="mock-badge">固定测试事件 · 无Agent</span></div>
-    <p className="market-note">历史由本地服务保存。读取已有事件只展示记录，不重复执行。</p>
+    <div className="market-heading"><h2>研究会话</h2><span className="mock-badge">规则演示／假模型</span></div>
+    <p className="market-note">确定性规则调用Python数据工具，不是真实LLM。历史由本地服务保存，重读不重复执行。</p>
     {!available && <p className="market-message">连接后端后可查看会话历史。</p>}
     {error && <p className="market-error" role="alert">{error}</p>}
     <form className="session-form" onSubmit={(e) => {
@@ -98,27 +104,32 @@ export function SessionPanel({ available }: { available: boolean }) {
             })}>删除当前会话</button>
           </div>
           <div className="message-history" data-testid="message-history" aria-label="消息历史">
-            {messages.length === 0 && <p className="market-note">暂无消息。输入文字，启动一次固定通信测试。</p>}
+            {messages.length === 0 && <p className="market-note">暂无消息。试试“查询AAPL.US行情”或“查看NVDA.US的K线”。</p>}
             {messages.map(messageView).map((message) => <article key={message.id} className={`message ${message.role}`}>
               <div>{message.label}<time>{new Date(message.timestamp).toLocaleString('zh-CN', { hour12: false })}</time></div>
               <p>{message.content}</p>
             </article>)}
           </div>
-          <form className="run-form" onSubmit={(e) => { e.preventDefault(); void perform(async () => {
-            const bridge = window.researchTrail!;
-            await bridge.startRun(current.id, input);
-            setInput(''); setSessions(await bridge.listSessions()); setRevision((v) => v + 1);
-          }); }}>
+          <form className="run-form" onSubmit={(e) => { e.preventDefault(); execute(true); }}>
             <label htmlFor="run-input">测试输入</label>
             <textarea id="run-input" maxLength={2000} rows={2} value={input} onChange={(e) => setInput(e.target.value)} disabled={disabled} />
-            <button disabled={disabled || !input.trim()}>启动固定测试运行</button>
+            <div className="run-actions">
+              <button disabled={disabled || !input.trim()}>运行规则演示</button>
+              <button type="button" className="secondary" disabled={disabled || !input.trim()} onClick={() => execute(false)}>启动固定测试运行</button>
+            </div>
           </form>
           {runs.length > 0 && <div className="event-section">
             <label htmlFor="run-select">运行记录</label>
             <select id="run-select" value={runId} disabled={disabled} onChange={(e) => setRunId(e.target.value)}>
               {runs.map((item) => <option key={item.id} value={item.id}>{item.input} · {new Date(item.started_at).toLocaleTimeString('zh-CN')}</option>)}
             </select>
-            {run && <p className="market-note" data-testid="run-state">固定测试已完成 · {run.last_sequence} 个持久化事件</p>}
+            {run && run.id === runId && <>
+              <p className={run.status === 'failed' ? 'market-error' : 'market-note'} data-testid="run-state">
+                {run.kind === 'fake_agent' ? run.model_label : '固定测试'} · {run.status === 'failed' ? '运行失败' : '已完成'} · {run.last_sequence} 个持久化事件
+              </p>
+              {run.error && <p role="alert" className="market-error" data-testid="run-error">{run.error.code}：{run.error.message}</p>}
+            </>}
+            <ToolResultCards events={events} runId={runId} />
             <button className="secondary" disabled={disabled || !run} onClick={() => void perform(async () => {
               const items = await window.researchTrail!.runEvents(selected, runId);
               setEvents((previous) => mergeEvents(previous, items));
