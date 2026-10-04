@@ -8,9 +8,13 @@ if errorlevel 1 goto missing_uv
 where node >nul 2>nul
 if errorlevel 1 goto missing_node
 set NODE_USE_ENV_PROXY=1
-call bun install --frozen-lockfile
+set INSTALL_OFFLINE=
+if "%RESEARCH_TRAIL_OFFLINE%"=="1" set INSTALL_OFFLINE=--offline
+call bun install --frozen-lockfile %INSTALL_OFFLINE%
 if errorlevel 1 goto failed
-uv sync --project services\backend --frozen
+uv sync --project services\backend --frozen %INSTALL_OFFLINE%
+if errorlevel 1 goto failed
+if "%RESEARCH_TRAIL_OFFLINE%"=="1" node scripts\prepare-electron.mjs --check
 if errorlevel 1 goto failed
 call bun run dev
 if errorlevel 1 goto failed

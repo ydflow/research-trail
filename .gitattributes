@@ -1,0 +1,3 @@
+# Generated contract checks compare exact bytes; Windows checkout must keep LF.
+/packages/contracts/openapi.json text eol=lf
+/packages/contracts/generated.ts text eol=lf

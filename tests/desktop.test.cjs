@@ -31,7 +31,10 @@ async function screenshot(page, name) {
 }
 async function launch(extraEnv = {}) {
   const databasePath = extraEnv.RESEARCH_TRAIL_DB_PATH || resolve(mkdtempSync(resolve(tmpdir(), 'research-trail-qa-')), 'test.sqlite3');
-  const app = await electron.launch({ args: [desktop], cwd: root, env: { ...env, RESEARCH_TRAIL_DB_PATH: databasePath, ...extraEnv } });
+  // Playwright deliberately removes NODE_OPTIONS from Electron's environment.
+  // Load the same offline guard explicitly, before the application entry point.
+  const args = env.RESEARCH_TRAIL_OFFLINE === '1' ? ['-r', resolve(root, 'scripts/offline/electron.cjs'), desktop] : [desktop];
+  const app = await electron.launch({ args, cwd: root, env: { ...env, RESEARCH_TRAIL_DB_PATH: databasePath, ...extraEnv } });
   const page = await app.firstWindow();
   return { app, page, pid: await app.evaluate(() => process.pid), databasePath };
 }
@@ -44,6 +47,21 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
     const errors = [];
     first.page.on('pageerror', (error) => errors.push(error.message));
     await expect(first.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    if (process.env.RESEARCH_TRAIL_OFFLINE === '1') {
+      assert.equal(await first.app.evaluate(() => globalThis[Symbol.for('research-trail.offline')]), true);
+      assert.equal(await first.app.evaluate(() => {
+        const socket = new (process.getBuiltinModule('node:net').Socket)();
+        try { socket.connect({ host: '203.0.113.1', port: 443 }); return false; }
+        catch (error) { return error.message.includes('Offline verification'); }
+        finally { socket.destroy(); }
+      }), true);
+      assert.equal(await first.app.evaluate(async ({ BrowserWindow }) => {
+        try {
+          await BrowserWindow.getAllWindows()[0].webContents.session.fetch('http://203.0.113.1/');
+          return false;
+        } catch (error) { return error.message.includes('ERR_BLOCKED_BY_CLIENT'); }
+      }), true);
+    }
     assert.equal(await first.page.title(), '研迹 · ResearchTrail');
     assert.equal(await first.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()), true);
     assert.match(first.page.url(), /dist\/renderer\/index\.html$/);
@@ -519,6 +537,21 @@ test('snapshot first, real stream reconnect, active refresh and session unsubscr
         const req = original.apply(this, args), url = String(args[0]);
         const item = { url, method: args[1]?.method || 'GET', cursor: args[1]?.headers?.['Last-Event-ID'], req };
         if (url.includes('/sessions/')) globalThis.streamQa.push(item);
+        if (url.includes('follow=true')) {
+          // The initial snapshot may end before or after tool_started. Observe
+          // complete frames after the production decoder, not the start cursor.
+          item.lastReceivedCursor = item.cursor;
+          let buffer = '';
+          req.on('response', (response) => response.on('data', (chunk) => {
+            buffer = (buffer + chunk.toString()).replaceAll('\r\n', '\n');
+            let end;
+            while ((end = buffer.indexOf('\n\n')) >= 0) {
+              const frame = buffer.slice(0, end); buffer = buffer.slice(end + 2);
+              const id = frame.match(/^id: ([^\n]+)$/m);
+              if (id) item.lastReceivedCursor = id[1];
+            }
+          }));
+        }
         return req;
       };
     });
@@ -542,10 +575,14 @@ test('snapshot first, real stream reconnect, active refresh and session unsubscr
     };
     const first = await start('查询AAPL.US行情');
     await expect(instance.page.getByTestId('event-list')).toContainText('tool_started');
-    await instance.app.evaluate(() => {
+    const disconnectedCursor = await instance.app.evaluate(() => {
       const item = globalThis.streamQa.findLast((item) => item.url.includes('follow=true') && !item.req.destroyed);
       if (!item) throw new Error('Expected real live SSE request');
+      // Capture and destroy in one main-process turn: no frame can advance the
+      // expected waterline between separate renderer/main evaluation requests.
+      const cursor = item.lastReceivedCursor;
       item.req.destroy(new Error('test-only stream disconnect'));
+      return cursor;
     });
     await expect(instance.page.getByTestId('stream-state')).toContainText('中断');
     if (process.env.RESEARCH_TRAIL_QA_DIR) await instance.page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, 'stream-reconnecting.png'), fullPage: true });
@@ -557,7 +594,7 @@ test('snapshot first, real stream reconnect, active refresh and session unsubscr
     const streams = trace.filter((item) => item.url.includes(first.id) && item.url.includes('follow=true'));
     assert.equal(streams.length, 2);
     assert.match(streams[1].cursor, new RegExp(`${first.id}:\\d+$`));
-    assert.equal(streams[1].cursor, streams[0].cursor);
+    assert.equal(streams[1].cursor, disconnectedCursor);
     const snapshotIndex = trace.findIndex((item) => item.url.endsWith(`/sessions/${a.id}/snapshot`));
     assert.ok(snapshotIndex >= 0 && snapshotIndex < trace.findIndex((item) => item.url.includes('follow=true')));
     const fetched = await instance.page.getByTestId('tool-fetched-at').textContent();
