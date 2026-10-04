@@ -447,3 +447,7 @@ Browser plugin not available：当前无Browser插件入口，按frontend-testin
 - 未验证/未实施：CI当前没有工作流，不能称CI通过；用户学习/逐项手动、真实LLM/实时行情/账户、真实外部Provider阻塞取消、安装包/干净机器、迁移降级/离线SQL/备份恢复及其他OS未验证。第6步自动SSE重连/完整快照对话及后续步骤未实施；重读事件与重启只保留数据，不自动调用模型/工具。
 
 提交按实际Python新实现、桌面接入、验收文档分开，使用当前作者配置和实际时间。PR链接、最终分支head、检查/合并状态由后续记录及GitHub确认，不在提交中伪造自身SHA。没有打标签、创建Release或启用定时付费评测。
+
+发布分支`feat/step-5-run-lifecycle`已推送，创建 [PR #4](https://github.com/ydflow/research-trail/pull/4)，base为main。已保留Python新实现`5c2791a1fe95b65e6e89bc10ad7e0f35784c6b52`、桌面接入`6b6c57a7d2ee5cb413623fc6ca2752af52c9e805`、验收文档`b094ecc034c7807111e262dfb2a3878951d97089`；无伪造上游作者或时间。创建后实查head与本地一致、28差异文件准确，MERGEABLE/CLEAN、非draft、无review或未解决讨论、检查列表为空；Actions工作流/标签/Release均为0，不能称远程CI通过。
+
+本段仅补PR链接和发布事实；没有改变已验证代码，无需重复业务测试。最终合并前再核对账号/仓库/远程、最终head、base及阻塞检查；只普通merge保留分支提交，不压缩、删除分支或绕过保护。合并SHA、本地main同步和最终工作区状态以GitHub、Git及交付回执为准。测试后实查没有本项目Electron/Python/开发启动器残留；公开候选仍为70个文本文件，来源及第三方声明保留。
