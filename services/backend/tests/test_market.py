@@ -1,10 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 import pytest
 
 from research_trail.app import create_app
+from research_trail import market
 from research_trail.market import FixtureMarketProvider, MARKET_TIME, MarketSnapshot, UnknownSymbolError
 
 TOKEN = "market-test-only-" + "x" * 48
@@ -13,7 +14,20 @@ EXPECTED = {"AAPL.US": 189.43, "NVDA.US": 880.12, "MSFT.US": 412.60, "TSLA.US": 
 
 
 @pytest.mark.parametrize("symbol,price", EXPECTED.items())
-def test_quote_and_candles_are_one_fixed_snapshot(symbol, price):
+@pytest.mark.parametrize("clock_step", [0, 1])
+def test_quote_and_candles_are_one_fixed_snapshot(symbol, price, clock_step, monkeypatch):
+    # Consecutive acquisitions can share a wall-clock tick on Windows.
+    # Verify each recorded time against a controlled clock, including equal ticks.
+    fetched_times = [datetime(2026, 10, 4, 12, tzinfo=timezone.utc)]
+    fetched_times.append(fetched_times[0] + timedelta(seconds=clock_step))
+    ticks = iter(fetched_times)
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return next(ticks)
+
+    monkeypatch.setattr(market, "datetime", Clock)
     with TestClient(create_app(TOKEN)) as client:
         first = client.get(f"/market/snapshot/{symbol}", headers=HEADERS)
         second = client.get(f"/market/snapshot/{symbol}", headers=HEADERS)
@@ -25,9 +39,9 @@ def test_quote_and_candles_are_one_fixed_snapshot(symbol, price):
         assert len(a["klines"]) == 10
         assert a["source"] == "fixture" and a["data_label"] == "模拟数据"
         assert datetime.fromisoformat(a["market_time"]) == MARKET_TIME
-        assert datetime.fromisoformat(a["fetched_at"]) > MARKET_TIME
-        assert a.pop("fetched_at") != b.pop("fetched_at")
-        assert a == b  # all market data/provenance unchanged, except acquisition time
+        assert datetime.fromisoformat(a.pop("fetched_at")) == fetched_times[0]
+        assert datetime.fromisoformat(b.pop("fetched_at")) == fetched_times[1]
+        assert a == b  # market data/provenance unchanged under either clock behavior
 
 
 def test_catalog_and_unknown_symbols_never_fabricate_prices():

@@ -320,3 +320,68 @@ QA 使用 Playwright Electron：本会话未提供 Browser 插件技能，且验
 PR已创建：[ydflow/research-trail #2](https://github.com/ydflow/research-trail/pull/2)，base main，head feat/step-3-persistence；首次head为44f6e867c4c34aa0f6d9cd87928b028e1e2c6288，前三项提交、32个差异文件与本地审核一致。创建后查询为OPEN、非草稿、MERGEABLE、mergeStateStatus CLEAN，reviews和未解决review线程为空；statusCheckRollup为空，Actions工作流为0，CI未配置。tags与Release也为0。
 
 本次PR链接/合并前检查仅补文档并独立提交，不改已复验业务源码。最后一次上传前61个已追踪文本文件共399146字节，完整差异空白、常见密钥特征和产物审核通过，工作区干净。核对补文档后的最终head及账号/目标后，按用户授权普通合并并fast-forward本地main；最终合并SHA以Git/GitHub及发布回执为准。没有将合并前状态提前写作已合并。
+
+## 14. 第4步：Python工具与规则Agent（2026-10-04）
+
+### 范围、基线与来源
+
+本轮只执行第4步开发。先读取项目规则、路线、证据和现有实现；开始时main工作区干净，HEAD为第3步PR #2普通合并提交 `7f925dee768ff33c076582dd9d41055aca9a5932`。本轮没有暂存、提交或GitHub写入，HEAD不变。状态为代码完成/待验收；第5—24步未开始。
+
+只读核对固定Folio参考的 `packages/shared/src/agent/intent-router.ts`、`packages/core/src/stream-events.ts` 和 `packages/shared/src/agent/local-finance-agent-backend.ts`：意图路由、工具注册/执行与回复组合，以及tool_started/tool_result/error/run_completed的协议语义。本步自行实现Python模型、工具和运行器，没有复制原TS业务内核或新增上游源码导入。结果卡片使用第2步已适配的QuoteCard/FinancialKLineChart；这些组件及其来源、版权和授权记录未修改。此前用户确认的复用授权继续按第9—10节原文记载，不扩写为独立核实的全仓MIT许可。没有新增依赖。
+
+### 实际实现与调用链
+
+- `model_provider.py`定义独立ModelProvider协议和FakeModelProvider。确定性规则接受查询/查看、四只支持股票及行情/K线表达；未知意图返回明确支持范围，不调用工具。回复只取工具返回的类型化数据。界面、回复和RunDTO明确标记“规则演示／假模型”，不声称真实LLM。
+- `tools.py`实现白名单注册和参数/结果校验。market.quote与market.kline绑定第2步同一个FixtureMarketProvider；完整快照重新经Pydantic校验，防止错误代码、非有限价格或重复K线时间进入成功结果。模型Provider与数据Provider分别注入，Agent不引用fixture价格常量。
+- `agent.py`本步每次至多执行一个只读工具：计划→tool_started→注册表执行→tool_result→组合回复。调用ID保持一致。UNKNOWN_SYMBOL、PROVIDER_ERROR、INVALID_RESULT等保存为失败结果和error事件，回复说明原因，运行status=failed、终态stop_reason=error；不回退为模拟成功。模型失败另为MODEL_ERROR；回复阶段失败保留真实的成功工具记录。
+- `store.py`沿用会话级事务与序号约束。工具开始事件在调用前收集；短同步运行结束后，将消息、运行及全部事件一起提交，提交后才返回或读取SSE。这里没有长驻实时订阅、逐事件实时落库发送或后台Agent循环。成功工具运行8事件、工具失败9事件、未知意图6事件。原固定测试运行仍有7事件，默认kind=fixture保持兼容。
+- 新迁移 `0002_agent`仅为runs增加可空model_label/error列，不改已公开的0001迁移。RunDTO用契约约束failed/error及fake_agent/model_label一致性。创建失败运行仍返回HTTP201，含已创建记录的明确失败状态，并不表示执行成功。
+- Pydantic/OpenAPI重新生成TypeScript类型。main/preload仅增加startAgentRun命名接口，共16项；渲染进程没有端口/令牌、任意网络请求或数据库权限。SessionPanel显示过程、保存的回复、失败原因及工具结果卡片。重新读取旧运行只显示已保存事件及原获取时间，不调用模型/工具或改成实时行情。
+
+真实链路：SessionPanel → preload.startAgentRun → main参数/来源验证 → 带启动令牌的FastAPI → FakeModelProvider.plan → Python ToolRegistry → FixtureMarketProvider.snapshot → 类型化工具结果 → FakeModelProvider.respond → SQLite事务提交 → 运行/有限SSE → 前端适配和结果卡片。市场时间固定，获取时间由本次数据查询记录，卡片显示“模拟数据”。
+
+### 验证与边界
+
+| 检查 | 实际结果 | 证明与限制 |
+| --- | --- | --- |
+| 契约/TypeScript/开发构建 | 通过 | bun run check、build；生成类型一致，无新增依赖 |
+| Python | 50项通过，1条上游TestClient弃用提示 | 原29项回归＋21项规则/工具/失败/升级验证；最后改动后完整复验通过 |
+| fixture改变回答 | 通过 | 同一FakeModelProvider下改变AAPL/NVDA数据fixture，工具结果及回复同步改变，Agent无需修改；旧保存结果不变 |
+| 实际工具执行证明 | 通过 | SpyProvider调用、匹配的tool_started/tool_result调用ID、工具名/代码/快照、回复数值与SSE/重开历史一致 |
+| 未知意图与失败 | 通过 | 未知意图不调用工具；未知股票、异常Provider、错误代码/NaN/重复K线时间均为failed；模型计划/回复失败分别传播，不暴露原始私密异常文本 |
+| 会话隔离与事件重读 | 通过 | 跨会话查询隔离、删除级联、旧事件重复读取不追加消息或刷新获取时间，失败历史重开保留 |
+| Electron实窗 | 9项通过 | 原8项完整回归另加1项规则Agent实窗；Agent用例最后再复验通过。真实窗口中行情/回复189.43一致、NVDA图表10根K线/末值880.12一致；未知代码失败且无旧卡片 |
+| 画面/进程清理 | 通过 | 查看行情、K线、600×620窄窗与失败截图，无横向溢出；关闭后所属Python退出，测试后未发现本项目Electron/Python/开发启动器残留 |
+| 迁移 | 通过 | 构造真实0001旧结构升级至0002，原固定运行/消息/事件保留；临时库CLI两次upgrade head、current=0002_agent (head)、check无新升级操作 |
+| 根start-dev.cmd | 本轮未重复执行 | 脚本未改，既有第1/2步CMD记录保留；本轮Electron回归覆盖Vite与Python迁移启动 |
+| 用户逐项手动/练习 | 待人工验收 | README第10—12项、practice第4步与三题待用户完成，未代填答案 |
+| 真实LLM/实时行情/账户 | 未执行 | 仅离线规则演示与固定模拟数据，未调用模型API或真实行情 |
+| 多轮Agent/取消/超时/中断恢复/自动流重连 | 未实现/未执行 | 本步短同步、至多一工具；不把重读历史称为任务恢复 |
+| 迁移降级/离线SQL/备份、安装包/干净机器、CI | 未执行 | 只验证现有迁移升级路径和本机开发环境 |
+
+Browser plugin not available：当前会话未提供该插件入口，桌面检查使用本项目已有Playwright Electron实窗工作流。React检查参考react-best-practices技能；使用生成联合类型、基本值依赖和请求过期保护，未引入重复业务状态。
+
+测试数据库在系统临时目录；截图位于仓库外本机 `C:/Users/38905/.codex/visualizations/2026/10/04/01a1052d-756d-7d41-8501-1f906d4fa709/step4`，未上传或加入项目文件。README、ROADMAP、tutorial C05和practice已更新；交付后停止，不执行下一步或自动发布。
+
+收尾审核：67个可交付文件均为文本，常见密钥签名、运行/账户/截图候选以及Markdown本地链接/围栏检查无异常；数据库/WAL/SHM、.env与日志忽略规则有效。git diff --check通过，暂存为空，main HEAD不变。第4步为20个已有文件修改、6个新增文件；工作区外PROJECT_STATE同步当前事实，未修改只读参考。测试窗口与所属后端均已结束。
+
+## 15. 第4步发布复验与交付（2026-10-04）
+
+本节是第14节本地开发后的发布轮次。用户明确授权当前已验收步骤提交功能分支、创建PR，检查通过且无阻塞后保留提交合并并同步main。第4步状态依据自动复验和本轮已验收发布确认更新为验收通过，未代填逐项手动及学习记录。不执行第5步，不打标签、不建Release或配置定时付费评测。
+
+- 身份与目标：gh api user实测ydflow；目标ydflow/research-trail为既有公开研迹项目，默认main，origin fetch/push均为https://github.com/ydflow/research-trail.git。GitHub main、fetch后的origin/main与本地基线均为7f925dee768ff33c076582dd9d41055aca9a5932；当前无开放PR。每次GitHub写入前重新核验，不切换账号或覆盖无关仓库。
+- 差异：开发轮20个已有文件修改、6个新增文件，均属第4步。本次复验另修改test_market.py修复时钟测试，合计27个差异文件。无新上游源码导入；第2步已有组件来源及LICENSE/NOTICE未变，继续保留第9—10节用户确认的原作者复用授权，不扩写其范围。
+- 首次Python复验49通过/1失败：旧行情测试要求两次紧邻查询的fetched_at不同，但Windows两次真实时钟返回相同值。这不说明fixture变为实时行情或遗漏获取时间。修复仅在测试使用受控时钟，覆盖相同tick和相隔1秒，分别核对两次记录时间及不变行情；不人为改业务时间，不删除必要断言，不靠sleep规避。按真实修复单独提交。
+- 修复后完整复验：Python54项通过（新增4项相同时钟覆盖），1条上游TestClient弃用提示；Electron实窗9项完整通过。契约一致性、TypeScript和开发构建通过。临时库CLI两次upgrade head成功，current为0002_agent (head)，check无新升级操作；旧0001结构保留历史升级的验证包含在Python测试中。
+- 上传文件审核：文档更新前67个文本文件470277字节；常见密钥签名、运行/账户/数据库/日志/缓存/截图候选、Markdown本地链接及围栏检查无异常。依赖、构建输出和截图不在候选清单。只提交明确文件，工作区外PROJECT_STATE不上传；测试后无本项目Electron/Python残留。
+- 提交分类：Python新实现/生成契约、桌面新接入/实窗验证、时钟测试修复、文档与验收分别记录；作者沿用ydflow及既有noreply邮箱，使用实际提交时间，不伪造上游导入、作者或历史。
+- 合并门槛：核对PR的base/head、最终提交SHA、可合并状态、checks及未解决review；CI为空时写未配置，不写CI通过。无阻塞时普通merge保留提交，本地main仅fast-forward；不强推、不用admin绕过、不删除分支。
+- 尚未验证：逐项用户手动/学习记录、真实LLM/实时行情/账户、多轮Agent/取消/超时/中断恢复/自动流重连、迁移降级/离线SQL/备份、Windows安装包、干净机器和CI。根start-dev.cmd本轮未重复执行且未改；此前实际CMD记录保留，本轮实窗覆盖开发启动与后端退出。
+
+本节在首次推送前生成；PR链接、提交与最终合并SHA以随后Git/GitHub回执为准，不提前宣称远程写入完成。
+
+已按真实改动创建本地提交：Python新实现 `c47f1c63f32241bcf478444c7a65916dbfa36b11`，桌面接入 `edd32a4e17738f324acaa1acb399a614e5cc1ba9`，时钟测试修复 `655b2a5ad3d0cee49dbc04e02af080bfefbddf88`。文档独立记录验收、调用链和学习材料，自身SHA由Git历史确认；无新增上游导入提交。
+
+PR已创建：[ydflow/research-trail #3](https://github.com/ydflow/research-trail/pull/3)，base main、head feat/step-4-rule-agent，首次head为6aaabeddfc20f7302b03c7ffc8d2fca73ae3c71d。首次推送前67个文本文件474063字节审核通过，完整提交差异空白检查通过，工作区干净。GitHub返回27个准确差异文件、4项提交、非草稿OPEN、MERGEABLE/CLEAN；reviews和未解决review threads均为空，checks为空，Actions工作流0（CI未配置），tags和Release均0。
+
+本次仅补PR链接与检查记录，不改变已复验源码；文档追加单独提交。再次核对最终head、账号/目标与合并条件后，按授权采用普通merge保留提交，本地main只fast-forward。最终合并SHA及同步结果以Git/GitHub和发布回执确认，不在合并前虚构结果。

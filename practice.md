@@ -101,7 +101,23 @@ set "RESEARCH_TRAIL_PYTHON="
 
 用户笔记：待填写。
 
-## C05：假模型与LLM（大纲）
+## 第4步：规则Agent与Python工具验收（待完成）
+
+从CMD运行 `"D:\folio\research-trail\start-dev.cmd"`，切到“会话与事件”，新建会话。输入“查询AAPL.US行情”并点击“运行规则演示”，核对假模型/模拟标签、行情卡片和tool_started/tool_result的Python工具名；输入“查看NVDA.US的K线”，核对图表与回复末收一致。输入“你好”，确认说明支持范围且无工具；输入“查询ZZZZ.US行情”，确认失败终态和错误卡片，没有旧成功数据。
+
+小改动：将 `services/backend/research_trail/market.py` 的AAPL最后示例收盘189.43改为190.43，关闭并重启，再发起新的规则运行。确认回答和卡片一起变化，未改model_provider.py/agent.py；选择旧运行，确认仍是189.43。恢复fixture后运行README检查，不修改测试预期。
+
+三道理解题：
+
+1. 规则模型决定什么，数据Provider决定什么？为什么识别两句指令不等于真实LLM推理？
+2. 如何用tool_started、tool_result、call_id和Provider调用记录证明走过Python工具，而不是Agent自己编了价格？
+3. 工具失败与“不支持的意图”有什么区别？为什么读取旧事件不应再次调用工具？
+
+- 用户手动验收：待用户填写。
+- 小改动与观察：未完成。
+- 三题回答：待用户填写。
+
+## C05：假模型与LLM（已展开第4步；真实LLM待后续）
 
 阅读引导：用“查询AAPL.US行情”沿关键词路由与工具执行走一遍；真实Pi适配在哪里替换了决策/传输？哪一层提供价格？
 

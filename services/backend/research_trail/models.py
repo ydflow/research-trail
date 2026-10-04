@@ -21,6 +21,8 @@ class RunRecord(Base):
     session_id: Mapped[str] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"), index=True)
     kind: Mapped[str] = mapped_column(String(20))
     status: Mapped[str] = mapped_column(String(20))
+    model_label: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    error: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
     input: Mapped[str] = mapped_column(Text)
     answer: Mapped[str] = mapped_column(Text)
     assistant_message_id: Mapped[str] = mapped_column(String(36))

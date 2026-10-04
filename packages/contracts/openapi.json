@@ -5,7 +5,10 @@
         "additionalProperties": false,
         "properties": {
           "stop_reason": {
-            "const": "completed",
+            "enum": [
+              "completed",
+              "error"
+            ],
             "title": "Stop Reason",
             "type": "string"
           }
@@ -36,6 +39,77 @@
         "title": "EmptyPayload",
         "type": "object"
       },
+      "ErrorEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "payload": {
+            "$ref": "#/components/schemas/ErrorPayload"
+          },
+          "protocol_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Protocol Version",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 1,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "type": {
+            "const": "error",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "run_id",
+          "sequence",
+          "timestamp",
+          "type",
+          "payload"
+        ],
+        "title": "ErrorEvent",
+        "type": "object"
+      },
+      "ErrorPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "retryable": {
+            "default": false,
+            "title": "Retryable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorPayload",
+        "type": "object"
+      },
       "EventPage": {
         "additionalProperties": false,
         "properties": {
@@ -43,12 +117,15 @@
             "items": {
               "discriminator": {
                 "mapping": {
+                  "error": "#/components/schemas/ErrorEvent",
                   "message_completed": "#/components/schemas/MessageCompletedEvent",
                   "message_started": "#/components/schemas/MessageStartedEvent",
                   "run_completed": "#/components/schemas/RunCompletedEvent",
                   "run_started": "#/components/schemas/RunStartedEvent",
                   "status": "#/components/schemas/StatusEvent",
-                  "text_delta": "#/components/schemas/TextDeltaEvent"
+                  "text_delta": "#/components/schemas/TextDeltaEvent",
+                  "tool_result": "#/components/schemas/ToolResultEvent",
+                  "tool_started": "#/components/schemas/ToolStartedEvent"
                 },
                 "propertyName": "type"
               },
@@ -70,6 +147,15 @@
                 },
                 {
                   "$ref": "#/components/schemas/RunCompletedEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/ToolStartedEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/ToolResultEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/ErrorEvent"
                 }
               ]
             },
@@ -168,6 +254,76 @@
           "volume"
         ],
         "title": "Kline",
+        "type": "object"
+      },
+      "KlineToolData": {
+        "additionalProperties": false,
+        "properties": {
+          "data_label": {
+            "const": "模拟数据",
+            "title": "Data Label",
+            "type": "string"
+          },
+          "fetched_at": {
+            "format": "date-time",
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "fixture_version": {
+            "const": "authored-v1",
+            "title": "Fixture Version",
+            "type": "string"
+          },
+          "kind": {
+            "const": "kline",
+            "default": "kline",
+            "title": "Kind",
+            "type": "string"
+          },
+          "klines": {
+            "items": {
+              "$ref": "#/components/schemas/Kline"
+            },
+            "minItems": 2,
+            "title": "Klines",
+            "type": "array"
+          },
+          "market_time": {
+            "format": "date-time",
+            "title": "Market Time",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "period": {
+            "const": "1d",
+            "title": "Period",
+            "type": "string"
+          },
+          "source": {
+            "const": "fixture",
+            "title": "Source",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "data_label",
+          "fixture_version",
+          "market_time",
+          "fetched_at",
+          "symbol",
+          "name",
+          "period",
+          "klines"
+        ],
+        "title": "KlineToolData",
         "type": "object"
       },
       "MarketError": {
@@ -503,6 +659,55 @@
         "title": "Quote",
         "type": "object"
       },
+      "QuoteToolData": {
+        "additionalProperties": false,
+        "properties": {
+          "data_label": {
+            "const": "模拟数据",
+            "title": "Data Label",
+            "type": "string"
+          },
+          "fetched_at": {
+            "format": "date-time",
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "fixture_version": {
+            "const": "authored-v1",
+            "title": "Fixture Version",
+            "type": "string"
+          },
+          "kind": {
+            "const": "quote",
+            "default": "quote",
+            "title": "Kind",
+            "type": "string"
+          },
+          "market_time": {
+            "format": "date-time",
+            "title": "Market Time",
+            "type": "string"
+          },
+          "quote": {
+            "$ref": "#/components/schemas/Quote"
+          },
+          "source": {
+            "const": "fixture",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "data_label",
+          "fixture_version",
+          "market_time",
+          "fetched_at",
+          "quote"
+        ],
+        "title": "QuoteToolData",
+        "type": "object"
+      },
       "RunCompletedEvent": {
         "additionalProperties": false,
         "properties": {
@@ -566,6 +771,16 @@
             "title": "Completed At",
             "type": "string"
           },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorPayload"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -575,7 +790,10 @@
             "type": "string"
           },
           "kind": {
-            "const": "fixture",
+            "enum": [
+              "fixture",
+              "fake_agent"
+            ],
             "title": "Kind",
             "type": "string"
           },
@@ -583,6 +801,18 @@
             "minimum": 1,
             "title": "Last Sequence",
             "type": "integer"
+          },
+          "model_label": {
+            "anyOf": [
+              {
+                "const": "规则演示／假模型",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Label"
           },
           "session_id": {
             "title": "Session Id",
@@ -594,7 +824,10 @@
             "type": "string"
           },
           "status": {
-            "const": "completed",
+            "enum": [
+              "completed",
+              "failed"
+            ],
             "title": "Status",
             "type": "string"
           }
@@ -705,6 +938,15 @@
             "maxLength": 2000,
             "minLength": 1,
             "title": "Input",
+            "type": "string"
+          },
+          "kind": {
+            "default": "fixture",
+            "enum": [
+              "fixture",
+              "fake_agent"
+            ],
+            "title": "Kind",
             "type": "string"
           }
         },
@@ -865,6 +1107,230 @@
           "text"
         ],
         "title": "TextPayload",
+        "type": "object"
+      },
+      "ToolArguments": {
+        "additionalProperties": false,
+        "properties": {
+          "symbol": {
+            "pattern": "^[A-Z0-9]{1,6}\\.US$",
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "title": "ToolArguments",
+        "type": "object"
+      },
+      "ToolFailure": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorPayload"
+          },
+          "ok": {
+            "const": false,
+            "default": false,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ToolFailure",
+        "type": "object"
+      },
+      "ToolResultEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "payload": {
+            "$ref": "#/components/schemas/ToolResultPayload"
+          },
+          "protocol_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Protocol Version",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 1,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "type": {
+            "const": "tool_result",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "run_id",
+          "sequence",
+          "timestamp",
+          "type",
+          "payload"
+        ],
+        "title": "ToolResultEvent",
+        "type": "object"
+      },
+      "ToolResultPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "call_id": {
+            "title": "Call Id",
+            "type": "string"
+          },
+          "name": {
+            "enum": [
+              "market.quote",
+              "market.kline"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ToolSuccess"
+              },
+              {
+                "$ref": "#/components/schemas/ToolFailure"
+              }
+            ],
+            "title": "Result"
+          }
+        },
+        "required": [
+          "call_id",
+          "name",
+          "result"
+        ],
+        "title": "ToolResultPayload",
+        "type": "object"
+      },
+      "ToolStartedEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "payload": {
+            "$ref": "#/components/schemas/ToolStartedPayload"
+          },
+          "protocol_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Protocol Version",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 1,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          },
+          "type": {
+            "const": "tool_started",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "run_id",
+          "sequence",
+          "timestamp",
+          "type",
+          "payload"
+        ],
+        "title": "ToolStartedEvent",
+        "type": "object"
+      },
+      "ToolStartedPayload": {
+        "additionalProperties": false,
+        "properties": {
+          "call_id": {
+            "title": "Call Id",
+            "type": "string"
+          },
+          "input": {
+            "$ref": "#/components/schemas/ToolArguments"
+          },
+          "name": {
+            "enum": [
+              "market.quote",
+              "market.kline"
+            ],
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "call_id",
+          "name",
+          "input"
+        ],
+        "title": "ToolStartedPayload",
+        "type": "object"
+      },
+      "ToolSuccess": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "discriminator": {
+              "mapping": {
+                "kline": "#/components/schemas/KlineToolData",
+                "quote": "#/components/schemas/QuoteToolData"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/QuoteToolData"
+              },
+              {
+                "$ref": "#/components/schemas/KlineToolData"
+              }
+            ],
+            "title": "Data"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "title": "ToolSuccess",
         "type": "object"
       },
       "ValidationError": {

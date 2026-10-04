@@ -3,7 +3,8 @@ from uuid import uuid4
 
 from sqlalchemy import delete, func, select
 
-from .conversation import EVENT_ADAPTER, EventPage, MessageDTO, RunDTO, SessionDTO
+from .conversation import EVENT_ADAPTER, MODEL_LABEL, EventPage, MessageDTO, RunDTO, SessionDTO
+from .agent import AgentRunner, AgentOutcome
 from .database import Database
 from .models import EventRecord, MessageRecord, RunRecord, SessionRecord
 
@@ -87,8 +88,14 @@ class Store:
             return RunDTO.model_validate(self.require_run(db, session_id, run_id))
 
     def start_fixture(self, session_id, text):
-        # A bounded fixture is committed atomically, not an Agent or an in-memory event bus.
-        # Returning only after commit guarantees HTTP/SSE never sees unpersisted events.
+        return self._start_run(session_id, text)
+
+    def start_agent(self, session_id, text, runner: AgentRunner):
+        return self._start_run(session_id, text, runner)
+
+    def _start_run(self, session_id, text, runner: AgentRunner | None = None):
+        # Only bounded, synchronous offline runs in this step. Events are captured at
+        # each action, then all records commit together before any response/SSE.
         with self.database.write() as db:
             session = self.require_session(db, session_id)
             message_sequence = (db.scalar(select(func.max(MessageRecord.sequence))
@@ -96,25 +103,36 @@ class Store:
             run_id, user_id, assistant_id = (str(uuid4()) for _ in range(3))
             started = now()
             common = {"protocol_version": 1, "session_id": session_id, "run_id": run_id}
-            specs = [
-                ("run_started", {"input": text, "started_at": started}, None),
-                ("message_started", {}, assistant_id),
-                ("status", {"phase": "working", "detail": "固定测试事件；没有Agent或模型调用。"}, None),
-                *(("text_delta", {"text": part}, assistant_id) for part in FIXTURE_PARTS),
-                ("message_completed", {}, assistant_id),
-                ("run_completed", {"stop_reason": "completed"}, None),
-            ]
             events = []
-            for sequence, (kind, payload, message_id) in enumerate(specs, start=1):
+
+            def emit(kind, payload, message=False):
+                sequence = len(events) + 1
                 data = {**common, "sequence": sequence, "type": kind, "timestamp": now(), "payload": payload}
-                if message_id is not None:
-                    data["message_id"] = message_id
+                if message:
+                    data["message_id"] = assistant_id
                 envelope = EVENT_ADAPTER.validate_python(data).model_dump(mode="json")
                 events.append(EventRecord(run_id=run_id, session_id=session_id, sequence=sequence,
                                           type=kind, timestamp=data["timestamp"], envelope=envelope))
+
+            emit("run_started", {"input": text, "started_at": started})
+            emit("message_started", {}, True)
+            if runner is None:
+                emit("status", {"phase": "working", "detail": "固定测试事件；没有Agent或模型调用。"})
+                outcome = AgentOutcome("".join(FIXTURE_PARTS), "completed")
+                parts = FIXTURE_PARTS
+            else:
+                outcome = runner.run(text, emit)
+                parts = (outcome.answer,)
+            for part in parts:
+                emit("text_delta", {"text": part}, True)
+            emit("message_completed", {}, True)
+            emit("run_completed", {"stop_reason": "error" if outcome.status == "failed" else "completed"})
             completed = now()
-            record = RunRecord(id=run_id, session_id=session_id, kind="fixture", status="completed", input=text,
-                               answer="".join(FIXTURE_PARTS), assistant_message_id=assistant_id,
+            record = RunRecord(id=run_id, session_id=session_id, kind="fake_agent" if runner else "fixture",
+                               status=outcome.status, input=text, answer=outcome.answer,
+                               model_label=MODEL_LABEL if runner else None,
+                               error=outcome.error.model_dump(mode="json") if outcome.error else None,
+                               assistant_message_id=assistant_id,
                                started_at=started, completed_at=completed, last_sequence=len(events))
             db.add(record)
             db.flush()

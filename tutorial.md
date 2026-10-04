@@ -6,9 +6,9 @@
 
 - 参考根：`D:\folio\主分支和简历skill\folio-main`。
 - 参考来源：ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`；本地无Git，不能保证逐文件无本地变化。
-- 新项目根：`D:\folio\research-trail`，当前有第1步健康链、第2步模拟行情、第3步持久化与固定事件源码。
+- 新项目根：`D:\folio\research-trail`，当前有第1步健康链、第2步模拟行情、第3步持久化与第4步最小规则Agent源码。
 - 本次覆盖：入口、界面/客户端、模型与数据、持久化/事件、组合、技能、研究、监控、评测与打包的阅读路线。
-- C01—C03已展开第1—3步真实流程，C04已展开第3步固定事件部分；取消/恢复和C05—C17仍为大纲。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
+- C01—C03已展开第1—3步流程，C04已展开固定事件部分，C05已展开第4步规则Agent与工具；取消/恢复、真实LLM和C06—C17仍为大纲。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
 - 前置知识：Python函数/类与异步、HTTP/JSON、TypeScript接口、React状态、进程与IPC、SQLite基本操作；按课程需要补，不要求先学完全部框架。
 
 主链先建立整体印象：
@@ -19,7 +19,7 @@
   → 事件与结果 → 界面
 ```
 
-研迹已实现界面→Electron桥→Python健康/固定行情/会话API→SQLite，以及已提交事件的SSE读取。
+研迹已实现界面→Electron桥→Python健康/行情/会话API→SQLite，以及规则Agent→Python工具→数据Provider→持久事件/卡片。
 
 ## C01：窗口为何能打开，页面从哪里来？
 
@@ -121,11 +121,11 @@ DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-
 
 `runEvents`在main用带令牌HTTP读取 `/events?after_sequence=N` 的有限SSE，每帧包含id、event、JSON data。Python先从已提交事件表读取，main校验run/session/type/连续序号，再交给页面。HTTP还接受当前run_id:sequence格式的Last-Event-ID；JSON event-log接口支持游标和有界分页，并将事件联合类型纳入OpenAPI。超过末尾的游标报错，跨会话访问404。
 
-本步一次读取在末尾关闭SSE，main收集有限响应后交给页面；没有模拟慢打字、自动EventSource重连或后台任务。点击“重新读取事件”不调用start_fixture，缓存按run_id:sequence合并，消息数不变。事务中任何写入失败会整体回滚，不能发出半条运行。真实模型/工具、取消/超时与快照+实时订阅由步骤4—6实施。
+固定测试一次读取在末尾关闭SSE，main收集有限响应后交给页面；没有模拟慢打字、自动EventSource重连或后台任务。点击“重新读取事件”不调用start_fixture，缓存按run_id:sequence合并，消息数不变。事务中任何写入失败会整体回滚，不能发出半条运行。第4步规则工具见C05；真实模型、取消/超时与快照+实时订阅仍属后续步骤。
 
 ## C05：规则Agent与真实LLM的区别是什么？
 
-状态：大纲。关联步骤4/9。
+状态：第4步已展开，用户练习待完成；真实LLM仍属步骤9。
 
 - 主链：用户文本 → 意图/模型决策 → 工具请求 → 数据结果 → 回答与运行事件。
 - 必读1：`packages/shared/src/agent/intent-router.ts` / `routeFinanceIntent`：关键词和symbol决定意图，不是LLM。
@@ -133,6 +133,18 @@ DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-
 - 必读3：`packages/shared/src/agent/pi-runtime-adapter.ts` / `PiRuntimeAdapter` 与 `pi-rpc-client.ts` / `PiRpcClient`：追真实进程传输和事件适配；研迹计划自己实现Python Runtime，不直接运行TS内核。
 - 验证选读：`packages/shared/src/agent/agent.test.ts`、`workspace-local.test.ts`。
 - 暂缓：模型凭证与数据权限不能混为同一连接，数据路由由C06。
+
+### 研迹的真实流程：一句“查询AAPL.US行情”如何调用Python工具？
+
+1. `SessionPanel`主按钮调用preload.startAgentRun，经IPC runs:agent和 `BackendManager.startAgentRun`发送POST /sessions/{id}/runs，body为input及kind=fake_agent。第3步startRun/fixture入口继续保留；renderer不能指定URL或执行工具。
+2. `app.py`分别注入 `MarketProvider` 与 `ModelProvider`，默认是FixtureMarketProvider和FakeModelProvider。行情HTTP与Agent工具用同一数据Provider；假模型模块不导入fixture价格表，也不访问数据库或网络。
+3. `Store.start_agent`在本步的短同步事务中创建事件身份，调用 `AgentRunner.run`。FakeModelProvider.plan用整句规则匹配“查询/查看＋一个US代码＋行情/K线”；输出ToolCall，未知/含多个标的的意图返回支持范围，不暗选股票或调用工具。
+4. `AgentRunner`先记录tool_started（call_id/name/input），再执行 `ToolRegistry.execute`。Registry只接受注册名称及Pydantic参数，market.quote/market.kline实际调用 `MarketProvider.snapshot`，重新验证第2步MarketSnapshot，再投影为带模拟来源、固定市场时间和获取时间的工具数据。
+5. 成功后记录同call_id的tool_result.ok=true。FakeModelProvider.respond只用返回的报价/最后K线/根数组织文字；修改market.py的示例数据，Agent不用改，回答和卡片就跟着变。失败则记录ok=false、error事件、解释回复、RunDTO.status=failed、run_completed.stop_reason=error，没有成功数据卡片。模型回复失败时，已成功的真实工具结果仍保存，运行失败。
+6. Store把回复消息、所有事件、终态和错误一同提交，然后才能返回或SSE读取。`0002_agent`只增加运行模型标记/错误的可空字段；0001迁移未修改，旧消息/事件仍可读取。工具开始时间在调用前记录，但本步整批在结束后提交，尚不是后台实时订阅或中断恢复。
+7. main校验事件身份/顺序，`ToolResultCards`按生成契约渲染行情卡片或K线图，继承第2步已有组件和来源声明。重读只展示当时保存的结果，获取时间不刷新；运行错误独立显示，不能把tool_result返回当成整次运行成功。
+
+这是一次规则决策、最多一个只读Python工具调用，无LLM推理、完整多轮循环或投资建议。协议新增tool_started、tool_result、error，保留运行ID＋序号与消息ID各自语义。Python测试用记录调用的Provider核对调用次数、名称/参数/call_id、持久结果和回复值，并在同一个模型上改fixture；桌面测试核对真实桥、卡片、画布、错误、重读与重启。
 
 ## C06：真实行情、账户和连接怎样路由？
 

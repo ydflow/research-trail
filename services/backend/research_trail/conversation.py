@@ -4,7 +4,10 @@ This is a Python implementation, not the upstream TypeScript business kernel.
 Wire names are snake_case and UTC ISO times; legacy UI conversions belong in TS.
 """
 from typing import Annotated, Literal
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, TypeAdapter, field_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, TypeAdapter, field_validator, model_validator
+from .market import Quote, Kline
+
+MODEL_LABEL = "规则演示／假模型"
 
 
 class DTO(BaseModel):
@@ -32,6 +35,7 @@ class SessionDTO(DTO):
 
 class StartRun(DTO):
     input: str = Field(min_length=1, max_length=2000)
+    kind: Literal["fixture", "fake_agent"] = "fixture"
 
     @field_validator("input")
     @classmethod
@@ -51,17 +55,79 @@ class MessageDTO(DTO):
     created_at: AwareDatetime
 
 
+class ErrorPayload(DTO):
+    code: str
+    message: str
+    retryable: bool = False
+
+
+class ToolArguments(DTO):
+    symbol: str = Field(pattern=r"^[A-Z0-9]{1,6}\.US$")
+
+
+ToolName = Literal["market.quote", "market.kline"]
+
+
+class ToolCall(DTO):
+    name: ToolName
+    arguments: ToolArguments
+
+
+class MarketProvenance(DTO):
+    source: Literal["fixture"]
+    data_label: Literal["模拟数据"]
+    fixture_version: Literal["authored-v1"]
+    market_time: AwareDatetime
+    fetched_at: AwareDatetime
+
+
+class QuoteToolData(MarketProvenance):
+    kind: Literal["quote"] = "quote"
+    quote: Quote
+
+
+class KlineToolData(MarketProvenance):
+    kind: Literal["kline"] = "kline"
+    symbol: str
+    name: str
+    period: Literal["1d"]
+    klines: list[Kline] = Field(min_length=2)
+
+
+ToolData = Annotated[QuoteToolData | KlineToolData, Field(discriminator="kind")]
+
+
+class ToolSuccess(DTO):
+    ok: Literal[True] = True
+    data: ToolData
+
+
+class ToolFailure(DTO):
+    ok: Literal[False] = False
+    error: ErrorPayload
+
+
 class RunDTO(DTO):
     id: str
     session_id: str
-    kind: Literal["fixture"]
-    status: Literal["completed"]
+    kind: Literal["fixture", "fake_agent"]
+    status: Literal["completed", "failed"]
+    model_label: Literal["规则演示／假模型"] | None = None
+    error: ErrorPayload | None = None
     input: str
     answer: str
     assistant_message_id: str
     started_at: AwareDatetime
     completed_at: AwareDatetime
     last_sequence: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def terminal_consistency(self):
+        if (self.status == "failed") != (self.error is not None):
+            raise ValueError("Failed runs require an error; completed runs cannot carry one")
+        if (self.kind == "fake_agent") != (self.model_label == MODEL_LABEL):
+            raise ValueError("Rule agent runs require their explicit fake-model label")
+        return self
 
 
 class EmptyPayload(DTO):
@@ -83,7 +149,19 @@ class StatusPayload(DTO):
 
 
 class CompletedPayload(DTO):
-    stop_reason: Literal["completed"]
+    stop_reason: Literal["completed", "error"]
+
+
+class ToolStartedPayload(DTO):
+    call_id: str
+    name: ToolName
+    input: ToolArguments
+
+
+class ToolResultPayload(DTO):
+    call_id: str
+    name: ToolName
+    result: ToolSuccess | ToolFailure
 
 
 class Envelope(DTO):
@@ -127,8 +205,24 @@ class RunCompletedEvent(Envelope):
     payload: CompletedPayload
 
 
+class ToolStartedEvent(Envelope):
+    type: Literal["tool_started"]
+    payload: ToolStartedPayload
+
+
+class ToolResultEvent(Envelope):
+    type: Literal["tool_result"]
+    payload: ToolResultPayload
+
+
+class ErrorEvent(Envelope):
+    type: Literal["error"]
+    payload: ErrorPayload
+
+
 StreamEvent = Annotated[RunStartedEvent | MessageStartedEvent | StatusEvent | TextDeltaEvent |
-                        MessageCompletedEvent | RunCompletedEvent, Field(discriminator="type")]
+                        MessageCompletedEvent | RunCompletedEvent | ToolStartedEvent | ToolResultEvent |
+                        ErrorEvent, Field(discriminator="type")]
 EVENT_ADAPTER = TypeAdapter(StreamEvent)
 
 

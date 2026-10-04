@@ -11,6 +11,9 @@ from .conversation import CreateSession, SessionDTO, MessageDTO, StartRun, RunDT
 from .database import Database, default_database_path
 from .store import Store, MissingRecord
 from .market import FixtureMarketProvider, MarketError, MarketProvider, MarketSnapshot, MarketSymbol, UnknownSymbolError
+from .agent import AgentRunner
+from .model_provider import FakeModelProvider, ModelProvider
+from .tools import market_tools
 
 
 class Health(BaseModel):
@@ -20,7 +23,7 @@ class Health(BaseModel):
 
 
 def create_app(token: str, market_provider: MarketProvider | None = None, *,
-               database_path: Path | str | None = None) -> FastAPI:
+               database_path: Path | str | None = None, model_provider: ModelProvider | None = None) -> FastAPI:
     if len(token) < 32:
         raise ValueError("启动令牌缺失或过短；请由 Electron 启动服务。")
     @asynccontextmanager
@@ -36,6 +39,7 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     # Schema export only constructs the app; it never opens a database.
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     provider = market_provider if market_provider is not None else FixtureMarketProvider()
+    runner = AgentRunner(model_provider if model_provider is not None else FakeModelProvider(), market_tools(provider))
 
     def authorize(x_researchtrail_token: Annotated[str | None, Header()] = None):
         if not secrets.compare_digest(x_researchtrail_token or "", token):
@@ -74,6 +78,8 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
 
     @app.post("/sessions/{session_id}/runs", response_model=RunDTO, status_code=201, dependencies=protected)
     def start_run(session_id: str, body: StartRun):
+        if body.kind == "fake_agent":
+            return app.state.store.start_agent(session_id, body.input, runner)
         return app.state.store.start_fixture(session_id, body.input)
 
     @app.get("/sessions/{session_id}/runs/{run_id}", response_model=RunDTO, dependencies=protected)

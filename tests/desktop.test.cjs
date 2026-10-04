@@ -52,7 +52,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       node: typeof window.require,
       process: typeof window.process,
     })), { bridge: ['checkHealth', 'marketSnapshot', 'marketSymbols', 'onStatus', 'retryBackend', 'status',
-      'listSessions', 'createSession', 'getSession', 'deleteSession', 'sessionMessages', 'sessionRuns', 'startRun', 'getRun', 'runEvents'].sort(), node: 'undefined', process: 'undefined' });
+      'listSessions', 'createSession', 'getSession', 'deleteSession', 'sessionMessages', 'sessionRuns', 'startRun', 'startAgentRun', 'getRun', 'runEvents'].sort(), node: 'undefined', process: 'undefined' });
     assert.deepEqual(await first.app.evaluate(({ BrowserWindow }) => {
       const pref = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();
       return { sandbox: pref.sandbox, nodeIntegration: pref.nodeIntegration, contextIsolation: pref.contextIsolation };
@@ -318,4 +318,100 @@ test('database migration startup failure is visible and leaves no backend', { ti
     await expect.poll(() => children(instance.pid)).toEqual([]);
     await screenshot(instance.page, 'database-startup-failure.png');
   } finally { await instance.app.close(); }
+});
+
+test('rule agent invokes Python data tools, renders saved cards and exposes failures', { timeout: 90000 }, async () => {
+  let instance = await launch();
+  const databasePath = instance.databasePath;
+  const errors = [];
+  try {
+    instance.page.on('pageerror', (e) => errors.push(e.message));
+    instance.page.on('console', (message) => { if (['error', 'warning'].includes(message.type())) errors.push(message.text()); });
+    await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    await instance.page.getByRole('button', { name: '会话与事件', exact: true }).click();
+    await expect(instance.page.getByText('规则演示／假模型', { exact: true })).toBeVisible();
+    await instance.page.getByLabel('会话标题', { exact: true }).fill('规则演示验收');
+    await instance.page.getByRole('button', { name: '创建会话', exact: true }).click();
+    await expect(instance.page.getByTestId('current-session')).toHaveText('规则演示验收');
+    const sid = (await instance.page.evaluate(() => window.researchTrail.listSessions()))[0].id;
+    const runPrompt = async (input, count) => {
+      await instance.page.getByLabel('测试输入', { exact: true }).fill(input);
+      await instance.page.getByRole('button', { name: '运行规则演示', exact: true }).click();
+      await expect(instance.page.getByTestId('message-history')).toContainText(input);
+      await expect(instance.page.getByRole('button', { name: '重新读取事件' })).toBeEnabled();
+      await expect(instance.page.getByTestId('event-list').locator('li')).toHaveCount(count);
+      return (await instance.page.evaluate((id) => window.researchTrail.sessionRuns(id), sid))[0];
+    };
+    const quote = await runPrompt('查询AAPL.US行情', 8);
+    await expect(instance.page.getByTestId('run-state')).toContainText('规则演示／假模型 · 已完成');
+    await expect(instance.page.getByTestId('tool-result')).toHaveAttribute('data-tool', 'market.quote');
+    await expect(instance.page.getByTestId('quote-price')).toHaveText('189.43');
+    await expect(instance.page.getByTestId('message-history')).toContainText('AAPL.US最新价 189.43 USD');
+    await expect(instance.page.getByTestId('event-list')).toContainText('调用Python工具 market.quote，参数 AAPL.US');
+    const fetchedAt = await instance.page.getByTestId('tool-fetched-at').textContent();
+    const trace = await instance.page.evaluate(({ sid, rid }) => window.researchTrail.runEvents(sid, rid), { sid, rid: quote.id });
+    assert.equal(trace[3].payload.call_id, trace[4].payload.call_id);
+    assert.equal(trace[4].payload.result.data.quote.last_price, 189.43);
+    assert.equal(quote.kind, 'fake_agent');
+    assert.equal(quote.error, null);
+    if (process.env.RESEARCH_TRAIL_QA_DIR) {
+      mkdirSync(process.env.RESEARCH_TRAIL_QA_DIR, { recursive: true });
+      await instance.page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, 'agent-quote.png'), fullPage: true });
+    }
+    const kline = await runPrompt('查看NVDA.US的K线', 8);
+    await expect(instance.page.getByTestId('tool-result')).toHaveAttribute('data-tool', 'market.kline');
+    await expect(instance.page.getByTestId('agent-kline-summary')).toHaveText('10 根日K线 · 最后收盘 880.12 USD');
+    await expect(instance.page.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-symbol', 'NVDA.US');
+    await expect(instance.page.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-close', '880.12');
+    await expect(instance.page.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-count', '10');
+    assert.ok(await instance.page.getByTestId('chart-canvas').locator('canvas').count() > 0);
+    assert.equal(await instance.page.getByTestId('quote-card').count(), 0);
+    assert.match(kline.answer, /880\.12/);
+    await instance.page.getByLabel('运行记录', { exact: true }).selectOption(quote.id);
+    await expect(instance.page.getByTestId('quote-price')).toHaveText('189.43');
+    await expect(instance.page.getByTestId('tool-fetched-at')).toHaveText(fetchedAt);
+    await instance.page.getByRole('button', { name: '重新读取事件' }).click();
+    await expect(instance.page.getByRole('button', { name: '重新读取事件' })).toBeEnabled();
+    await expect(instance.page.getByTestId('event-list').locator('li')).toHaveCount(8);
+    assert.equal((await instance.page.evaluate((id) => window.researchTrail.getSession(id), sid)).message_count, 4);
+    await instance.page.getByLabel('运行记录', { exact: true }).selectOption(kline.id);
+    await expect(instance.page.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-symbol', 'NVDA.US');
+    if (process.env.RESEARCH_TRAIL_QA_DIR) await instance.page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, 'agent-kline.png'), fullPage: true });
+    await instance.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(600, 620));
+    assert.equal(await instance.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    if (process.env.RESEARCH_TRAIL_QA_DIR) await instance.page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, 'agent-compact.png'), fullPage: true });
+    const unsupported = await runPrompt('请帮我推荐股票', 6);
+    await expect(instance.page.getByTestId('message-history')).toContainText('当前规则演示只支持');
+    assert.equal(unsupported.status, 'completed');
+    assert.equal(await instance.page.getByTestId('tool-result').count(), 0);
+    assert.equal(await instance.page.getByTestId('chart-canvas').count(), 0);
+    const failed = await runPrompt('查询ZZZZ.US行情', 9);
+    await expect(instance.page.getByTestId('run-state')).toContainText('运行失败');
+    await expect(instance.page.getByTestId('run-error')).toContainText('UNKNOWN_SYMBOL');
+    await expect(instance.page.getByTestId('tool-failure')).toContainText('未知股票代码：ZZZZ.US');
+    assert.equal(await instance.page.getByTestId('quote-card').count(), 0);
+    assert.equal(await instance.page.getByTestId('chart-canvas').count(), 0);
+    assert.equal(failed.status, 'failed');
+    const failureTrace = await instance.page.evaluate(({ sid, rid }) => window.researchTrail.runEvents(sid, rid), { sid, rid: failed.id });
+    assert.equal(failureTrace[4].payload.result.ok, false);
+    assert.equal(failureTrace.at(-1).payload.stop_reason, 'error');
+    if (process.env.RESEARCH_TRAIL_QA_DIR) await instance.page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, 'agent-failure.png'), fullPage: true });
+    await assert.rejects(instance.page.evaluate((sid) => window.researchTrail.startAgentRun(sid, { command: 'anything' }), sid), /输入需要/);
+    const owned = children(instance.pid);
+    await instance.app.close(); instance = undefined;
+    for (const pid of owned) await expect.poll(() => alive(pid)).toBe(false);
+    instance = await launch({ RESEARCH_TRAIL_DB_PATH: databasePath });
+    await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    await instance.page.getByRole('button', { name: '会话与事件', exact: true }).click();
+    await expect(instance.page.getByTestId('run-error')).toContainText('UNKNOWN_SYMBOL');
+    await expect(instance.page.getByTestId('event-list').locator('li')).toHaveCount(9);
+    await instance.page.getByLabel('运行记录', { exact: true }).selectOption(quote.id);
+    await expect(instance.page.getByTestId('quote-price')).toHaveText('189.43');
+    await expect(instance.page.getByTestId('tool-fetched-at')).toHaveText(fetchedAt);
+    assert.equal(await instance.page.locator('vite-error-overlay').count(), 0);
+    assert.deepEqual(errors, []);
+    const replacement = children(instance.pid);
+    await instance.app.close(); instance = undefined;
+    for (const pid of replacement) await expect.poll(() => alive(pid)).toBe(false);
+  } finally { if (instance) await instance.app.close(); }
 });
