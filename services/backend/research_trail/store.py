@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from sqlalchemy import delete, func, select
 
-from .conversation import EVENT_ADAPTER, MODEL_LABEL, ErrorPayload, EventPage, MessageDTO, RunDTO, SessionDTO
+from .conversation import EVENT_ADAPTER, MODEL_LABEL, ErrorPayload, EventPage, MessageDTO, RunDTO, SessionDTO, SessionSnapshot
 from .database import Database
 from .models import EventRecord, MessageRecord, RunRecord, SessionRecord
 
@@ -95,6 +95,20 @@ class Store:
     def run(self, session_id, run_id):
         with self.database.sessions() as db:
             return RunDTO.model_validate(self.require_run(db, session_id, run_id))
+
+    def snapshot(self, session_id):
+        with self.database.sessions() as db:
+            # sqlite3 legacy mode does not BEGIN on SELECT. Pin one WAL read
+            # snapshot so message text and each run's event waterline agree.
+            db.connection().exec_driver_sql("BEGIN")
+            session = self.session_dto(db, self.require_session(db, session_id))
+            messages = [MessageDTO.model_validate(row) for row in db.scalars(
+                select(MessageRecord).where(MessageRecord.session_id == session_id).order_by(MessageRecord.sequence))]
+            runs = [RunDTO.model_validate(row) for row in db.scalars(
+                select(RunRecord).where(RunRecord.session_id == session_id).order_by(RunRecord.started_at.desc(), RunRecord.id))]
+            events = [EVENT_ADAPTER.validate_python(row.envelope) for row in db.scalars(
+                select(EventRecord).where(EventRecord.session_id == session_id).order_by(EventRecord.run_id, EventRecord.sequence))]
+            return SessionSnapshot(session=session, messages=messages, runs=runs, events=events)
 
     def start_fixture(self, session_id, text):
         return self._start_run(session_id, text)

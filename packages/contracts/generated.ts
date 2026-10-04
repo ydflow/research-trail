@@ -190,6 +190,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sessions/{session_id}/snapshot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Session Snapshot */
+        get: operations["session_snapshot_sessions__session_id__snapshot_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -692,6 +709,16 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /** SessionSnapshot */
+        SessionSnapshot: {
+            /** Events */
+            events: (components["schemas"]["RunStartedEvent"] | components["schemas"]["MessageStartedEvent"] | components["schemas"]["StatusEvent"] | components["schemas"]["TextDeltaEvent"] | components["schemas"]["MessageCompletedEvent"] | components["schemas"]["RunCompletedEvent"] | components["schemas"]["ToolStartedEvent"] | components["schemas"]["ToolResultEvent"] | components["schemas"]["ErrorEvent"] | components["schemas"]["CancelledEvent"])[];
+            /** Messages */
+            messages: components["schemas"]["MessageDTO"][];
+            /** Runs */
+            runs: components["schemas"]["RunDTO"][];
+            session: components["schemas"]["SessionDTO"];
         };
         /** StartRun */
         StartRun: {
@@ -1358,6 +1385,7 @@ export interface operations {
         parameters: {
             query?: {
                 after_sequence?: number;
+                follow?: boolean;
             };
             header?: {
                 "last-event-id"?: string | null;
@@ -1378,6 +1406,39 @@ export interface operations {
                 };
                 content: {
                     "text/event-stream": string;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    session_snapshot_sessions__session_id__snapshot_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionSnapshot"];
                 };
             };
             /** @description Validation Error */

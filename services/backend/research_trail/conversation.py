@@ -247,3 +247,10 @@ EVENT_ADAPTER = TypeAdapter(StreamEvent)
 class EventPage(DTO):
     events: list[StreamEvent]
     last_sequence: int
+
+
+class SessionSnapshot(DTO):
+    session: SessionDTO
+    messages: list[MessageDTO]
+    runs: list[RunDTO]
+    events: list[StreamEvent]

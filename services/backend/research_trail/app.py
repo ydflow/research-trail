@@ -1,13 +1,14 @@
+import asyncio
 import platform
 import secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, Response
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
-from .conversation import CreateSession, SessionDTO, MessageDTO, StartRun, RunDTO, EventPage
+from .conversation import CreateSession, SessionDTO, MessageDTO, StartRun, RunDTO, EventPage, SessionSnapshot
 from .database import Database, default_database_path
 from .store import Store, MissingRecord, ActiveRun
 from .lifecycle import DatabaseLease, RunManager
@@ -80,6 +81,10 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     def session(session_id: str):
         return app.state.store.session(session_id)
 
+    @app.get("/sessions/{session_id}/snapshot", response_model=SessionSnapshot, dependencies=protected)
+    def session_snapshot(session_id: str):
+        return app.state.store.snapshot(session_id)
+
     @app.delete("/sessions/{session_id}", status_code=204, dependencies=protected)
     def delete_session(session_id: str):
         app.state.manager.delete_session(session_id)
@@ -121,8 +126,8 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     @app.get("/sessions/{session_id}/runs/{run_id}/events", response_class=StreamingResponse,
              responses={200: {"content": {"text/event-stream": {"schema": {"type": "string"}}}}},
              dependencies=protected)
-    def stream_events(session_id: str, run_id: str, after_sequence: int = Query(default=0, ge=0),
-                      last_event_id: Annotated[str | None, Header()] = None):
+    def stream_events(request: Request, session_id: str, run_id: str, after_sequence: int = Query(default=0, ge=0),
+                      last_event_id: Annotated[str | None, Header()] = None, follow: bool = False):
         if last_event_id is not None:
             prefix, separator, cursor = last_event_id.partition(":")
             if prefix != run_id or separator != ":" or len(cursor) > 16 or not cursor.isascii() or not cursor.isdigit():
@@ -130,13 +135,39 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             after_sequence = max(after_sequence, int(cursor))
         # Validate before opening SSE, then send only committed immutable records.
         page = event_page(session_id, run_id, after_sequence)
+        record = app.state.store.run(session_id, run_id)
 
-        def frames():
-            for event in page.events:
-                yield f"id: {event.run_id}:{event.sequence}\nevent: {event.type}\ndata: {event.model_dump_json()}\n\n"
+        async def frames():
+            cursor = after_sequence
+            current = page
+            heartbeat = asyncio.get_running_loop().time()
+            # Ended runs and finite replay keep the original response semantics.
+            while True:
+                for event in current.events:
+                    if await request.is_disconnected():
+                        return
+                    yield f"id: {event.run_id}:{event.sequence}\nevent: {event.type}\ndata: {event.model_dump_json()}\n\n"
+                    cursor = event.sequence
+                    if follow and event.type == "run_completed":
+                        return
+                if not follow or await request.is_disconnected():
+                    return
+                try:
+                    record = await asyncio.to_thread(app.state.store.run, session_id, run_id)
+                    if record.status != "running" and cursor >= record.last_sequence:
+                        return
+                    if asyncio.get_running_loop().time() - heartbeat >= 10:
+                        yield ": keep-alive\n\n"
+                        heartbeat = asyncio.get_running_loop().time()
+                    await asyncio.sleep(0.1)
+                    current = await asyncio.to_thread(app.state.store.events, session_id, run_id, cursor)
+                except MissingRecord:
+                    return  # Session deletion closes its subscription, never recreates it.
 
         return StreamingResponse(frames(), media_type="text/event-stream",
-                                 headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+                                 headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no",
+                                          "X-ResearchTrail-Run-Status": record.status,
+                                          "X-ResearchTrail-Last-Sequence": str(record.last_sequence)})
 
     @app.get("/health", response_model=Health, dependencies=[Depends(authorize)])
     def health() -> Health:
