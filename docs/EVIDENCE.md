@@ -570,10 +570,20 @@ README架构图改为当前真实Python调用链，未来研究/账户不混写�
 用户另授权发布当前已验收的第7步：提交功能分支、创建PR，检查通过且无阻塞后普通合并，保留提交记录并同步main。先前版本发布核对因第7步尚未提交而停止，没有创建v0.1.0标签或Release；本轮只交付第7步源码，不开发第8步，不打标签、创建Release或启用定时付费评测。第20节保留开发轮次事实和逐项未验证记录。
 
 - 身份与基线：本轮gh api user确认ydflow，公开、非fork的ydflow/research-trail默认main，origin fetch/push均为https://github.com/ydflow/research-trail.git。fetch后本地main、origin/main、GitHub main均为f51b802d61896f9da30cd1f6df331c90e75e24b9；没有既有开放PR或同名发布分支。Actions已启用，允许普通merge，main没有分支保护。每次GitHub写入前重新核验账号和目标，不切换账号、强推、删除或覆盖无关内容。
-- 文件范围：9个已有文本修改、12个新增，共21个，全部是第7步测试、离线策略、启动保护、CI和说明。本轮仅同步文档的发布轮次措辞；后端业务、renderer、生成契约、锁文件和已有来源/第三方声明无差异，没有新依赖、迁移、Folio组件导入或原TS后端。公开范围沿用第9—11节用户确认的原作者复用授权，不宣称独立核实全仓MIT。
+- 文件范围：发布开始时9个已有文本修改、12个新增，共21个，全部是第7步测试、离线策略、启动保护、CI和说明。远程CI复验后补一份.gitattributes并修正断流测试预期，最终9个修改、13个新增，共22个；后端业务、renderer、生成契约、锁文件和已有来源/第三方声明无差异，没有新依赖、迁移、Folio组件导入或原TS后端。公开范围沿用第9—11节用户确认的原作者复用授权，不宣称独立核实全仓MIT。
 - 审核：本轮文档更新前86份候选文本共668476字节，常见密钥签名、运行/账户/日志/缓存/图片产物检查未发现异常，git diff --check通过；.env、库/WAL、日志、账户、截图、依赖、虚拟环境、构建目录忽略探针均有效。测试库和桌面证据始终在仓库外，不上传日常数据或截图。扫描是源码审核辅助，不是完整安全认证。
 - 本机完整复验：实际cmd.exe /d /c check.cmd退出0，Python73项、Node离线/SSE/适配8项、真实Electron12项均通过且无跳过；契约、类型、构建和临时库重复迁移通过，head为0003_lifecycle、check无新升级。只有一条上游Starlette/TestClient httpx弃用提示，没有更换依赖或修复业务源码。隔离迁移证据research-trail-verify-y1FLZa。
 - 干净源码重新验收：bun run verify:clean退出0，86份源码导出至系统临时research-trail-clean-2UksOW/clean source；不复制依赖/构建/日常库，新安装71个前端包、28个Python包并准备Electron。副本同样完整73/8/12及契约/类型/构建/重复迁移通过，再由副本自己的根start-dev.cmd打开真实Vite/Electron，完成选股→建会话→行情→取消→关闭/重启历史，保存快照完全相同、4消息/2运行、获取时间不变、无新运行、所属进程归零。最终结果research-trail-cmd-qa-5RzKNV/result.json。可复用本机下载缓存，不称无工具或空缓存机器验收；发布文档的随后更新不改变已验证运行代码。
 - Actions静态：原固定Action SHA和只读Windows工作流保留，actionlint再次通过；安装阶段允许下载，check.cmd仅本机通信、规则假模型与模拟行情，没有真实模型/行情调用。实际远程CI需PR上传后单独核实，不由本地通过推定。
 - 提交归类：Python离线策略/回归是本项目新增测试；桌面/统一验收工具与CI单独提交；开发启动器的离线保护修复单独提交；验收及学习文档单独提交。本步没有新上游导入，不制造不存在的导入或Python业务实现提交。作者沿用ydflow及现有noreply配置，使用实际当前时间，不伪造来源作者或开发时间。
 - 验证边界：仅假模型＋模拟数据的Windows源码。用户亲自清单与练习、真实LLM/行情/账户、真实外部Provider阻塞取消、安装包/无工具干净机器、其他OS、迁移降级/离线SQL/备份恢复、大历史分页/长时重连压力未验证；普通响应/单帧仍为256KiB。PR、远程CI、最终head与合并SHA由实际Git/GitHub和交付回执确认，不提前虚构结果。
+
+发布分支feat/step-7-offline-acceptance创建 [PR #6](https://github.com/ydflow/research-trail/pull/6)，base main、非draft，已核对初始21文件与4提交、作者ydflow及实际时间2026-10-04 23:22:14—15（Asia/Shanghai）。保留Python测试fa73caad79b3db7e22a9b0bb4636af6e6721349d、统一验收/CI 50dfef1cd7bb1fddfd8bdcb05c13de77d2d8b903、启动修复1dba7eff4a87ba8a7030816e65e831e3e53d7753、验收文档a72c1e925636a14fd58e91284e57254ca2ffe258；没有新上游导入。
+
+远程首次 [PR检查37212809774](https://github.com/ydflow/research-trail/actions/runs/37212809774)及push检查37212801583均在契约逐字检查失败，没有合并。通过仓库外git clone --config core.autocrlf=true复现：两份生成文件i/lf、w/crlf，严格字节不同而仅归一CRLF后完全一致。独立修复bad3739a90ea718d6f1a2ebce996817023800329只新增.gitattributes，为这两份生成契约固定text eol=lf，不改契约内容或放宽比较。该隔离Git检出重写后i/lf、w/lf、严格散列相等，新装依赖后完整73/8/12、契约/类型/构建/重复迁移及根CMD历史链通过，证据research-trail-cmd-qa-Rlwsl0（4消息/2运行、同快照、0残留）。这补充了Windows真实Git检出证明，原verify:clean只是按清单复制。
+
+换行修复后 [PR检查37213114420](https://github.com/ydflow/research-trail/actions/runs/37213114420)成功，但push检查37213111655在一个桌面断流断言失败：开始游标为run:3，断开前完整收到tool_started第4帧，正确重连游标为run:4；原测试错误地要求重连仍等于开始游标。独立修复c37a9875a85f4da0415360e4878733d8ae3c43d8：在生产解码器之后旁路观察完整帧ID，并在同一次主进程调用内保存水位/断开，严格断言重连Last-Event-ID等于该水位；保留恰好两次连接、8事件、消息ID去重、快照先于订阅、历史获取时间及POST次数不增、切会话解除等原断言。没有修改生产SSE/快照、fixture或Agent，不用重跑旧失败冒充修复。
+
+断流修复针对性实窗测试1通过，最终本机check.cmd再次完整73/8/12及类型/构建/重复迁移全部通过、退出0，隔离迁移证据research-trail-verify-kmXine。修复后 [push CI 37213537186](https://github.com/ydflow/research-trail/actions/runs/37213537186)实测success，head=c37a9875a85f4da0415360e4878733d8ae3c43d8；对应PR检查及本文随后文档提交的最终检查以 [PR #6检查](https://github.com/ydflow/research-trail/pull/6/checks)中实际head为准。原失败保留为调查记录，不能替代最终检查。
+
+本次仅同步PR链接、修复与已验证记录，独立文档提交，不改变已验证运行代码。合并前再核验最终head/base、全部检查、账号/目标、未解决讨论及文件清单；检查全通过且无阻塞才按用户授权普通merge保留提交，本地main只fast-forward。最终合并SHA、main同步及远程最新检查由Git/GitHub和交付回执确认，不提前写作已合并；没有标签、Release、删分支、强推或下一步功能。
