@@ -1,4 +1,4 @@
-import type { MessageDTO, RunDTO, StreamEvent } from '../conversation-types';
+import type { MessageDTO, RunDTO, StreamEvent, SessionSnapshot } from '../conversation-types';
 
 export function runStatus(status: RunDTO['status']) {
   return { running: '运行中', completed: '已完成', failed: '运行失败', cancelled: '已取消',
@@ -31,4 +31,44 @@ export function mergeEvents(previous: StreamEvent[], incoming: StreamEvent[]) {
   const cache = new Map(previous.map((event) => [`${event.run_id}:${event.sequence}`, event]));
   for (const event of incoming) cache.set(`${event.run_id}:${event.sequence}`, event);
   return [...cache.values()].sort((a, b) => a.sequence - b.sequence);
+}
+
+// Snapshot text already includes its event waterline. Only unseen protocol
+// events update the same message ID; no legacy message channel is subscribed.
+export function applySessionEvent(snapshot: SessionSnapshot, event: StreamEvent): SessionSnapshot {
+  if (event.session_id !== snapshot.session.id) return snapshot;
+  const run = snapshot.runs.find((item) => item.id === event.run_id);
+  if (!run || event.sequence <= run.last_sequence) return snapshot;
+  if (event.sequence !== run.last_sequence + 1) throw new Error('事件序号不连续，请重新读取会话。');
+  return { ...snapshot,
+    events: mergeEvents(snapshot.events, [event]),
+    runs: snapshot.runs.map((item) => item.id === run.id ? { ...item, last_sequence: event.sequence } : item),
+    messages: event.type === 'text_delta' ? snapshot.messages.map((item) => item.id === event.message_id && item.run_id === event.run_id
+      ? { ...item, content: item.content + event.payload.text } : item) : snapshot.messages,
+  };
+}
+
+export interface ToolView {
+  id: string; name: string; symbol: string; startedAt: number; completedAt?: number;
+  status: 'running' | 'success' | 'error' | 'cancelled' | 'timed_out' | 'interrupted';
+}
+
+export function toolViews(events: StreamEvent[], run: RunDTO): ToolView[] {
+  const calls = new Map<string, ToolView>();
+  for (const event of events) {
+    if (event.run_id !== run.id) continue;
+    if (event.type === 'tool_started') calls.set(event.payload.call_id, { id: event.payload.call_id, name: event.payload.name,
+      symbol: event.payload.input.symbol, startedAt: Date.parse(event.timestamp), status: 'running' });
+    if (event.type === 'tool_result') {
+      const call = calls.get(event.payload.call_id);
+      if (call) { call.status = event.payload.result.ok ? 'success' : 'error'; call.completedAt = Date.parse(event.timestamp); }
+    }
+  }
+  for (const call of calls.values()) {
+    if (call.status === 'running' && run.status !== 'running') {
+      call.status = ['cancelled', 'timed_out', 'interrupted'].includes(run.status) ? run.status as ToolView['status'] : 'error';
+      call.completedAt = run.completed_at ? Date.parse(run.completed_at) : undefined;
+    }
+  }
+  return [...calls.values()];
 }

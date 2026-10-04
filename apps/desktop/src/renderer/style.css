@@ -87,5 +87,11 @@ h2, h3 { margin: 0; font-size: 20px; }
 .tool-result .quote-card { border-top: 0; padding-top: 0; }
 .tool-result .chart-heading { border-top: 0; }
 .tool-failure { border-color: #e1b7ad; }
+.stream-state { color: var(--muted); font-size: 13px; padding: 10px 12px; background: #f4f8f6; border-radius: 6px; }
+.tool-activity { margin: 16px 0; border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+.tool-activity ul { margin: 12px 0 0; padding: 0; list-style: none; }
+.tool-activity li { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; line-height: 1.8; overflow-wrap: anywhere; }
+.event-details { margin-top: 18px; }
+.event-details summary { cursor: pointer; color: var(--muted); }
 @media (max-width: 760px) { .session-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; } .session-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }
 @media (max-width: 660px) { header { margin: 0 16px; padding: 24px 12px 20px; } main { width: calc(100% - 56px); margin-top: 28px; } footer { padding: 20px 28px 28px; } .health-row { font-size: 16px; } .stock-list { grid-template-columns: repeat(2, 1fr); } .metrics { grid-template-columns: repeat(3, 1fr); row-gap: 18px; } .chart-canvas { height: 270px; } }

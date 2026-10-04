@@ -1034,6 +1034,89 @@
         "title": "SessionDTO",
         "type": "object"
       },
+      "SessionSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "events": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "cancelled": "#/components/schemas/CancelledEvent",
+                  "error": "#/components/schemas/ErrorEvent",
+                  "message_completed": "#/components/schemas/MessageCompletedEvent",
+                  "message_started": "#/components/schemas/MessageStartedEvent",
+                  "run_completed": "#/components/schemas/RunCompletedEvent",
+                  "run_started": "#/components/schemas/RunStartedEvent",
+                  "status": "#/components/schemas/StatusEvent",
+                  "text_delta": "#/components/schemas/TextDeltaEvent",
+                  "tool_result": "#/components/schemas/ToolResultEvent",
+                  "tool_started": "#/components/schemas/ToolStartedEvent"
+                },
+                "propertyName": "type"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/RunStartedEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/MessageStartedEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/StatusEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/TextDeltaEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/MessageCompletedEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/RunCompletedEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/ToolStartedEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/ToolResultEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/ErrorEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/CancelledEvent"
+                }
+              ]
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/MessageDTO"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/RunDTO"
+            },
+            "title": "Runs",
+            "type": "array"
+          },
+          "session": {
+            "$ref": "#/components/schemas/SessionDTO"
+          }
+        },
+        "required": [
+          "session",
+          "messages",
+          "runs",
+          "events"
+        ],
+        "title": "SessionSnapshot",
+        "type": "object"
+      },
       "StartRun": {
         "additionalProperties": false,
         "properties": {
@@ -2290,6 +2373,16 @@
             }
           },
           {
+            "in": "query",
+            "name": "follow",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Follow",
+              "type": "boolean"
+            }
+          },
+          {
             "in": "header",
             "name": "last-event-id",
             "required": false,
@@ -2345,6 +2438,61 @@
           }
         },
         "summary": "Stream Events"
+      }
+    },
+    "/sessions/{session_id}/snapshot": {
+      "get": {
+        "operationId": "session_snapshot_sessions__session_id__snapshot_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionSnapshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Session Snapshot"
       }
     }
   }

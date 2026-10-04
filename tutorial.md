@@ -6,9 +6,9 @@
 
 - 参考根：`D:\folio\主分支和简历skill\folio-main`。
 - 参考来源：ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`；本地无Git，不能保证逐文件无本地变化。
-- 新项目根：`D:\folio\research-trail`，当前有第1—5步健康、模拟行情、持久化、规则Agent与运行生命周期源码。
+- 新项目根：`D:\folio\research-trail`，当前有第1—6步健康、模拟行情、持久化、规则Agent、运行生命周期及快照/SSE续读源码。
 - 本次覆盖：入口、界面/客户端、模型与数据、持久化/事件、组合、技能、研究、监控、评测与打包的阅读路线。
-- C01—C05已展开第1—5步流程，C04包含取消/超时与重启中断；自动流重连、真实LLM和C06—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
+- C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；真实LLM和C06—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
 - 前置知识：Python函数/类与异步、HTTP/JSON、TypeScript接口、React状态、进程与IPC、SQLite基本操作；按课程需要补，不要求先学完全部框架。
 
 主链先建立整体印象：
@@ -104,7 +104,7 @@ DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-
 
 ## C04：运行如何流式更新、取消并重放？
 
-状态：第3步固定事件已展开；真实运行、取消和流重连仍为后续大纲。关联步骤3/5/6。
+状态：第3—6步固定事件、规则运行、取消和流重连已展开；真实模型仍待后续。关联步骤3/5/6。
 
 - 主链：startRun → RunManager驱动Runtime → 持久化/广播事件 → KernelBridge更新UI；取消在执行中进入终态。
 - 必读1：`packages/shared/src/kernel/run-manager.ts` / `RunManager.startRun`、`cancelRun`：区分请求返回和后台事件完成。
@@ -121,7 +121,7 @@ DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-
 
 `runEvents`在main用带令牌HTTP读取 `/events?after_sequence=N` 的有限SSE，每帧包含id、event、JSON data。Python先从已提交事件表读取，main校验run/session/type/连续序号，再交给页面。HTTP还接受当前run_id:sequence格式的Last-Event-ID；JSON event-log接口支持游标和有界分页，并将事件联合类型纳入OpenAPI。超过末尾的游标报错，跨会话访问404。
 
-固定测试一次读取在末尾关闭SSE，main收集有限响应后交给页面；这个fixture入口没有后台任务。点击“重新读取事件”不调用start_fixture，缓存按run_id:sequence合并，消息数不变。事务中任何写入失败会整体回滚。规则工具见C05，规则运行的第5步生命周期见下文；真实模型及快照+实时订阅仍属后续步骤。
+固定测试一次读取在末尾关闭SSE，main收集有限响应后交给页面；这个fixture入口没有后台任务。第6步“重新读取事件”改读完整会话快照，不调用start_fixture，消息数不变。规则工具见C05，运行生命周期及快照/实时订阅见下文；真实模型仍属后续步骤。
 
 ### 第5步：取消、超时和完成为什么只能赢一次？
 
@@ -132,9 +132,20 @@ DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-
 5. 删除入口持有同一管理锁，先取消该会话活动运行，再级联删除。启动与删除不能交错产生孤儿运行；迟到线程不能重新建立被删记录。数据库索引进一步限制每会话一个running、每运行每角色一消息。
 6. 启动先取得`DatabaseLease`再迁移和`Store.recover_interrupted`。同库仍被活后端占用时明确拒绝启动；系统会在进程硬退出后释放持有锁。正常关闭主动标记interrupted，硬退出留下的running在下次启动标记中断，补唯一终态并保留历史。这里只允许手动重新发起，不重调旧模型/工具。
 7. `0003_lifecycle`把completed_at改为可空，保留原历史、复合外键与last_sequence检查。SQLite父表重建只在专用迁移连接临时关闭外键，检查完整性后提交并再开启；业务连接保持外键开启。降级被明确拒绝，备份恢复未验证。
-8. `SessionPanel`每200ms读取当前保存状态与有限SSE快照；查看旧运行时也更新同会话活动状态，终态后停止轮询。前端不推断终态、不自动重发、不实现第6步长驻流重连。
+8. 第5步原界面每200ms读取状态与有限SSE。第6步已替换为数据库快照→持续订阅→终态快照；后台运行及唯一终态机制继续使用第5步实现，前端不推断终态或重发请求。
 
 阅读顺序：`conversation.py`→`store.py`的begin_agent/append_running/finish→`lifecycle.py`→`app.py`→主进程/preload→SessionPanel。对照参考`packages/shared/src/kernel/run-manager.ts`的cancelRun/consumeRuntime和`packages/core/src/stream-events.ts`的cancelled.partial、stopReason语义；不运行原TS内核。本项目以error和明确stop_reason区分超时/中断，不照搬上游预算/多轮功能。
+
+### 第6步：为什么快照之后还要从水位续读？
+
+1. `Store.snapshot`显式BEGIN读事务固定同一个SQLite WAL版本，查询会话、消息、运行、所有事件；每运行last_sequence与已显示文字一致。只读，不经过AgentRunner。`SessionSnapshot`经OpenAPI生成TypeScript，preload.sessionSnapshot只请求这个命名接口。
+2. `SessionPanel`收到快照才调用subscribeRun，传入活动运行的last_sequence。快照之后、订阅之前写入的新事件通过Python `/events?follow=true`重放；不能直接订阅“最新”，否则间隙会丢事件。默认follow=false仍保留第3步有限重放语义。
+3. `RunSubscription`在main持有带令牌的本机HTTP请求。FrameDecoder跨块保存半帧，decodeEvent校验session/run/type/id和序号。只有完整连续事件才推进游标，重复帧忽略；中断从该游标及同值Last-Event-ID退避重连。Python只从已提交事件读取，结束头/末事件明确正常EOF；已读到终态末尾不空转重连。
+4. preload以独立订阅ID过滤IPC，解除函数移除监听并关闭main请求。SessionPanel effect退出先失效旧回调，再解除订阅；main额外在页面导航/销毁、后端关闭清理请求/重连定时器。旧快照晚到或旧流晚到不能写入新会话。
+5. `applySessionEvent`只更新本会话已知运行、连续未见序号和原message_id；快照里已有文本不会再追加，不另消费旧消息渠道。收到run_completed后重新读取Python快照决定终态；接收事件只更新显示缓存，不管理数据库业务。
+6. `toolViews`是前端适配层，把tool_started/tool_result与Python终态投影成工具状态。局部移植ToolActivity折叠/耗时显示，沿用已有结果卡；没有引入完整Folio侧栏、旧TS类型、Jotai、Markdown或研究/组合页面。
+
+从快照读取历史、SSE续读或切回会话，始终只GET，不能自动执行原工具。模拟行情的获取时间因此保持原值；重新发起是用户明确POST产生一个新运行。参考streamAtoms按运行+序号幂等思路，但其旧渠道与新协议不同时接入；侧栏和输入保留研迹现有组件。
 
 ## C05：规则Agent与真实LLM的区别是什么？
 
@@ -154,7 +165,7 @@ DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-
 3. 第5步起由`RunManager.start`先创建持久运行，再在工作线程调用`AgentRunner.run`。FakeModelProvider.plan用整句规则匹配“查询/查看＋一个US代码＋行情/K线”；输出ToolCall，未知/含多个标的的意图返回支持范围，不暗选股票或调用工具。
 4. `AgentRunner`先记录tool_started（call_id/name/input），再执行 `ToolRegistry.execute`。Registry只接受注册名称及Pydantic参数，market.quote/market.kline实际调用 `MarketProvider.snapshot`，重新验证第2步MarketSnapshot，再投影为带模拟来源、固定市场时间和获取时间的工具数据。
 5. 成功后记录同call_id的tool_result.ok=true。FakeModelProvider.respond只用返回的报价/最后K线/根数组织文字；修改market.py的示例数据，Agent不用改，回答和卡片就跟着变。失败则记录ok=false、error事件、解释回复、RunDTO.status=failed、run_completed.stop_reason=error，没有成功数据卡片。模型回复失败时，已成功的真实工具结果仍保存，运行失败。
-6. 第4步原为整批结束后提交；第5步起每个过程事件先提交，终态事务统一保存最终回复、错误和结束事件。0001/0002迁移未修改，0003保留旧消息/事件。SSE仍是有限快照，自动流重连未实现。
+6. 第4步原为整批结束后提交；第5步起过程逐事件提交、终态统一提交。0001/0002/0003迁移保留，第6步没有新迁移；会话一致快照和活动SSE续读见C04。
 7. main校验事件身份/顺序，`ToolResultCards`按生成契约渲染行情卡片或K线图，继承第2步已有组件和来源声明。重读只展示当时保存的结果，获取时间不刷新；运行错误独立显示，不能把tool_result返回当成整次运行成功。
 
 这是一次规则决策、最多一个只读Python工具调用，无LLM推理、完整多轮循环或投资建议。协议新增tool_started、tool_result、error，保留运行ID＋序号与消息ID各自语义。Python测试用记录调用的Provider核对调用次数、名称/参数/call_id、持久结果和回复值，并在同一个模型上改fixture；桌面测试核对真实桥、卡片、画布、错误、重读与重启。

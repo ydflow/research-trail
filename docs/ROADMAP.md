@@ -11,7 +11,8 @@
 - 第3步：验收通过；SQLite四类记录、会话操作、固定测试运行和有限SSE已实现，Python29项、Electron8项、重复迁移与模型一致性复验通过，用户本轮明确按已验收步骤发布；逐项手动及练习记录待补。交付为 [PR #2](https://github.com/ydflow/research-trail/pull/2)，发布记录见EVIDENCE第13节。
 - 第4步：验收通过；Python命名工具、FakeModelProvider、最小Agent运行、工具事件和结果卡片已实现，fixture变化/调用证据/错误终态/旧库升级自动化通过；发布复验Python54项、Electron9项通过，用户本轮明确按已验收步骤发布。逐项手动和练习记录待补；交付为 [PR #3](https://github.com/ydflow/research-trail/pull/3)，发布记录见EVIDENCE第15节。
 - 第5步：验收通过；后台规则运行、主动取消、工具/整体超时、唯一终态、先取消后删除及重启中断已实现；发布复验Python67项、Electron实窗10项、类型/构建及重复迁移通过，用户本轮明确按已验收步骤发布。逐项手动及练习记录待补；交付为 [PR #4](https://github.com/ydflow/research-trail/pull/4)，发布证据见EVIDENCE第17节。
-- 第6—24步：未开始；没有用户具体指令不继续。
+- 第6步：验收通过；数据库一致快照、活动SSE订阅、断流续读和去重、刷新/会话切换清理、工具状态与历史显示已实现。发布复验Python72项、传输/适配5项、Electron实窗12项、契约/类型/构建及重复迁移通过，用户本轮明确按已验收步骤发布；交付为 [PR #5](https://github.com/ydflow/research-trail/pull/5)，逐项手动及学习待填，证据见EVIDENCE第18—19节。
+- 第7—24步：未开始；没有用户具体指令不继续。
 - 默认分支 `main`；第0/1步首次上传检查见EVIDENCE第7节，第2步发布检查见第9—10节，提交历史和远程状态以Git为准。
 - 状态取值：未开始 / 进行中 / 代码完成/待验收 / 验收通过 / 受阻。
 - 来源：固定 ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`，本地只读路径 `D:\folio\主分支和简历skill\folio-main`。
@@ -26,7 +27,7 @@
 | 3 | SQLite/SQLAlchemy/Alembic，会话/消息/运行/事件与 SSE | 2 | 两会话隔离；重启历史；先存后发；按序事件；重复迁移 | 验收通过 |
 | 4 | 假模型 Agent、Python 工具注册与结果卡片 | 3 | 调用数据工具；fixture 改变结果；假模型标签；错误不伪装成功 | 验收通过 |
 | 5 | 取消/超时竞争、删会话、重启中断 | 4 | 唯一终态，无永久 running；保留部分结果，不自动重调用 | 验收通过 |
-| 6 | 对话界面、快照恢复、事件重连和去重 | 5 | 会话不串消息；运行 ID+序号去重；历史不重执行 | 未开始 |
+| 6 | 对话界面、快照恢复、事件重连和去重 | 5 | 会话不串消息；运行 ID+序号去重；历史不重执行 | 验收通过 |
 | 7 | 首版验收、离线 CI、干净源码启动、说明 | 6 | 相关检查通过；桌面人工另验；仅准备 v0.1.0，不自动发布 | 未开始 |
 | 8 | 模型/行情/账户设置、凭证、个人资料、诊断 | 7 | 独立健康状态；系统凭证存储；日志/接口不返密钥；先假连接 | 未开始 |
 | 9 | OpenAI 兼容模型与工具循环 | 8 | 默认 8 轮工具/整体 120 秒；只读参数校验；可取消；真实验证另记 | 未开始 |
@@ -50,14 +51,14 @@
 
 ## 功能对照与来源索引
 
-以下相对路径都相对于 **只读参考 Folio**。研迹第1—5步健康、固定行情、持久化、规则Agent及运行生命周期已实现，其余业务未开始；参考源码存在仅能证明有可阅读的实现，不能证明本机运行或生产正确。
+以下相对路径都相对于 **只读参考 Folio**。研迹第1—6步健康、固定行情、持久化、规则Agent、运行生命周期及会话快照/事件恢复已实现，其余业务未开始；参考源码存在仅能证明有可阅读的实现，不能证明本机运行或生产正确。
 
 | 功能组 | 参考源码位置 | 研迹计划承担方 / 步骤 | 研迹实现 / 验证 |
 | --- | --- | --- | --- |
 | Electron 窗口与通信 | `apps/electron/src/main/index.ts`；`src/preload/index.ts` | Electron 管桌面/Python 进程，步骤1 | 健康链已实现 / 本机实窗自动化通过；用户手动待验 |
 | 前端客户端与类型 | `packages/ui/src/client.tsx`；`packages/core/src/index.ts` | Python/OpenAPI + TS 适配，步骤2/3 | 行情、会话/消息/运行/事件契约生成已实现 / 一致性与类型检查通过 |
 | 行情、K线、模拟来源 | `packages/shared/src/agent/demo-market-data.ts`；`packages/ui/src/components/workspace` | Python Provider + 页面，步骤2/11 | 四股票固定Fixture与局部界面已实现 / 后端、实窗自动化通过；完整市场页与真实数据未开始 |
-| 会话、运行、取消和事件 | `packages/shared/src/kernel/session-manager.ts`、`run-manager.ts`、`stream-event-log.ts`；`packages/core/src/stream-events.ts` | Python 内核/SQLite/SSE，步骤3—6 | 四类持久化、规则后台运行、取消/超时与重启中断已实现 / 隔离、唯一终态、重启、按序SSE、迁移自动化通过；自动流重连未实现 |
+| 会话、运行、取消和事件 | `packages/shared/src/kernel/session-manager.ts`、`run-manager.ts`、`stream-event-log.ts`；`packages/core/src/stream-events.ts`；UI的`atoms/streamAtoms.ts`、`components/agent/ToolActivity.tsx` | Python 内核/SQLite/SSE及前端适配，步骤3—6 | 四类持久化、生命周期、一致快照及活动SSE续读已实现 / 隔离、唯一终态、刷新、重连去重、切换解除及迁移自动化见证据；仅显示恢复，不恢复执行 |
 | 本地规则与真实模型 | `packages/shared/src/agent/intent-router.ts`、`local-finance-agent-backend.ts`、`pi-runtime-adapter.ts` | 独立 FakeModel/OpenAI 兼容 Python Runtime，步骤4/9 | Python规则/假模型、行情/K线工具及持久结果卡片已实现 / fixture变化、调用证据、错误终态自动化通过；真实LLM和完整工具循环未开始 |
 | 设置、凭证、诊断 | `packages/ui/src/components/settings`；`apps/electron/src/main/kernelHost.ts` | Python 健康/系统凭证 + 页面，步骤8 | 未实现 / 未执行 |
 | 行情/账户提供商 | `packages/shared/src/providers/router.ts`、`longbridge`、`massive` | Python SDK/只读CLI适配，步骤10 | 未实现 / 未执行 |
@@ -94,7 +95,7 @@
 
 ## 本地操作和下一条提示词
 
-当前可通过根目录 `start-dev.cmd` 运行第1—5步。用户逐项手动记录、练习与回答待补；本轮仅发布已验收的第5步，不执行第6步。下面保留第1步原始范围供历史对照，不是重复执行指令。
+当前可通过根目录 `start-dev.cmd` 运行第1—6步。用户逐项手动记录、练习与回答待补；本轮仅发布已验收的第6步，不执行第7步。下面保留第1步原始范围供历史对照，不是重复执行指令。
 
 ```text
 在D:\folio\research-trail执行第1步。先读取AGENTS.md、docs/ROADMAP.md、docs/EVIDENCE.md和已有文件。

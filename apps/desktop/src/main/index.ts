@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, type IpcMainInvokeEvent } from 'electron';
+import { app, BrowserWindow, ipcMain, type IpcMainInvokeEvent, type IpcMainEvent } from 'electron';
 import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { BackendManager } from './backend';
@@ -12,7 +12,7 @@ const devUrl = process.env.RESEARCH_TRAIL_RENDERER_URL;
 if (devUrl && (new URL(devUrl).hostname !== '127.0.0.1' || new URL(devUrl).protocol !== 'http:')) throw new Error('开发页面必须来自本机 Vite。');
 const rendererUrl = devUrl || pathToFileURL(join(__dirname, 'renderer/index.html')).href;
 
-function assertSender(event: IpcMainInvokeEvent) {
+function assertSender(event: IpcMainInvokeEvent | IpcMainEvent) {
   if (!window || event.sender !== window.webContents || event.senderFrame !== window.webContents.mainFrame || event.senderFrame.url !== rendererUrl) throw new Error('不允许的 IPC 来源。');
 }
 
@@ -44,11 +44,26 @@ app.whenReady().then(async () => {
   ipcMain.handle('sessions:delete', (event, id: unknown) => { assertSender(event); return backend.deleteSession(id); });
   ipcMain.handle('sessions:messages', (event, id: unknown) => { assertSender(event); return backend.sessionMessages(id); });
   ipcMain.handle('sessions:runs', (event, id: unknown) => { assertSender(event); return backend.sessionRuns(id); });
+  ipcMain.handle('sessions:snapshot', (event, id: unknown) => { assertSender(event); return backend.sessionSnapshot(id); });
   ipcMain.handle('runs:start', (event, id: unknown, input: unknown) => { assertSender(event); return backend.startRun(id, input); });
   ipcMain.handle('runs:agent', (event, id: unknown, input: unknown, scenario: unknown) => { assertSender(event); return backend.startAgentRun(id, input, scenario); });
   ipcMain.handle('runs:cancel', (event, id: unknown, runId: unknown) => { assertSender(event); return backend.cancelRun(id, runId); });
   ipcMain.handle('runs:get', (event, id: unknown, runId: unknown) => { assertSender(event); return backend.getRun(id, runId); });
   ipcMain.handle('runs:events', (event, id: unknown, runId: unknown, after: unknown) => { assertSender(event); return backend.runEvents(id, runId, after); });
+  ipcMain.on('runs:subscribe', (event, key: unknown, id: unknown, runId: unknown, after: unknown) => {
+    assertSender(event);
+    if (typeof key !== 'string' || key.length > 36) return;
+    try {
+      backend.subscribeRun(key, id, runId, after, (value) => {
+        if (window && !window.isDestroyed()) window.webContents.send('runs:changed', key, value);
+      });
+    } catch (error) {
+      event.sender.send('runs:changed', key, { kind: 'connection', phase: 'failed', detail: (error as Error).message });
+    }
+  });
+  ipcMain.on('runs:unsubscribe', (event, key: unknown) => { assertSender(event); backend.unsubscribeRun(key); });
+  window.webContents.on('did-start-navigation', (_event, _url, _inPlace, mainFrame) => { if (mainFrame) backend.stopSubscriptions(); });
+  window.webContents.on('destroyed', () => backend.stopSubscriptions());
   backend.on('status', (state) => {
     if (window && !window.isDestroyed()) window.webContents.send('backend:changed', state);
   });
