@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { BackendState, ResearchTrailBridge } from '../bridge';
 import { MarketPanel } from './market/MarketPanel';
+import { SessionPanel } from './SessionPanel';
 
 declare global { interface Window { researchTrail?: ResearchTrailBridge } }
 const unavailable: BackendState = { phase: 'failed', detail: '桌面通信桥不可用。请通过 start-dev.cmd 打开研迹桌面应用。' };
@@ -10,6 +11,7 @@ const labels = { idle: '尚未启动', starting: '启动中', healthy: '运行�
 export function App() {
   const [state, setState] = useState<BackendState>({ phase: 'idle', detail: '等待本地服务启动。' });
   const [busy, setBusy] = useState(false);
+  const [view, setView] = useState<'market' | 'sessions'>('market');
   useEffect(() => {
     const bridge = window.researchTrail;
     if (!bridge) { setState(unavailable); return; }
@@ -43,7 +45,11 @@ export function App() {
         <p className="timestamp">上次检查：{state.checkedAt ? new Date(state.checkedAt).toLocaleTimeString('zh-CN', { hour12: false }) : '尚未完成'}</p>
         <button onClick={action} disabled={pending}>{pending ? '正在处理…' : state.phase === 'healthy' ? '重新检查' : '重试启动'}</button>
       </section>
-      <MarketPanel available={state.phase === 'healthy'} />
+      <nav className="view-tabs" aria-label="工作区">
+        <button aria-pressed={view === 'market'} onClick={() => setView('market')}>模拟行情</button>
+        <button aria-pressed={view === 'sessions'} onClick={() => setView('sessions')}>会话与事件</button>
+      </nav>
+      {view === 'market' ? <MarketPanel available={state.phase === 'healthy'} /> : <SessionPanel available={state.phase === 'healthy'} />}
       </main>
       <footer>每次研究，都有据可查。</footer>
     </div>

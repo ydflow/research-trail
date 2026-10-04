@@ -245,3 +245,78 @@ QA 使用 Playwright Electron：本会话未提供 Browser 插件技能，且验
 - GitHub合并前查询：OPEN、非草稿、MERGEABLE、mergeStateStatus CLEAN，review列表和未解决review threads均为空。statusCheckRollup为空，未配置CI，不能写作CI通过。实际验收来自本地契约/类型/构建、Python22项、Electron实窗6项以及用户当前发布确认。
 - 本节只补充PR链接与审核记录，不改变运行源码。核对新的最终head后，按用户明确授权采用普通merge commit保留全部提交，随后只做本地main的fast-forward同步；不用admin绕过、不强推、不删除分支。实际合并SHA与本地同步结果见Git/GitHub及最终回执。
 - 未验证边界仍为用户逐项手动/学习记录、真实模型/行情/账户、Windows安装包、干净机器和CI。没有Agent或下一步功能；不打标签、不建Release、不启用付费定时评测。
+
+## 12. 第3步：会话、消息、运行和事件持久化（2026-10-04）
+
+### 范围、基线和参考核对
+
+用户本轮仅授权第3步开发及本地交付，不授权本轮提交或发布。开始时Git根为 `D:/folio/research-trail`，main工作区干净，HEAD与origin/main为 `0e1dfd5ccf7e99c66d58188dcac9497ddd6e2bd8`。该基线是第2步PR #1普通合并提交；本轮完成后HEAD不变，暂存为空，改动留在本地。
+
+先读取AGENTS、README、路线、已有证据、桌面桥/进程、后端契约和测试。只读核对固定Folio参考（ZIP标识ba5dcdfd31b162f5edb8b908f7f099a560389326）的 `packages/core/src/index.ts` Session/SessionMeta/Message/Run、`packages/core/src/stream-events.ts`、`packages/shared/src/kernel/session-manager.ts`、`packages/ui/src/components/kernel/KernelBridge.tsx` 和 `docs/adr/0001-stream-event-protocol.md`。未修改参考目录，未导入原TypeScript后端或本步新复制UI源码。第2步来源/授权记录继续保留。
+
+参考对照：会话/消息/运行分别有独立ID，事件用runId＋sequence作身份；protocolVersion为1，timestamp只供显示，messageId仅在消息级事件出现，text_delta是增量。旧AgentEvent的message_delta可能是累计文本，参考KernelBridge有双协议订阅；本项目未同时发送两套协议。研迹采用snake_case与UTC ISO，前端 `session-adapter.ts`处理消息时间/文案转换；本步是协议语义核对与Python新实现，不复用原TS存储/运行内核，也不把原测试成绩计入本项目。
+
+### 实际实现
+
+- uv依赖新增并锁定SQLAlchemy 2.0.54、Alembic 1.20.0；Python仍为3.12，SQLite使用Python标准驱动。依赖同步完成。官方API参考：[SQLAlchemy SQLite](https://docs.sqlalchemy.org/en/20/dialects/sqlite.html)、[Alembic commands](https://alembic.sqlalchemy.org/en/latest/api/commands.html)、[SSE帧格式](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)。
+- `database.py`和Alembic：默认根runtime/research-trail.sqlite3，可用RESEARCH_TRAIL_DB_PATH显式改路径；外键开启、WAL、5秒busy_timeout。启动lifespan先迁移、后报告ready。四表明确迁移，版本0001_conversation，提供后续迁移模板；不使用create_all。升级写锁也串行化版本表初始化。离线契约导出不打开库、不建目录。
+- `models.py` / `store.py`：sessions、messages、runs、events四表。消息有会话内sequence和唯一约束；事件有每运行sequence、复合主键。消息和事件的run_id/session_id复合外键禁止跨会话关联，删除会话级联清理子记录。写事务BEGIN IMMEDIATE；失败整体回滚。
+- 会话API：POST/GET /sessions，GET/DELETE /sessions/{id}，GET其/messages与/runs。选择会话由前端保存选择ID，再查询后端历史，不把“当前选择”当作共享业务状态写库。未知/已删会话404，标题与测试输入由Pydantic校验。
+- 运行API：POST /sessions/{id}/runs写一次固定测试，GET /runs/{run_id}查询。固定响应由本项目FIXTURE_PARTS定义，kind=fixture，实际状态仅completed；不创建Agent、FakeModelProvider、后台工作线程或模型/工具调用。
+- 固定测试在同一事务写入两消息、一运行、七事件（run_started、message_started、status、text_delta×2、message_completed、run_completed），提交后才能返回或读取。事件包含protocol_version/session_id/run_id/sequence/type/timestamp和类型专属payload。事件不是行情数据，也不关联未来模型Provider。
+- GET /events返回有限SSE：id=run_id:sequence、event=type、data=完整JSON；after_sequence或Last-Event-ID按游标读取，跨运行ID/无效/超前游标明确报错。GET /event-log另提供有界JSON页和last_sequence，并让Pydantic事件联合契约进入OpenAPI。读已有记录不生成新运行、不调用模型/工具。
+- main/preload新增九个命名操作（会话五、运行四），共15项；main验证UUID、输入和游标，继续校验IPC来源，并携令牌发本机HTTP。有限SSE在main收集后校验身份、类型与连续序号再交给renderer；3秒/256KiB响应限制保留。renderer没有端口、令牌、任意请求接口、文件/进程或数据库能力。
+- `SessionPanel`提供创建、列表、选择、删除、消息历史、固定运行记录与事件列表。选择变化清理显示缓存，忽略旧请求晚到；重新读取按run_id:sequence合并。没有localStorage业务备份或前端自行制造完成状态。行情页保留独立导航和原行为。
+- 测试中发现Windows时钟可能给用户/响应消息同刻时间，原按时间＋UUID排序会颠倒顺序；已使用事务内分配的会话消息sequence排序，并验证并发写入后的1—16顺序及角色交替。没有改写开发时间来规避排序。
+
+真实调用链：SessionPanel → preload命名操作 → main来源/参数校验 → 带令牌FastAPI → Pydantic → Store/SQLAlchemy事务 → SQLite提交 → RunDTO。读取链：runEvents → 本机SSE → 已提交事件查询 → main协议检查 → 前端显示缓存。类型链：conversation.py → 离线OpenAPI → generated.ts → conversation-types.ts。
+
+### 验证结果与尚未验证
+
+| 检查 | 实际结果 | 证明与限制 |
+| --- | --- | --- |
+| 契约/TypeScript/开发构建 | 通过 | bun run check、build；新DTO来自生成契约，未手改generated.ts |
+| Python | 29项通过，1条上游TestClient弃用提示 | 原22项回归＋6项持久化/契约/并发/回滚约束＋1项真实网络SSE及进程重启 |
+| Electron实窗 | 8项通过 | 原6项回归＋持久会话/桥/事件/重启/删除及数据库启动失败；最终文案调整后持久会话用例另复验通过 |
+| 两会话隔离 | 通过 | 不同输入、运行/事件跨会话404、消息复合外键拒绝跨会话更新、删除甲后乙记录保留；真实桌面切换复验 |
+| 重启历史 | 通过 | TestClient重新打开同库、真正Python子进程退出/重启、Electron关闭后同库重新打开；未重执行旧运行 |
+| 事件先存后发/顺序 | 通过 | 真实HTTP流每收到一帧即另开SQLite连接核对已提交事件；序号1—7；Last-Event-ID/after游标尾段及重复读取内容相同 |
+| 原子写入失败 | 通过 | 注入事件INSERT失败，消息、运行、事件均回滚，消息数仍0；不产生半条运行 |
+| 重复迁移 | 通过 | 程序内多次upgrade保留16消息；独立临时库CLI连续两次upgrade head成功，current显示0001_conversation (head)，check无新升级操作 |
+| 画面/退出 | 通过 | 查看仓库外实窗完整截图及600×620布局，无横向溢出；健康/故障原因可见，所属子进程退出，两实例不误杀。测试后未发现本项目Electron/Python/开发启动器残留 |
+| 根start-dev.cmd | 本轮未重复执行 | 脚本本轮未变，第1/2步已有实际CMD记录；本轮实窗覆盖Vite开发加载、桥和Python迁移启动 |
+| 用户手动/练习 | 待用户 | README第7—9项、practice第3步；未代填答案 |
+| Agent/假模型/真实模型/真实行情/账户 | 未执行 | 本步仅固定测试事件，无模型或工具执行；第2步固定行情回归通过 |
+| Agent取消/超时/中断恢复、自动流重连 | 未实现/未执行 | 有限已完成运行SSE在末尾关闭，main收集后交页面；不是长驻实时订阅或慢打字，后续步骤4—6单独实施 |
+| 迁移降级、离线SQL、旧库升级/备份、安装包、干净机器、CI | 未执行 | 本步初始迁移；未把模型一致性检查写成这些项目通过 |
+
+测试库均在系统临时目录，截图在仓库外本机step3验证目录；未改日常库或上传运行产物。README、ROADMAP、tutorial C03/C04和practice已更新。状态为代码完成/待验收，自动验证通过；第4—24步未开始。本轮不git add/commit/push/PR、标签或Release，不启用定时付费评测；交付后停止。
+
+收尾：61个可交付文件均为文本；本地Markdown链接/围栏、常见密钥特征与运行产物候选检查无异常，数据库/WAL/SHM忽略规则有效，git diff --check通过。暂存仍为空，main HEAD未变；本步13个新增文件及19个已有文件修改均围绕持久化、白名单接入、测试和文档。参考目录未写入；测试窗口和所属后端均已结束。
+
+## 13. 第3步发布复验与交付（2026-10-04）
+
+本节记录第12节开发交付后的发布轮次。用户明确授权当前已验收步骤提交功能分支、创建PR，检查通过且无阻塞后保留提交合并并同步main；不执行第4步、不打标签/Release或启用付费评测。第3步状态按自动复验及用户本轮“已验收”发布确认更新为验收通过，未代填逐项手动操作或学习记录。
+
+- 身份和目标实时检查：gh api user为ydflow；仓库nameWithOwner为ydflow/research-trail、公开、默认main，URL准确；origin fetch/push均为https://github.com/ydflow/research-trail.git。GitHub main、fetch后的origin/main和本地main均为0e1dfd5ccf7e99c66d58188dcac9497ddd6e2bd8，属于既有研迹项目。未切换账号，未覆盖无关仓库。
+- 实际差异：19个已有文件修改、13个新增文件，均属第3步。第2步三个UI适配及第三方LICENSE/NOTICE没有修改；继续保留第8—10节来源及用户确认的原作者复用授权。本步只参考DTO/事件语义，新增Python和桌面代码由本项目实现，无新上游源码导入，因此不制造导入提交或伪造修复历史。
+- 发布候选61个文本文件，文档更新前统计395266字节；本地Markdown链接/围栏、常见密钥签名及运行数据库/日志/缓存/账户/截图候选检查无异常。忽略规则覆盖数据库/WAL/SHM、.env、账户数据与日志。没有暂存被忽略产物、安装包或截图，参考目录只读。
+- 发布复验：bun run check和build通过；Python29项通过，1条上游TestClient弃用提示；Electron实窗8项通过，含两会话隔离、事件重复读取、重启历史、删除级联、启动失败解释及所属进程清理。临时库CLI连续两次upgrade head成功，current为0001_conversation (head)，check为No new upgrade operations detected。未发现本项目Electron/Python残留。
+- 提交安排：feat/step-3-persistence上分别记录Python持久化/API/生成契约、桌面白名单/会话显示与实窗测试、文档/验收记录。作者沿用ydflow及现有noreply邮箱，使用实际提交时间，不导入原作者历史、不修改已公开提交。具体SHA由Git提交后记录。
+- 合并条件：核对PR准确base/head、最终SHA、CI状态、可合并状态及未解决review线程；没有配置CI时明确记为未配置，不能以空checks写成CI通过。无阻塞后用普通merge commit保留提交，不强推、不用admin绕过、不删除分支；本地main仅fast-forward。
+- 尚未验证：逐项用户手动/学习记录、真实模型/行情/账户、完整Agent/取消恢复/自动流重连、迁移降级/离线SQL/旧库升级备份、Windows安装包、干净机器和CI。本轮根start-dev.cmd未重复执行，脚本未变，既有第1/2步实际CMD记录保留，当前实窗验证了Vite与Python迁移启动。
+
+本节在首次推送前生成，PR链接及最终合并SHA以随后Git/GitHub回执为准，不提前宣称远程写入完成。
+
+已按实际改动创建本地提交：
+
+| 提交 | 范围 |
+| --- | --- |
+| 80c1443c0bdb0f3f44f2ffb8599e5f2f508f1220 | Python新实现：四类持久化、初始迁移、会话/运行API、有限SSE、生成契约及后端验证 |
+| 4eb803cd849582e38df82fb0e0cc8961554f9270 | 桌面新接入：命名白名单、主进程SSE、会话/事件显示缓存和Electron实窗验证 |
+
+文档独立提交记录路线、真实调用链、练习和发布复验；自身SHA由Git历史确认。本步没有新的上游导入，消息同刻排序问题已在未发布Python实现内修正并验证，不拆造一个历史上不存在的上游或修复版本。
+
+PR已创建：[ydflow/research-trail #2](https://github.com/ydflow/research-trail/pull/2)，base main，head feat/step-3-persistence；首次head为44f6e867c4c34aa0f6d9cd87928b028e1e2c6288，前三项提交、32个差异文件与本地审核一致。创建后查询为OPEN、非草稿、MERGEABLE、mergeStateStatus CLEAN，reviews和未解决review线程为空；statusCheckRollup为空，Actions工作流为0，CI未配置。tags与Release也为0。
+
+本次PR链接/合并前检查仅补文档并独立提交，不改已复验业务源码。最后一次上传前61个已追踪文本文件共399146字节，完整差异空白、常见密钥特征和产物审核通过，工作区干净。核对补文档后的最终head及账号/目标后，按用户授权普通合并并fast-forward本地main；最终合并SHA以Git/GitHub及发布回执为准。没有将合并前状态提前写作已合并。

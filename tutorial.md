@@ -6,9 +6,9 @@
 
 - 参考根：`D:\folio\主分支和简历skill\folio-main`。
 - 参考来源：ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`；本地无Git，不能保证逐文件无本地变化。
-- 新项目根：`D:\folio\research-trail`，当前有第1步桌面健康链与第2步固定模拟行情源码。
+- 新项目根：`D:\folio\research-trail`，当前有第1步健康链、第2步模拟行情、第3步持久化与固定事件源码。
 - 本次覆盖：入口、界面/客户端、模型与数据、持久化/事件、组合、技能、研究、监控、评测与打包的阅读路线。
-- C01、C02已展开第1/2步真实流程，C03—C17仍为大纲。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
+- C01—C03已展开第1—3步真实流程，C04已展开第3步固定事件部分；取消/恢复和C05—C17仍为大纲。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
 - 前置知识：Python函数/类与异步、HTTP/JSON、TypeScript接口、React状态、进程与IPC、SQLite基本操作；按课程需要补，不要求先学完全部框架。
 
 主链先建立整体印象：
@@ -19,7 +19,7 @@
   → 事件与结果 → 界面
 ```
 
-研迹已实现界面→Electron桥→Python健康/固定行情API。事件、会话与SQLite仍是计划。
+研迹已实现界面→Electron桥→Python健康/固定行情/会话API→SQLite，以及已提交事件的SSE读取。
 
 ## C01：窗口为何能打开，页面从哪里来？
 
@@ -83,7 +83,7 @@ React ← preload白名单 ← 状态/事件 ← 主进程健康检查
 
 ## C03：创建会话和消息如何保存？
 
-状态：大纲。关联步骤3。
+状态：第3步已展开，用户练习待完成。
 
 - 主链：创建会话/读消息 → 客户端 → kernelHost → SessionManager → repository → 返回元数据/历史。
 - 必读1：`packages/ui/src/atoms/sessionAtoms.ts`：创建和水合入口，读写视图状态。
@@ -92,9 +92,19 @@ React ← preload白名单 ← 状态/事件 ← 主进程健康检查
 - 验证选读：`packages/shared/src/kernel/agent-kernel.test.ts`；研迹未来用SQLite，而非直接照搬参考存储。
 - 暂缓：一次运行的异步事件由C04。
 
+### 研迹的真实流程：关闭窗口后消息为何还在？
+
+1. `SessionPanel`创建会话，经preload的 `createSession`、main来源校验和 `BackendManager.createSession`发送带令牌POST `/sessions`。Pydantic `CreateSession`校验标题，`Store.create_session`分配UUID并提交SQLAlchemy事务，提交后才返回DTO。
+2. `database.py`在后端lifespan打开SQLite、启用外键/WAL并迁移。`__main__.py`组合该lifespan，迁移失败时不发送就绪。离线OpenAPI只构造app，不打开数据库。默认路径是根runtime目录，可用RESEARCH_TRAIL_DB_PATH选择临时库。
+3. `models.py`描述四张业务表，`migrations/versions/0001_conversation.py`明确建表，Alembic记录版本。再次upgrade head不会重建表或清空历史；没有调用create_all代替迁移。
+4. 消息按会话内sequence排序，不以Windows可能同刻的时间或随机UUID排序。事件则按各运行自己的sequence排序。外键的run_id/session_id组合禁止跨会话关联；删会话级联删除其三类子记录。
+5. 切换会话调用getSession、sessionMessages和sessionRuns。React effect取消旧请求的展示更新，只保留当前会话缓存；关闭窗口丢失缓存，数据库记录仍在。重启后重新查询Python，不从localStorage重建业务状态。
+
+DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-types.ts。参考Folio字段采用camelCase/毫秒，研迹使用snake_case/UTC ISO；`session-adapter.ts`仅在前端将消息时间转换为显示所需毫秒与文案，未增加第二套后端兼容接口。
+
 ## C04：运行如何流式更新、取消并重放？
 
-状态：大纲。关联步骤3/5/6。
+状态：第3步固定事件已展开；真实运行、取消和流重连仍为后续大纲。关联步骤3/5/6。
 
 - 主链：startRun → RunManager驱动Runtime → 持久化/广播事件 → KernelBridge更新UI；取消在执行中进入终态。
 - 必读1：`packages/shared/src/kernel/run-manager.ts` / `RunManager.startRun`、`cancelRun`：区分请求返回和后台事件完成。
@@ -102,6 +112,16 @@ React ← preload白名单 ← 状态/事件 ← 主进程健康检查
 - 必读3：`packages/ui/src/components/kernel/KernelBridge.tsx` / `KernelBridge`：旧AgentEvent与StreamEvent的两个订阅，不视为两个独立模型运行。
 - 验证选读：`packages/shared/src/kernel/run-manager.test.ts`、`stream-replay.e2e.test.ts`。
 - 暂缓：真实Runtime传输由C05；研究恢复由C11。
+
+### 研迹的真实流程：启动固定测试后读取七个事件
+
+`startRun`经POST `/sessions/{id}/runs`调用 `Store.start_fixture`。BEGIN IMMEDIATE串行分配消息序号，在同一事务写用户消息、固定响应、completed运行及七个事件；全部提交后才返回。运行kind为fixture，只有实际实现的completed状态，未假装后台Agent正在运行。
+
+七个事件是run_started、message_started、status、两次text_delta、message_completed、run_completed。Pydantic按type辨别payload；每个事件含protocol_version、session_id、run_id、sequence、timestamp。只有消息事件带message_id；时间供展示，运行ID＋序号供身份/排序。
+
+`runEvents`在main用带令牌HTTP读取 `/events?after_sequence=N` 的有限SSE，每帧包含id、event、JSON data。Python先从已提交事件表读取，main校验run/session/type/连续序号，再交给页面。HTTP还接受当前run_id:sequence格式的Last-Event-ID；JSON event-log接口支持游标和有界分页，并将事件联合类型纳入OpenAPI。超过末尾的游标报错，跨会话访问404。
+
+本步一次读取在末尾关闭SSE，main收集有限响应后交给页面；没有模拟慢打字、自动EventSource重连或后台任务。点击“重新读取事件”不调用start_fixture，缓存按run_id:sequence合并，消息数不变。事务中任何写入失败会整体回滚，不能发出半条运行。真实模型/工具、取消/超时与快照+实时订阅由步骤4—6实施。
 
 ## C05：规则Agent与真实LLM的区别是什么？
 

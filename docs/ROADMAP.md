@@ -8,7 +8,8 @@
 - 第 1 步：代码完成/待验收；类型、构建、后端与实窗自动化已通过，用户手动验收未完成。
 - 第2步：验收通过；固定模拟行情、契约生成和局部组件适配已实现，自动化复验通过，用户本轮明确按已验收步骤发布；逐项手动记录和练习待补。
 - 第2步发布：以 [PR #1](https://github.com/ydflow/research-trail/pull/1) 交付并保留提交；用户补充原作者复用授权确认后，公开范围阻塞已解除。过程记录见EVIDENCE第9—11节，最终状态以GitHub与发布回执为准。
-- 第 3—24 步：未开始；没有用户具体指令不继续。
+- 第3步：验收通过；SQLite四类记录、会话操作、固定测试运行和有限SSE已实现，Python29项、Electron8项、重复迁移与模型一致性复验通过，用户本轮明确按已验收步骤发布；逐项手动及练习记录待补。交付为 [PR #2](https://github.com/ydflow/research-trail/pull/2)，发布记录见EVIDENCE第13节。
+- 第4—24步：未开始；没有用户具体指令不继续。
 - 默认分支 `main`；第0/1步首次上传检查见EVIDENCE第7节，第2步发布检查见第9—10节，提交历史和远程状态以Git为准。
 - 状态取值：未开始 / 进行中 / 代码完成/待验收 / 验收通过 / 受阻。
 - 来源：固定 ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`，本地只读路径 `D:\folio\主分支和简历skill\folio-main`。
@@ -20,7 +21,7 @@
 | 0 | 本地 Git、约定、路线、证据、课程与忽略规则 | 无 | 七份文件一致；main 无提交/远程；无业务和上游写入 | 验收通过 |
 | 1 | 桌面与 Python 服务生命周期 | 0 | CMD 一条命令打开；本机随机端口/令牌；失败反馈和退出清理 | 代码完成/待验收 |
 | 2 | 固定模拟行情与 K 线、股票界面、类型契约 | 1 | 四股票切换、卡片图表一致、未知代码报错、固定市场时间 | 验收通过 |
-| 3 | SQLite/SQLAlchemy/Alembic，会话/消息/运行/事件与 SSE | 2 | 两会话隔离；重启历史；先存后发；按序事件；重复迁移 | 未开始 |
+| 3 | SQLite/SQLAlchemy/Alembic，会话/消息/运行/事件与 SSE | 2 | 两会话隔离；重启历史；先存后发；按序事件；重复迁移 | 验收通过 |
 | 4 | 假模型 Agent、Python 工具注册与结果卡片 | 3 | 调用数据工具；fixture 改变结果；假模型标签；错误不伪装成功 | 未开始 |
 | 5 | 取消/超时竞争、删会话、重启中断 | 4 | 唯一终态，无永久 running；保留部分结果，不自动重调用 | 未开始 |
 | 6 | 对话界面、快照恢复、事件重连和去重 | 5 | 会话不串消息；运行 ID+序号去重；历史不重执行 | 未开始 |
@@ -47,14 +48,14 @@
 
 ## 功能对照与来源索引
 
-以下相对路径都相对于 **只读参考 Folio**。研迹第1步桌面健康链、第2步固定模拟行情与契约已实现，其余业务功能未开始；参考源码存在仅能证明有可阅读的实现，不能证明本机运行或生产正确。
+以下相对路径都相对于 **只读参考 Folio**。研迹第1步健康链、第2步固定行情、第3步持久化与固定事件已实现，其余业务未开始；参考源码存在仅能证明有可阅读的实现，不能证明本机运行或生产正确。
 
 | 功能组 | 参考源码位置 | 研迹计划承担方 / 步骤 | 研迹实现 / 验证 |
 | --- | --- | --- | --- |
 | Electron 窗口与通信 | `apps/electron/src/main/index.ts`；`src/preload/index.ts` | Electron 管桌面/Python 进程，步骤1 | 健康链已实现 / 本机实窗自动化通过；用户手动待验 |
-| 前端客户端与类型 | `packages/ui/src/client.tsx`；`packages/core/src/index.ts` | Python/OpenAPI + TS 适配，步骤2/3 | 行情契约生成已实现 / 一致性与类型检查通过；会话契约未开始 |
+| 前端客户端与类型 | `packages/ui/src/client.tsx`；`packages/core/src/index.ts` | Python/OpenAPI + TS 适配，步骤2/3 | 行情、会话/消息/运行/事件契约生成已实现 / 一致性与类型检查通过 |
 | 行情、K线、模拟来源 | `packages/shared/src/agent/demo-market-data.ts`；`packages/ui/src/components/workspace` | Python Provider + 页面，步骤2/11 | 四股票固定Fixture与局部界面已实现 / 后端、实窗自动化通过；完整市场页与真实数据未开始 |
-| 会话、运行、取消和事件 | `packages/shared/src/kernel/session-manager.ts`、`run-manager.ts`、`stream-event-log.ts`；`packages/core/src/stream-events.ts` | Python 内核/SQLite/SSE，步骤3—6 | 未实现 / 未执行 |
+| 会话、运行、取消和事件 | `packages/shared/src/kernel/session-manager.ts`、`run-manager.ts`、`stream-event-log.ts`；`packages/core/src/stream-events.ts` | Python 内核/SQLite/SSE，步骤3—6 | 四类持久化、会话操作与固定测试事件已实现 / 隔离、重启、按序SSE、重复迁移自动化通过；Agent、取消恢复与自动流重连未实现 |
 | 本地规则与真实模型 | `packages/shared/src/agent/intent-router.ts`、`local-finance-agent-backend.ts`、`pi-runtime-adapter.ts` | 独立 FakeModel/OpenAI 兼容 Python Runtime，步骤4/9 | 未实现 / 未执行 |
 | 设置、凭证、诊断 | `packages/ui/src/components/settings`；`apps/electron/src/main/kernelHost.ts` | Python 健康/系统凭证 + 页面，步骤8 | 未实现 / 未执行 |
 | 行情/账户提供商 | `packages/shared/src/providers/router.ts`、`longbridge`、`massive` | Python SDK/只读CLI适配，步骤10 | 未实现 / 未执行 |
