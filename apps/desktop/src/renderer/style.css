@@ -1,0 +1,25 @@
+:root { font-family: "Microsoft YaHei", "Segoe UI", sans-serif; color: #163e39; background: #fff; font-synthesis: none; text-rendering: optimizeLegibility; --muted: #67736e; --accent: #14685a; --border: #e6ece9; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+.shell { min-height: 100vh; display: flex; flex-direction: column; }
+header { display: flex; align-items: baseline; gap: 12px; margin: 0 24px; padding: 38px 36px 24px; border-bottom: 1px solid var(--border); }
+.brand { font-size: 26px; font-weight: 700; letter-spacing: -.8px; }
+.english { color: var(--muted); font-size: 15px; }
+main { width: min(660px, calc(100% - 96px)); margin: 114px auto 70px; }
+h1 { font-size: 40px; letter-spacing: -1px; line-height: 1.25; font-weight: 700; margin: 0 0 18px; }
+.detail { font-size: 17px; color: var(--muted); line-height: 1.8; margin: 0 0 44px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.health-row { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 0 0 20px; border-bottom: 1px solid var(--border); font-size: 18px; color: var(--muted); }
+.health-name { color: #163e39; display: inline-flex; align-items: center; gap: 22px; }
+.dot { width: 14px; height: 14px; border-radius: 50%; background: #a8b5ae; flex-shrink: 0; }
+.healthy { color: var(--accent); }
+.healthy .dot { background: #13ad62; }
+.failed { color: #a24333; }
+.failed .dot { background: #c46450; }
+.starting .dot { background: #bb903e; }
+.timestamp { color: var(--muted); font-size: 15px; margin: 18px 0 36px; }
+button { min-width: 158px; min-height: 46px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent); color: white; padding: 10px 25px; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer; transition: background .15s; }
+button:hover:not(:disabled) { background: #105347; }
+button:disabled { opacity: .65; cursor: wait; }
+button:focus-visible { outline: 3px solid #89bdaf; outline-offset: 4px; }
+footer { color: var(--muted); font-size: 15px; margin-top: auto; padding: 20px 60px 44px; }
+@media (max-width: 660px) { header { margin: 0 16px; padding: 24px 12px 20px; } main { width: calc(100% - 56px); margin-top: 70px; } h1 { font-size: 34px; } footer { padding: 20px 28px 28px; } .health-row { font-size: 16px; } }

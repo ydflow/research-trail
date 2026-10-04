@@ -1,0 +1,76 @@
+# Dependency and Python environments
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+.uv-cache/
+
+# Generated outputs and packaging
+dist/
+build/
+release/
+coverage/
+.coverage
+.coverage.*
+htmlcov/
+playwright-report/
+test-results/
+*.tsbuildinfo
+*.spec
+
+# Secrets; configuration examples remain reviewable and trackable
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+!.env.*.example
+credentials.json
+credentials.*.json
+secrets.json
+secrets.*.json
+*.pem
+*.key
+
+# Runtime state, personal account data, and private captures
+runtime/
+user-data/
+userData/
+private/
+private-data/
+account-data/
+imports/
+logs/
+*.log
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
+*.sqlite-journal
+*.sqlite3-journal
+*.db-journal
+
+# Models, local assets and scratch files
+models/
+.local/
+.tmp/
+*.tmp
+*.bak
+
+# Local IDE and OS state
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
