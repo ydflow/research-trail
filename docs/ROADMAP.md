@@ -9,7 +9,7 @@
 - 第2步：验收通过；固定模拟行情、契约生成和局部组件适配已实现，自动化复验通过，用户本轮明确按已验收步骤发布；逐项手动记录和练习待补。
 - 第2步发布：以 [PR #1](https://github.com/ydflow/research-trail/pull/1) 交付并保留提交；用户补充原作者复用授权确认后，公开范围阻塞已解除。过程记录见EVIDENCE第9—11节，最终状态以GitHub与发布回执为准。
 - 第3步：验收通过；SQLite四类记录、会话操作、固定测试运行和有限SSE已实现，Python29项、Electron8项、重复迁移与模型一致性复验通过，用户本轮明确按已验收步骤发布；逐项手动及练习记录待补。交付为 [PR #2](https://github.com/ydflow/research-trail/pull/2)，发布记录见EVIDENCE第13节。
-- 第4步：验收通过；Python命名工具、FakeModelProvider、最小Agent运行、工具事件和结果卡片已实现，fixture变化/调用证据/错误终态/旧库升级自动化通过；发布复验Python54项、Electron9项通过，用户本轮明确按已验收步骤发布。逐项手动和练习记录待补；发布记录见EVIDENCE第15节。
+- 第4步：验收通过；Python命名工具、FakeModelProvider、最小Agent运行、工具事件和结果卡片已实现，fixture变化/调用证据/错误终态/旧库升级自动化通过；发布复验Python54项、Electron9项通过，用户本轮明确按已验收步骤发布。逐项手动和练习记录待补；交付为 [PR #3](https://github.com/ydflow/research-trail/pull/3)，发布记录见EVIDENCE第15节。
 - 第5—24步：未开始；没有用户具体指令不继续。
 - 默认分支 `main`；第0/1步首次上传检查见EVIDENCE第7节，第2步发布检查见第9—10节，提交历史和远程状态以Git为准。
 - 状态取值：未开始 / 进行中 / 代码完成/待验收 / 验收通过 / 受阻。
