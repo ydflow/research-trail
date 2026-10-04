@@ -316,3 +316,7 @@ QA 使用 Playwright Electron：本会话未提供 Browser 插件技能，且验
 | 4eb803cd849582e38df82fb0e0cc8961554f9270 | 桌面新接入：命名白名单、主进程SSE、会话/事件显示缓存和Electron实窗验证 |
 
 文档独立提交记录路线、真实调用链、练习和发布复验；自身SHA由Git历史确认。本步没有新的上游导入，消息同刻排序问题已在未发布Python实现内修正并验证，不拆造一个历史上不存在的上游或修复版本。
+
+PR已创建：[ydflow/research-trail #2](https://github.com/ydflow/research-trail/pull/2)，base main，head feat/step-3-persistence；首次head为44f6e867c4c34aa0f6d9cd87928b028e1e2c6288，前三项提交、32个差异文件与本地审核一致。创建后查询为OPEN、非草稿、MERGEABLE、mergeStateStatus CLEAN，reviews和未解决review线程为空；statusCheckRollup为空，Actions工作流为0，CI未配置。tags与Release也为0。
+
+本次PR链接/合并前检查仅补文档并独立提交，不改已复验业务源码。最后一次上传前61个已追踪文本文件共399146字节，完整差异空白、常见密钥特征和产物审核通过，工作区干净。核对补文档后的最终head及账号/目标后，按用户授权普通合并并fast-forward本地main；最终合并SHA以Git/GitHub及发布回执为准。没有将合并前状态提前写作已合并。
