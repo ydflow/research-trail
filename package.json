@@ -4,13 +4,17 @@
   "trustedDependencies": ["electron", "esbuild"],
   "workspaces": ["apps/desktop"],
   "scripts": {
-    "dev": "node scripts/dev.mjs",
+    "dev": "node scripts/contracts.mjs && node scripts/dev.mjs",
     "build": "node scripts/build.mjs && bun run --cwd apps/desktop build",
-    "check": "bun run --cwd apps/desktop check",
+    "check": "node scripts/contracts.mjs --check && bun run --cwd apps/desktop check",
+    "contracts:generate": "node scripts/contracts.mjs",
+    "contracts:check": "node scripts/contracts.mjs --check",
     "test:desktop": "node --test tests/desktop.test.cjs"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",
-    "esbuild": "0.28.2"
+    "esbuild": "0.28.2",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3"
   }
 }
