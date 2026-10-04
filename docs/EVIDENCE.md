@@ -515,3 +515,9 @@ README、ROADMAP、tutorial C04/C05和practice第6步已同步，状态代码完
 - 尚未验证：CI实查工作流数为0，不称CI通过。逐项手动和学习、真实LLM/行情/账户、真实外部Provider阻塞取消、安装包/干净机器、其他OS、迁移降级/离线SQL/备份恢复、大历史分页和长时重连压力未验证；普通响应/单帧继续限制256KiB。根start-dev.cmd未改，本轮未重复执行该入口。
 
 提交按上游组件适配、Python新实现、桌面接入、验收文档分别记录，使用当前ydflow作者配置与实际提交时间。后续PR链接、最终head和合并SHA由实际Git/GitHub及回执确认，不在合并前虚构结果；不打标签、创建Release或启用定时付费评测。
+
+发布分支feat/step-6-session-stream已推送，创建 [PR #5](https://github.com/ydflow/research-trail/pull/5)，base main；每次写入前实时核验ydflow、目标仓库及origin，推送只在本次命令使用已验证gh凭证助手，不改全局凭证配置。已保留上游组件适配bb584d777eb5cebb2f118739ec63e49574521d8e、Python新实现495ffd73f3cb11ed5a47d3f1f051074d2dcc83de、桌面接入3977107f083a151f41e48fa2fad5d5466f9a7bc4、验收文档2644973884e4e4016a0bfafbc0f82cff263ab68e。作者沿用ydflow及现有noreply邮箱，实际提交时间2026-10-04 21:45:17—18（Asia/Shanghai）；没有伪造原作者或时间。
+
+创建后实查head与本地一致、25个差异文件及4个提交准确，MERGEABLE/CLEAN、非draft、无review或未解决讨论，检查列表为空；Actions工作流、标签与Release均为0，不宣称远程CI通过。PR创建前最终74个文本文件共614683字节，差异空白、常见密钥特征、运行产物与Markdown审核通过，工作区干净。
+
+本次仅补PR链接与合并前检查，独立文档提交，不改已验证业务源码。最终再核对head/base、提交/文件清单、账号与目标、未解决阻塞后，按用户授权普通merge保留全部提交并fast-forward本地main；实际合并SHA、同步及最终工作区状态以Git/GitHub与交付回执确认，不提前声称合并。没有强推、删分支、标签、Release、定时付费评测或第7步实现。
