@@ -237,3 +237,11 @@ QA 使用 Playwright Electron：本会话未提供 Browser 插件技能，且验
 本记录在推送前生成。后续按用户授权核验账号与目标后推送分支、创建PR；检查无未解决阻塞才采用保留提交的merge方式并同步main。最终PR、合并SHA及同步结果由Git/GitHub与发布回执确认，不在本提交中虚构自己的SHA。未执行第3步，不打标签、不创建Release、不配置付费评测。
 
 完整已提交差异的git diff --check发现依赖附带LICENSE-lightweight-charts末尾有冗余空行；保留全部许可证正文与版权，只规范末尾换行，并单独作为格式修复记录。与npm包原文去除末尾换行后逐字节相同；其余LICENSE/NOTICE未变。随后重跑完整提交差异检查和文件审核，不为纯文本空白改动重复执行无关业务测试。
+
+## 11. 第2步PR与合并前检查（2026-10-04）
+
+- 交付：[ydflow/research-trail PR #1](https://github.com/ydflow/research-trail/pull/1)，base main，head feat/step-2-fixture-market。每次推送或创建PR前均实时验证gh账号ydflow、公开目标仓库/default main及准确的origin fetch/push地址；Git推送仅本次命令使用已核验gh凭证助手，未切换账号或修改全局凭证配置。
+- 创建PR时head为 `f2a91a74e6d57f4c8b41ee295fb10318ce7911a9`，六项新增提交；31个差异文件均属第2步。推送前48个已追踪文本文件共251906字节，密钥特征及运行数据/截图检查无异常，工作区干净，完整提交差异空白检查通过，许可证正文校验通过。导入/Python/修复/桌面/文档按真实改动分别记录作者与当前时间。
+- GitHub合并前查询：OPEN、非草稿、MERGEABLE、mergeStateStatus CLEAN，review列表和未解决review threads均为空。statusCheckRollup为空，未配置CI，不能写作CI通过。实际验收来自本地契约/类型/构建、Python22项、Electron实窗6项以及用户当前发布确认。
+- 本节只补充PR链接与审核记录，不改变运行源码。核对新的最终head后，按用户明确授权采用普通merge commit保留全部提交，随后只做本地main的fast-forward同步；不用admin绕过、不强推、不删除分支。实际合并SHA与本地同步结果见Git/GitHub及最终回执。
+- 未验证边界仍为用户逐项手动/学习记录、真实模型/行情/账户、Windows安装包、干净机器和CI。没有Agent或下一步功能；不打标签、不建Release、不启用付费定时评测。
