@@ -181,9 +181,9 @@ export interface components {
         CompletedPayload: {
             /**
              * Stop Reason
-             * @constant
+             * @enum {string}
              */
-            stop_reason: "completed";
+            stop_reason: "completed" | "error";
         };
         /** CreateSession */
         CreateSession: {
@@ -195,10 +195,48 @@ export interface components {
         };
         /** EmptyPayload */
         EmptyPayload: Record<string, never>;
+        /** ErrorEvent */
+        ErrorEvent: {
+            payload: components["schemas"]["ErrorPayload"];
+            /**
+             * Protocol Version
+             * @default 1
+             * @constant
+             */
+            protocol_version: 1;
+            /** Run Id */
+            run_id: string;
+            /** Sequence */
+            sequence: number;
+            /** Session Id */
+            session_id: string;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "error";
+        };
+        /** ErrorPayload */
+        ErrorPayload: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+            /**
+             * Retryable
+             * @default false
+             */
+            retryable: boolean;
+        };
         /** EventPage */
         EventPage: {
             /** Events */
-            events: (components["schemas"]["RunStartedEvent"] | components["schemas"]["MessageStartedEvent"] | components["schemas"]["StatusEvent"] | components["schemas"]["TextDeltaEvent"] | components["schemas"]["MessageCompletedEvent"] | components["schemas"]["RunCompletedEvent"])[];
+            events: (components["schemas"]["RunStartedEvent"] | components["schemas"]["MessageStartedEvent"] | components["schemas"]["StatusEvent"] | components["schemas"]["TextDeltaEvent"] | components["schemas"]["MessageCompletedEvent"] | components["schemas"]["RunCompletedEvent"] | components["schemas"]["ToolStartedEvent"] | components["schemas"]["ToolResultEvent"] | components["schemas"]["ErrorEvent"])[];
             /** Last Sequence */
             last_sequence: number;
         };
@@ -239,6 +277,50 @@ export interface components {
             timestamp: number;
             /** Volume */
             volume: number;
+        };
+        /** KlineToolData */
+        KlineToolData: {
+            /**
+             * Data Label
+             * @constant
+             */
+            data_label: "模拟数据";
+            /**
+             * Fetched At
+             * Format: date-time
+             */
+            fetched_at: string;
+            /**
+             * Fixture Version
+             * @constant
+             */
+            fixture_version: "authored-v1";
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "kline";
+            /** Klines */
+            klines: components["schemas"]["Kline"][];
+            /**
+             * Market Time
+             * Format: date-time
+             */
+            market_time: string;
+            /** Name */
+            name: string;
+            /**
+             * Period
+             * @constant
+             */
+            period: "1d";
+            /**
+             * Source
+             * @constant
+             */
+            source: "fixture";
+            /** Symbol */
+            symbol: string;
         };
         /** MarketError */
         MarketError: {
@@ -412,6 +494,40 @@ export interface components {
             /** Volume */
             volume: number;
         };
+        /** QuoteToolData */
+        QuoteToolData: {
+            /**
+             * Data Label
+             * @constant
+             */
+            data_label: "模拟数据";
+            /**
+             * Fetched At
+             * Format: date-time
+             */
+            fetched_at: string;
+            /**
+             * Fixture Version
+             * @constant
+             */
+            fixture_version: "authored-v1";
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "quote";
+            /**
+             * Market Time
+             * Format: date-time
+             */
+            market_time: string;
+            quote: components["schemas"]["Quote"];
+            /**
+             * Source
+             * @constant
+             */
+            source: "fixture";
+        };
         /** RunCompletedEvent */
         RunCompletedEvent: {
             payload: components["schemas"]["CompletedPayload"];
@@ -449,17 +565,20 @@ export interface components {
              * Format: date-time
              */
             completed_at: string;
+            error?: components["schemas"]["ErrorPayload"] | null;
             /** Id */
             id: string;
             /** Input */
             input: string;
             /**
              * Kind
-             * @constant
+             * @enum {string}
              */
-            kind: "fixture";
+            kind: "fixture" | "fake_agent";
             /** Last Sequence */
             last_sequence: number;
+            /** Model Label */
+            model_label?: "规则演示／假模型" | null;
             /** Session Id */
             session_id: string;
             /**
@@ -469,9 +588,9 @@ export interface components {
             started_at: string;
             /**
              * Status
-             * @constant
+             * @enum {string}
              */
-            status: "completed";
+            status: "completed" | "failed";
         };
         /** RunStartedEvent */
         RunStartedEvent: {
@@ -522,6 +641,12 @@ export interface components {
         StartRun: {
             /** Input */
             input: string;
+            /**
+             * Kind
+             * @default fixture
+             * @enum {string}
+             */
+            kind: "fixture" | "fake_agent";
         };
         /** StartedPayload */
         StartedPayload: {
@@ -601,6 +726,107 @@ export interface components {
         TextPayload: {
             /** Text */
             text: string;
+        };
+        /** ToolArguments */
+        ToolArguments: {
+            /** Symbol */
+            symbol: string;
+        };
+        /** ToolFailure */
+        ToolFailure: {
+            error: components["schemas"]["ErrorPayload"];
+            /**
+             * Ok
+             * @default false
+             * @constant
+             */
+            ok: false;
+        };
+        /** ToolResultEvent */
+        ToolResultEvent: {
+            payload: components["schemas"]["ToolResultPayload"];
+            /**
+             * Protocol Version
+             * @default 1
+             * @constant
+             */
+            protocol_version: 1;
+            /** Run Id */
+            run_id: string;
+            /** Sequence */
+            sequence: number;
+            /** Session Id */
+            session_id: string;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "tool_result";
+        };
+        /** ToolResultPayload */
+        ToolResultPayload: {
+            /** Call Id */
+            call_id: string;
+            /**
+             * Name
+             * @enum {string}
+             */
+            name: "market.quote" | "market.kline";
+            /** Result */
+            result: components["schemas"]["ToolSuccess"] | components["schemas"]["ToolFailure"];
+        };
+        /** ToolStartedEvent */
+        ToolStartedEvent: {
+            payload: components["schemas"]["ToolStartedPayload"];
+            /**
+             * Protocol Version
+             * @default 1
+             * @constant
+             */
+            protocol_version: 1;
+            /** Run Id */
+            run_id: string;
+            /** Sequence */
+            sequence: number;
+            /** Session Id */
+            session_id: string;
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "tool_started";
+        };
+        /** ToolStartedPayload */
+        ToolStartedPayload: {
+            /** Call Id */
+            call_id: string;
+            input: components["schemas"]["ToolArguments"];
+            /**
+             * Name
+             * @enum {string}
+             */
+            name: "market.quote" | "market.kline";
+        };
+        /** ToolSuccess */
+        ToolSuccess: {
+            /** Data */
+            data: components["schemas"]["QuoteToolData"] | components["schemas"]["KlineToolData"];
+            /**
+             * Ok
+             * @default true
+             * @constant
+             */
+            ok: true;
         };
         /** ValidationError */
         ValidationError: {
