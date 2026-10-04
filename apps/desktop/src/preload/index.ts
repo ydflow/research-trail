@@ -14,7 +14,8 @@ const bridge: ResearchTrailBridge = {
   sessionMessages: (id) => ipcRenderer.invoke('sessions:messages', id),
   sessionRuns: (id) => ipcRenderer.invoke('sessions:runs', id),
   startRun: (id, input) => ipcRenderer.invoke('runs:start', id, input),
-  startAgentRun: (id, input) => ipcRenderer.invoke('runs:agent', id, input),
+  startAgentRun: (id, input, scenario = 'normal') => ipcRenderer.invoke('runs:agent', id, input, scenario),
+  cancelRun: (id, runId) => ipcRenderer.invoke('runs:cancel', id, runId),
   getRun: (id, runId) => ipcRenderer.invoke('runs:get', id, runId),
   runEvents: (id, runId, after = 0) => ipcRenderer.invoke('runs:events', id, runId, after),
   onStatus(callback) {
