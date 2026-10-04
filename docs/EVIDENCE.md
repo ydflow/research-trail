@@ -385,3 +385,65 @@ Browser plugin not available：当前会话未提供该插件入口，桌面检�
 PR已创建：[ydflow/research-trail #3](https://github.com/ydflow/research-trail/pull/3)，base main、head feat/step-4-rule-agent，首次head为6aaabeddfc20f7302b03c7ffc8d2fca73ae3c71d。首次推送前67个文本文件474063字节审核通过，完整提交差异空白检查通过，工作区干净。GitHub返回27个准确差异文件、4项提交、非草稿OPEN、MERGEABLE/CLEAN；reviews和未解决review threads均为空，checks为空，Actions工作流0（CI未配置），tags和Release均0。
 
 本次仅补PR链接与检查记录，不改变已复验源码；文档追加单独提交。再次核对最终head、账号/目标与合并条件后，按授权采用普通merge保留提交，本地main只fast-forward。最终合并SHA及同步结果以Git/GitHub和发布回执确认，不在合并前虚构结果。
+
+## 16. 第5步：运行生命周期、取消、超时与中断（2026-10-04）
+
+### 范围、基线与来源
+
+本轮只授权第5步开发及本地交付，不提交或发布。开始时main干净，HEAD为第4步PR #3普通合并提交 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`。先读AGENTS、路线、证据、现有同步Agent/Store、进程退出与白名单桥。只读参考固定Folio的 `packages/shared/src/kernel/run-manager.ts` cancelRun/consumeRuntime/预算停止与清理、`packages/core/src/stream-events.ts` cancelled.partial、messageId和stopReason语义。Python实现由本项目编写；没有新上游导入、依赖变化或参考目录写入，已有组件来源和授权声明不变。
+
+### 实际实现与责任边界
+
+- `lifecycle.py` / `RunManager`：先由Store.begin_agent提交running、用户消息、空响应占位和两个开始事件，再启动本后端拥有的daemon工作线程；POST返回已创建运行，不等终态。SCENARIOS独立提供normal（0秒延迟/2秒工具限时）、delayed（3秒/5秒）、timeout（2秒/0.6秒），整体15秒限时。Event.wait使假延迟可取消；Timer负责有界超时，事件status注明模拟时序，不把它当真实服务成绩。
+- `Store.append_running`逐条事务落库，只允许过程事件；先检查数据库仍是running。取消、完成、失败、超时、中断统一走finish：BEGIN IMMEDIATE串行检查running，只有首个胜者更新终态、同一个响应消息和一次message_completed/run_completed。重复取消返回已保存胜者；晚到工具或模型结果被停止检查/数据库状态挡住。已保存文本和工具结果不删除，不追加重复最终消息。
+- RunDTO状态为running/completed/failed/cancelled/timed_out/interrupted；只有running的completed_at为空，失败/超时/中断带明确error。cancelled事件带用户原因、消息ID和原部分文本；run_completed的stop_reason区分completed/error/cancelled/timeout/interrupted。契约由Python/OpenAPI重新生成TS；前端适配只转换显示文案。
+- 同会话活动运行唯一，重复启动409；固定通信测试也不能插入活动运行。删除入口在同一管理锁内先取消该会话活动运行，再级联删除；启动/删除不能交错产生孤儿记录。跨会话取消404，另一个会话保留。
+- DatabaseLease用系统文件锁限制同库一个活后端，避免第二个服务误中断第一实例；不杀进程、不删除锁文件，同库占用解释清楚。锁随进程退出由系统释放。启动在迁移后恢复遗留running为interrupted，保留保存内容并补唯一终态。正常关闭先中断活动运行、停止计时器并有界等待工作线程；硬退出由下次启动恢复。本步不自动重调工具/模型或自动重新发起。
+- 当前fixture和假延迟可协作退出；Python线程无法强行终止任意第三方阻塞调用。受控阻塞Provider/Model测试在终态后释放闸门，证明晚返回不写结果；这不表示已完成真实网络Provider的取消支持。daemon线程不阻止所属后端退出。
+- `0003_lifecycle`允许completed_at为空，增加每会话唯一running部分索引及每运行每角色唯一消息索引。SQLite batch重建保留历史、复合外键和last_sequence约束；将旧未命名CHECK反射并命名以避免被遗漏。仅专用迁移连接在BEGIN前临时关闭外键，提交前foreign_key_check、结束再开启；业务连接仍开启。0001/0002没有修改，0003明确不自动降级。[Alembic batch/约束说明](https://alembic.sqlalchemy.org/en/latest/batch.html)、[Python Timer说明](https://docs.python.org/3.12/library/threading.html#timer-objects)为实现参考。
+- main/preload新增cancelRun，共17命名接口；startAgentRun只接受normal/delayed/timeout白名单，不暴露任意时长、URL、端口/令牌、文件/进程/数据库能力。界面有模拟时序、运行状态、取消按钮、中断原因和手动重新发起提示；正在运行时200ms读取已提交状态/有限SSE。查看旧运行也更新同会话活动状态，终态后停止；不是第6步长驻订阅或自动SSE重连。
+
+真实链路：SessionPanel → preload.startAgentRun → main → FastAPI → RunManager.start → Store.begin_agent提交 → 后台AgentRunner/独立模型与工具 → append_running提交 → finish唯一终态提交 → main有限SSE/GET → 前端显示。取消走cancelRun→Python管理器→同一finish；重启走独占持有→迁移→recover_interrupted，不运行旧Agent。
+
+### 验证过程、结果与未验范围
+
+开发复验发现并修正：初次迁移会遗漏旧未命名CHECK，改为保留并命名后用非法last_sequence更新拒绝验证；Windows持有锁区域不能先读取，改用文件长度检查后锁定，第二实例可读地失败；进程测试的HTTP客户端已请求后不能再次进入上下文，改为显式关闭。原双服务健康/令牌/退出测试改用两个独立临时数据库，并另增同库活持有者保护用例，没有删除多实例隔离验收。
+
+| 检查 | 实际结果 | 证明与限制 |
+| --- | --- | --- |
+| 契约/TypeScript/构建 | 通过 | bun run check、build；生成类型一致，无新依赖 |
+| Python最终完整复验 | 67项通过，1条上游TestClient弃用提示 | 原54项回归＋本步13项参数化生命周期验证 |
+| 主动取消/部分保存 | 通过 | 假延迟唤醒、重复取消幂等、保留部分文本、旧取消不影响新运行，取消后无工具调用/晚写 |
+| 工具及整体超时 | 通过 | 延迟超过工具限时；模型计划/回复受控阻塞触发RUN_TIMEOUT，保留已经提交工具结果；晚返回不改终态 |
+| 完成/取消/超时竞争 | 通过 | 工具闸门分别验证三种胜者；数据库三方同步闸门并发竞争8轮，每轮一个终态/最终消息且无running |
+| 删除活动会话 | 通过 | 删除前观察到cancelled，再级联清空三类子记录；另一会话保留，无迟到写入；跨会话取消404/重复启动409 |
+| 正常退出与硬退出 | 通过 | TestClient生命周期正常退出；真实Python子进程kill后重启，遗留running→interrupted，原已存事件保留，无自动调用或新运行；允许明确重新发起 |
+| 升级/重复迁移/约束 | 通过 | 旧0001历史升级回归；临时库CLI连续两次upgrade、current=0003_lifecycle (head)、check无新操作，原外键/序号约束回归通过 |
+| Electron实窗 | 10项通过 | 原9项完整回归＋1项本步流程；最后界面调整后Agent与生命周期两项另复验通过。取消/超时/删活动会话/杀所属后端重试/中断解释/手动新运行均有真实桥与DOM状态证明 |
+| 桌面QA | 通过 | 本地dist页面和Vite回归；默认窗口、600×620，页面研迹身份/内容正常、无Vite overlay、无目标流程console error/warning或pageerror、无横向溢出；查看仓库外取消和中断全页/窄窗首屏截图 |
+| 关闭清理 | 通过 | 原所属退出/EOF/两实例不误杀回归，Agent及生命周期末尾所属Python退出；收尾进程复查另记 |
+| 根start-dev.cmd | 本轮未重复执行 | 脚本未改，第1/2步实际CMD记录保留，当前实窗覆盖Vite与Python启动/迁移/关闭 |
+| 人工/学习 | 待人工验收 | README第13—14项、practice第5步小改动与三题，未代填 |
+| 真实LLM/实时行情/账户、安装包/干净机器/CI | 未执行 | 当前仅规则演示与模拟数据，无模型API或实盘服务 |
+| 自动流重连/完整快照对话、多轮Agent、研究显式恢复 | 未实现/未执行 | 第6步及以后，不把轮询或重读历史称为恢复执行 |
+| 降级/离线SQL/备份恢复、其他OS/设备 | 未执行 | 本步0003拒绝自动降级；只验证本机Windows开发环境 |
+
+Browser plugin not available：当前无Browser插件入口，按frontend-testing-debugging技能使用项目现有Playwright Electron工作流。React检查采用基本值effect依赖、取消过期读取、并行无依赖查询及显示缓存；不制造前端业务终态。
+
+截图位于仓库外 `C:/Users/38905/.codex/visualizations/2026/10/04/01a1052d-756d-7d41-8501-1f906d4fa709/step5`；测试数据库及持有锁在系统临时目录，不修改日常库。README、ROADMAP、tutorial C04/C05和practice已更新。当前状态代码完成/待验收，本轮不暂存/提交/上传，不执行第6步；交付后停止。
+
+收尾：70个可交付文件均为文本；Markdown本地链接/围栏、常见密钥特征、运行/账户/截图候选审核无异常。数据库/WAL/SHM、持有锁、.env和日志忽略规则有效，git diff --check通过。25个已有文件修改、3个新增文件，仅属第5步；main HEAD仍为4a72e47f79d478ed4f611444ee8d64dccf9d6a17，暂存为空。进程复查未发现本项目Electron/Python/开发启动器残留；工作区外PROJECT_STATE同步当前事实，参考目录未写入。
+
+## 17. 第5步发布复验与范围（2026-10-04）
+
+用户本轮明确要求发布当前已经验收通过的第5步，授权功能分支、PR及检查无阻塞后的普通合并，保留提交记录、同步本地main。第5步依据本轮完整自动复验及用户确认标为验收通过；第16节保留开发结束时的历史状态，未代填逐项手动、练习或三题回答。
+
+- 身份与归属：`gh api user`实测ydflow；目标为公开、非fork的ydflow/research-trail，默认main；origin fetch/push均为`https://github.com/ydflow/research-trail.git`。本地HEAD、fetch后的origin/main及GitHub main均为`4a72e47f79d478ed4f611444ee8d64dccf9d6a17`，无已有开放PR。每次GitHub写入前重新核对账号/目标，不切换账号、覆盖其他仓库或强推。
+- 实际差异：25个已追踪文件修改、3个新增文本文件，均属第5步。Python生命周期、事务终态、迁移及测试为独立新实现；桌面白名单取消和显示缓存为接入适配。没有本步新上游导入、新依赖或单独业务修复；不制造导入/修复提交。已有Folio UI适配来源及用户确认的原作者复用授权保留（第8—11节），第三方声明未改，不把全仓宣称为MIT。
+- 文件审核：本节追加前70个文本候选共540824字节；逐项源码/文档差异、常见密钥签名、运行库/账户/日志/缓存/图片候选、Markdown本地链接/围栏无异常。`.env`、SQLite/WAL/SHM、owner.lock、日志、依赖及构建输出忽略规则实测有效。截图和测试数据库均在仓库外，未上传；签名扫描不替代来源与实际内容审核。
+- 后端复验：按README的`uv run --directory services/backend --frozen python -m pytest`，67项通过、1条上游TestClient/httpx弃用提示。取消及部分保存、工具/整体超时、晚返回、完成/取消/超时三方竞争、先取消后删除、正常退出、真实子进程硬退出后重启中断、同库活持有者保护及原回归均通过。首次误用裸pytest导致模块查找错误；改用项目规定的python -m命令通过，无需更改代码或依赖。
+- 桌面复验：`node --test tests/desktop.test.cjs`完整10项全部通过、无跳过，覆盖真实Electron窗口、Vite开发页、隔离白名单、健康/启动失败、四股票模拟、历史/SSE、规则工具及本步取消/超时/删除/硬退出重试中断/手动新运行；末尾验证所属Python退出。结果属于本机自动实窗验证，不等同用户逐项手动记录。
+- 类型与迁移：`bun run check`契约一致性与TypeScript通过；`bun run build`通过。独立临时库CLI连续两次upgrade head、current显示`0003_lifecycle (head)`、check显示无新升级操作，原历史与约束回归通过。根start-dev.cmd未改，本轮未重复执行该入口；当前实窗覆盖Vite/Python启动迁移与关闭。
+- 未验证/未实施：CI当前没有工作流，不能称CI通过；用户学习/逐项手动、真实LLM/实时行情/账户、真实外部Provider阻塞取消、安装包/干净机器、迁移降级/离线SQL/备份恢复及其他OS未验证。第6步自动SSE重连/完整快照对话及后续步骤未实施；重读事件与重启只保留数据，不自动调用模型/工具。
+
+提交按实际Python新实现、桌面接入、验收文档分开，使用当前作者配置和实际时间。PR链接、最终分支head、检查/合并状态由后续记录及GitHub确认，不在提交中伪造自身SHA。没有打标签、创建Release或启用定时付费评测。

@@ -6,13 +6,14 @@
 
 ## 当前状态
 
-截至 2026-10-04：**第0/2/3/4步验收通过；第1步代码完成、自动化通过**。桌面支持四股票模拟行情、SQLite会话历史，以及调用Python数据工具的最小规则Agent。界面明确标注“规则演示／假模型”，没有真实LLM。第4步状态依据自动复验及用户本轮已验收发布确认；逐项手动与学习记录待填写。
+截至 2026-10-04：**第0/2/3/4/5步验收通过；第1步代码完成、自动化通过**。桌面支持四股票模拟行情、SQLite会话历史、最小规则Agent，以及取消、超时和重启中断。界面明确标注“规则演示／假模型”，没有真实LLM。第5步状态依据发布复验及用户本轮已验收发布确认；逐项手动与学习记录待填写。
 
 - 默认分支 `main`；初始公开提交为 `55b1a3d`，第2步按功能分支/PR保留导入、Python新实现、修复与桌面适配提交。
 - 第2步公开复用依据为用户本轮确认的原作者授权，保留适配来源与依赖声明；交付见 [PR #1](https://github.com/ydflow/research-trail/pull/1)，发布检查和授权记录见EVIDENCE第9—11节，最终提交/合并状态以Git与发布回执为准。
 - 公开仓库：[ydflow/research-trail](https://github.com/ydflow/research-trail)。仅上传源码、测试、文档、依赖清单与锁文件；不包含运行数据或截图。
 - 第2步已普通合并，main基线为 `0e1dfd5ccf7e99c66d58188dcac9497ddd6e2bd8`；第3步以 [PR #2](https://github.com/ydflow/research-trail/pull/2) 交付，开发与发布验证见EVIDENCE第12—13节，最终提交和合并状态以Git与发布回执为准。
 - 第3步合并基线为 `7f925dee768ff33c076582dd9d41055aca9a5932`；第4步以 [PR #3](https://github.com/ydflow/research-trail/pull/3) 交付，开发及发布复验见EVIDENCE第14—15节，按功能分支/PR保留提交，最终远程状态以GitHub和发布回执为准。
+- 第5步开发基线为 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`；开发及发布复验见EVIDENCE第16—17节，按功能分支/PR保留提交，最终远程状态以GitHub和发布回执为准。第6—24步未开始。
 - 首版 `v0.1.0`、完整版本 `v1.0.0` 都是计划，不是已发布版本。
 - Folio 功能和测试属于参考项目，不代表研迹已实现或用户已完成的贡献。
 
@@ -30,15 +31,17 @@ React 页面
 
 Python 统一管理业务状态，前端维护显示缓存。假模型和模拟行情分别实现，后续分别替换为真实连接。真实数据来源与模型回答不能混为一谈。
 
-行情调用链：股票选择 → `MarketPanel` → preload 的 `marketSnapshot` → Electron 主进程 → 带令牌的 `/market/snapshot/{symbol}` → Python `FixtureMarketProvider` → 同一份 `MarketSnapshot` → 行情卡片与 K 线。桥现在共16个命名操作：原健康/行情六项、会话五项、运行五项（新增startAgentRun）。端口和令牌只在主进程和后端之间使用，不传给页面；Python无reload worker，直接作为Electron子进程启动。
+行情调用链：股票选择 → `MarketPanel` → preload 的 `marketSnapshot` → Electron 主进程 → 带令牌的 `/market/snapshot/{symbol}` → Python `FixtureMarketProvider` → 同一份 `MarketSnapshot` → 行情卡片与 K 线。桥现在共17个命名操作：健康/行情六项、会话五项、运行六项（本步新增cancelRun，startAgentRun只接受三种模拟时序）。端口和令牌只在主进程和后端之间使用，不传给页面；Python无reload worker，直接作为Electron子进程启动。
 
-会话调用链：`SessionPanel` → preload白名单 → main → 带令牌的FastAPI → `Store` / SQLAlchemy事务 → SQLite。启动固定测试运行会一次提交两条消息、一条运行和七个事件，然后返回已完成的运行。事件以运行ID＋递增序号标识；main读取有限SSE响应并校验身份/顺序，页面只缓存展示，重复读取按身份去重。没有后台Agent、取消、中断恢复或自动重连，这些属于后续步骤。
+会话调用链：`SessionPanel` → preload白名单 → main → 带令牌的FastAPI → `Store` / SQLAlchemy事务 → SQLite。固定通信测试仍一次提交两条消息、一条运行和七事件。规则Agent改为先保存running记录及消息占位，再启动Python后台工作线程；每条事件事务提交后才能读取。main读取有限SSE并校验身份/顺序，页面只显示缓存。运行期间每200ms读取已保存状态，终态后停止；这不是长驻SSE订阅或自动流重连，后者留给第6步。
 
-规则Agent调用链：`startAgentRun` → POST /sessions/{id}/runs（kind=fake_agent）→ `Store.start_agent` → `AgentRunner` → `FakeModelProvider.plan` → `ToolRegistry.execute` → 第2步同一 `MarketProvider.snapshot` → 模型按工具结果组织回复 → 消息/事件/终态提交 → SSE与结果卡片。模型只识别“查询/查看 单一US代码 行情/K线”，价格不写在Agent中。默认无kind的API仍启动第3步固定通信测试；界面的主按钮“运行规则演示”显式选择fake_agent，次按钮保留原测试入口。
+规则Agent调用链：`startAgentRun` → POST /sessions/{id}/runs（kind=fake_agent）→ `RunManager.start` / `Store.begin_agent` → 后台`AgentRunner` → `FakeModelProvider.plan` → Python工具 → 第2步同一`MarketProvider.snapshot` → 结果/回复保存 → `Store.finish` → 有限SSE与结果卡片。POST返回已创建的running记录，不等待完成。默认无kind的API仍启动固定通信测试；主按钮选择fake_agent，次按钮保留原测试入口。
 
-支持输入“查询AAPL.US行情”“查看NVDA.US的K线”，同样可查四只示例股票。未知意图返回当前支持范围，不调用工具；“查询ZZZZ.US行情”会经过Python工具，保存UNKNOWN_SYMBOL、tool_result.ok=false、failed运行及stop_reason=error，不生成成功卡片。成功运行有8个事件，工具失败有9个，未知意图通常6个。工具开始/结果用call_id关联，SSE仍读取已完成运行的有限记录；界面显示保存的过程，不模拟实时LLM打字。模型Provider与数据Provider分别注入，后续可各自替换。
+支持输入“查询AAPL.US行情”“查看NVDA.US的K线”，同样可查四只示例股票。未知意图说明范围，不调用工具；未知股票保存UNKNOWN_SYMBOL、tool_result.ok=false及failed终态。正常成功8事件、工具失败9事件、未知意图6事件。工具开始/结果由call_id关联，SSE读取当前已提交记录，不模拟LLM打字。模型Provider与数据Provider分别注入。
 
-默认数据库为项目根 `runtime/research-trail.sqlite3`，启动时自动执行Alembic `upgrade head`，迁移成功后才报告就绪。关闭应用释放数据库连接；重启继续使用同一路径，删除会话级联删除其消息、运行和事件。可用当前CMD的 `set "RESEARCH_TRAIL_DB_PATH=绝对数据库路径"` 选择独立库；测试使用临时库，不修改日常历史。运行数据库与WAL/SHM文件已忽略，不上传。
+在“模拟工具时序”选择正常（无额外延迟、工具限时2秒）、延迟演示（等待3秒、限时5秒）或超时演示（等待2秒、限时0.6秒），整体运行限时15秒；这些是本步假工具验收配置，日志事件也标明时序。点击“取消运行”调用POST /sessions/{id}/runs/{run_id}/cancel。running只允许一次转为completed/failed/cancelled/timed_out/interrupted，重复取消返回原终态；事务内更新同一条响应消息并写一次run_completed。取消后不能写入迟到成功结果，已保存文本/工具证据保留。
+
+默认数据库为项目根 `runtime/research-trail.sqlite3`。启动先取得数据库独占持有锁、执行迁移，再把遗留running标记为interrupted，完成后报告就绪；同库第二个服务明确报占用，不中断活着的持有者。正常退出也将活动运行标为中断；硬退出由下次启动处理。只保留历史，不自动重调模型/工具。删除会话先取消其活动运行，再级联删除记录；同一会话只允许一个活动运行。可用CMD的 `set "RESEARCH_TRAIL_DB_PATH=绝对数据库路径"` 选择独立库；测试库在临时目录。数据库、WAL/SHM与持有锁均忽略，不上传。
 
 Pydantic 是业务契约来源。离线导出 OpenAPI 后，`openapi-typescript` 生成 `packages/contracts/generated.ts`，页面通过类型别名消费，未手写第二份 Quote/Kline。`bun run check` 同时检查契约是否过期。
 
@@ -53,7 +56,8 @@ Pydantic 是业务契约来源。离线导出 OpenAPI 后，`openapi-typescript`
 | 2 | 模拟行情与K线、股票选择、OpenAPI类型 | 验收通过；自动化复验及用户发布确认，手动记录待补 |
 | 3 | SQLite会话/消息/运行/事件、有限SSE读取 | 验收通过；29项Python、8项实窗复验及用户发布确认，手动记录待补 |
 | 4 | Python工具注册、最小规则Agent、过程与结果卡片 | 验收通过；自动复验＋用户发布确认 |
-| 5—7 | 取消恢复、完整对话与首版验收 | 未开始 |
+| 5 | 运行取消、超时竞争、删除与重启中断 | 验收通过；67项Python、10项实窗复验＋用户发布确认 |
+| 6—7 | 完整对话与事件重连、首版验收 | 未开始 |
 | 8—13 | 设置与凭证、真实模型/行情、市场工作台、组合及对比 | 未开始 |
 | 14—20 | 能力技能、研究策略/报告/恢复、论点、筛选与事件 | 未开始 |
 | 21—24 | 提醒与 Today、评测、研究结果校准、Windows 交付 | 未开始 |
@@ -117,6 +121,8 @@ research-trail/
 10. 新建会话，输入“查询AAPL.US行情”，点击“运行规则演示”：核对规则/模拟标签、行情卡片，以及tool_started→tool_result→回复→run_completed；再输入“查看NVDA.US的K线”，核对10根日线和回复最后收盘一致。
 11. 输入“你好”，确认说明支持范围且没有工具结果卡片；输入“查询ZZZZ.US行情”，确认运行失败、UNKNOWN_SYMBOL和失败卡片，没有旧行情结果。
 12. 选择旧运行、重读事件、关窗再打开，确认原结果及获取时间保持不变。fixture改价练习见practice第4步，不能改Agent价格或测试预期。
+13. 第5步：选择“延迟演示”，运行查询后点击“取消运行”，确认已取消且无新成功卡片；重复读取不增加最终消息。选择“超时演示”再运行，确认TOOL_TIMEOUT和已超时。
+14. 延迟运行期间删除会话，确认列表消失、另一个会话仍在；再建会话延迟运行并关窗，重新打开确认“已中断”、保留历史，不自动执行。可在输入框手动重新发起。
 
 ## 可重复的 CMD 检查
 
@@ -146,7 +152,7 @@ uv run --directory services\backend --frozen python -m alembic -c alembic.ini cu
 uv run --directory services\backend --frozen python -m alembic -c alembic.ini check
 ```
 
-`current`应显示 `0002_agent (head)`，`check`确认模型与迁移一致。第4步迁移只给运行增加可空的模型标记/错误字段，旧第3步历史保留；重复upgrade不清空历史。迁移降级与离线SQL导出未验证。
+`current`应显示 `0003_lifecycle (head)`，`check`确认模型与迁移一致。0003允许运行完成时间为空，并增加每会话唯一活动运行/每运行每角色唯一消息索引；保留旧历史及外键、序号约束。SQLite表重建只在迁移连接临时关闭外键，提交前检查完整性，再开启；业务连接仍开启外键。重复upgrade不清空历史。0003不提供自动降级；离线SQL与备份恢复未验证。
 
 ## 来源与公开边界
 
