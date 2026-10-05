@@ -8,6 +8,7 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, TypeAdapter, f
 from .market import Quote, Kline
 
 MODEL_LABEL = "规则演示／假模型"
+LIVE_MODEL_LABEL = "OpenAI兼容／真实模型"
 
 
 class DTO(BaseModel):
@@ -35,7 +36,7 @@ class SessionDTO(DTO):
 
 class StartRun(DTO):
     input: str = Field(min_length=1, max_length=2000)
-    kind: Literal["fixture", "fake_agent"] = "fixture"
+    kind: Literal["fixture", "fake_agent", "openai_agent"] = "fixture"
     scenario: Literal["normal", "delayed", "timeout"] = "normal"
 
     @field_validator("input")
@@ -111,9 +112,9 @@ class ToolFailure(DTO):
 class RunDTO(DTO):
     id: str
     session_id: str
-    kind: Literal["fixture", "fake_agent"]
+    kind: Literal["fixture", "fake_agent", "openai_agent"]
     status: Literal["running", "completed", "failed", "cancelled", "timed_out", "interrupted"]
-    model_label: Literal["规则演示／假模型"] | None = None
+    model_label: Literal["规则演示／假模型", "OpenAI兼容／真实模型"] | None = None
     error: ErrorPayload | None = None
     input: str
     answer: str
@@ -128,8 +129,8 @@ class RunDTO(DTO):
             raise ValueError("Failed, timed-out and interrupted runs require an error")
         if (self.status == "running") != (self.completed_at is None):
             raise ValueError("Only running records have no completion time")
-        if (self.kind == "fake_agent") != (self.model_label == MODEL_LABEL):
-            raise ValueError("Rule agent runs require their explicit fake-model label")
+        if self.model_label != {"fixture": None, "fake_agent": MODEL_LABEL, "openai_agent": LIVE_MODEL_LABEL}[self.kind]:
+            raise ValueError("Runs require the label matching their actual model kind")
         return self
 
 

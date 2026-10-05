@@ -240,10 +240,12 @@ export class BackendManager extends EventEmitter {
     if (typeof input !== 'string' || input.length > 2000 || !input.trim()) throw new Error('测试输入需要1至2000个字符。');
     return this.business<RunDTO>(`/sessions/${this.id(id)}/runs`, 'POST', { input });
   }
-  startAgentRun(id: unknown, input: unknown, scenario: unknown = 'normal') {
+  startAgentRun(id: unknown, input: unknown, scenario: unknown = 'normal', kind: unknown = 'fake_agent') {
     if (typeof input !== 'string' || input.length > 2000 || !input.trim()) throw new Error('规则演示输入需要1至2000个字符。');
     if (!['normal', 'delayed', 'timeout'].includes(scenario as string)) throw new Error('未知模拟工具时序。');
-    return this.business<RunDTO>(`/sessions/${this.id(id)}/runs`, 'POST', { input, kind: 'fake_agent', scenario });
+    if (!['fake_agent', 'openai_agent'].includes(kind as string)) throw new Error('未知模型类型。');
+    if (kind === 'openai_agent' && scenario !== 'normal') throw new Error('真实模型不使用模拟工具时序。');
+    return this.business<RunDTO>(`/sessions/${this.id(id)}/runs`, 'POST', { input, kind, scenario });
   }
   cancelRun(id: unknown, runId: unknown) { return this.business<RunDTO>(`/sessions/${this.id(id)}/runs/${this.id(runId)}/cancel`, 'POST'); }
   sessionSnapshot(id: unknown) { return this.business<SessionSnapshot>(`/sessions/${this.id(id)}/snapshot`); }

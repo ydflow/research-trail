@@ -24,6 +24,22 @@ class ToolRegistry:
             raise ValueError("工具名称未允许或已注册")
         self._handlers[name] = handler
 
+    def definitions(self):
+        # Wire names cannot contain dots; map back only through this registered allowlist.
+        return [{"type": "function", "function": {"name": name.replace(".", "_"),
+                 "description": "Read-only " + name + "; fixture data, not real-time market data.",
+                 "parameters": ToolArguments.model_json_schema(), "strict": True}}
+                for name in self._handlers]
+
+    def decode(self, name, arguments):
+        allowed = {key.replace(".", "_"): key for key in self._handlers}
+        if name not in allowed:
+            raise ToolExecutionError("UNKNOWN_TOOL", "模型请求的工具未注册或不是允许的只读工具。")
+        try:
+            return ToolCall(name=allowed[name], arguments=ToolArguments.model_validate(arguments))
+        except ValidationError:
+            raise ToolExecutionError("INVALID_ARGUMENT", "模型工具参数不符合US代码契约。") from None
+
     def execute(self, call: ToolCall) -> ToolData:
         handler = self._handlers.get(call.name)
         if handler is None:

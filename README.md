@@ -6,15 +6,15 @@
 
 ## 当前状态
 
-截至 2026-10-05：**第0/2/3/4/5/6/7/8步自动验收通过；第1步原用户手动记录仍待填写**。v0.1.0源码版已发布，仅假模型＋模拟数据。第8步新增设置/连接/个人资料/脱敏诊断，五类配置和健康由Python独立管理、凭证存于Windows系统凭证管理器；本步所有测试入口都是假连接，不请求真实模型/行情/账户。用户逐项亲自操作和学习记录仍待填写，本步按独立授权通过 [PR #7](https://github.com/ydflow/research-trail/pull/7)交付，开发与发布复验见EVIDENCE第22—23节；最终合并状态以GitHub与发布回执为准。
+截至 2026-10-05：**第0/2/3/4/5/6/7/8/9步自动验收通过（第9步含一次真实模型工具验证，行情仍为模拟）；第1步原用户手动记录仍待填写**。v0.1.0源码版已发布，仅假模型＋模拟数据。第8步新增设置/连接/个人资料/脱敏诊断，五类配置和健康由Python独立管理、凭证存于Windows系统凭证管理器；第8步连接探针仍是假测试；第9步真实模型运行需显式选择，行情/账户真实接入未实现。用户逐项亲自操作和学习记录仍待填写，第8步按独立授权通过 [PR #7](https://github.com/ydflow/research-trail/pull/7)交付，开发与发布复验见EVIDENCE第22—23节；最终合并状态以GitHub与发布回执为准。
 
 - 默认分支 `main`；初始公开提交为 `55b1a3d`，第2步按功能分支/PR保留导入、Python新实现、修复与桌面适配提交。
 - 第2步公开复用依据为用户本轮确认的原作者授权，保留适配来源与依赖声明；交付见 [PR #1](https://github.com/ydflow/research-trail/pull/1)，发布检查和授权记录见EVIDENCE第9—11节，最终提交/合并状态以Git与发布回执为准。
 - 公开仓库：[ydflow/research-trail](https://github.com/ydflow/research-trail)。仅上传源码、测试、文档、依赖清单与锁文件；不包含运行数据或截图。
 - 第2步已普通合并，main基线为 `0e1dfd5ccf7e99c66d58188dcac9497ddd6e2bd8`；第3步以 [PR #2](https://github.com/ydflow/research-trail/pull/2) 交付，开发与发布验证见EVIDENCE第12—13节，最终提交和合并状态以Git与发布回执为准。
 - 第3步合并基线为 `7f925dee768ff33c076582dd9d41055aca9a5932`；第4步以 [PR #3](https://github.com/ydflow/research-trail/pull/3) 交付，开发及发布复验见EVIDENCE第14—15节，按功能分支/PR保留提交，最终远程状态以GitHub和发布回执为准。
-- 第5步开发基线为 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`；以 [PR #4](https://github.com/ydflow/research-trail/pull/4) 普通合并，第6步发布基线为`a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677`。第6步 [PR #5](https://github.com/ydflow/research-trail/pull/5)已普通合并，第7步发布基线为`f51b802d61896f9da30cd1f6df331c90e75e24b9`。第7步以 [PR #6](https://github.com/ydflow/research-trail/pull/6)交付，开发与发布证据见EVIDENCE第20—21节；第9—24步未开始。
-- [v0.1.0源码Release](https://github.com/ydflow/research-trail/releases/tag/v0.1.0)对应main `716543305ba5d74f57336c589c4b2dffaf6e3592`，没有安装包。第8步改动不在此标签内；[首版清单](docs/ACCEPTANCE-v0.1.0.md)保留标签创建前的验收快照，完整版本 `v1.0.0`仍为计划。
+- 第5步开发基线为 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`；以 [PR #4](https://github.com/ydflow/research-trail/pull/4) 普通合并，第6步发布基线为`a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677`。第6步 [PR #5](https://github.com/ydflow/research-trail/pull/5)已普通合并，第7步发布基线为`f51b802d61896f9da30cd1f6df331c90e75e24b9`。第7步以 [PR #6](https://github.com/ydflow/research-trail/pull/6)交付，开发与发布证据见EVIDENCE第20—21节；第10—24步未开始。
+- [v0.1.0源码Release](https://github.com/ydflow/research-trail/releases/tag/v0.1.0)对应main `716543305ba5d74f57336c589c4b2dffaf6e3592`，没有安装包。第8/9步改动不在此标签内；[首版清单](docs/ACCEPTANCE-v0.1.0.md)保留标签创建前的验收快照，完整版本 `v1.0.0`仍为计划。
 - Folio 功能和测试属于参考项目，不代表研迹已实现或用户已完成的贡献。
 
 ## 架构与当前边界
@@ -25,7 +25,8 @@ React 页面
     → Electron main：随机端口/令牌、所属Python进程、SSE续读
       → 本机 Python / FastAPI：鉴权与Pydantic契约
         ├─ 行情：FixtureMarketProvider（四股票固定示例）
-        ├─ 运行：RunManager → FakeModelProvider → ToolRegistry → 行情工具
+        ├─ 运行：RunManager → AgentRunner → FakeModel / OpenAIModelProvider
+        │    → 已注册只读ToolRegistry → 模拟行情 → 返回模型 → 最终回复
         └─ Store / SQLAlchemy / SQLite：会话、消息、运行、事件
             → 事务提交 → 快照/SSE → main校验 → React显示缓存
 设置页面 → 同一白名单桥 → Python SettingsService
@@ -34,7 +35,7 @@ React 页面
   └─ 确定性假连接测试 → 独立健康状态 → 白名单脱敏诊断JSON
 ```
 
-Python 统一管理业务状态，前端维护显示缓存。假模型和模拟行情分别实现，后续分别替换为真实连接。真实数据来源与模型回答不能混为一谈。
+Python 统一管理业务状态，前端维护显示缓存。假模型和模拟行情分别实现；会话可主动选择OpenAI兼容真实模型，行情仍为模拟数据。真实数据来源与模型回答不能混为一谈。
 
 行情调用链：股票选择 → `MarketPanel` → preload 的 `marketSnapshot` → Electron 主进程 → 带令牌的 `/market/snapshot/{symbol}` → Python `FixtureMarketProvider` → 同一份 `MarketSnapshot` → 行情卡片与 K 线。桥共30个命名操作：原健康/行情/会话/运行19项，加设置/凭证/资料/诊断11项。订阅返回解除函数；页面不能指定后端URL、端口、令牌、文件或进程。诊断导出只通过主进程系统保存对话框选择目的地，不给页面任意文件能力。Python无reload worker，直接作为Electron子进程启动。
 
@@ -74,12 +75,30 @@ Pydantic 是业务契约来源。离线导出 OpenAPI 后，`openapi-typescript`
 | 5 | 运行取消、超时竞争、删除与重启中断 | 验收通过；67项Python、10项实窗复验＋用户发布确认 |
 | 6 | 会话界面、数据库快照恢复、SSE续读和去重 | 验收通过；第6步发布复验见EVIDENCE第19节 |
 | 7 | 首版验收、离线CI、干净源码启动 | 验收通过；源码可发布，仅假模型＋模拟数据；远程CI与发布复验见EVIDENCE第21节 |
-| 8 | 设置、凭证、个人资料与脱敏诊断 | 自动验收通过；仅假连接，未提交/上传，用户操作待填 |
-| 9—13 | 真实模型/行情、市场工作台、组合及对比 | 未开始 |
+| 8 | 设置、凭证、个人资料与脱敏诊断 | 自动验收通过，PR #7已合并；连接探针仍是假测试，用户操作待填 |
+| 9 | OpenAI兼容模型与受限只读工具循环 | 自动验收通过；一次真实模型工具验证通过（2次请求、1次工具，行情仍为模拟）；交付 [PR #8](https://github.com/ydflow/research-trail/pull/8) |
+| 10—13 | 真实行情、市场工作台、组合及对比 | 未开始 |
 | 14—20 | 能力技能、研究策略/报告/恢复、论点、筛选与事件 | 未开始 |
 | 21—24 | 提醒与 Today、评测、研究结果校准、Windows 交付 | 未开始 |
 
 每次只执行用户发送的一步，运行验证后再决定上传或下一步。界面逐步复用，Python 核心按功能实现；不导入整套 TypeScript 后端同时管理业务。
+
+## 第9步：模型配置与一次真实验证
+
+Python OpenAIModelProvider使用Chat Completions协议，Base URL拼接`/chat/completions`。先在设置保存Base URL（例如服务提供的`https://example.com/v1`）、模型ID与系统凭证；API Key不通过聊天或环境变量导入。默认工具轮数与累计执行次数均最多8，整体120秒、单次请求30秒；可分别设置1—32次、1—600秒、1—120秒。连接探针仍是假测试，不能证明真实模型可用。
+
+会话的“运行模型”默认是假模型，显式选择“OpenAI兼容／真实模型”才请求本机配置的服务。模型选择注册工具→Python校验整批参数→执行→tool_call_id回传→继续模型→最终回复，最多限制值+1次模型请求（最后一次允许回复）；非法/超额工具不执行，不自动重试、不回退假模型。仅market.quote、market.kline已注册只读工具开放；模拟行情标签与时间保留。只发送本次输入和工具结果，不发送其他历史或个人资料。取消关闭HTTP流并阻止后续模型/工具；运行错误码见会话记录。
+
+远程服务必须HTTPS，本机模型可HTTP；不跟随重定向、不使用环境代理。上下文1MiB、响应256KiB、最终回复4000字符上限，输出最多1024 tokens；不支持所有厂商扩展、Responses或模型增量流。认证/限流/超时/网络/异常响应分别保存固定错误码，错误原文、Key与provider元数据不入事件。已知Key若被模型在回复中反射则替换为脱敏标记。
+
+开发轮未配置模型，入口返回MODEL_UNCONFIGURED、请求数0。发布轮用户在本机配置后，一次受限真实验证通过：2次模型请求、1次成功工具回传、8个持久化事件、最终completed。行情仍为模拟数据；不代表全部服务商或真实行情已验收。可从CMD明确发起最多两次模型请求、一次工具调用的验证：
+
+```cmd
+cd /d "D:\folio\research-trail\services\backend"
+.venv\Scripts\python.exe -m research_trail.verify_live --run
+```
+
+不带`--run`仅检查配置，不发请求。该入口只读日常库/系统凭证，运行与事件保存在仓库外新临时库；没有工具调用的直接回复不算验收通过。完整清单与未验证项见 [第9步验收](docs/ACCEPTANCE-step9.md)，代码调用链见tutorial C05，练习见practice第9步。第9步按用户独立授权准备功能分支/PR交付，发布复验见EVIDENCE第25节；最终PR/合并状态以GitHub和发布回执为准，不实施第10步。
 
 ## 材料入口
 

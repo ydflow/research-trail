@@ -14,7 +14,9 @@ const emptyProfile: Profile = { display_name: '', research_style: 'balanced' };
 
 function ConnectionCard({ connection, available, onChange }: { connection: ConnectionView; available: boolean; onChange: (value: ConnectionView) => void }) {
   const [form, setForm] = useState<ConnectionInput>({ enabled: connection.enabled, endpoint: connection.endpoint,
-    model: connection.model, requires_credential: connection.requires_credential, fake_result: connection.fake_result });
+    model: connection.model, requires_credential: connection.requires_credential, fake_result: connection.fake_result,
+    max_tool_rounds: connection.max_tool_rounds, run_timeout_seconds: connection.run_timeout_seconds,
+    request_timeout_seconds: connection.request_timeout_seconds });
   const [secret, setSecret] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -31,7 +33,9 @@ function ConnectionCard({ connection, available, onChange }: { connection: Conne
   const bridge = window.researchTrail!;
   const credentialKind = ['model', 'market', 'account'].includes(connection.kind);
   const dirty = form.enabled !== connection.enabled || form.endpoint !== connection.endpoint || form.model !== connection.model ||
-    form.requires_credential !== connection.requires_credential || form.fake_result !== connection.fake_result;
+    form.requires_credential !== connection.requires_credential || form.fake_result !== connection.fake_result ||
+    form.max_tool_rounds !== connection.max_tool_rounds || form.run_timeout_seconds !== connection.run_timeout_seconds ||
+    form.request_timeout_seconds !== connection.request_timeout_seconds;
   return <section className="settings-card" aria-label={`${titles[connection.kind]}连接`} data-testid={`connection-${connection.kind}`}>
     <div className="settings-card-heading"><h3>{titles[connection.kind]}</h3><span className={`settings-status ${connection.status}`} data-testid="connection-status">{statuses[connection.status]}</span></div>
     <p className="detail">{connection.detail}</p>
@@ -39,9 +43,15 @@ function ConnectionCard({ connection, available, onChange }: { connection: Conne
     <fieldset disabled={!available || busy}>
       <label className="settings-check"><input type="checkbox" checked={form.enabled} onChange={e => setForm({ ...form, enabled: e.target.checked })} />启用此连接</label>
       {credentialKind ? <>
-        <label>服务地址（选填，本步不请求）<input type="url" maxLength={200} value={form.endpoint} onChange={e => setForm({ ...form, endpoint: e.target.value })} placeholder="https://example.com/v1" /></label>
+        <label>服务地址{connection.kind === 'model' ? '（Base URL，含/v1；真实运行时请求）' : '（选填，本步不请求）'}<input type="url" maxLength={200} value={form.endpoint} onChange={e => setForm({ ...form, endpoint: e.target.value })} placeholder="https://example.com/v1" /></label>
         {connection.kind === 'model' ? <label>模型名称（选填）<input maxLength={80} value={form.model} onChange={e => setForm({ ...form, model: e.target.value })} placeholder="demo-model" /></label> : null}
         <label className="settings-check"><input type="checkbox" checked={form.requires_credential} onChange={e => setForm({ ...form, requires_credential: e.target.checked })} />测试前要求已保存凭证</label>
+      </> : null}
+      {connection.kind === 'model' ? <>
+        <label>工具轮数及累计调用上限<input type="number" min={1} max={32} value={form.max_tool_rounds} onChange={e => setForm({ ...form, max_tool_rounds: Number(e.target.value) })} /></label>
+        <label>整体超时（秒）<input type="number" min={1} max={600} value={form.run_timeout_seconds} onChange={e => setForm({ ...form, run_timeout_seconds: Number(e.target.value) })} /></label>
+        <label>单次模型请求超时（秒）<input type="number" min={1} max={120} value={form.request_timeout_seconds} onChange={e => setForm({ ...form, request_timeout_seconds: Number(e.target.value) })} /></label>
+        <p className="detail">真实运行必须有Base URL、模型ID和系统存储中的API Key。远程地址使用HTTPS，本机可用HTTP。下面的“测试假连接”不请求模型；真实验证请到会话选择真实模型并运行。</p>
       </> : null}
       <label>假连接结果<select value={form.fake_result} onChange={e => setForm({ ...form, fake_result: e.target.value as ConnectionInput['fake_result'] })}>
         <option value="success">成功</option><option value="failure">失败</option><option value="invalid">失效</option>
@@ -103,8 +113,8 @@ export function SettingsPanel({ available }: { available: boolean }) {
   };
   const bridge = window.researchTrail;
   return <section className="settings-panel" aria-label="设置与诊断">
-    <div className="market-heading"><h2>设置与诊断</h2><span className="mock-badge">仅假连接 · 不请求真实服务</span></div>
-    <p className="detail">五类连接分别保存和测试。假连接成功只说明此状态流程通过；会话仍使用规则演示和模拟行情。</p>
+    <div className="market-heading"><h2>设置与诊断</h2><span className="mock-badge">连接探针仍为假测试</span></div>
+    <p className="detail">五类连接分别保存和测试。假连接成功只说明状态流程通过；会话可主动选择真实模型，行情工具仍为模拟数据。</p>
     <div className="settings-actions"><button disabled={!available || busy || !bridge} onClick={() => void work(async current => {
       const values = await bridge!.connections(); if (current()) { setConnections(values); setReport(undefined); setNotice('已重新读取各连接状态。'); }
     })}>重新读取状态</button></div>
@@ -126,7 +136,7 @@ export function SettingsPanel({ available }: { available: boolean }) {
       <h3 className="profile-health-title">各连接独立状态</h3><ul className="profile-health">{connections.map(row => <li key={row.kind}>{titles[row.kind]}<span>{statuses[row.status]}</span></li>)}</ul>
     </section> : null}
     {tab === 'diagnostics' ? <section className="settings-card" aria-label="诊断">
-      <h3>脱敏诊断</h3><p className="detail">仅包含五类连接状态、凭证是否存在和测试时间。排除密钥、服务地址、个人资料、本机路径及环境变量。</p>
+      <h3>脱敏诊断</h3><p className="detail">仅包含五类连接探针状态、凭证是否存在和测试时间。test_mode及real_requests_sent仅描述这些假探针；真实模型结果与错误见会话运行记录。排除密钥、服务地址、个人资料、本机路径及环境变量。</p>
       <div className="settings-actions"><button disabled={!available || busy || !bridge} onClick={() => void work(async current => { const value = await bridge!.diagnostics(); if (current()) setReport(value); })}>读取诊断</button>
         <button disabled={!available || busy || !bridge} onClick={() => void work(async current => { const saved = await bridge!.exportDiagnostics(); if (current()) setNotice(saved ? '脱敏诊断已保存。' : '已取消导出。'); })}>导出脱敏诊断</button></div>
       {report ? <pre data-testid="diagnostics-json">{JSON.stringify(report, null, 2)}</pre> : null}

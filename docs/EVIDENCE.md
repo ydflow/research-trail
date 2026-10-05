@@ -636,3 +636,57 @@ PR、远程Actions和合并结果以本轮实际Git/GitHub查询及最终回执�
 发布分支创建 [PR #7](https://github.com/ydflow/research-trail/pull/7)，base main、非draft，初始head为98eb73ce8d924b1b953c424bdd6c4a110be8630d。已核对25文件与三个实际当前时间提交：Python新实现ae6b6461e4e01dac3edb023333ff15707016d694、Folio界面流程适配/桌面接入e785dd68d32e33dc4a15b8cc88babe4e2d0a184c、验收来源文档98eb73ce8d924b1b953c424bdd6c4a110be8630d；均为ydflow，不重写上游作者或导入历史。本次只补PR链接与查询记录，不改运行代码。
 
 创建后push与pull_request两项Windows Actions已启动，尚在运行，不提前记作通过；最终检查以 [PR #7检查](https://github.com/ydflow/research-trail/pull/7/checks)的实际最新head为准。合并前重新读取head/base、全部检查、review及未解决讨论，并再次核对账号/目标；满足用户授权条件才普通merge保留提交，同步本地main。最终检查与合并SHA由Git/GitHub及发布回执核实，不在本文预写自己的合并结果。
+## 24. 第9步：OpenAI兼容模型、受限只读工具循环与模拟协议验收（2026-10-05）
+
+用户本轮只授权第9步开发：先读规则/现实现，Python支持Base URL/模型ID/API Key，接入现有Agent工具循环，默认8轮/整体120秒、取消、白名单参数校验与可定位错误；先模拟，本机配置后少量真实验证，无凭证则记录未执行，完成停止。开始时main干净，HEAD=f4c51f85fd468aa540feca0dc494caa4d993ce2b（第8步PR #7合并）。本轮不提交/上传，不实施第10步，不改现有标签/Release或定时付费评测。
+
+### 实现与来源
+
+- 新增Python openai_provider.py，通过已有httpx的AsyncClient实现非流式Chat Completions；原httpx 0.28.1从dev移到运行依赖，离线uv lock/sync通过，不新增版本或包。官方协议核对：[function calling](https://developers.openai.com/api/docs/guides/function-calling)、[Chat Completions](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create)。wire函数名不带点，market_quote/market_kline显式映射内部market.quote/market.kline；保留assistant.tool_calls与按tool_call_id回传工具JSON的顺序。未导入Folio TS内核或新上游组件，现有UI出处/第三方声明和用户确认授权记录保持。
+- AgentRunner统一messages→工具选择→整批校验→ToolRegistry.execute→tool_started/tool_result→tool消息→模型→回复。旧FakeModelProvider.plan/respond用RuleDialog封装，规则行为、fixture价格、原工具/事件/历史语义保持。真实openai_agent与fake_agent分别标识，缺配置/认证失败不回退规则模型。所有行情工具仍为模拟数据，不与真实模型身份混写。
+- Python SettingsService在锁内取得一致配置/凭证/限制快照，Key仅内部ModelConfiguration（repr排除Key）；本机系统存储保存，不提供读回API、不用环境Key。新增0005_model_limits仅非敏感整数列，8次/120秒/30秒默认值；限制分别1—32、1—600、1—120。运行中改地址/模型/Key/限制不影响在途运行；配置编辑仍使假探针失效，五类记录独立。diagnostics.scope=connection-probes，false real_requests_sent仅指假连接探针，真实结果见会话RunDTO/事件。
+- 工具仅注册只读market.quote/market.kline，校验唯一有界ID、JSON无重复字段、symbol及extra=forbid；整批校验后才执行，超额批次零执行。轮数和累计调用数都限制，默认最多8次执行、最多9次模型请求（最后一次可回复）；provider原始ID、非法参数原文和扩展元数据不写事件。内部call_id自造UUID，执行仍二次校验/类型与symbol匹配。
+- RunManager继续后台工作线程、整体Timer、工具Timer、取消Event和Store唯一终态；真实运行整体默认120秒，原fake SCENARIOS保持15秒/受控模拟时序。HTTP请求等待中检查stop/deadline，取消task/关闭流，工具前后及模型返回后checkpoint防迟到写回；正常/硬退出仍中断恢复且不重执行。单次请求也有绝对时间限，慢分块不能仅靠活动read重置超时。
+- 固定MODEL_AUTH_FAILED、MODEL_RATE_LIMIT、MODEL_HTTP_ERROR、MODEL_NETWORK_ERROR、MODEL_TIMEOUT/RUN_TIMEOUT、MODEL_RESPONSE_INVALID/LIMIT、UNKNOWN_TOOL、INVALID_ARGUMENT、TOOL_LIMIT等错误码。无重试/重定向/环境代理，远程HTTPS、本机可HTTP；请求上下文1MiB、响应256KiB、最终4000字符/输出1024 tokens。异常正文不入日志/事件，已知Key在合法最终内容中的反射替换为脱敏标记。
+- 桌面原30项白名单保持，startAgentRun增加显式模型kind参数，默认fake；设置表单新增限制，真实模型选项说明会发送本次输入/工具结果与可能费用，不发送其他历史/资料。会话及中断/取消使用实际模型标签，不制造健康；假连接探针仍独立，不把一次真实运行当其他连接成功。
+- 新增verify_live入口：只读日常SQLite配置与对应系统条目，不枚举凭证，在独立临时库使用同一Runner/Manager/Store、1轮/次、整体最多60秒、单次最多30秒，最多两次模型请求；必须completed且有一次成功tool_result才passed。默认只检查配置，--run显式执行；无配置not_executed，直接回复无工具不算通过，输出不包含Key/URL/模型ID/资料。
+
+### 已执行验证与修正
+
+新增Python模拟协议40项通过，覆盖多轮回传/共用事件/读历史不重请求、整批参数/额外字段/非法工具/重复JSON字段及ID、默认8次与批次不能绕过总数、各HTTP/网络错误、异常响应和空工具对象/false工具字段、凭证反射脱敏、远程HTTP/停用不发Key、单次/整体限时、取消与worker退出、在途配置快照、旧第8步配置/资料/会话迁移保持、少量验证入口两请求预算/只读日常库。MockTransport是模拟HTTP响应，不是外部LLM；另有真实loopback HTTP socket测试，取消后服务端观察连接关闭。
+
+新增Electron实窗1项通过：未配置零请求失败→UI保存本机协议fixture与占位凭证/1次限制→模拟模型选择工具→Python真实执行→回传模型fixture→生成回复/模拟卡片→TOOL_LIMIT→取消本机HTTP流/服务端观察断开→假模型同工具链且无模型HTTP请求→关闭同库重启，完整快照相同、无新请求。临时命名空间Windows凭证清理，密码框清空、历史不含Key。所有模型响应来自本机确定性协议fixture，不写作真实模型通过。
+
+Browser plugin not available，依frontend-testing-debugging使用项目已有Playwright Electron；dist/renderer/index.html、研迹标题、非空首屏、无Vite overlay/相关console warning/error/pageerror。1100×800与600×620已看首屏/设置/工具结果/取消/窄窗截图，无横向溢出，长内容纵向滚动。截图在C:\Users\38905\AppData\Local\Temp\research-trail-step9-qa，测试库在research-trail-model-qa-*，均在仓库外，不上传。
+
+初次统一检查Python125/Node8通过，但Electron12/14通过、2项失败：本步改了既有“模拟工具时序”label，使旧生命周期/断流测试的exact定位失效。恢复原label、保持原断言，新增目标及两项旧回归共3项通过；没有放宽取消/续读/去重/不重执行断言。随后补验证入口与严格空tool_calls类型保护，模拟协议增至40项；最终完整统一结果将在本节追加，不把初次失败或单项通过冒充完整通过。
+
+### 真实验证与停止边界
+
+只读检查默认日常库：库存在，但没有model配置记录；没有读取账户/持仓/其他凭证。实际运行python -m research_trail.verify_live --run返回real_validation=not_executed、reason=MODEL_UNCONFIGURED、requests_started=0，未发真实模型/行情/账户请求。本轮只要求用户在本机配置并回复是否完成，不索要或展示Key；未配置不是认证成功。真实模型服务、外部TLS/DNS阻塞取消、兼容厂商扩展/Responses/模型流、真实行情/账户、安装包/无工具机器/其他OS/长时压力未验证；本步未重做干净安装或远程CI。普通Python字符串/系统凭证极端崩溃清理的第8步限制保持。
+
+README/ROADMAP、tutorial C05、practice第9步及ACCEPTANCE-step9同步；一个非敏感限制修改练习和三道理解题保留待用户回答。不新增上游原样导入、交易功能或下一步数据适配，本轮完成后停止，HEAD不变，改动仅本地。
+
+最终统一check.cmd实际退出0：完整Python130项（新增模拟协议40项）、Node8项、真实Electron14项（新增模型协议fixture1项）均通过、无跳过；契约逐字一致、TS、main/preload/Vite构建及隔离库两次upgrade/current/check通过，head=0005_model_limits、无新升级操作。仅原上游Starlette/TestClient httpx弃用提示1条，未升级依赖。最终隔离迁移证据research-trail-verify-rZInpU。先前127/8/14完整轮也通过，随后因发现空对象/false工具字段会被or []误作无工具而补严格类型拒绝和远程HTTP/停用零请求保护测试，最终完整130/8/14单独重新验证，不以重跑未修失败代替修复。之后只补文档，不改变已验证运行代码。
+
+结论：第9步模拟协议和完整自动验收通过，真实模型验证未执行（MODEL_UNCONFIGURED、0请求）；用户亲自操作与学习待填写，不能宣称真实模型/实时行情已验收。来源/声明、现有假模型/fixture及原取消/快照/SSE严格回归保持。本轮所有改动在本地，HEAD/main仍f4c51f85fd468aa540feca0dc494caa4d993ce2b，未暂存/提交/推送，不执行第10步，交付后停止。
+
+
+收尾审核：本段追加前99份候选均为文本、888653字节，24项Markdown本地链接/围栏及9项秘密/运行/账户/截图/依赖/构建忽略探针通过，常见密钥签名/运行产物无标记，git diff --check通过。实际26个已有文件修改、5个新增，共31个，仅第9步实现/配置/迁移/契约/回归与文档；工作流、AGENTS、.gitattributes、前端锁文件及已有声明不变。测试末未发现属于本项目的Electron/Python/Node/Bun残留；再次执行少量真实验证入口仍not_executed / MODEL_UNCONFIGURED / requests_started=0。暂存为空、HEAD不变，本轮未写Git/GitHub或日常库/账户数据；所有截图/协议fixture库/JSON只在仓库外。本机PROJECT_STATE最新进度已同步，历史验收与交接快照保留，完成停止。
+
+## 25. 第9步发布复验与受限真实模型验证（2026-10-05）
+
+用户另行授权仅发布已验收的第9步：真实改动分类提交、功能分支/PR，检查通过且没有未解决阻塞才普通合并并同步main。本节承接第24节开发快照，不抹去当时未配置/未执行的事实，不执行第10步，不打标签、创建Release或定时付费评测。
+
+- 发布基线：main、远程main均f4c51f85fd468aa540feca0dc494caa4d993ce2b；实时gh api user为ydflow。现有ydflow/research-trail为本项目公开、非fork、非归档仓库，默认main，origin fetch/push均https://github.com/ydflow/research-trail.git，具有普通merge能力。开放PR为空，无同名feat/step-9-openai-agent远程分支；不切换账号、不覆盖无关仓库、不删除/强推。每次GitHub写入前再次核对账号/仓库/远程。
+- 实际范围：26个已有文件修改、5个新增，共31个。Python新实现包含模型适配、共用受限循环、限制/迁移、契约、验证入口与回归；桌面接入/模型选择/设置及实窗协议fixture另提交；文档另提交。本步没有新的上游原样导入或独立修复改动，不制造对应提交。第24节开发中修复过的响应严格校验/旧标签回归按实际最终源码包含在本步实现与测试中，不伪造另一次历史。沿用ydflow/noreply与真实当前提交时间。
+- 来源：第9—11节用户确认的原作者复用授权记录保留，未独立核验授权原文，不把全仓自行标MIT；既有Folio固定ZIP出处和第三方LICENSE/NOTICE未变。没有新增原TS内核/账户源码或依赖；httpx原锁定版本移为运行依赖。
+- 发布本机完整检查：cmd.exe /d /c check.cmd实际退出0，Python130、Node8、真实Electron14项均通过且无跳过；契约逐字一致、类型/构建和隔离库重复upgrade/current/check通过，head=0005_model_limits；迁移证据research-trail-verify-xF4kxS。仅既有Starlette/TestClient httpx弃用提示1条，未升级依赖。
+- 干净源码复验：bun run verify:clean实际退出0，99份源码文本导出至仓库外research-trail-clean-EHqwpe/clean source，不复制Git、依赖、构建和运行数据；按锁定清单新安装71个前端包、28个Python包并准备Electron。副本完整130/8/14、契约/类型/构建/迁移再次通过；自身根CMD完成选股→会话→行情→取消→关闭/重启历史，快照相同、无新运行、所属进程退出，证据research-trail-cmd-qa-RpUvr8。安装可复用缓存，不称无工具机器/空缓存验收。此后仅更新发布文档，未改变运行代码。
+- 本机真实模型：只读配置检查返回CONFIGURED_REQUIRES_EXPLICIT_RUN、0请求，确认用户已在本机配置；没有打印Key/地址/模型ID或索要聊天凭证。按第9步“配置后用少量请求验证一次真实工具调用”原授权实际执行verify_live --run一次，返回passed、completed、requests_started=2、tool_results=1、event_count=8、market_source=fixture；同一Python适配器/AgentRunner/工具/事件链完成选择工具→执行→回传模型→回复。证据库在仓库外research-trail-live-qa-3o_7wqwl，日常库只读、不枚举账户/凭证，不上传临时库或回复。未重试或追加收费评测。成功仅覆盖当前本机配置的一次模型工具循环，不代表真实行情/账户。
+- 发布候选审核（文档更新前）：99份文本889477字节，24项本地Markdown链接/围栏、9项秘密/运行/WAL/账户/截图/依赖/虚拟环境/构建忽略探针通过。常见密钥签名/二进制/运行产物无标记；实际本机已配置Key的字节未出现在候选源码或真实验证DB/WAL/SHM；声明与HEAD逐字相同，git diff --check通过。按明确路径提交，运行库、账户数据、日志、缓存及所有截图不上传。扫描是辅助审核，不等于完整安全认证。
+- 未验证：外部真实认证失败/限流/超时/阻塞取消只模拟覆盖；所有兼容服务商/模型、费用账单、外部TLS/DNS阻塞取消、Responses/增量流、真实行情/账户、其他OS、安装包/无工具机器/空缓存、长时并发/全部极端崩溃未验证。用户亲自操作/练习保持待填。远程CI与PR/合并结果依据后续实际GitHub查询，不能用本机成功推定。
+
+发布准备完成。仅在最终PR head全部检查通过、无未解决讨论与合并阻塞后，按本轮授权普通merge保留提交、fast-forward本地main；最终链接、SHA和CI由Git/GitHub及发布回执核实。
+
+已创建 [第9步PR #8](https://github.com/ydflow/research-trail/pull/8)，base main、head feat/step-9-openai-agent、非draft。初始head=2fe844cf5552134d0826e951a3df720ee8969275；保留Python新实现0fa115348bf1dd1a6eaa616ee563151c9002c71e、桌面接入8bb3b21abdea236ee8f0f66874a3a261230106f7、来源与验收文档2fe844cf5552134d0826e951a3df720ee8969275，作者ydflow与实际提交时间2026-10-05 20:57:12 +08:00。推送/创建前均重新核验账号、目标与origin，无账号切换；本次只补PR链接与记录，不改运行代码。初次查询MERGEABLE、reviews及未解决讨论为空，push/pull_request两项Windows Actions仍运行，不提前记作CI通过。最终head检查见 [PR #8 checks](https://github.com/ydflow/research-trail/pull/8/checks)，最终合并与main同步由实际Git/GitHub及本轮回执确认，不在本文虚构自身合并SHA。

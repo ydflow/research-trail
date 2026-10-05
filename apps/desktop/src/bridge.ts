@@ -34,7 +34,7 @@ export interface ResearchTrailBridge {
   sessionRuns(sessionId: string): Promise<RunDTO[]>;
   sessionSnapshot(sessionId: string): Promise<SessionSnapshot>;
   startRun(sessionId: string, input: string): Promise<RunDTO>;
-  startAgentRun(sessionId: string, input: string, scenario?: 'normal' | 'delayed' | 'timeout'): Promise<RunDTO>;
+  startAgentRun(sessionId: string, input: string, scenario?: 'normal' | 'delayed' | 'timeout', kind?: 'fake_agent' | 'openai_agent'): Promise<RunDTO>;
   cancelRun(sessionId: string, runId: string): Promise<RunDTO>;
   getRun(sessionId: string, runId: string): Promise<RunDTO>;
   runEvents(sessionId: string, runId: string, afterSequence?: number): Promise<StreamEvent[]>;

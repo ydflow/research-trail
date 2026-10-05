@@ -46,6 +46,8 @@ class Work:
     session_id: str
     run_id: str
     timing: Timing
+    runner: object = None
+    deadline: float = 0
     stop: threading.Event = field(default_factory=threading.Event)
     timers: list[threading.Timer] = field(default_factory=list)
     thread: threading.Thread | None = None
@@ -69,21 +71,21 @@ class RunManager:
         timer.start()
         return timer
 
-    def start(self, session_id, text, scenario):
+    def start(self, session_id, text, scenario, *, runner=None, timing=None, kind="fake_agent"):
         with self.lock:
             if self.closed:
                 raise RuntimeError("后端正在关闭。")
-            timing = self.timings[scenario]
-            record = self.store.begin_agent(session_id, text)
-            work = Work(session_id, record.id, timing)
+            timing = self.timings[scenario] if timing is None else timing
+            record = self.store.begin_agent(session_id, text, kind)
+            work = Work(session_id, record.id, timing, runner or self.runner, time.monotonic() + timing.run_timeout)
             self.work[record.id] = work
             try:
                 self.timer(work, work.timing.run_timeout, "RUN_TIMEOUT")
                 work.thread = threading.Thread(target=self.execute, args=(work, text), daemon=True,
-                                               name=f"rule-run-{record.id}")
+                                               name=f"agent-run-{record.id}")
                 work.thread.start()
             except Exception:
-                record = self.settle(work, "failed", error=ErrorPayload(code="WORKER_START_FAILED", message="规则工作线程启动失败。"))
+                record = self.settle(work, "failed", error=ErrorPayload(code="WORKER_START_FAILED", message="Agent工作线程启动失败。"))
                 self.work.pop(record.id, None)
             return record
 
@@ -96,7 +98,7 @@ class RunManager:
             self.checkpoint(work)
             # Error is included once, atomically with the winning terminal state.
             if kind != "error":
-                if kind == "status":
+                if kind == "status" and work.runner is self.runner:
                     payload = {**payload, "detail": payload["detail"] +
                                f" 模拟工具时序：延迟{work.timing.delay:g}秒，工具限时{work.timing.tool_timeout:g}秒。"}
                 self.store.append_running(work.session_id, work.run_id, kind, payload)
@@ -119,8 +121,9 @@ class RunManager:
     def execute(self, work, text):
         try:
             self.checkpoint(work)
-            outcome = self.runner.run(text, lambda kind, payload: self.emit(work, kind, payload),
-                                      before_tool=lambda: self.before_tool(work), after_tool=lambda: self.after_tool(work))
+            outcome = work.runner.run(text, lambda kind, payload: self.emit(work, kind, payload), stop=work.stop,
+                                      deadline=work.deadline, before_tool=lambda: self.before_tool(work),
+                                      after_tool=lambda: self.after_tool(work))
             with self.lock:
                 self.checkpoint(work)
                 self.settle(work, outcome.status, text=outcome.answer, error=outcome.error)
@@ -129,7 +132,7 @@ class RunManager:
         except Exception:
             with self.lock:
                 if not self.closed and not work.stop.is_set():
-                    self.settle(work, "failed", error=ErrorPayload(code="RUN_ERROR", message="规则运行发生内部错误。"))
+                    self.settle(work, "failed", error=ErrorPayload(code="RUN_ERROR", message="Agent运行发生内部错误。"))
         finally:
             with self.lock:
                 work.stop.set()
@@ -151,8 +154,8 @@ class RunManager:
                 return
             if code == "TOOL_TIMEOUT" and work.tool_timer is None:
                 return
-            error = ErrorPayload(code=code, message="模拟工具超时。" if code == "TOOL_TIMEOUT" else "规则运行超时。")
-            self.settle(work, "timed_out", text=f"规则演示／假模型：{error.message}", error=error)
+            error = ErrorPayload(code=code, message="只读工具超时。" if code == "TOOL_TIMEOUT" else "Agent运行达到整体时间限制。")
+            self.settle(work, "timed_out", text=f"{work.runner.model.label}：{error.message}", error=error)
 
     def cancel(self, session_id, run_id):
         with self.lock:
@@ -161,8 +164,8 @@ class RunManager:
                 return record
             work = self.work.get(run_id)
             if work is not None:
-                return self.settle(work, "cancelled", text="\n规则演示／假模型：已取消，保存的内容保留。")
-            return self.store.finish(session_id, run_id, "cancelled", "\n规则演示／假模型：已取消。")
+                return self.settle(work, "cancelled", text=f"\n{record.model_label}：已取消，保存的内容保留。")
+            return self.store.finish(session_id, run_id, "cancelled", f"\n{record.model_label or '固定测试'}：已取消。")
 
     def delete_session(self, session_id):
         with self.lock:
@@ -178,7 +181,7 @@ class RunManager:
             for work in list(self.work.values()):
                 if work.stop.is_set():
                     continue
-                self.settle(work, "interrupted", "\n规则演示／假模型：后端已退出，请重新发起。",
+                self.settle(work, "interrupted", f"\n{work.runner.model.label}：后端已退出，请重新发起。",
                             ErrorPayload(code="BACKEND_INTERRUPTED", message="后端关闭中断运行；保存内容保留，不自动重执行。"))
             self.store.recover_interrupted()
         deadline = time.monotonic() + 1

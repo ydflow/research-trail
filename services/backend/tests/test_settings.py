@@ -181,7 +181,8 @@ def test_diagnostics_whitelist_profile_and_restart(settings):
     assert client.put("/settings/profile", json=profile).json() == profile
     before = rows(client)
     report = client.get("/settings/diagnostics").json()
-    assert set(report) == {"schema_version", "generated_at", "test_mode", "real_requests_sent", "credential_storage", "connections"}
+    assert set(report) == {"schema_version", "scope", "generated_at", "test_mode", "real_requests_sent", "credential_storage", "connections"}
+    assert report["scope"] == "connection-probes"
     assert all(set(row) == {"kind", "configured", "credential_present", "status", "reason", "checked_at"} for row in report["connections"])
     serialized = json.dumps(report, ensure_ascii=False)
     assert all(value not in serialized for value in (SENTINEL, "example.com", "本机研究者", str(path), "credential_ref", "demo-model"))
@@ -226,7 +227,7 @@ def test_migrate_old_conversation_and_repeat(tmp_path):
     database.migrate(); database.migrate()
     assert store.snapshot(session.id).model_dump() == before
     with database.engine.connect() as connection:
-        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0004_settings"
+        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0005_model_limits"
     database.close()
 
 

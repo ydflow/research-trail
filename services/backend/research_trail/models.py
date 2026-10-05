@@ -79,6 +79,9 @@ class ConnectionRecord(Base):
     status: Mapped[str] = mapped_column(String(20))
     reason: Mapped[str] = mapped_column(String(40))
     checked_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    max_tool_rounds: Mapped[int] = mapped_column(Integer, default=8)
+    run_timeout_seconds: Mapped[int] = mapped_column(Integer, default=120)
+    request_timeout_seconds: Mapped[int] = mapped_column(Integer, default=30)
 
 
 class ProfileRecord(Base):

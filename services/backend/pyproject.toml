@@ -5,13 +5,14 @@ description = "ResearchTrail local fixture market and persistent conversation se
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "alembic>=1.15,<2",
+    "httpx>=0.28,<1",
     "fastapi>=0.115,<1",
     "sqlalchemy>=2.0,<2.1",
     "uvicorn>=0.34,<1",
 ]
 
 [dependency-groups]
-dev = ["pytest>=8,<10", "httpx>=0.28,<1"]
+dev = ["pytest>=8,<10"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

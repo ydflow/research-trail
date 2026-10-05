@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from sqlalchemy import delete, func, select
 
-from .conversation import EVENT_ADAPTER, MODEL_LABEL, ErrorPayload, EventPage, MessageDTO, RunDTO, SessionDTO, SessionSnapshot
+from .conversation import EVENT_ADAPTER, MODEL_LABEL, LIVE_MODEL_LABEL, ErrorPayload, EventPage, MessageDTO, RunDTO, SessionDTO, SessionSnapshot
 from .database import Database
 from .models import EventRecord, MessageRecord, RunRecord, SessionRecord
 
@@ -174,7 +174,9 @@ class Store:
                            type=kind, timestamp=timestamp, envelope=envelope))
         session.updated_at = timestamp
 
-    def begin_agent(self, session_id, text):
+    def begin_agent(self, session_id, text, kind="fake_agent"):
+        if kind not in ("fake_agent", "openai_agent"):
+            raise ValueError("不是Agent运行类型")
         with self.database.write() as db:
             session = self.require_session(db, session_id)
             if db.scalar(select(RunRecord.id).where(RunRecord.session_id == session_id, RunRecord.status == "running")):
@@ -182,8 +184,8 @@ class Store:
             message_sequence = (db.scalar(select(func.max(MessageRecord.sequence))
                                 .where(MessageRecord.session_id == session_id)) or 0) + 1
             started = now()
-            record = RunRecord(id=str(uuid4()), session_id=session_id, kind="fake_agent", status="running",
-                               model_label=MODEL_LABEL, error=None, input=text, answer="",
+            record = RunRecord(id=str(uuid4()), session_id=session_id, kind=kind, status="running",
+                               model_label=MODEL_LABEL if kind == "fake_agent" else LIVE_MODEL_LABEL, error=None, input=text, answer="",
                                assistant_message_id=str(uuid4()), started_at=started, completed_at=None,
                                last_sequence=0)
             self.append_event(db, record, session, "run_started", {"input": text, "started_at": started})
@@ -254,7 +256,7 @@ class Store:
 
     def recover_interrupted(self):
         for record in self.active_runs():
-            self.finish(record.session_id, record.id, "interrupted", "\n规则演示／假模型：运行中断，请重新发起。",
+            self.finish(record.session_id, record.id, "interrupted", f"\n{record.model_label or '固定测试'}：运行中断，请重新发起。",
                         ErrorPayload(code="BACKEND_INTERRUPTED", message="后端已退出；保存的内容保留，本次不自动重执行。"))
 
     def events(self, session_id, run_id, after_sequence=0, limit=500):

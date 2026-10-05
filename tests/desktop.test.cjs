@@ -25,6 +25,124 @@ function children(pid) {
 }
 const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
 
+test('OpenAI compatible UI: simulated HTTP tool loop, limits, cancel and persisted identity', { timeout: 90000 }, async () => {
+  const { createServer } = require('node:http');
+  const work = mkdtempSync(resolve(tmpdir(), 'research-trail-model-qa-'));
+  const databasePath = resolve(work, 'model.sqlite3');
+  const sentinel = 'test-only-loopback-model-key';
+  const requests = [], errors = [], serverErrors = [];
+  let mode = 'success', blocked = false, disconnected = false;
+  const server = createServer(async (req, res) => {
+    try {
+      if (req.url !== '/v1/chat/completions' || req.headers.authorization !== `Bearer ${sentinel}`) throw new Error('Unexpected model transport route/auth');
+      let raw = ''; for await (const chunk of req) raw += chunk;
+      const body = JSON.parse(raw); requests.push(body);
+      if (mode === 'blocked') {
+        res.writeHead(200, { 'content-type': 'application/json', 'content-length': '500' }); res.flushHeaders();
+        blocked = true; res.on('close', () => { disconnected = true; }); return;
+      }
+      const tool = body.messages.at(-1).role === 'tool';
+      if (tool) {
+        const result = JSON.parse(body.messages.at(-1).content);
+        assert.equal(result.data.quote.last_price, 189.43); assert.equal(result.data.data_label, '模拟数据');
+      }
+      const calls = mode === 'limit' || !tool;
+      const message = calls ? { role: 'assistant', content: null, tool_calls: [{ id: `call_${requests.length}`, type: 'function',
+        function: { name: 'market_quote', arguments: '{"symbol":"AAPL.US"}' } }] } :
+        { role: 'assistant', content: '模型协议模拟响应：AAPL.US 189.43 USD，模拟数据，非实时行情。' };
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ choices: [{ finish_reason: calls ? 'tool_calls' : 'stop', message }] }));
+    } catch (error) { serverErrors.push(error.message); res.writeHead(500); res.end('Fixture protocol failed'); }
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  let instance = await launch({ RESEARCH_TRAIL_DB_PATH: databasePath });
+  const watch = page => {
+    page.on('pageerror', error => errors.push(error.message));
+    page.on('console', message => { if (['error', 'warning'].includes(message.type())) errors.push(message.text()); });
+  };
+  watch(instance.page);
+  try {
+    await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    assert.equal(await instance.page.title(), '研迹 · ResearchTrail');
+    assert.match(instance.page.url(), /dist\/renderer\/index\.html$/);
+    await screenshot(instance.page, 'step9-initial.png');
+    await instance.page.getByRole('button', { name: '会话与事件', exact: true }).click();
+    await instance.page.getByLabel('会话标题', { exact: true }).fill('第9步模拟协议');
+    await instance.page.getByRole('button', { name: '创建会话', exact: true }).click();
+    await expect(instance.page.getByTestId('current-session')).toHaveText('第9步模拟协议');
+    await instance.page.getByLabel('运行模型', { exact: true }).selectOption('openai_agent');
+    await instance.page.getByLabel('测试输入', { exact: true }).fill('查询AAPL.US行情');
+    await instance.page.getByRole('button', { name: '运行真实模型', exact: true }).click();
+    await expect(instance.page.getByTestId('run-error')).toContainText('MODEL_UNCONFIGURED');
+    assert.equal(requests.length, 0);
+    await instance.page.getByRole('button', { name: '设置与诊断', exact: true }).click();
+    const model = instance.page.getByTestId('connection-model');
+    await model.getByLabel('服务地址').fill(`http://127.0.0.1:${server.address().port}/v1`);
+    await model.getByLabel('模型名称').fill('loopback-protocol-fixture');
+    await model.getByLabel('工具轮数').fill('1');
+    await model.getByLabel('整体超时').fill('10');
+    await model.getByRole('button', { name: '保存配置', exact: true }).click();
+    await expect(model.getByTestId('connection-status')).toHaveText('待测试');
+    await model.getByLabel('新凭证').fill(sentinel);
+    await model.getByRole('button', { name: '保存凭证', exact: true }).click();
+    await expect(model.getByLabel('新凭证')).toHaveValue('');
+    await expect(model).toContainText('已保存（不回显）');
+    await screenshot(instance.page, 'step9-model-settings.png');
+    await instance.page.getByRole('button', { name: '会话与事件', exact: true }).click();
+    await instance.page.getByLabel('运行模型', { exact: true }).selectOption('openai_agent');
+    const execute = async () => {
+      await instance.page.getByLabel('测试输入', { exact: true }).fill('查询AAPL.US行情');
+      await instance.page.getByRole('button', { name: '运行真实模型', exact: true }).click();
+    };
+    await execute();
+    await expect(instance.page.getByTestId('run-state')).toContainText('OpenAI兼容／真实模型 · 已完成');
+    await expect(instance.page.getByTestId('message-history')).toContainText('模型协议模拟响应');
+    await expect(instance.page.getByTestId('tool-result')).toContainText('189.43');
+    assert.equal(requests.length, 2);
+    await instance.page.getByTestId('run-state').scrollIntoViewIfNeeded();
+    await screenshot(instance.page, 'step9-loopback-completed.png');
+    const ids = await instance.page.evaluate(() => window.researchTrail.listSessions());
+    const sid = ids[0].id;
+    const snapshot = await instance.page.evaluate(id => window.researchTrail.sessionSnapshot(id), sid);
+    const successful = snapshot.runs.find(run => run.status === 'completed');
+    assert.equal(successful.kind, 'openai_agent');
+    assert.equal(successful.model_label, 'OpenAI兼容／真实模型');
+    assert.deepEqual(snapshot.events.filter(e => e.run_id === successful.id && e.type.startsWith('tool_')).map(e => e.type), ['tool_started', 'tool_result']);
+    mode = 'limit'; await execute();
+    await expect(instance.page.getByTestId('run-error')).toContainText('TOOL_LIMIT');
+    assert.equal(requests.length, 4);
+    mode = 'blocked'; await execute();
+    await expect.poll(() => blocked).toBe(true);
+    await instance.page.getByRole('button', { name: '取消运行', exact: true }).click();
+    await expect(instance.page.getByTestId('run-state')).toContainText('已取消');
+    await expect.poll(() => disconnected).toBe(true);
+    await screenshot(instance.page, 'step9-cancelled.png');
+    await instance.page.getByLabel('运行模型', { exact: true }).selectOption('fake_agent');
+    await instance.page.getByLabel('测试输入', { exact: true }).fill('查询AAPL.US行情');
+    await instance.page.getByRole('button', { name: '运行规则演示', exact: true }).click();
+    await expect(instance.page.getByTestId('run-state')).toContainText('规则演示／假模型 · 已完成');
+    assert.equal(requests.length, 5);
+    const before = await instance.page.evaluate(id => window.researchTrail.sessionSnapshot(id), sid);
+    assert.equal(JSON.stringify(before).includes(sentinel), false);
+    await instance.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(600, 620));
+    assert.equal(await instance.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    await screenshot(instance.page, 'step9-compact.png');
+    assert.equal(await instance.page.locator('vite-error-overlay').count(), 0);
+    await instance.app.close();
+    instance = await launch({ RESEARCH_TRAIL_DB_PATH: databasePath }); watch(instance.page);
+    await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    assert.deepEqual(await instance.page.evaluate(id => window.researchTrail.sessionSnapshot(id), sid), before);
+    assert.equal(requests.length, 5);
+    assert.deepEqual(errors, []); assert.deepEqual(serverErrors, []);
+  } finally {
+    try { await instance.page.evaluate(() => window.researchTrail.deleteConnection('model')); } catch {}
+    await instance.app.close(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
+    execFileSync(resolve(root, 'services/backend/.venv/Scripts/python.exe'), ['-c',
+      'import sqlite3,sys; from hashlib import sha256; from research_trail.credentials import WindowsCredentialVault; from pathlib import Path; p=Path(sys.argv[1]).resolve(); n=sha256(str(p).casefold().encode()).hexdigest()[:32]; c=sqlite3.connect(p); refs=[r[0] for r in c.execute("select credential_ref from connections where credential_ref is not null")]; c.close(); v=WindowsCredentialVault(); [v.delete("ResearchTrail/"+n+"/"+r) for r in refs]', databasePath],
+      { cwd: resolve(root, 'services/backend'), env, windowsHide: true });
+  }
+});
+
 test('settings: independent fake health, native credentials, profile, redacted export and restart', { timeout: 90000 }, async () => {
   const work = mkdtempSync(resolve(tmpdir(), 'research-trail-settings-qa-'));
   const databasePath = resolve(work, 'settings.sqlite3');

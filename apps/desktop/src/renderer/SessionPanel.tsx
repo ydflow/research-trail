@@ -18,6 +18,7 @@ export function SessionPanel({ available }: { available: boolean }) {
   const [revision, setRevision] = useState(0);
   const [stream, setStream] = useState('等待数据库快照');
   const [scenario, setScenario] = useState<'normal' | 'delayed' | 'timeout'>('normal');
+  const [modelKind, setModelKind] = useState<'fake_agent' | 'openai_agent'>('fake_agent');
 
   useEffect(() => {
     let active = true;
@@ -76,13 +77,13 @@ export function SessionPanel({ available }: { available: boolean }) {
   const disabled = busy || loading || !available;
   const execute = (agent: boolean) => void perform(async () => {
     const bridge = window.researchTrail!;
-    const record = await (agent ? bridge.startAgentRun(current!.id, input, scenario) : bridge.startRun(current!.id, input));
+    const record = await (agent ? bridge.startAgentRun(current!.id, input, modelKind === 'openai_agent' ? 'normal' : scenario, modelKind) : bridge.startRun(current!.id, input));
     setInput(''); setRunId(record.id); setSessions(await bridge.listSessions()); setRevision((value) => value + 1);
   });
 
   return <section className="session-panel" aria-label="持久化会话">
-    <div className="market-heading"><h2>研究会话</h2><span className="mock-badge">规则演示／假模型</span></div>
-    <p className="market-note">确定性规则调用Python数据工具，不是真实LLM。先读数据库快照，再订阅事件；查看历史不会重新执行。</p>
+    <div className="market-heading"><h2>研究会话</h2><span className="mock-badge">{modelKind === 'fake_agent' ? '规则演示／假模型' : 'OpenAI兼容／真实模型'}</span></div>
+    <p className="market-note">模型共用Python只读工具，行情仍为模拟数据。先读数据库快照，再订阅事件；查看历史不会重新执行。</p>
     <p className="stream-state" role="status" data-testid="stream-state">事件连接：{stream}</p>
     {error && <p className="market-error" role="alert">{error}</p>}
     <form className="session-form" onSubmit={(e) => {
@@ -123,17 +124,24 @@ export function SessionPanel({ available }: { available: boolean }) {
             </article>)}
           </div>
           <form className="run-form" onSubmit={(e) => { e.preventDefault(); execute(true); }}>
+            <label htmlFor="agent-model">运行模型</label>
+            <select id="agent-model" value={modelKind} disabled={disabled || runs.some(item => item.status === 'running')}
+              onChange={e => setModelKind(e.target.value as typeof modelKind)}>
+              <option value="fake_agent">规则演示／假模型（默认）</option>
+              <option value="openai_agent">OpenAI兼容／真实模型（使用本机配置）</option>
+            </select>
+            {modelKind === 'openai_agent' && <p className="market-note">运行会向设置中的模型服务发送本次输入与模拟工具结果，可能产生API费用。先在“模型设置”保存Base URL、模型ID、API Key与限制；不会发送历史会话或个人资料，不会自动重试。</p>}
             <label htmlFor="run-input">测试输入</label>
             <textarea id="run-input" maxLength={2000} rows={2} value={input} onChange={(e) => setInput(e.target.value)} disabled={disabled}
               placeholder="查询AAPL.US行情 / 查看NVDA.US的K线" />
             <label htmlFor="tool-scenario">模拟工具时序</label>
-            <select id="tool-scenario" value={scenario} disabled={disabled} onChange={(e) => setScenario(e.target.value as typeof scenario)}>
+            <select id="tool-scenario" value={modelKind === 'openai_agent' ? 'normal' : scenario} disabled={disabled || modelKind === 'openai_agent'} onChange={(e) => setScenario(e.target.value as typeof scenario)}>
               <option value="normal">正常 · 无额外延迟</option>
               <option value="delayed">延迟演示 · 等待3秒，可取消</option>
               <option value="timeout">超时演示 · 等待2秒，限时0.6秒</option>
             </select>
             <div className="run-actions">
-              <button disabled={disabled || !input.trim() || runs.some((item) => item.status === 'running')}>运行规则演示</button>
+              <button disabled={disabled || !input.trim() || runs.some((item) => item.status === 'running')}>{modelKind === 'fake_agent' ? '运行规则演示' : '运行真实模型'}</button>
               <button type="button" className="secondary" disabled={disabled || !input.trim() || runs.some((item) => item.status === 'running')} onClick={() => execute(false)}>启动固定测试运行</button>
             </div>
           </form>
@@ -144,7 +152,7 @@ export function SessionPanel({ available }: { available: boolean }) {
             </select>
             {run && <>
               <p className={run.error ? 'market-error' : 'market-note'} data-testid="run-state">
-                {run.kind === 'fake_agent' ? run.model_label : '固定测试'} · {runStatus(run.status)} · {run.last_sequence} 个持久化事件
+                {run.model_label || '固定测试'} · {runStatus(run.status)} · {run.last_sequence} 个持久化事件
               </p>
               {run.error && <p role="alert" className="market-error" data-testid="run-error">{run.error.code}：{run.error.message}</p>}
               <button className="secondary" disabled={disabled || run.status !== 'running'} onClick={() => void perform(async () => {
