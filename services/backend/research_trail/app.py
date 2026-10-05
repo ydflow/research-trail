@@ -20,6 +20,9 @@ from .model_provider import FakeModelProvider, ModelProvider
 from .tools import market_tools
 from .credentials import CredentialUnavailable
 from .settings import SettingsService, SettingsError, ConnectionKind, ConnectionInput, ConnectionView, CredentialInput, Profile, Diagnostics
+from .provider_contracts import ProviderId, ProviderConfiguration, ProviderCredentials, ProviderProfile, ReadQuery, ProviderResult, CapabilityView
+from .provider_settings import ProviderSettings
+from .provider_service import ProviderService
 
 
 class Health(BaseModel):
@@ -30,7 +33,7 @@ class Health(BaseModel):
 
 def create_app(token: str, market_provider: MarketProvider | None = None, *,
                database_path: Path | str | None = None, model_provider: ModelProvider | None = None,
-               run_timings=None, credential_vault=None, openai_transport=None) -> FastAPI:
+               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None) -> FastAPI:
     if len(token) < 32:
         raise ValueError("启动令牌缺失或过短；请由 Electron 启动服务。")
     @asynccontextmanager
@@ -43,11 +46,15 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             database.migrate()
             app.state.store = Store(database)
             app.state.settings = SettingsService(database, credential_vault)
+            app.state.provider_settings = ProviderSettings(app.state.settings)
+            app.state.providers = ProviderService(app.state.provider_settings, **(provider_options or {}))
             app.state.store.recover_interrupted()
             manager = app.state.manager = RunManager(app.state.store, runner, run_timings)
             yield
         finally:
             try:
+                if hasattr(app.state,'providers'):
+                    app.state.providers.close()
                 if manager:
                     manager.shutdown()
             finally:
@@ -79,14 +86,14 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
         try:
             return await call_next(request)
         except Exception:
-            if request.url.path.startswith("/settings"):
+            if request.url.path.startswith(("/settings", "/providers")):
                 # Do not let an injected/native/storage exception echo the request in logs.
                 return JSONResponse(status_code=503, content={"detail": "设置存储操作失败，请检查本机环境后重试。"})
             raise
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request, error):
-        if request.url.path.startswith("/settings"):
+        if request.url.path.startswith(("/settings", "/providers")):
             # FastAPI's default errors include the raw rejected input, including secrets.
             return JSONResponse(status_code=422, content={"detail": "设置输入不符合契约，请检查字段、长度与地址格式。"})
         return JSONResponse(status_code=422, content={"detail": [{"loc": list(item["loc"]),
@@ -139,6 +146,42 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     @app.get("/settings/diagnostics", response_model=Diagnostics, dependencies=protected)
     def diagnostics():
         return app.state.settings.diagnostics()
+
+    @app.get('/settings/providers',response_model=list[ProviderProfile],dependencies=protected)
+    def provider_profiles():
+        return app.state.provider_settings.profiles()
+
+    @app.put('/settings/providers/{provider}',response_model=ProviderProfile,dependencies=protected)
+    def save_provider(provider:ProviderId,body:ProviderConfiguration):
+        result=app.state.provider_settings.save(provider,body)
+        app.state.providers.invalidate(provider)
+        return result
+
+    @app.delete('/settings/providers/{provider}',response_model=ProviderProfile,dependencies=protected)
+    def delete_provider(provider:ProviderId):
+        result=app.state.provider_settings.delete(provider)
+        app.state.providers.invalidate(provider)
+        return result
+
+    @app.put('/settings/providers/{provider}/credential',response_model=ProviderProfile,dependencies=protected)
+    def provider_credential(provider:ProviderId,body:ProviderCredentials):
+        result=app.state.provider_settings.credentials(provider,body)
+        app.state.providers.invalidate(provider)
+        return result
+
+    @app.delete('/settings/providers/{provider}/credential',response_model=ProviderProfile,dependencies=protected)
+    def delete_provider_credential(provider:ProviderId):
+        result=app.state.provider_settings.delete_credentials(provider)
+        app.state.providers.invalidate(provider)
+        return result
+
+    @app.get('/providers/capabilities',response_model=list[CapabilityView],dependencies=protected)
+    def provider_capabilities():
+        return app.state.providers.capabilities()
+
+    @app.post('/providers/{provider}/query',response_model=ProviderResult,dependencies=protected)
+    def provider_query(provider:ProviderId,body:ReadQuery):
+        return app.state.providers.query(provider,body)
 
     @app.post("/sessions", response_model=SessionDTO, status_code=201, dependencies=protected)
     def create_session(body: CreateSession):

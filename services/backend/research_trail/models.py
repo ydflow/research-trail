@@ -84,6 +84,16 @@ class ConnectionRecord(Base):
     request_timeout_seconds: Mapped[int] = mapped_column(Integer, default=30)
 
 
+class DataProviderRecord(Base):
+    __tablename__ = 'data_providers'
+    __table_args__ = (CheckConstraint("provider IN ('longbridge','longbridge-account','massive')"),
+                     CheckConstraint('revision >= 1'))
+    provider: Mapped[str] = mapped_column(String(30), primary_key=True)
+    configuration: Mapped[dict] = mapped_column(JSON)
+    credential_ref: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    revision: Mapped[int] = mapped_column(Integer)
+
+
 class ProfileRecord(Base):
     __tablename__ = "profile"
     __table_args__ = (CheckConstraint("id = 1"),)

@@ -72,6 +72,103 @@
         "title": "CancelledPayload",
         "type": "object"
       },
+      "CapabilityView": {
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "enum": [
+              "market.quote",
+              "market.kline",
+              "market.intraday",
+              "market.depth",
+              "market.trades",
+              "market.capitalFlow",
+              "market.sentiment",
+              "market.status",
+              "company.profile",
+              "company.valuation",
+              "company.financials",
+              "company.dividends",
+              "company.earnings",
+              "company.ratings",
+              "research.news",
+              "research.events",
+              "account.accounts",
+              "account.portfolio",
+              "account.positions",
+              "account.assets",
+              "account.cashFlow"
+            ],
+            "title": "Capability",
+            "type": "string"
+          },
+          "checked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked At"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "implemented": {
+            "default": true,
+            "title": "Implemented",
+            "type": "boolean"
+          },
+          "provider": {
+            "enum": [
+              "longbridge",
+              "longbridge-account",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "transport": {
+            "enum": [
+              "sdk",
+              "cli",
+              "http"
+            ],
+            "title": "Transport",
+            "type": "string"
+          },
+          "validation": {
+            "default": "unverified",
+            "enum": [
+              "unverified",
+              "simulated",
+              "real",
+              "restricted",
+              "failed"
+            ],
+            "title": "Validation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "capability",
+          "transport"
+        ],
+        "title": "CapabilityView",
+        "type": "object"
+      },
       "CompletedPayload": {
         "additionalProperties": false,
         "properties": {
@@ -608,6 +705,7 @@
         "title": "Health",
         "type": "object"
       },
+      "JsonValue": {},
       "Kline": {
         "additionalProperties": false,
         "properties": {
@@ -1017,6 +1115,472 @@
         "title": "Profile",
         "type": "object"
       },
+      "Provenance": {
+        "additionalProperties": false,
+        "properties": {
+          "cached": {
+            "default": false,
+            "title": "Cached",
+            "type": "boolean"
+          },
+          "credential_source": {
+            "default": "none",
+            "enum": [
+              "none",
+              "system-store",
+              "external-cli-session"
+            ],
+            "title": "Credential Source",
+            "type": "string"
+          },
+          "data_label": {
+            "enum": [
+              "模拟数据",
+              "真实数据",
+              "延迟行情",
+              "历史行情",
+              "真实数据（延迟未知）"
+            ],
+            "title": "Data Label",
+            "type": "string"
+          },
+          "fetched_at": {
+            "format": "date-time",
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "market_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Time"
+          },
+          "mode": {
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "permission": {
+            "default": "unknown",
+            "enum": [
+              "unknown",
+              "request-succeeded"
+            ],
+            "title": "Permission",
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "longbridge",
+              "longbridge-account",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "served_at": {
+            "format": "date-time",
+            "title": "Served At",
+            "type": "string"
+          },
+          "timeliness": {
+            "enum": [
+              "unknown",
+              "realtime",
+              "delayed",
+              "historical"
+            ],
+            "title": "Timeliness",
+            "type": "string"
+          },
+          "timeliness_basis": {
+            "enum": [
+              "fixture",
+              "historical-request",
+              "user-declared",
+              "unknown"
+            ],
+            "title": "Timeliness Basis",
+            "type": "string"
+          },
+          "transport": {
+            "enum": [
+              "fixture",
+              "sdk",
+              "cli",
+              "http"
+            ],
+            "title": "Transport",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "transport",
+          "mode",
+          "data_label",
+          "timeliness",
+          "timeliness_basis",
+          "fetched_at",
+          "served_at"
+        ],
+        "title": "Provenance",
+        "type": "object"
+      },
+      "ProviderConfiguration": {
+        "additionalProperties": false,
+        "properties": {
+          "cache_ttl_seconds": {
+            "default": 30,
+            "maximum": 300,
+            "minimum": 0,
+            "title": "Cache Ttl Seconds",
+            "type": "integer"
+          },
+          "cli_path": {
+            "default": "",
+            "maxLength": 300,
+            "title": "Cli Path",
+            "type": "string"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "region": {
+            "default": "global",
+            "enum": [
+              "global",
+              "cn"
+            ],
+            "title": "Region",
+            "type": "string"
+          },
+          "timeliness": {
+            "default": "unknown",
+            "enum": [
+              "unknown",
+              "realtime",
+              "delayed",
+              "historical"
+            ],
+            "title": "Timeliness",
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "default": 15,
+            "maximum": 60,
+            "minimum": 1,
+            "title": "Timeout Seconds",
+            "type": "integer"
+          }
+        },
+        "title": "ProviderConfiguration",
+        "type": "object"
+      },
+      "ProviderCredentials": {
+        "additionalProperties": false,
+        "properties": {
+          "access_token": {
+            "anyOf": [
+              {
+                "format": "password",
+                "type": "string",
+                "writeOnly": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Token"
+          },
+          "api_key": {
+            "anyOf": [
+              {
+                "format": "password",
+                "type": "string",
+                "writeOnly": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key"
+          },
+          "app_key": {
+            "anyOf": [
+              {
+                "format": "password",
+                "type": "string",
+                "writeOnly": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "App Key"
+          },
+          "app_secret": {
+            "anyOf": [
+              {
+                "format": "password",
+                "type": "string",
+                "writeOnly": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "App Secret"
+          }
+        },
+        "title": "ProviderCredentials",
+        "type": "object"
+      },
+      "ProviderFailure": {
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "enum": [
+              "market.quote",
+              "market.kline",
+              "market.intraday",
+              "market.depth",
+              "market.trades",
+              "market.capitalFlow",
+              "market.sentiment",
+              "market.status",
+              "company.profile",
+              "company.valuation",
+              "company.financials",
+              "company.dividends",
+              "company.earnings",
+              "company.ratings",
+              "research.news",
+              "research.events",
+              "account.accounts",
+              "account.portfolio",
+              "account.positions",
+              "account.assets",
+              "account.cashFlow"
+            ],
+            "title": "Capability",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "ok": {
+            "const": false,
+            "default": false,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "provider": {
+            "enum": [
+              "longbridge",
+              "longbridge-account",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "retryable": {
+            "default": false,
+            "title": "Retryable",
+            "type": "boolean"
+          },
+          "state": {
+            "enum": [
+              "unconfigured",
+              "disabled",
+              "restricted",
+              "unsupported",
+              "failed",
+              "timed_out",
+              "cancelled"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "capability",
+          "state",
+          "code",
+          "message"
+        ],
+        "title": "ProviderFailure",
+        "type": "object"
+      },
+      "ProviderProfile": {
+        "additionalProperties": false,
+        "properties": {
+          "cache_ttl_seconds": {
+            "default": 30,
+            "maximum": 300,
+            "minimum": 0,
+            "title": "Cache Ttl Seconds",
+            "type": "integer"
+          },
+          "cli_path": {
+            "default": "",
+            "maxLength": 300,
+            "title": "Cli Path",
+            "type": "string"
+          },
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "credential_present": {
+            "title": "Credential Present",
+            "type": "boolean"
+          },
+          "credential_storage": {
+            "const": "windows-credential-manager",
+            "default": "windows-credential-manager",
+            "title": "Credential Storage",
+            "type": "string"
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "provider": {
+            "enum": [
+              "longbridge",
+              "longbridge-account",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "region": {
+            "default": "global",
+            "enum": [
+              "global",
+              "cn"
+            ],
+            "title": "Region",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "timeliness": {
+            "default": "unknown",
+            "enum": [
+              "unknown",
+              "realtime",
+              "delayed",
+              "historical"
+            ],
+            "title": "Timeliness",
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "default": 15,
+            "maximum": 60,
+            "minimum": 1,
+            "title": "Timeout Seconds",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "provider",
+          "configured",
+          "credential_present",
+          "revision"
+        ],
+        "title": "ProviderProfile",
+        "type": "object"
+      },
+      "ProviderSuccess": {
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "enum": [
+              "market.quote",
+              "market.kline",
+              "market.intraday",
+              "market.depth",
+              "market.trades",
+              "market.capitalFlow",
+              "market.sentiment",
+              "market.status",
+              "company.profile",
+              "company.valuation",
+              "company.financials",
+              "company.dividends",
+              "company.earnings",
+              "company.ratings",
+              "research.news",
+              "research.events",
+              "account.accounts",
+              "account.portfolio",
+              "account.positions",
+              "account.assets",
+              "account.cashFlow"
+            ],
+            "title": "Capability",
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "provider": {
+            "enum": [
+              "longbridge",
+              "longbridge-account",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "state": {
+            "const": "ready",
+            "default": "ready",
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "capability",
+          "data",
+          "provenance"
+        ],
+        "title": "ProviderSuccess",
+        "type": "object"
+      },
       "Quote": {
         "additionalProperties": false,
         "properties": {
@@ -1141,6 +1705,160 @@
           "quote"
         ],
         "title": "QuoteToolData",
+        "type": "object"
+      },
+      "ReadQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "enum": [
+              "market.quote",
+              "market.kline",
+              "market.intraday",
+              "market.depth",
+              "market.trades",
+              "market.capitalFlow",
+              "market.sentiment",
+              "market.status",
+              "company.profile",
+              "company.valuation",
+              "company.financials",
+              "company.dividends",
+              "company.earnings",
+              "company.ratings",
+              "research.news",
+              "research.events",
+              "account.accounts",
+              "account.portfolio",
+              "account.positions",
+              "account.assets",
+              "account.cashFlow"
+            ],
+            "title": "Capability",
+            "type": "string"
+          },
+          "count": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Count",
+            "type": "integer"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "event_type": {
+            "default": "financial",
+            "enum": [
+              "financial",
+              "report",
+              "dividend",
+              "ipo",
+              "macrodata",
+              "closed"
+            ],
+            "title": "Event Type",
+            "type": "string"
+          },
+          "kind": {
+            "default": "ALL",
+            "enum": [
+              "IS",
+              "BS",
+              "CF",
+              "ALL"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "market": {
+            "default": "US",
+            "enum": [
+              "US",
+              "HK",
+              "CN",
+              "SG"
+            ],
+            "title": "Market",
+            "type": "string"
+          },
+          "mode": {
+            "default": "simulated",
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "period": {
+            "default": "1d",
+            "enum": [
+              "1m",
+              "5m",
+              "15m",
+              "1h",
+              "1d",
+              "1w"
+            ],
+            "title": "Period",
+            "type": "string"
+          },
+          "report": {
+            "anyOf": [
+              {
+                "pattern": "^(annual|interim|quarter|[12][0-9]{3}(Q[1-4]|H[12])?)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z0-9]{1,6}\\.(US|HK|SG|SH|SZ|HAS)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          },
+          "use_cache": {
+            "default": true,
+            "title": "Use Cache",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "capability"
+        ],
+        "title": "ReadQuery",
         "type": "object"
       },
       "RunCompletedEvent": {
@@ -2084,6 +2802,134 @@
           }
         },
         "summary": "Symbols"
+      }
+    },
+    "/providers/capabilities": {
+      "get": {
+        "operationId": "provider_capabilities_providers_capabilities_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CapabilityView"
+                  },
+                  "title": "Response Provider Capabilities Providers Capabilities Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Provider Capabilities"
+      }
+    },
+    "/providers/{provider}/query": {
+      "post": {
+        "operationId": "provider_query_providers__provider__query_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "enum": [
+                "longbridge",
+                "longbridge-account",
+                "massive"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReadQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ProviderSuccess"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ProviderFailure"
+                    }
+                  ],
+                  "title": "Response Provider Query Providers  Provider  Query Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Provider Query"
       }
     },
     "/sessions": {
@@ -3407,6 +4253,312 @@
           }
         },
         "summary": "Save Profile"
+      }
+    },
+    "/settings/providers": {
+      "get": {
+        "operationId": "provider_profiles_settings_providers_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProviderProfile"
+                  },
+                  "title": "Response Provider Profiles Settings Providers Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Provider Profiles"
+      }
+    },
+    "/settings/providers/{provider}": {
+      "delete": {
+        "operationId": "delete_provider_settings_providers__provider__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "enum": [
+                "longbridge",
+                "longbridge-account",
+                "massive"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderProfile"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Provider"
+      },
+      "put": {
+        "operationId": "save_provider_settings_providers__provider__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "enum": [
+                "longbridge",
+                "longbridge-account",
+                "massive"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderConfiguration"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderProfile"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Provider"
+      }
+    },
+    "/settings/providers/{provider}/credential": {
+      "delete": {
+        "operationId": "delete_provider_credential_settings_providers__provider__credential_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "enum": [
+                "longbridge",
+                "longbridge-account",
+                "massive"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderProfile"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Provider Credential"
+      },
+      "put": {
+        "operationId": "provider_credential_settings_providers__provider__credential_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "enum": [
+                "longbridge",
+                "longbridge-account",
+                "massive"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderCredentials"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderProfile"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Provider Credential"
       }
     }
   }
