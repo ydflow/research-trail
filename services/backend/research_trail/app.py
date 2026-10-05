@@ -15,6 +15,7 @@ from .store import Store, MissingRecord, ActiveRun
 from .lifecycle import DatabaseLease, RunManager
 from .market import FixtureMarketProvider, MarketError, MarketProvider, MarketSnapshot, MarketSymbol, UnknownSymbolError
 from .agent import AgentRunner
+from .openai_provider import OpenAIModelProvider, ModelError
 from .model_provider import FakeModelProvider, ModelProvider
 from .tools import market_tools
 from .credentials import CredentialUnavailable
@@ -29,7 +30,7 @@ class Health(BaseModel):
 
 def create_app(token: str, market_provider: MarketProvider | None = None, *,
                database_path: Path | str | None = None, model_provider: ModelProvider | None = None,
-               run_timings=None, credential_vault=None) -> FastAPI:
+               run_timings=None, credential_vault=None, openai_transport=None) -> FastAPI:
     if len(token) < 32:
         raise ValueError("启动令牌缺失或过短；请由 Electron 启动服务。")
     @asynccontextmanager
@@ -172,6 +173,23 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     def start_run(session_id: str, body: StartRun):
         if body.kind == "fake_agent":
             return app.state.manager.start(session_id, body.input, body.scenario)
+        if body.kind == "openai_agent":
+            from .lifecycle import Timing
+            if body.scenario != "normal":
+                raise HTTPException(status_code=422, detail="真实模型不使用模拟工具时序。")
+            settings = app.state.settings
+            with settings.lock:
+                rounds, timeout = settings.model_limits()
+                try:
+                    configuration = settings.model_configuration()
+                except ModelError as error:
+                    public_error = error.error
+                    def configuration():
+                        raise ModelError(public_error.code, public_error.message)
+            model = OpenAIModelProvider(configuration, transport=openai_transport)
+            return app.state.manager.start(session_id, body.input, "normal", kind="openai_agent",
+                                          runner=AgentRunner(model, runner.tools, max_tool_rounds=rounds),
+                                          timing=Timing(tool_timeout=2, run_timeout=timeout))
         return app.state.store.start_fixture(session_id, body.input)
 
     @app.get("/sessions/{session_id}/runs/{run_id}", response_model=RunDTO, dependencies=protected)

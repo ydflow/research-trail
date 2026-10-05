@@ -381,15 +381,30 @@ export interface components {
              */
             fake_result: "success" | "failure" | "invalid";
             /**
+             * Max Tool Rounds
+             * @default 8
+             */
+            max_tool_rounds: number;
+            /**
              * Model
              * @default
              */
             model: string;
             /**
+             * Request Timeout Seconds
+             * @default 30
+             */
+            request_timeout_seconds: number;
+            /**
              * Requires Credential
              * @default false
              */
             requires_credential: boolean;
+            /**
+             * Run Timeout Seconds
+             * @default 120
+             */
+            run_timeout_seconds: number;
         };
         /** ConnectionView */
         ConnectionView: {
@@ -423,6 +438,11 @@ export interface components {
              */
             kind: "model" | "market" | "account" | "skills" | "runtime";
             /**
+             * Max Tool Rounds
+             * @default 8
+             */
+            max_tool_rounds: number;
+            /**
              * Model
              * @default
              */
@@ -430,12 +450,22 @@ export interface components {
             /** Reason */
             reason: string;
             /**
+             * Request Timeout Seconds
+             * @default 30
+             */
+            request_timeout_seconds: number;
+            /**
              * Requires Credential
              * @default false
              */
             requires_credential: boolean;
             /** Revision */
             revision: number;
+            /**
+             * Run Timeout Seconds
+             * @default 120
+             */
+            run_timeout_seconds: number;
             /**
              * Status
              * @enum {string}
@@ -509,6 +539,12 @@ export interface components {
              * @constant
              */
             schema_version: 1;
+            /**
+             * Scope
+             * @default connection-probes
+             * @constant
+             */
+            scope: "connection-probes";
             /**
              * Test Mode
              * @default fake
@@ -913,11 +949,11 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "fixture" | "fake_agent";
+            kind: "fixture" | "fake_agent" | "openai_agent";
             /** Last Sequence */
             last_sequence: number;
             /** Model Label */
-            model_label?: "规则演示／假模型" | null;
+            model_label?: ("规则演示／假模型" | "OpenAI兼容／真实模型") | null;
             /** Session Id */
             session_id: string;
             /**
@@ -995,7 +1031,7 @@ export interface components {
              * @default fixture
              * @enum {string}
              */
-            kind: "fixture" | "fake_agent";
+            kind: "fixture" | "fake_agent" | "openai_agent";
             /**
              * Scenario
              * @default normal

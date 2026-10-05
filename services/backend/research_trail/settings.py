@@ -42,6 +42,9 @@ class ConnectionInput(StrictModel):
     model: str = Field(default="", max_length=80, pattern=r"^[a-zA-Z0-9_.:/-]*$")
     requires_credential: bool = False
     fake_result: Literal["success", "failure", "invalid"] = "success"
+    max_tool_rounds: int = Field(default=8, ge=1, le=32, strict=True)
+    run_timeout_seconds: int = Field(default=120, ge=1, le=600, strict=True)
+    request_timeout_seconds: int = Field(default=30, ge=1, le=120, strict=True)
 
     @field_validator("endpoint")
     @classmethod
@@ -99,6 +102,7 @@ class DiagnosticConnection(StrictModel):
 
 class Diagnostics(StrictModel):
     schema_version: Literal[1] = 1
+    scope: Literal["connection-probes"] = "connection-probes"
     generated_at: str
     test_mode: Literal["fake"] = "fake"
     real_requests_sent: Literal[False] = False
@@ -141,7 +145,8 @@ class SettingsService:
         return ConnectionView(kind=kind, configured=True, enabled=row.enabled, endpoint=row.endpoint, model=row.model,
                               requires_credential=row.requires_credential, fake_result=row.fake_result,
                               credential_present=present, status=status, reason=reason, detail=REASONS[reason],
-                              revision=row.revision, checked_at=row.checked_at)
+                              revision=row.revision, checked_at=row.checked_at, max_tool_rounds=row.max_tool_rounds,
+                              run_timeout_seconds=row.run_timeout_seconds, request_timeout_seconds=row.request_timeout_seconds)
 
     def connections(self):
         with self.lock, self.database.sessions() as db:
@@ -167,6 +172,39 @@ class SettingsService:
 
     def _get(self, kind):
         return next(view for view in self.connections() if view.kind == kind)
+
+    def model_limits(self):
+        # No vault access, network or secret in the public/non-sensitive limits snapshot.
+        with self.lock, self.database.sessions() as db:
+            row = db.get(ConnectionRecord, "model")
+            if row is None:
+                return 8, 120
+            return row.max_tool_rounds, row.run_timeout_seconds
+
+    def model_configuration(self):
+        # Internal-only immutable snapshot. Never returned by an API/diagnostic serializer.
+        from .openai_provider import ModelConfiguration, ModelError
+        with self.lock, self.database.sessions() as db:
+            row = db.get(ConnectionRecord, "model")
+            if row is None or not row.enabled:
+                raise ModelError("MODEL_UNCONFIGURED", "请在本机保存并启用模型连接。")
+            if not row.endpoint or not row.model:
+                raise ModelError("MODEL_CONFIG_INVALID", "真实模型需要Base URL和模型ID。")
+            from ipaddress import ip_address
+            url = urlsplit(row.endpoint)
+            try:
+                loopback = ip_address(url.hostname).is_loopback
+            except ValueError:
+                loopback = url.hostname == "localhost"
+            if url.scheme != "https" and not loopback:
+                raise ModelError("MODEL_CONFIG_INVALID", "远程模型地址需要HTTPS；HTTP仅支持本机模型。")
+            try:
+                secret = self.vault.get(self.target(row.credential_ref)) if row.credential_ref else None
+            except Exception:
+                raise ModelError("MODEL_VAULT_UNAVAILABLE", "系统凭证存储不可用。") from None
+            if not secret:
+                raise ModelError("MODEL_CREDENTIAL_MISSING", "模型API Key未配置，请仅在本机设置页保存。")
+            return ModelConfiguration(row.endpoint, row.model, secret, row.request_timeout_seconds)
 
     def credential(self, kind, body):
         if kind in ("skills", "runtime"):

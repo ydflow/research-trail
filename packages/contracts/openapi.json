@@ -117,6 +117,13 @@
             "title": "Fake Result",
             "type": "string"
           },
+          "max_tool_rounds": {
+            "default": 8,
+            "maximum": 32,
+            "minimum": 1,
+            "title": "Max Tool Rounds",
+            "type": "integer"
+          },
           "model": {
             "default": "",
             "maxLength": 80,
@@ -124,10 +131,24 @@
             "title": "Model",
             "type": "string"
           },
+          "request_timeout_seconds": {
+            "default": 30,
+            "maximum": 120,
+            "minimum": 1,
+            "title": "Request Timeout Seconds",
+            "type": "integer"
+          },
           "requires_credential": {
             "default": false,
             "title": "Requires Credential",
             "type": "boolean"
+          },
+          "run_timeout_seconds": {
+            "default": 120,
+            "maximum": 600,
+            "minimum": 1,
+            "title": "Run Timeout Seconds",
+            "type": "integer"
           }
         },
         "title": "ConnectionInput",
@@ -191,6 +212,13 @@
             "title": "Kind",
             "type": "string"
           },
+          "max_tool_rounds": {
+            "default": 8,
+            "maximum": 32,
+            "minimum": 1,
+            "title": "Max Tool Rounds",
+            "type": "integer"
+          },
           "model": {
             "default": "",
             "maxLength": 80,
@@ -202,6 +230,13 @@
             "title": "Reason",
             "type": "string"
           },
+          "request_timeout_seconds": {
+            "default": 30,
+            "maximum": 120,
+            "minimum": 1,
+            "title": "Request Timeout Seconds",
+            "type": "integer"
+          },
           "requires_credential": {
             "default": false,
             "title": "Requires Credential",
@@ -209,6 +244,13 @@
           },
           "revision": {
             "title": "Revision",
+            "type": "integer"
+          },
+          "run_timeout_seconds": {
+            "default": 120,
+            "maximum": 600,
+            "minimum": 1,
+            "title": "Run Timeout Seconds",
             "type": "integer"
           },
           "status": {
@@ -364,6 +406,12 @@
             "default": 1,
             "title": "Schema Version",
             "type": "integer"
+          },
+          "scope": {
+            "const": "connection-probes",
+            "default": "connection-probes",
+            "title": "Scope",
+            "type": "string"
           },
           "test_mode": {
             "const": "fake",
@@ -1186,7 +1234,8 @@
           "kind": {
             "enum": [
               "fixture",
-              "fake_agent"
+              "fake_agent",
+              "openai_agent"
             ],
             "title": "Kind",
             "type": "string"
@@ -1199,7 +1248,10 @@
           "model_label": {
             "anyOf": [
               {
-                "const": "规则演示／假模型",
+                "enum": [
+                  "规则演示／假模型",
+                  "OpenAI兼容／真实模型"
+                ],
                 "type": "string"
               },
               {
@@ -1425,7 +1477,8 @@
             "default": "fixture",
             "enum": [
               "fixture",
-              "fake_agent"
+              "fake_agent",
+              "openai_agent"
             ],
             "title": "Kind",
             "type": "string"
