@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { _electron: electron, expect } = require('@playwright/test');
 const { execFileSync } = require('node:child_process');
 const { resolve } = require('node:path');
-const { mkdirSync, mkdtempSync } = require('node:fs');
+const { mkdirSync, mkdtempSync, readFileSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 const { createRequire } = require('node:module');
 const { pathToFileURL } = require('node:url');
@@ -24,10 +24,125 @@ function children(pid) {
   return Array.isArray(parsed) ? parsed : [parsed];
 }
 const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
+
+test('settings: independent fake health, native credentials, profile, redacted export and restart', { timeout: 90000 }, async () => {
+  const work = mkdtempSync(resolve(tmpdir(), 'research-trail-settings-qa-'));
+  const databasePath = resolve(work, 'settings.sqlite3');
+  const sentinel = 'test-only-desktop-credential-no-real-service';
+  const reportPath = resolve(work, 'diagnostics.json');
+  let instance = await launch({ RESEARCH_TRAIL_DB_PATH: databasePath });
+  const errors = [];
+  const watch = (page) => {
+    page.on('pageerror', error => errors.push(error.message));
+    page.on('console', message => { if (['error', 'warning'].includes(message.type())) errors.push(message.text()); });
+    page.on('dialog', dialog => void dialog.accept());
+  };
+  watch(instance.page);
+  try {
+    await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    assert.equal(await instance.page.title(), '研迹 · ResearchTrail');
+    assert.match(instance.page.url(), /dist\/renderer\/index\.html$/);
+    await instance.page.getByRole('button', { name: '设置与诊断', exact: true }).click();
+    const model = instance.page.getByTestId('connection-model');
+    await expect(model.getByTestId('connection-status')).toHaveText('未配置');
+    await screenshot(instance.page, 'step8-overview.png');
+    await model.getByLabel('服务地址').fill('https://203.0.113.1/v1');
+    await model.getByLabel('模型名称').fill('demo-model');
+    await model.getByLabel('测试前要求已保存凭证').check();
+    await model.getByRole('button', { name: '保存配置', exact: true }).click();
+    await expect(model.getByTestId('connection-status')).toHaveText('已失效');
+    await model.getByLabel('新凭证').fill(sentinel);
+    await model.getByRole('button', { name: '保存凭证', exact: true }).click();
+    await expect(model).toContainText('已保存（不回显）');
+    await expect(model.getByLabel('新凭证')).toHaveValue('');
+    await model.getByRole('button', { name: '测试假连接', exact: true }).click();
+    await expect(model.getByTestId('connection-status')).toHaveText('假连接成功');
+    await model.getByLabel('模型名称').fill('demo-model-updated');
+    await expect(model.getByRole('button', { name: '测试假连接', exact: true })).toBeDisabled();
+    await model.getByRole('button', { name: '保存配置', exact: true }).click();
+    await expect(model.getByTestId('connection-status')).toHaveText('已失效');
+    await model.getByRole('button', { name: '测试假连接', exact: true }).click();
+    await expect(model.getByTestId('connection-status')).toHaveText('假连接成功');
+    await instance.page.getByRole('button', { name: '重新读取状态', exact: true }).click();
+    await expect(model.getByTestId('connection-status')).toHaveText('假连接成功');
+    const before = await instance.page.evaluate(() => window.researchTrail.connections());
+    assert.equal(before.filter(row => row.kind !== 'model').every(row => row.status === 'unconfigured'), true);
+    assert.equal(JSON.stringify(before).includes(sentinel), false);
+    assert.equal(await instance.page.evaluate(value => Object.values(sessionStorage).some(item => item.includes(value)), sentinel), false);
+    await screenshot(instance.page, 'step8-model.png');
+    await instance.page.getByRole('button', { name: '连接设置', exact: true }).click();
+    for (const [kind, result, status] of [['market', 'failure', '失败'], ['account', 'invalid', '已失效']]) {
+      const card = instance.page.getByTestId(`connection-${kind}`);
+      await expect(card.getByTestId('connection-status')).toHaveText('未配置');
+      await card.getByLabel('假连接结果').selectOption(result);
+      await card.getByRole('button', { name: '保存配置', exact: true }).click();
+      await expect(card.getByTestId('connection-status')).toHaveText('待测试');
+      await card.getByRole('button', { name: '测试假连接', exact: true }).click();
+      await expect(card.getByTestId('connection-status')).toHaveText(status);
+    }
+    await expect(instance.page.getByTestId('connection-skills').getByTestId('connection-status')).toHaveText('未配置');
+    await expect(instance.page.getByTestId('connection-runtime').getByTestId('connection-status')).toHaveText('未配置');
+    await screenshot(instance.page, 'step8-connections.png');
+    await instance.page.getByRole('button', { name: '个人资料', exact: true }).click();
+    await instance.page.getByLabel('显示名称').fill('第8步研究者');
+    await instance.page.getByLabel('研究偏好').selectOption('cautious');
+    await instance.page.getByRole('button', { name: '保存资料', exact: true }).click();
+    await expect(instance.page.getByRole('status')).toContainText('个人资料已保存');
+    await instance.page.getByRole('button', { name: '诊断', exact: true }).click();
+    await instance.page.getByRole('button', { name: '读取诊断', exact: true }).click();
+    await expect(instance.page.getByTestId('diagnostics-json')).toContainText('DEMO_FAILED');
+    const diagnostic = await instance.page.getByTestId('diagnostics-json').innerText();
+    for (const value of [sentinel, '203.0.113.1', '第8步研究者', 'credential_ref', databasePath]) assert.equal(diagnostic.includes(value), false);
+    await instance.app.evaluate(({ dialog }, path) => {
+      globalThis.originalSettingsSaveDialog = dialog.showSaveDialog;
+      dialog.showSaveDialog = async () => ({ canceled: false, filePath: path });
+    }, reportPath);
+    await instance.page.getByRole('button', { name: '导出脱敏诊断', exact: true }).click();
+    await expect(instance.page.getByRole('status')).toContainText('脱敏诊断已保存');
+    const file = readFileSync(reportPath, 'utf8');
+    assert.equal(JSON.parse(file).real_requests_sent, false);
+    for (const value of [sentinel, '203.0.113.1', '第8步研究者', databasePath]) assert.equal(file.includes(value), false);
+    await instance.app.evaluate(({ dialog }) => { dialog.showSaveDialog = globalThis.originalSettingsSaveDialog; });
+    await screenshot(instance.page, 'step8-diagnostics.png');
+    await instance.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(600, 620));
+    await instance.page.getByRole('button', { name: '连接设置', exact: true }).click();
+    await expect(instance.page.getByRole('button', { name: '连接设置', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(instance.page.getByTestId('connection-market')).toBeVisible();
+    assert.equal(await instance.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+    await screenshot(instance.page, 'step8-compact.png');
+    assert.equal(await instance.page.locator('vite-error-overlay').count(), 0);
+    const saved = await instance.page.evaluate(() => window.researchTrail.connections());
+    const owned = children(instance.pid);
+    await instance.app.close();
+    await expect.poll(() => owned.every(pid => !alive(pid))).toBe(true);
+    instance = await launch({ RESEARCH_TRAIL_DB_PATH: databasePath });
+    watch(instance.page);
+    await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    assert.deepEqual(await instance.page.evaluate(() => window.researchTrail.connections()), saved);
+    assert.equal((await instance.page.evaluate(() => window.researchTrail.profile())).display_name, '第8步研究者');
+    await instance.page.getByRole('button', { name: '设置与诊断', exact: true }).click();
+    await expect(instance.page.getByTestId('connection-model')).toContainText('已保存（不回显）');
+    await instance.page.getByTestId('connection-model').getByRole('button', { name: '删除凭证', exact: true }).click();
+    await expect(instance.page.getByTestId('connection-model').getByTestId('connection-status')).toHaveText('已失效');
+    await instance.page.getByTestId('connection-model').getByRole('button', { name: '删除配置', exact: true }).click();
+    await expect(instance.page.getByTestId('connection-model').getByTestId('connection-status')).toHaveText('未配置');
+    await assert.rejects(instance.page.evaluate(() => window.researchTrail.testConnection('../health')), /未知连接类别/);
+    await instance.page.getByRole('button', { name: '个人资料', exact: true }).click();
+    await instance.page.getByRole('button', { name: '删除资料', exact: true }).click();
+    await expect(instance.page.getByLabel('显示名称')).toHaveValue('');
+    assert.deepEqual(errors, []);
+  } finally {
+    // Remove only this test's generated system-vault entry, never enumerate other apps.
+    try { await instance.page.evaluate(() => window.researchTrail.deleteConnection('model')); } catch {}
+    await instance.app.close();
+    const python = resolve(root, 'services/backend/.venv/Scripts/python.exe');
+    execFileSync(python, ['-c', 'import sqlite3,sys; from hashlib import sha256; from research_trail.credentials import WindowsCredentialVault; from pathlib import Path; p=Path(sys.argv[1]).resolve(); n=sha256(str(p).casefold().encode()).hexdigest()[:32]; c=sqlite3.connect(p); refs=[r[0] for r in c.execute("select credential_ref from connections where credential_ref is not null")]; c.close(); v=WindowsCredentialVault(); [v.delete("ResearchTrail/"+n+"/"+r) for r in refs]', databasePath], { cwd: resolve(root, 'services/backend'), env, windowsHide: true });
+  }
+});
 async function screenshot(page, name) {
   if (!process.env.RESEARCH_TRAIL_QA_DIR) return;
   mkdirSync(process.env.RESEARCH_TRAIL_QA_DIR, { recursive: true });
-  await page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, name), fullPage: false });
+  await page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, name), fullPage: false, animations: 'disabled' });
 }
 async function launch(extraEnv = {}) {
   const databasePath = extraEnv.RESEARCH_TRAIL_DB_PATH || resolve(mkdtempSync(resolve(tmpdir(), 'research-trail-qa-')), 'test.sqlite3');
@@ -70,7 +185,8 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       node: typeof window.require,
       process: typeof window.process,
     })), { bridge: ['checkHealth', 'marketSnapshot', 'marketSymbols', 'onStatus', 'retryBackend', 'status',
-      'listSessions', 'createSession', 'getSession', 'deleteSession', 'sessionMessages', 'sessionRuns', 'sessionSnapshot', 'startRun', 'startAgentRun', 'cancelRun', 'getRun', 'runEvents', 'subscribeRun'].sort(), node: 'undefined', process: 'undefined' });
+      'listSessions', 'createSession', 'getSession', 'deleteSession', 'sessionMessages', 'sessionRuns', 'sessionSnapshot', 'startRun', 'startAgentRun', 'cancelRun', 'getRun', 'runEvents', 'subscribeRun',
+      'connections', 'saveConnection', 'deleteConnection', 'saveCredential', 'deleteCredential', 'testConnection', 'profile', 'saveProfile', 'deleteProfile', 'diagnostics', 'exportDiagnostics'].sort(), node: 'undefined', process: 'undefined' });
     assert.deepEqual(await first.app.evaluate(({ BrowserWindow }) => {
       const pref = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();
       return { sandbox: pref.sandbox, nodeIntegration: pref.nodeIntegration, contextIsolation: pref.contextIsolation };

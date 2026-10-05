@@ -23,6 +23,30 @@ button:disabled { opacity: .65; cursor: wait; }
 button:focus-visible { outline: 3px solid #89bdaf; outline-offset: 4px; }
 footer { color: var(--muted); font-size: 15px; margin-top: auto; padding: 20px 60px 44px; }
 .connection { padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+.settings-panel { padding-top: 24px; }
+.settings-tabs { flex-wrap: wrap; }
+.settings-grid { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.settings-card { min-width: 0; border: 1px solid var(--border); border-radius: 10px; padding: 22px; }
+.settings-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.settings-status { font-size: 13px; padding: 5px 8px; border-radius: 5px; background: #edf2ef; white-space: nowrap; }
+.settings-status.ready { color: #14685a; background: #e5f5ee; }
+.settings-status.invalid { color: #865f1b; background: #fff5dd; }
+.settings-status.failed { color: #a24333; background: #fcefe9; }
+.settings-card fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.settings-card label { display: flex; flex-direction: column; gap: 7px; margin: 12px 0; font-size: 13px; color: var(--muted); }
+.settings-card input:not([type="checkbox"]), .settings-card select { width: 100%; min-width: 0; padding: 9px 10px; border: 1px solid #cedbd3; border-radius: 6px; font: inherit; background: white; color: #163e39; }
+.settings-card .settings-check { flex-direction: row; align-items: center; }
+.settings-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.settings-actions button { min-width: 0; min-height: 36px; font-size: 13px; padding: 7px 12px; }
+.settings-actions .secondary { background: white; color: var(--accent); }
+.settings-actions .secondary:hover:not(:disabled) { background: #f1f6f3; }
+.credential-form { border-top: 1px solid var(--border); margin-top: 18px; padding-top: 8px; }
+.settings-error { color: #a24333; font-size: 13px; overflow-wrap: anywhere; }
+.profile-health-title { margin-top: 24px; }
+.profile-health { list-style: none; padding: 0; }
+.profile-health li { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.settings-card pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 14px; background: #f4f7f5; font-size: 12px; max-height: 380px; overflow: auto; }
+@media (max-width: 760px) { .settings-grid { grid-template-columns: minmax(0, 1fr); } .settings-card { padding: 18px; } }
 .connection button { min-height: 36px; padding: 7px 18px; font-size: 14px; }
 .market-panel { padding-top: 30px; }
 .market-heading, .chart-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -59,6 +83,7 @@ h2, h3 { margin: 0; font-size: 20px; }
 .view-tabs button, .session-panel button { min-width: 0; min-height: 36px; font-size: 13px; padding: 8px 14px; }
 .view-tabs button { background: #fff; color: var(--accent); }
 .view-tabs button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.view-tabs.settings-tabs button[aria-pressed="true"]:hover { background: var(--accent); color: #fff; }
 .session-panel { padding-top: 30px; }
 .session-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 22px 0; font-size: 13px; }
 .session-panel input, .session-panel textarea, .session-panel select { font: inherit; border: 1px solid #bccbc4; border-radius: 5px; padding: 9px; max-width: 100%; min-width: 0; background: #fff; color: #163e39; }
