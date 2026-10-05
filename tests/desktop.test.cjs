@@ -25,6 +25,63 @@ function children(pid) {
 }
 const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
 
+test('Step10 provider settings, simulated readonly data and isolated capability status', { timeout: 60000 }, async () => {
+  const instance = await launch();
+  const errors = [];
+  instance.page.on('pageerror', e => errors.push(e.message));
+  instance.page.on('console', m => { if (['warning', 'error'].includes(m.type())) errors.push(m.text()); });
+  try {
+    await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    await instance.page.getByRole('button', { name: '数据与只读账户', exact: true }).click();
+    await expect(instance.page.getByTestId('provider-editor')).toContainText('未配置');
+    await instance.page.getByRole('button', { name: '验证模拟查询', exact: true }).click();
+    await expect(instance.page.getByTestId('provider-result')).toContainText('模拟数据');
+    await expect(instance.page.getByTestId('provider-result')).toContainText('189.43');
+    await expect(instance.page.getByTestId('provider-capabilities').getByText('market.quote', { exact: false })).toContainText('模拟通过');
+    await expect(instance.page.getByTestId('provider-capabilities').getByText('market.kline', { exact: false })).toContainText('未验证');
+    await screenshot(instance.page, 'step10-simulated-wide.png');
+    await instance.page.getByLabel('查询模式', { exact: true }).selectOption('real');
+    await expect(instance.page.getByTestId('provider-result')).toHaveCount(0);
+    await instance.page.getByRole('button', { name: '执行一次真实只读查询', exact: true }).click();
+    await expect(instance.page.getByTestId('provider-result')).toContainText('PROVIDER_UNCONFIGURED');
+    await instance.page.getByRole('button', { name: '保存提供商配置', exact: true }).click();
+    await expect(instance.page.getByTestId('provider-editor')).toContainText('已保存');
+    await instance.page.getByRole('button', { name: '执行一次真实只读查询', exact: true }).click();
+    await expect(instance.page.getByTestId('provider-result')).toContainText('CREDENTIAL_MISSING');
+    // Test sentinel goes to native Windows vault, never a real vendor request.
+    for (const label of ['Longbridge App Key', 'Longbridge App Secret', 'Longbridge Access Token']) await instance.page.getByLabel(label, { exact: true }).fill('test-only-provider-credential');
+    await instance.page.getByRole('button', { name: '保存提供商凭证', exact: true }).click();
+    await expect(instance.page.getByTestId('provider-editor')).toContainText('已保存（不回显）');
+    await expect(instance.page.getByLabel('Longbridge App Key', { exact: true })).toHaveValue('');
+    await instance.page.getByRole('button', { name: '删除提供商凭证', exact: true }).click();
+    await expect(instance.page.getByTestId('provider-editor')).toContainText('未保存');
+    await instance.page.getByLabel('数据提供商', { exact: true }).selectOption('longbridge-account');
+    await expect(instance.page.getByTestId('provider-result')).toHaveCount(0);
+    await expect(instance.page.getByTestId('provider-editor')).toContainText('未配置');
+    await instance.page.getByLabel('查询模式', { exact: true }).selectOption('simulated');
+    await instance.page.getByRole('button', { name: '验证模拟查询', exact: true }).click();
+    await expect(instance.page.getByTestId('provider-result')).toContainText('模拟持仓');
+    await expect(instance.page.getByTestId('provider-capabilities').getByText('account.assets', { exact: false })).toContainText('未验证');
+    await screenshot(instance.page, 'step10-account-wide.png');
+    await instance.page.getByLabel('数据提供商', { exact: true }).selectOption('massive');
+    await instance.page.getByRole('button', { name: '验证模拟查询', exact: true }).click();
+    await expect(instance.page.getByTestId('provider-result')).toContainText('模拟数据');
+    await instance.app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(600, 680));
+    assert.equal(await instance.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    await screenshot(instance.page, 'step10-massive-compact.png');
+    const profiles = await instance.page.evaluate(() => window.researchTrail.providerProfiles());
+    assert.equal(profiles.find(p => p.provider === 'longbridge').credential_present, false);
+    assert.equal(profiles.find(p => p.provider === 'massive').configured, false);
+    assert.equal(await instance.page.title(), '研迹 · ResearchTrail');
+    assert.match(instance.page.url(), /dist\/renderer\/index\.html$/);
+    assert.equal(await instance.page.locator('vite-error-overlay').count(), 0);
+    assert.deepEqual(errors, []);
+  } finally {
+    await instance.page.evaluate(() => window.researchTrail.deleteProvider('longbridge')).catch(() => {});
+    await instance.app.close();
+  }
+});
+
 test('OpenAI compatible UI: simulated HTTP tool loop, limits, cancel and persisted identity', { timeout: 90000 }, async () => {
   const { createServer } = require('node:http');
   const work = mkdtempSync(resolve(tmpdir(), 'research-trail-model-qa-'));
@@ -304,7 +361,8 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       process: typeof window.process,
     })), { bridge: ['checkHealth', 'marketSnapshot', 'marketSymbols', 'onStatus', 'retryBackend', 'status',
       'listSessions', 'createSession', 'getSession', 'deleteSession', 'sessionMessages', 'sessionRuns', 'sessionSnapshot', 'startRun', 'startAgentRun', 'cancelRun', 'getRun', 'runEvents', 'subscribeRun',
-      'connections', 'saveConnection', 'deleteConnection', 'saveCredential', 'deleteCredential', 'testConnection', 'profile', 'saveProfile', 'deleteProfile', 'diagnostics', 'exportDiagnostics'].sort(), node: 'undefined', process: 'undefined' });
+      'connections', 'saveConnection', 'deleteConnection', 'saveCredential', 'deleteCredential', 'testConnection', 'profile', 'saveProfile', 'deleteProfile', 'diagnostics', 'exportDiagnostics',
+      'providerProfiles', 'saveProvider', 'deleteProvider', 'saveProviderCredential', 'deleteProviderCredential', 'providerCapabilities', 'queryProvider'].sort(), node: 'undefined', process: 'undefined' });
     assert.deepEqual(await first.app.evaluate(({ BrowserWindow }) => {
       const pref = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();
       return { sandbox: pref.sandbox, nodeIntegration: pref.nodeIntegration, contextIsolation: pref.contextIsolation };

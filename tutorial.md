@@ -8,7 +8,7 @@
 - 参考来源：ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`；本地无Git，不能保证逐文件无本地变化。
 - 新项目根：`D:\folio\research-trail`，当前有第1—6步业务、第7步验收脚本/离线CI文件、第8步设置/凭证/假连接/诊断。v0.1.0源码发布只包含第1—7步，第8步已通过PR #7交付，第9步实现模型适配/受限工具循环；发布轮一次真实模型工具验证通过（2次请求、1次工具），真实行情未接入。
 - 本次覆盖：入口、界面/客户端、模型与数据、持久化/事件、组合、技能、研究、监控、评测与打包的阅读路线。
-- C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；C06已展开第8步设置/凭证/假健康，C05已补第9步模型协议/工具循环；一次真实模型工具验证通过（模拟行情），真实行情及C07—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
+- C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；C06已展开第8步设置/凭证/假健康，C05已补第9步模型协议/工具循环；一次真实模型工具验证通过（模拟行情），第10步数据与只读账户适配已展开，真实查询未执行，C07—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
 - 前置知识：Python函数/类与异步、HTTP/JSON、TypeScript接口、React状态、进程与IPC、SQLite基本操作；按课程需要补，不要求先学完全部框架。
 
 主链先建立整体印象：
@@ -193,11 +193,11 @@ DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-
 6. OpenAIModelProvider通过httpx.AsyncClient进行有界非流式Chat Completions。禁代理/重定向/重试，检测认证401/403、限流429、其他HTTP、网络、单次/整体超时、异常JSON/finish_reason/消息。等待HTTP时轮询stop并取消请求task，真实本机socket关闭已验证；不是用假回复盖住失败。API Key只用于请求头，异常固定错误码，最终文本反射已知Key时脱敏。
 7. verify_live只读本机配置/系统凭证，在临时库以1轮/次、整体最多60秒与最多两次请求执行同一AgentRunner/RunManager/Store。无凭证返回not_executed；直接回复而无一次成功tool_result也不能记passed。测试中的MockTransport/本机协议fixture均是模拟响应，开发轮真实验证未执行；发布轮本机配置后2次请求、1次成功工具回传、completed通过，详情见EVIDENCE第25节。
 
-官方协议依据：[OpenAI function calling](https://developers.openai.com/api/docs/guides/function-calling)、[Chat Completions reference](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create)。实现/验收见openai_provider.py、agent.py、tests/test_openai.py和 [第9步清单](docs/ACCEPTANCE-step9.md)。行情/账户真实适配仍待第10步，不在此循环里伪造真实来源。
+官方协议依据：[OpenAI function calling](https://developers.openai.com/api/docs/guides/function-calling)、[Chat Completions reference](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create)。实现/验收见openai_provider.py、agent.py、tests/test_openai.py和 [第9步清单](docs/ACCEPTANCE-step9.md)。第10步行情/账户适配走独立只读验收入口，此Agent循环仍使用模拟行情。
 
 ## C06：真实行情、账户和连接怎样路由？
 
-状态：第8步设置/凭证/假连接已展开；第9步模型选路见C05，真实数据适配仍待步骤10/11，用户练习待完成。
+状态：第8步设置/凭证/假连接已展开；第9步模型选路见C05，第10步提供商适配已实现并通过模拟验收，完整市场页仍待第11步，用户练习待完成。
 
 - 主链：配置/健康 → 能力请求 → 路由选择Provider → 规范化数据与来源 → UI/Agent。
 - 必读1：`packages/core/src/provider.ts`：LLM、financial-data、broker-account不同契约和状态。
@@ -346,3 +346,17 @@ Windows系统存储不可用时拒绝保存，无明文后备。凭证命名空�
 ## 学习记录维护
 
 每次只展开当前步骤相关课程，保留其他章节及用户笔记。完成后增加实际研迹调用链、文件/符号、失败分支和一个复述任务。未讲内容不生成“课后题”，大纲阶段对应阅读引导见 [practice](practice.md)。
+
+
+### 研迹第10步：相同查询为何会有模拟、真实、缓存与受限结果？
+
+场景：在“数据与只读账户”查询AAPL.US，先不配置凭证。模拟成功只标market.quote模拟通过；切到真实模式得到PROVIDER_UNCONFIGURED，不带模拟价格。保存配置但没有凭证时SDK返回CREDENTIAL_MISSING，不影响其他能力。
+
+1. `renderer/ProviderPanel.tsx`显式选择provider/mode/capability，清除旧结果，默认simulated；`provider-types.ts`只引用Python生成类型。preload七个命名操作→main来源/提供商白名单→BackendManager→带启动令牌的本机API，渲染端不执行SDK或CLI。
+2. `provider_contracts.ReadQuery`拒绝未知能力、额外字段、非法代码/日期/布尔count；`app.py`只读查询入口→`ProviderService.query`。simulated调用`authored_data`，真实路径取得`ProviderSettings.snapshot`的一致配置/凭证引用，只读行情与账户独立。
+3. Python读取对应Windows系统凭证，不枚举、不打印；`provider_process.sdk_process`把快照通过stdin交给所属worker，argv/env不含密钥。`provider_sdk.execute_sdk`静态映射当前官方SDK只读方法；Massive使用固定HTTPS路径、Authorization请求头。子进程输出/时间有界，Windows所属Job在父进程异常结束后回收孩子。
+4. 缺口进入`provider_cli.arguments/execute_cli`：限定longbridge.exe绝对路径、argv数组、已验证参数与auth status前置检查；账户身份/组合及部分日历/报告走CLI原有会话。CLI认证存储不是研迹管理的SDK三项凭证，真实兼容性仍待本机验证。
+5. `provider_normalize.public_json`仅公开SDK类型注解/JSON字段，转换有限数值和UTC时间，移除敏感字段与已知密钥反射；账户保留币种，缺市价/市值null，不补成零。CLI按固定基线实际overview/market_accounts/holdings或分组list/infos投影，不返回auth/debug。
+6. ProviderResult成功携mode/transport/时效依据/获取与市场时间，失败携固定状态/码，无真实失败回退Fixture。默认延迟未知，用户时效声明不证明权限。当前进程按provider/capability/revision记录最近状态；一次quote成功不能把account.assets或其他提供商设为成功。
+7. 行情内存缓存有TTL、版本和容量；命中保留原fetched_at、更新served_at。换配置/凭证、删除重建立即失效；过期请求失败不复用陈旧成功。账户不缓存、不落数据库、不进诊断；面板离开就丢显示结果。
+8. `verify_data`默认只读检查配置；显式--run才允许一次SDK/HTTP业务查询，仅打印安全验收摘要。本轮用户无凭证，三类均未执行/0查询。学习读链：provider_contracts→provider_settings→provider_service→provider_sdk/provider_cli/provider_massive→provider_normalize→tests/test_providers.py；完整 [覆盖表](docs/PROVIDER-COVERAGE-step10.md)与 [验收清单](docs/ACCEPTANCE-step10.md)。

@@ -51,6 +51,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/providers/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Provider Capabilities */
+        get: operations["provider_capabilities_providers_capabilities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/providers/{provider}/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Provider Query */
+        post: operations["provider_query_providers__provider__query_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sessions": {
         parameters: {
             query?: never;
@@ -313,6 +347,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/settings/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Provider Profiles */
+        get: operations["provider_profiles_settings_providers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/providers/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save Provider */
+        put: operations["save_provider_settings_providers__provider__put"];
+        post?: never;
+        /** Delete Provider */
+        delete: operations["delete_provider_settings_providers__provider__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/providers/{provider}/credential": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Provider Credential */
+        put: operations["provider_credential_settings_providers__provider__credential_put"];
+        post?: never;
+        /** Delete Provider Credential */
+        delete: operations["delete_provider_credential_settings_providers__provider__credential_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -353,6 +440,39 @@ export interface components {
              * @constant
              */
             reason: "user";
+        };
+        /** CapabilityView */
+        CapabilityView: {
+            /**
+             * Capability
+             * @enum {string}
+             */
+            capability: "market.quote" | "market.kline" | "market.intraday" | "market.depth" | "market.trades" | "market.capitalFlow" | "market.sentiment" | "market.status" | "company.profile" | "company.valuation" | "company.financials" | "company.dividends" | "company.earnings" | "company.ratings" | "research.news" | "research.events" | "account.accounts" | "account.portfolio" | "account.positions" | "account.assets" | "account.cashFlow";
+            /** Checked At */
+            checked_at?: string | null;
+            /** Code */
+            code?: string | null;
+            /**
+             * Implemented
+             * @default true
+             */
+            implemented: boolean;
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "longbridge" | "longbridge-account" | "massive";
+            /**
+             * Transport
+             * @enum {string}
+             */
+            transport: "sdk" | "cli" | "http";
+            /**
+             * Validation
+             * @default unverified
+             * @enum {string}
+             */
+            validation: "unverified" | "simulated" | "real" | "restricted" | "failed";
         };
         /** CompletedPayload */
         CompletedPayload: {
@@ -619,6 +739,7 @@ export interface components {
              */
             status: string;
         };
+        JsonValue: unknown;
         /** Kline */
         Kline: {
             /** Close */
@@ -838,6 +959,226 @@ export interface components {
              */
             research_style: "balanced" | "cautious" | "exploratory";
         };
+        /** Provenance */
+        Provenance: {
+            /**
+             * Cached
+             * @default false
+             */
+            cached: boolean;
+            /**
+             * Credential Source
+             * @default none
+             * @enum {string}
+             */
+            credential_source: "none" | "system-store" | "external-cli-session";
+            /**
+             * Data Label
+             * @enum {string}
+             */
+            data_label: "模拟数据" | "真实数据" | "延迟行情" | "历史行情" | "真实数据（延迟未知）";
+            /**
+             * Fetched At
+             * Format: date-time
+             */
+            fetched_at: string;
+            /** Market Time */
+            market_time?: string | null;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /**
+             * Permission
+             * @default unknown
+             * @enum {string}
+             */
+            permission: "unknown" | "request-succeeded";
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "longbridge" | "longbridge-account" | "massive";
+            /**
+             * Served At
+             * Format: date-time
+             */
+            served_at: string;
+            /**
+             * Timeliness
+             * @enum {string}
+             */
+            timeliness: "unknown" | "realtime" | "delayed" | "historical";
+            /**
+             * Timeliness Basis
+             * @enum {string}
+             */
+            timeliness_basis: "fixture" | "historical-request" | "user-declared" | "unknown";
+            /**
+             * Transport
+             * @enum {string}
+             */
+            transport: "fixture" | "sdk" | "cli" | "http";
+        };
+        /** ProviderConfiguration */
+        ProviderConfiguration: {
+            /**
+             * Cache Ttl Seconds
+             * @default 30
+             */
+            cache_ttl_seconds: number;
+            /**
+             * Cli Path
+             * @default
+             */
+            cli_path: string;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /**
+             * Region
+             * @default global
+             * @enum {string}
+             */
+            region: "global" | "cn";
+            /**
+             * Timeliness
+             * @default unknown
+             * @enum {string}
+             */
+            timeliness: "unknown" | "realtime" | "delayed" | "historical";
+            /**
+             * Timeout Seconds
+             * @default 15
+             */
+            timeout_seconds: number;
+        };
+        /** ProviderCredentials */
+        ProviderCredentials: {
+            /** Access Token */
+            access_token?: string | null;
+            /** Api Key */
+            api_key?: string | null;
+            /** App Key */
+            app_key?: string | null;
+            /** App Secret */
+            app_secret?: string | null;
+        };
+        /** ProviderFailure */
+        ProviderFailure: {
+            /**
+             * Capability
+             * @enum {string}
+             */
+            capability: "market.quote" | "market.kline" | "market.intraday" | "market.depth" | "market.trades" | "market.capitalFlow" | "market.sentiment" | "market.status" | "company.profile" | "company.valuation" | "company.financials" | "company.dividends" | "company.earnings" | "company.ratings" | "research.news" | "research.events" | "account.accounts" | "account.portfolio" | "account.positions" | "account.assets" | "account.cashFlow";
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+            /**
+             * Ok
+             * @default false
+             * @constant
+             */
+            ok: false;
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "longbridge" | "longbridge-account" | "massive";
+            /**
+             * Retryable
+             * @default false
+             */
+            retryable: boolean;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "unconfigured" | "disabled" | "restricted" | "unsupported" | "failed" | "timed_out" | "cancelled";
+        };
+        /** ProviderProfile */
+        ProviderProfile: {
+            /**
+             * Cache Ttl Seconds
+             * @default 30
+             */
+            cache_ttl_seconds: number;
+            /**
+             * Cli Path
+             * @default
+             */
+            cli_path: string;
+            /** Configured */
+            configured: boolean;
+            /** Credential Present */
+            credential_present: boolean;
+            /**
+             * Credential Storage
+             * @default windows-credential-manager
+             * @constant
+             */
+            credential_storage: "windows-credential-manager";
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "longbridge" | "longbridge-account" | "massive";
+            /**
+             * Region
+             * @default global
+             * @enum {string}
+             */
+            region: "global" | "cn";
+            /** Revision */
+            revision: number;
+            /**
+             * Timeliness
+             * @default unknown
+             * @enum {string}
+             */
+            timeliness: "unknown" | "realtime" | "delayed" | "historical";
+            /**
+             * Timeout Seconds
+             * @default 15
+             */
+            timeout_seconds: number;
+        };
+        /** ProviderSuccess */
+        ProviderSuccess: {
+            /**
+             * Capability
+             * @enum {string}
+             */
+            capability: "market.quote" | "market.kline" | "market.intraday" | "market.depth" | "market.trades" | "market.capitalFlow" | "market.sentiment" | "market.status" | "company.profile" | "company.valuation" | "company.financials" | "company.dividends" | "company.earnings" | "company.ratings" | "research.news" | "research.events" | "account.accounts" | "account.portfolio" | "account.positions" | "account.assets" | "account.cashFlow";
+            data: components["schemas"]["JsonValue"];
+            /**
+             * Ok
+             * @default true
+             * @constant
+             */
+            ok: true;
+            provenance: components["schemas"]["Provenance"];
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "longbridge" | "longbridge-account" | "massive";
+            /**
+             * State
+             * @default ready
+             * @constant
+             */
+            state: "ready";
+        };
         /** Quote */
         Quote: {
             /** Change */
@@ -905,6 +1246,62 @@ export interface components {
              * @constant
              */
             source: "fixture";
+        };
+        /** ReadQuery */
+        ReadQuery: {
+            /**
+             * Capability
+             * @enum {string}
+             */
+            capability: "market.quote" | "market.kline" | "market.intraday" | "market.depth" | "market.trades" | "market.capitalFlow" | "market.sentiment" | "market.status" | "company.profile" | "company.valuation" | "company.financials" | "company.dividends" | "company.earnings" | "company.ratings" | "research.news" | "research.events" | "account.accounts" | "account.portfolio" | "account.positions" | "account.assets" | "account.cashFlow";
+            /**
+             * Count
+             * @default 20
+             */
+            count: number;
+            /** End */
+            end?: string | null;
+            /**
+             * Event Type
+             * @default financial
+             * @enum {string}
+             */
+            event_type: "financial" | "report" | "dividend" | "ipo" | "macrodata" | "closed";
+            /**
+             * Kind
+             * @default ALL
+             * @enum {string}
+             */
+            kind: "IS" | "BS" | "CF" | "ALL";
+            /**
+             * Market
+             * @default US
+             * @enum {string}
+             */
+            market: "US" | "HK" | "CN" | "SG";
+            /**
+             * Mode
+             * @default simulated
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /**
+             * Period
+             * @default 1d
+             * @enum {string}
+             */
+            period: "1m" | "5m" | "15m" | "1h" | "1d" | "1w";
+            /** Report */
+            report?: string | null;
+            /** Start */
+            start?: string | null;
+            /** Symbol */
+            symbol?: string | null;
+            /**
+             * Use Cache
+             * @default true
+             */
+            use_cache: boolean;
         };
         /** RunCompletedEvent */
         RunCompletedEvent: {
@@ -1332,6 +1729,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MarketSymbol"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    provider_capabilities_providers_capabilities_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapabilityView"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    provider_query_providers__provider__query_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                provider: "longbridge" | "longbridge-account" | "massive";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReadQuery"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderSuccess"] | components["schemas"]["ProviderFailure"];
                 };
             };
             /** @description Validation Error */
@@ -2073,6 +2538,177 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Profile"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    provider_profiles_settings_providers_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderProfile"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_provider_settings_providers__provider__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                provider: "longbridge" | "longbridge-account" | "massive";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProviderConfiguration"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderProfile"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_provider_settings_providers__provider__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                provider: "longbridge" | "longbridge-account" | "massive";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderProfile"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    provider_credential_settings_providers__provider__credential_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                provider: "longbridge" | "longbridge-account" | "massive";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProviderCredentials"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderProfile"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_provider_credential_settings_providers__provider__credential_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                provider: "longbridge" | "longbridge-account" | "massive";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderProfile"];
                 };
             };
             /** @description Validation Error */

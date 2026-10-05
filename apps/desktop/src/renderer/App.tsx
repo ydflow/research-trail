@@ -3,6 +3,7 @@ import type { BackendState, ResearchTrailBridge } from '../bridge';
 import { MarketPanel } from './market/MarketPanel';
 import { SessionPanel } from './SessionPanel';
 import { SettingsPanel } from './settings/SettingsPanel';
+import { ProviderPanel } from './ProviderPanel';
 
 declare global { interface Window { researchTrail?: ResearchTrailBridge } }
 const unavailable: BackendState = { phase: 'failed', detail: '桌面通信桥不可用。请通过 start-dev.cmd 打开研迹桌面应用。' };
@@ -12,9 +13,9 @@ const labels = { idle: '尚未启动', starting: '启动中', healthy: '运行�
 export function App() {
   const [state, setState] = useState<BackendState>({ phase: 'idle', detail: '等待本地服务启动。' });
   const [busy, setBusy] = useState(false);
-  const [view, setView] = useState<'market' | 'sessions' | 'settings'>(() => {
+  const [view, setView] = useState<'market' | 'sessions' | 'settings' | 'providers'>(() => {
     const saved = sessionStorage.getItem('research-trail.view');
-    return saved === 'sessions' || saved === 'settings' ? saved : 'market';
+    return saved === 'sessions' || saved === 'settings' || saved === 'providers' ? saved : 'market';
   });
   useEffect(() => { sessionStorage.setItem('research-trail.view', view); }, [view]);
   useEffect(() => {
@@ -54,8 +55,9 @@ export function App() {
         <button aria-pressed={view === 'market'} onClick={() => setView('market')}>模拟行情</button>
         <button aria-pressed={view === 'sessions'} onClick={() => setView('sessions')}>会话与事件</button>
         <button aria-pressed={view === 'settings'} onClick={() => setView('settings')}>设置与诊断</button>
+        <button aria-pressed={view === 'providers'} onClick={() => setView('providers')}>数据与只读账户</button>
       </nav>
-      {view === 'market' ? <MarketPanel available={state.phase === 'healthy'} /> : view === 'sessions' ? <SessionPanel available={state.phase === 'healthy'} /> : <SettingsPanel available={state.phase === 'healthy'} />}
+      {view === 'market' ? <MarketPanel available={state.phase === 'healthy'} /> : view === 'sessions' ? <SessionPanel available={state.phase === 'healthy'} /> : view === 'providers' ? <ProviderPanel available={state.phase === 'healthy'} /> : <SettingsPanel available={state.phase === 'healthy'} />}
       </main>
       <footer>每次研究，都有据可查。</footer>
     </div>

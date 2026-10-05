@@ -2,6 +2,13 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendState, ResearchTrailBridge, RunStreamUpdate } from '../bridge';
 
 const bridge: ResearchTrailBridge = {
+  providerProfiles: () => ipcRenderer.invoke('providers:profiles'),
+  saveProvider: (provider, input) => ipcRenderer.invoke('providers:save', provider, input),
+  deleteProvider: (provider) => ipcRenderer.invoke('providers:delete', provider),
+  saveProviderCredential: (provider, input) => ipcRenderer.invoke('providers:credential-save', provider, input),
+  deleteProviderCredential: (provider) => ipcRenderer.invoke('providers:credential-delete', provider),
+  providerCapabilities: () => ipcRenderer.invoke('providers:capabilities'),
+  queryProvider: (provider, input) => ipcRenderer.invoke('providers:query', provider, input),
   connections: () => ipcRenderer.invoke('settings:connections'),
   saveConnection: (kind, input) => ipcRenderer.invoke('settings:save', kind, input),
   deleteConnection: (kind) => ipcRenderer.invoke('settings:delete', kind),
