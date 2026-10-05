@@ -632,3 +632,7 @@ README架构图改为当前真实Python调用链，未来研究/账户不混写�
 - 验证边界：所有连接测试都是确定性假连接，离线保护下没有真实模型/行情/账户请求。Windows原生凭证测试只用临时唯一命名空间与自造占位值并清理；接口/日志/诊断不回显凭证，五类健康独立。用户亲自清单与练习、人工系统保存对话框点击/取消、真实Provider、安装包/无工具机器、其他OS、凭证跨机器迁移/全部极端崩溃点未验证。公开不包含运行库、账户数据、日志、缓存或敏感截图。
 
 PR、远程Actions和合并结果以本轮实际Git/GitHub查询及最终回执为准，不由本机通过推定远程成功；只有最终head全部检查通过、没有未解决讨论或阻塞时才普通merge并fast-forward本地main。
+
+发布分支创建 [PR #7](https://github.com/ydflow/research-trail/pull/7)，base main、非draft，初始head为98eb73ce8d924b1b953c424bdd6c4a110be8630d。已核对25文件与三个实际当前时间提交：Python新实现ae6b6461e4e01dac3edb023333ff15707016d694、Folio界面流程适配/桌面接入e785dd68d32e33dc4a15b8cc88babe4e2d0a184c、验收来源文档98eb73ce8d924b1b953c424bdd6c4a110be8630d；均为ydflow，不重写上游作者或导入历史。本次只补PR链接与查询记录，不改运行代码。
+
+创建后push与pull_request两项Windows Actions已启动，尚在运行，不提前记作通过；最终检查以 [PR #7检查](https://github.com/ydflow/research-trail/pull/7/checks)的实际最新head为准。合并前重新读取head/base、全部检查、review及未解决讨论，并再次核对账号/目标；满足用户授权条件才普通merge保留提交，同步本地main。最终检查与合并SHA由Git/GitHub及发布回执核实，不在本文预写自己的合并结果。
