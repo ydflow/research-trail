@@ -6,9 +6,9 @@
 
 - 参考根：`D:\folio\主分支和简历skill\folio-main`。
 - 参考来源：ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`；本地无Git，不能保证逐文件无本地变化。
-- 新项目根：`D:\folio\research-trail`，当前有第1—6步业务、第7步验收脚本/离线CI文件、第8步设置/凭证/假连接/诊断。v0.1.0源码发布只包含第1—7步，第8步为本地改动；真实模型/行情仍未接入。
+- 新项目根：`D:\folio\research-trail`，当前有第1—6步业务、第7步验收脚本/离线CI文件、第8步设置/凭证/假连接/诊断。v0.1.0源码发布只包含第1—7步，第8步已通过PR #7交付，第9步实现模型适配/受限工具循环；发布轮一次真实模型工具验证通过（2次请求、1次工具），真实行情未接入。
 - 本次覆盖：入口、界面/客户端、模型与数据、持久化/事件、组合、技能、研究、监控、评测与打包的阅读路线。
-- C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；C06已展开第8步设置/凭证/假健康，真实LLM/行情及C07—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
+- C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；C06已展开第8步设置/凭证/假健康，C05已补第9步模型协议/工具循环；一次真实模型工具验证通过（模拟行情），真实行情及C07—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
 - 前置知识：Python函数/类与异步、HTTP/JSON、TypeScript接口、React状态、进程与IPC、SQLite基本操作；按课程需要补，不要求先学完全部框架。
 
 主链先建立整体印象：
@@ -117,7 +117,7 @@ DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-
 
 ## C04：运行如何流式更新、取消并重放？
 
-状态：第3—6步固定事件、规则运行、取消和流重连已展开；真实模型仍待后续。关联步骤3/5/6。
+状态：第3—6步固定事件、规则运行、取消和流重连已展开；第9步模型传输与限制见C05。关联步骤3/5/6。
 
 - 主链：startRun → RunManager驱动Runtime → 持久化/广播事件 → KernelBridge更新UI；取消在执行中进入终态。
 - 必读1：`packages/shared/src/kernel/run-manager.ts` / `RunManager.startRun`、`cancelRun`：区分请求返回和后台事件完成。
@@ -134,7 +134,7 @@ DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-
 
 `runEvents`在main用带令牌HTTP读取 `/events?after_sequence=N` 的有限SSE，每帧包含id、event、JSON data。Python先从已提交事件表读取，main校验run/session/type/连续序号，再交给页面。HTTP还接受当前run_id:sequence格式的Last-Event-ID；JSON event-log接口支持游标和有界分页，并将事件联合类型纳入OpenAPI。超过末尾的游标报错，跨会话访问404。
 
-固定测试一次读取在末尾关闭SSE，main收集有限响应后交给页面；这个fixture入口没有后台任务。第6步“重新读取事件”改读完整会话快照，不调用start_fixture，消息数不变。规则工具见C05，运行生命周期及快照/实时订阅见下文；真实模型仍属后续步骤。
+固定测试一次读取在末尾关闭SSE，main收集有限响应后交给页面；这个fixture入口没有后台任务。第6步“重新读取事件”改读完整会话快照，不调用start_fixture，消息数不变。规则工具见C05，运行生命周期及快照/实时订阅见下文；第9步模型协议见C05；一次真实模型工具验证见EVIDENCE第25节。
 
 ### 第5步：取消、超时和完成为什么只能赢一次？
 
@@ -162,7 +162,7 @@ DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-
 
 ## C05：规则Agent与真实LLM的区别是什么？
 
-状态：第4步已展开，用户练习待完成；真实LLM仍属步骤9。
+状态：第4步规则链与第9步OpenAI兼容协议/循环已展开，用户练习待完成；模拟协议与一次真实模型工具验证通过；工具数据仍为模拟。
 
 - 主链：用户文本 → 意图/模型决策 → 工具请求 → 数据结果 → 回答与运行事件。
 - 必读1：`packages/shared/src/agent/intent-router.ts` / `routeFinanceIntent`：关键词和symbol决定意图，不是LLM。
@@ -183,9 +183,21 @@ DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-
 
 这是一次规则决策、最多一个只读Python工具调用，无LLM推理、完整多轮循环或投资建议。协议新增tool_started、tool_result、error，保留运行ID＋序号与消息ID各自语义。Python测试用记录调用的Provider核对调用次数、名称/参数/call_id、持久结果和回复值，并在同一个模型上改fixture；桌面测试核对真实桥、卡片、画布、错误、重读与重启。
 
+### 第9步：同一AgentRunner怎样在模型与工具之间循环？
+
+1. SessionPanel的运行模型默认fake_agent；显式openai_agent经过同一个startAgentRun/IPC白名单接口。app.py在SettingsService锁内取限制与ModelConfiguration快照，系统存储读取Key但不序列化。运行中改设置只影响下次运行，不把新地址/Key混入当前请求。无配置也保存带真实模型标签的失败记录，不回退规则。
+2. RunManager仍负责begin_agent、整体Timer、取消Event、工具Timer和唯一终态。真实运行用配置的120秒默认限时；原假模型SCENARIOS的15秒/受控延迟保持。每次模型返回及工具前后检查stop/deadline，取消/超时后迟到数据不能写回。正常退出与硬退出沿用中断恢复，不自动重调。
+3. AgentRunner把旧plan/respond包成RuleDialog；真实模型使用OpenAIModelProvider.complete。两者共用messages→工具选择→ToolRegistry→tool_started/tool_result→tool消息→最终回复的循环和Store/SSE。假模型仍固定最多一次工具，价格仍来自工具。
+4. ToolRegistry.definitions只枚举已注册的market.quote、market.kline。协议wire名称market_quote、market_kline不带点，decode按注册表映射回内部名称。整批验证ID唯一、JSON无重复字段、symbol匹配US且无额外字段后才执行，原ToolArguments与execute二次校验保持；非法批次零执行。内部事件call_id自造UUID，不保存provider原始ID或参数错误原文。
+5. 默认最多8轮且累计8次工具调用，批量请求不能绕过计数。第8次结果回传后仍可请求最终回复；若继续要工具则TOOL_LIMIT、零超额执行，所以模型请求最多9次。模型先返回assistant.tool_calls，再按tool_call_id追加tool结果；不会把工具数据当系统指令。
+6. OpenAIModelProvider通过httpx.AsyncClient进行有界非流式Chat Completions。禁代理/重定向/重试，检测认证401/403、限流429、其他HTTP、网络、单次/整体超时、异常JSON/finish_reason/消息。等待HTTP时轮询stop并取消请求task，真实本机socket关闭已验证；不是用假回复盖住失败。API Key只用于请求头，异常固定错误码，最终文本反射已知Key时脱敏。
+7. verify_live只读本机配置/系统凭证，在临时库以1轮/次、整体最多60秒与最多两次请求执行同一AgentRunner/RunManager/Store。无凭证返回not_executed；直接回复而无一次成功tool_result也不能记passed。测试中的MockTransport/本机协议fixture均是模拟响应，开发轮真实验证未执行；发布轮本机配置后2次请求、1次成功工具回传、completed通过，详情见EVIDENCE第25节。
+
+官方协议依据：[OpenAI function calling](https://developers.openai.com/api/docs/guides/function-calling)、[Chat Completions reference](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create)。实现/验收见openai_provider.py、agent.py、tests/test_openai.py和 [第9步清单](docs/ACCEPTANCE-step9.md)。行情/账户真实适配仍待第10步，不在此循环里伪造真实来源。
+
 ## C06：真实行情、账户和连接怎样路由？
 
-状态：第8步设置/凭证/假连接已展开；真实选路和数据适配仍待步骤9/10/11，用户练习待完成。
+状态：第8步设置/凭证/假连接已展开；第9步模型选路见C05，真实数据适配仍待步骤10/11，用户练习待完成。
 
 - 主链：配置/健康 → 能力请求 → 路由选择Provider → 规范化数据与来源 → UI/Agent。
 - 必读1：`packages/core/src/provider.ts`：LLM、financial-data、broker-account不同契约和状态。
