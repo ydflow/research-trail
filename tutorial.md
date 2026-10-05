@@ -6,9 +6,9 @@
 
 - 参考根：`D:\folio\主分支和简历skill\folio-main`。
 - 参考来源：ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`；本地无Git，不能保证逐文件无本地变化。
-- 新项目根：`D:\folio\research-trail`，当前有第1—6步业务及第7步验收脚本/离线CI文件，源码首版可发布仅指假模型＋模拟数据本机验证通过。
+- 新项目根：`D:\folio\research-trail`，当前有第1—6步业务、第7步验收脚本/离线CI文件、第8步设置/凭证/假连接/诊断。v0.1.0源码发布只包含第1—7步，第8步为本地改动；真实模型/行情仍未接入。
 - 本次覆盖：入口、界面/客户端、模型与数据、持久化/事件、组合、技能、研究、监控、评测与打包的阅读路线。
-- C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；真实LLM和C06—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
+- C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；C06已展开第8步设置/凭证/假健康，真实LLM/行情及C07—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
 - 前置知识：Python函数/类与异步、HTTP/JSON、TypeScript接口、React状态、进程与IPC、SQLite基本操作；按课程需要补，不要求先学完全部框架。
 
 主链先建立整体印象：
@@ -54,7 +54,7 @@
 3. `apps/desktop/src/main/index.ts`等待Electron就绪，创建沙箱窗口、注册白名单通道、加载preload和页面，然后显示窗口并调用 `BackendManager.retry()`。第1步最初只有健康相关通道；截至第6步桥共19个命名操作，后续行情/会话/运行见C03—C05。
 4. `main/backend.ts`生成随机令牌，直接启动 `services/backend/.venv/Scripts/python.exe -m research_trail`。Python在 `research_trail/__main__.py`绑定127.0.0.1的端口0：0表示让操作系统分配端口。它把同一socket交给Uvicorn，避免“先找空端口、再抢占端口”的竞态。
 5. Python用stdout发一行就绪JSON，只有端口，没有令牌。Electron收到后请求 `/health`，在请求头携令牌。`research_trail/app.py`的 `create_app()`用常量时间比较检查令牌，正确才返回服务名和Python版本。
-6. Electron将健康结果转换为桌面状态。`preload/index.ts`通过命名接口访问健康信息；React的 `App.tsx`订阅状态，更新标题、状态行和检查时间。第1步最初四个接口，当前19项白名单见bridge.ts；页面没有后端端口或令牌，也不能随意指定URL、读文件或调用进程。
+6. Electron将健康结果转换为桌面状态。`preload/index.ts`通过命名接口访问健康信息；React的 `App.tsx`订阅状态，更新标题、状态行和检查时间。第1步最初四个接口，第8步起30项白名单见bridge.ts；页面没有后端端口或令牌，也不能随意指定URL、读文件或调用进程。诊断导出经命名接口及主进程系统保存对话框，不开放任意文件写入。
 7. 健康时按钮调用checkHealth；失败时调用retryBackend。重试先关闭旧子进程，再使用新令牌启动新服务。重复点击由前端禁用和后端复用同一重试Promise共同处理。
 8. 关窗触发before-quit，先写stdin的shutdown通知，等Python结束；超时才结束持有的Python子进程。Electron崩溃时管道EOF也会让Python退出。随后dev启动器关闭Vite。没有按python.exe或electron.exe名称批量结束进程。
 
@@ -185,7 +185,7 @@ DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-
 
 ## C06：真实行情、账户和连接怎样路由？
 
-状态：大纲。关联步骤8/10/11。
+状态：第8步设置/凭证/假连接已展开；真实选路和数据适配仍待步骤9/10/11，用户练习待完成。
 
 - 主链：配置/健康 → 能力请求 → 路由选择Provider → 规范化数据与来源 → UI/Agent。
 - 必读1：`packages/core/src/provider.ts`：LLM、financial-data、broker-account不同契约和状态。
@@ -193,6 +193,22 @@ DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-
 - 必读3：`packages/shared/src/providers/longbridge/adapter.ts`、`broker.ts`、`massive/adapter.ts`，及`connection.ts` / `ConnectionStore`：核对SDK/CLI实际字段到规范结果的映射。
 - 验证选读：`packages/shared/src/providers/providers.test.ts`；不能据此替代真实凭证调用。
 - 暂缓：组合导入由C07，风险计算由C08。
+
+### 研迹第8步：为什么模型成功不能带着行情成功？
+
+场景：在“模型设置”保存demo-model，点击“测试假连接”；模型显示假成功，行情、账户、技能、运行时仍未配置。
+
+1. `App`打开`settings/SettingsPanel.tsx`。页面并行读取`connections`和`profile`，只维护表单及显示缓存；关闭页面/后端变化时丢弃过期结果。四个分区参考Folio设置/连接/资料/诊断的信息流，本步没有导入原client或TS后端。
+2. `ConnectionCard`提交非敏感`ConnectionInput`；`preload`只调用`settings:save`，main验证IPC来源及五类kind白名单，`BackendManager`携本机启动令牌PUT `/settings/connections/{kind}`。页面中的endpoint只是配置值，主进程不会把它当请求目标。
+3. Python `SettingsService.save`只写SQLite `connections`对应kind的记录。首次保存为untested；已有配置重新保存后旧测试invalid、checked_at清空。`0004_settings`只增加connections/profile两张表；不改变消息、运行或事件历史。
+4. “保存凭证”单独调用`/credential`，`CredentialInput`使用SecretStr和字节上限。Python `WindowsCredentialVault`调用CredWriteW把UTF-8原文存于系统凭证管理器，数据库只存UUID引用；先创建新系统条目、再提交引用，提交失败清理新条目并保留旧引用，成功后清理旧条目。接口没有读回密钥操作，只返回credential_present。密码框在提交时立即清空，不写sessionStorage。
+5. “测试假连接”POST `/test`。`SettingsService.test`与编辑操作通过同一锁串行，只更新此kind的状态：success→ready、failure→failed、invalid→invalid；没有HTTP、模型SDK或行情SDK。未配置/停用不成功，缺所需凭证invalid、系统存储不可用failed。模型与行情的记录/凭证引用互不共用。
+6. 修改模型名、地址或凭证会使旧成功失效；删除凭证或在系统管理器外部移除凭证后，GET重新检查是否存在，不能凭旧成功显示就绪。“重新读取状态”直接从Python刷新，重启后同库保留状态/测试时间/资料，不重新测试，不改变规则Agent或fixture数据。
+7. `SettingsService.diagnostics`显式投影白名单字段，不包含endpoint、model、资料、引用、本机路径、环境或异常原文。`/settings`验证错误不返回原始输入，存储异常也用固定消息，避免默认422回显凭证。“导出脱敏诊断”由main读取此报告，系统保存对话框选择路径后写JSON；renderer不指定路径或任意内容。
+
+Windows系统存储不可用时拒绝保存，无明文后备。凭证命名空间按数据库绝对路径隔离；复制数据库不复制系统凭证，迁移路径需重新配置。极端崩溃/系统清理失败可能留孤立系统条目，普通Python字符串不承诺彻底擦除内存。上述真实系统存储读写与状态流程验证，并不证明真实LLM/行情连接健康。
+
+理解题和亲自操作见practice第8步及 [第8步验收](docs/ACCEPTANCE-step8.md)。
 
 ## C07：导入持仓怎样校验而不污染账户？
 

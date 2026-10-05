@@ -1,6 +1,6 @@
 # 研迹：路线、功能对照与当前进度
 
-更新时间：2026-10-04（Asia/Shanghai）。本文件记录计划与阶段状态，不代表未来步骤已经获得执行或发布授权。
+更新时间：2026-10-05（Asia/Shanghai）。本文件记录计划与阶段状态，不代表未来步骤已经获得执行或发布授权。
 
 ## 当前执行边界
 
@@ -13,7 +13,8 @@
 - 第5步：验收通过；后台规则运行、主动取消、工具/整体超时、唯一终态、先取消后删除及重启中断已实现；发布复验Python67项、Electron实窗10项、类型/构建及重复迁移通过，用户本轮明确按已验收步骤发布。逐项手动及练习记录待补；交付为 [PR #4](https://github.com/ydflow/research-trail/pull/4)，发布证据见EVIDENCE第17节。
 - 第6步：验收通过；数据库一致快照、活动SSE订阅、断流续读和去重、刷新/会话切换清理、工具状态与历史显示已实现。发布复验Python72项、传输/适配5项、Electron实窗12项、契约/类型/构建及重复迁移通过，用户本轮明确按已验收步骤发布；交付为 [PR #5](https://github.com/ydflow/research-trail/pull/5)，逐项手动及学习待填，证据见EVIDENCE第18—19节。
 - 第7步：验收通过；完整pytest73项、Node离线/传输8项、Electron12项、契约/类型/构建、重复迁移、干净源码锁定安装与根CMD真实启动/重启历史通过。v0.1.0源码可发布，仅假模型＋模拟数据；用户亲自清单待填。开发轮未提交或上传；本轮以 [PR #6](https://github.com/ydflow/research-trail/pull/6)交付，仅发布第7步，远程CI及发布复验单独见EVIDENCE第21节，开发验收见ACCEPTANCE-v0.1.0.md及第20节。
-- 第8—24步：未开始；没有用户具体指令不继续。
+- 第8步：验收通过（本机自动验收，用户亲自/学习记录待填）；设置/连接/个人资料/诊断已接入Python，五类独立配置与健康、Windows系统凭证存储、配置变更/缺凭证失效、假连接测试及脱敏导出。Python90/Node8/Electron13项统一验收通过，最终界面针对性复验通过；开发与发布复验见EVIDENCE第22—23节，按本步独立授权交付功能分支/PR；最终合并状态以GitHub与发布回执为准。
+- 第9—24步：未开始；没有用户具体指令不继续。
 - 默认分支 `main`；第0/1步首次上传检查见EVIDENCE第7节，第2步发布检查见第9—10节，提交历史和远程状态以Git为准。
 - 状态取值：未开始 / 进行中 / 代码完成/待验收 / 验收通过 / 受阻。
 - 来源：固定 ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`，本地只读路径 `D:\folio\主分支和简历skill\folio-main`。
@@ -30,7 +31,7 @@
 | 5 | 取消/超时竞争、删会话、重启中断 | 4 | 唯一终态，无永久 running；保留部分结果，不自动重调用 | 验收通过 |
 | 6 | 对话界面、快照恢复、事件重连和去重 | 5 | 会话不串消息；运行 ID+序号去重；历史不重执行 | 验收通过 |
 | 7 | 首版验收、离线 CI、干净源码启动、说明 | 6 | 相关检查通过；桌面人工另验；仅准备 v0.1.0，不自动发布 | 验收通过 |
-| 8 | 模型/行情/账户设置、凭证、个人资料、诊断 | 7 | 独立健康状态；系统凭证存储；日志/接口不返密钥；先假连接 | 未开始 |
+| 8 | 模型/行情/账户设置、凭证、个人资料、诊断 | 7 | 独立健康状态；系统凭证存储；日志/接口不返密钥；先假连接 | 验收通过 |
 | 9 | OpenAI 兼容模型与工具循环 | 8 | 默认 8 轮工具/整体 120 秒；只读参数校验；可取消；真实验证另记 | 未开始 |
 | 10 | Longbridge、Massive 与只读账户适配 | 9 | 能力覆盖表；权限/缓存/延迟标识；真实失败不静默回退模拟 | 未开始 |
 | 11 | 自选、概览、财报、新闻、市场状态 | 10 | 股票上下文正确，来源时间可见，缺指标为 —，视图故障案例 | 未开始 |
@@ -52,7 +53,7 @@
 
 ## 功能对照与来源索引
 
-以下相对路径都相对于 **只读参考 Folio**。研迹第1—6步健康、固定行情、持久化、规则Agent、运行生命周期及会话快照/事件恢复已实现，其余业务未开始；参考源码存在仅能证明有可阅读的实现，不能证明本机运行或生产正确。
+以下相对路径都相对于 **只读参考 Folio**。研迹第1—6步健康、固定行情、持久化、规则Agent、运行生命周期及会话快照/事件恢复、第8步设置/凭证/假连接/诊断已实现，其余业务未开始；参考源码存在仅能证明有可阅读的实现，不能证明本机运行或生产正确。
 
 | 功能组 | 参考源码位置 | 研迹计划承担方 / 步骤 | 研迹实现 / 验证 |
 | --- | --- | --- | --- |
@@ -61,7 +62,7 @@
 | 行情、K线、模拟来源 | `packages/shared/src/agent/demo-market-data.ts`；`packages/ui/src/components/workspace` | Python Provider + 页面，步骤2/11 | 四股票固定Fixture与局部界面已实现 / 后端、实窗自动化通过；完整市场页与真实数据未开始 |
 | 会话、运行、取消和事件 | `packages/shared/src/kernel/session-manager.ts`、`run-manager.ts`、`stream-event-log.ts`；`packages/core/src/stream-events.ts`；UI的`atoms/streamAtoms.ts`、`components/agent/ToolActivity.tsx` | Python 内核/SQLite/SSE及前端适配，步骤3—6 | 四类持久化、生命周期、一致快照及活动SSE续读已实现 / 隔离、唯一终态、刷新、重连去重、切换解除及迁移自动化见证据；仅显示恢复，不恢复执行 |
 | 本地规则与真实模型 | `packages/shared/src/agent/intent-router.ts`、`local-finance-agent-backend.ts`、`pi-runtime-adapter.ts` | 独立 FakeModel/OpenAI 兼容 Python Runtime，步骤4/9 | Python规则/假模型、行情/K线工具及持久结果卡片已实现 / fixture变化、调用证据、错误终态自动化通过；真实LLM和完整工具循环未开始 |
-| 设置、凭证、诊断 | `packages/ui/src/components/settings`；`apps/electron/src/main/kernelHost.ts` | Python 健康/系统凭证 + 页面，步骤8 | 未实现 / 未执行 |
+| 设置、凭证、诊断 | `packages/ui/src/components/settings`；`packages/ui/src/components/profile/ProfileSecurityView.tsx` | Python 健康/系统凭证 + 页面，步骤8 | 五类独立配置/假健康、Windows系统凭证、资料和脱敏JSON导出已实现 / 自动验收通过；真实连接未验证 |
 | 行情/账户提供商 | `packages/shared/src/providers/router.ts`、`longbridge`、`massive` | Python SDK/只读CLI适配，步骤10 | 未实现 / 未执行 |
 | 组合导入与计算 | `packages/shared/src/portfolio-import/parsers.ts`；`packages/core/src/account.ts` | Python 校验/SQLite/计算，步骤12 | 未实现 / 未执行 |
 | 风险与股票对比 | `packages/shared/src/portfolio-risk/service.ts`；`compare/service.ts` | Python 确定性计算，步骤13 | 未实现 / 未执行 |
@@ -96,7 +97,7 @@
 
 ## 本地操作和下一条提示词
 
-当前可通过根目录 `start-dev.cmd` 运行第1—6步。第7步只复验首版并准备发布，统一检查为`check.cmd`，干净源码检查为`bun run verify:clean`；用户逐项手动记录、练习与回答待补，本轮仅提交/PR交付第7步，不执行第8步。下面保留第1步原始范围供历史对照，不是重复执行指令。
+当前可通过根目录 `start-dev.cmd` 运行第1—6步业务及第8步设置。统一检查为`check.cmd`，干净源码检查为`bun run verify:clean`；用户逐项手动记录、练习与回答待补。第8步开发/验收已完成，本轮按用户另行授权提交功能分支和PR；发布复验见EVIDENCE第23节，不执行第9步。下面保留第1步原始范围供历史对照，不是重复执行指令。
 
 ```text
 在D:\folio\research-trail执行第1步。先读取AGENTS.md、docs/ROADMAP.md、docs/EVIDENCE.md和已有文件。
