@@ -1,0 +1,16 @@
+Step 10 dependency source notice (2026-10-05)
+
+Runtime dependency: longbridge Python package, version 5.2.0, pinned in uv.lock.
+Official upstream: https://github.com/longbridge/openapi
+Documentation: https://open.longbridge.com/sdk
+
+LICENSE-MIT and LICENSE-APACHE are retained verbatim from the upstream main
+repository files of those names, retrieved via GitHub's public Contents API.
+The installed 5.2.0 wheel does not include a license file or license metadata.
+This notice records repository texts; it does not attest a rebuilt wheel or
+installer distribution. No SDK source, wheel or native binary is uploaded by
+this step. Future packaging must check the exact distributed dependency files.
+
+These dependency notices do not license Folio or the ResearchTrail repository.
+The existing Folio reuse record and third-party notices remain applicable to
+their respective files. No upstream author or source history is rewritten.
