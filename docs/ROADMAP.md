@@ -98,7 +98,7 @@
 
 ## 本地操作和下一条提示词
 
-当前可通过根目录 `start-dev.cmd` 运行第1—6步业务、第8步设置和第9步模型适配。统一检查为`check.cmd`，干净源码检查为`bun run verify:clean`；用户逐项手动记录、练习与回答待补。第8步PR #7已合并；第9步按用户独立授权进行功能分支/PR发布，开发与发布证据见EVIDENCE第24—25节；最终合并状态以GitHub与发布回执为准，不执行第10步。下面保留第1步原始范围供历史对照，不是重复执行指令。
+当前可通过根目录 `start-dev.cmd` 运行第1—6步业务、第8步设置和第9步模型适配。统一检查为`check.cmd`，干净源码检查为`bun run verify:clean`；用户逐项手动记录、练习与回答待补。第8步PR #7已合并；第9步按用户独立授权通过 [PR #8](https://github.com/ydflow/research-trail/pull/8)交付，开发与发布证据见EVIDENCE第24—25节；最终合并状态以GitHub与发布回执为准，不执行第10步。下面保留第1步原始范围供历史对照，不是重复执行指令。
 
 ```text
 在D:\folio\research-trail执行第1步。先读取AGENTS.md、docs/ROADMAP.md、docs/EVIDENCE.md和已有文件。

@@ -688,3 +688,5 @@ README/ROADMAP、tutorial C05、practice第9步及ACCEPTANCE-step9同步；一�
 - 未验证：外部真实认证失败/限流/超时/阻塞取消只模拟覆盖；所有兼容服务商/模型、费用账单、外部TLS/DNS阻塞取消、Responses/增量流、真实行情/账户、其他OS、安装包/无工具机器/空缓存、长时并发/全部极端崩溃未验证。用户亲自操作/练习保持待填。远程CI与PR/合并结果依据后续实际GitHub查询，不能用本机成功推定。
 
 发布准备完成。仅在最终PR head全部检查通过、无未解决讨论与合并阻塞后，按本轮授权普通merge保留提交、fast-forward本地main；最终链接、SHA和CI由Git/GitHub及发布回执核实。
+
+已创建 [第9步PR #8](https://github.com/ydflow/research-trail/pull/8)，base main、head feat/step-9-openai-agent、非draft。初始head=2fe844cf5552134d0826e951a3df720ee8969275；保留Python新实现0fa115348bf1dd1a6eaa616ee563151c9002c71e、桌面接入8bb3b21abdea236ee8f0f66874a3a261230106f7、来源与验收文档2fe844cf5552134d0826e951a3df720ee8969275，作者ydflow与实际提交时间2026-10-05 20:57:12 +08:00。推送/创建前均重新核验账号、目标与origin，无账号切换；本次只补PR链接与记录，不改运行代码。初次查询MERGEABLE、reviews及未解决讨论为空，push/pull_request两项Windows Actions仍运行，不提前记作CI通过。最终head检查见 [PR #8 checks](https://github.com/ydflow/research-trail/pull/8/checks)，最终合并与main同步由实际Git/GitHub及本轮回执确认，不在本文虚构自身合并SHA。

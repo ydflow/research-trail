@@ -1,6 +1,6 @@
 # 第9步：OpenAI兼容模型与受限工具循环
 
-日期：2026-10-05（Asia/Shanghai）。模拟协议与完整本机自动验收通过：Python130、Node8、Electron14均无跳过，契约/类型/构建、重复迁移/current/check通过；head=0005_model_limits。开发记录见EVIDENCE第24节，发布复验见第25节。开发轮未配置模型、真实验证未执行；发布轮用户本机配置后，一次真实模型工具验证通过（2次模型请求、1次成功工具回传、8个事件、completed）。行情仍为模拟数据。本步按独立发布授权交付，最终PR/合并状态以GitHub和发布回执为准，不执行第10步。
+日期：2026-10-05（Asia/Shanghai）。模拟协议与完整本机自动验收通过：Python130、Node8、Electron14均无跳过，契约/类型/构建、重复迁移/current/check通过；head=0005_model_limits。开发记录见EVIDENCE第24节，发布复验见第25节。开发轮未配置模型、真实验证未执行；发布轮用户本机配置后，一次真实模型工具验证通过（2次模型请求、1次成功工具回传、8个事件、completed）。行情仍为模拟数据。本步按独立发布授权通过 [PR #8](https://github.com/ydflow/research-trail/pull/8)交付，最终PR/合并状态以GitHub和发布回执为准，不执行第10步。
 
 ## 实现与限制
 
