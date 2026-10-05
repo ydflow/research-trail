@@ -736,3 +736,7 @@ Electron新增流程：模拟quote成功且仅单项模拟通过→切真实未�
 - 验证边界：所有供应商验收为模拟SDK/CLI/HTTP与本机通信，原生凭证测试仅临时唯一命名空间/自造占位值并清理，不使用已配置模型Key。真实Longbridge/Massive数据/权限/错误/SDK握手阻塞、CLI OAuth存储/续期与版本兼容、完整分页/批量报告参数、用户亲自操作/练习、安装包/其他OS/长期负载仍未验证。未配置不当作权限受限，单项成功不扩散到其他连接/能力；真实失败不回退模拟。公开不包含私人持仓/账户或敏感截图。
 
 PR与Actions结果以本轮实时查询及最终回执为准。合并前核对最终head/base、全部检查、review与未解决讨论；只有没有阻塞且最终head通过才普通merge、fast-forward本地main。最终合并SHA不在本文预写自身结果。
+
+发布分支已创建 [PR #9](https://github.com/ydflow/research-trail/pull/9)，base main、非draft、初始head e4b87c79dc20b41739d89873692d1ce5d1ec378c。40项差异与四个分类提交核对：上游依赖声明7ac8a323f955598522414be8ab3f843ce2fff02d、Python新实现fde2625b15a695b602d31ccec16ecc972c5b11bf、桌面接入218cde38bdb070c93300d9face0faf02ce10e5ec、验收文档e4b87c79dc20b41739d89873692d1ce5d1ec378c；实际作者ydflow/noreply、当前时间。本次另补PR记录提交，不改变运行源码。
+
+创建后Windows Actions已启动，尚在运行，不提前记作通过；仅最终head的全部检查通过且无未解决阻塞才合并。最终Actions见 [PR #9检查](https://github.com/ydflow/research-trail/pull/9/checks)，最终提交/检查/合并与本地main同步由实时Git/GitHub及发布回执核实，不在本文预写自己的合并SHA。

@@ -47,4 +47,4 @@ uv run --directory services/backend --frozen python -m research_trail.verify_dat
 
 用户另行授权只发布已验收第10步。本轮check.cmd重新执行，完整Python225/Node8/真实Electron15全部通过、无跳过；契约/类型/构建、0006重复迁移/current/check通过。干净源码120份文本在仓库外锁定新装71个前端包与29个Python包，同一完整检查再次通过；根目录CMD实窗选股、会话、查询、取消、关闭/重启历史通过，快照一致、无新运行、所属进程退出。下载可利用本机缓存，不代表空缓存或无工具机器验证。
 
-所有业务验收仍为假响应/本机通信，未使用模型Key或发送真实Longbridge/Massive/账户请求。上方真实能力缺口保持。公开候选无密钥、账户、数据库、日志、缓存、截图或依赖二进制；上游出处与声明保留。PR、最终head远程CI及普通合并结果见EVIDENCE第27节与最终发布回执，不能由本机通过推定远程通过。
+所有业务验收仍为假响应/本机通信，未使用模型Key或发送真实Longbridge/Massive/账户请求。上方真实能力缺口保持。公开候选无密钥、账户、数据库、日志、缓存、截图或依赖二进制；上游出处与声明保留。[PR #9](https://github.com/ydflow/research-trail/pull/9)、最终head远程CI及普通合并结果见EVIDENCE第27节与最终发布回执，不能由本机通过推定远程通过。

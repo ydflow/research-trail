@@ -15,7 +15,7 @@
 - 第7步：验收通过；完整pytest73项、Node离线/传输8项、Electron12项、契约/类型/构建、重复迁移、干净源码锁定安装与根CMD真实启动/重启历史通过。v0.1.0源码可发布，仅假模型＋模拟数据；用户亲自清单待填。开发轮未提交或上传；本轮以 [PR #6](https://github.com/ydflow/research-trail/pull/6)交付，仅发布第7步，远程CI及发布复验单独见EVIDENCE第21节，开发验收见ACCEPTANCE-v0.1.0.md及第20节。
 - 第8步：验收通过（本机自动验收，用户亲自/学习记录待填）；设置/连接/个人资料/诊断已接入Python，五类独立配置与健康、Windows系统凭证存储、配置变更/缺凭证失效、假连接测试及脱敏导出。Python90/Node8/Electron13项统一验收通过，最终界面针对性复验通过；开发与发布复验见EVIDENCE第22—23节，按本步独立授权通过 [PR #7](https://github.com/ydflow/research-trail/pull/7)交付；最终合并状态以GitHub与发布回执为准。
 - 第9步：验收通过（模拟协议与本机完整自动验收，一次真实模型工具验证通过）；Python OpenAI兼容适配、共用工具循环、参数白名单、8轮/次及120秒默认限制、取消与固定错误码已实现。模拟协议40项与完整Python130/Node8/Electron14均通过；开发轮未配置模型；发布轮本机配置后2次模型请求、1次工具回传、8个事件、completed通过，行情仍为模拟。证据见EVIDENCE第24—25节。
-- 第10步：验收通过（模拟与本机自动验收）；官方Longbridge 5.2.0 SDK、缺口只读CLI、Massive REST、独立配置/凭证/能力状态、来源/时效/缓存标记及本机查询入口已实现。完整Python225/Node8/Electron15通过；本轮无凭证，三个真实验证均未执行/0业务查询。范围见PROVIDER-COVERAGE-step10.md，开发证据见EVIDENCE第26节，独立发布复验见第27节。
+- 第10步：验收通过（模拟与本机自动验收）；官方Longbridge 5.2.0 SDK、缺口只读CLI、Massive REST、独立配置/凭证/能力状态、来源/时效/缓存标记及本机查询入口已实现。完整Python225/Node8/Electron15通过；本轮无凭证，三个真实验证均未执行/0业务查询。范围见PROVIDER-COVERAGE-step10.md，开发证据见EVIDENCE第26节，独立发布复验与 [PR #9](https://github.com/ydflow/research-trail/pull/9)交付见第27节。
 - 第11—24步：未开始；没有用户具体指令不继续。
 - 默认分支 `main`；第0/1步首次上传检查见EVIDENCE第7节，第2步发布检查见第9—10节，提交历史和远程状态以Git为准。
 - 状态取值：未开始 / 进行中 / 代码完成/待验收 / 验收通过 / 受阻。

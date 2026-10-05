@@ -231,4 +231,4 @@ uv run --directory services\backend --frozen python -m alembic -c alembic.ini ch
 
 官方Longbridge Python SDK（锁定5.2.0）、SDK缺口只读CLI和Massive美股REST已接入“数据与只读账户”配置/验收面板。Python管理三个独立配置、系统凭证和逐项能力状态；行情仅内存缓存，账户数据不落库。默认模拟，真实失败显示固定错误码，不回退模拟；现有Agent工具仍使用Fixture。
 
-本轮用户选择先模拟：完整Python225、Node8、真实Electron15通过，真实Longbridge/Massive查询未执行。入口、少量真实查询命令与缺口见 [第10步验收](docs/ACCEPTANCE-step10.md)，固定Folio版本与24条目/参数边界见 [能力覆盖表](docs/PROVIDER-COVERAGE-step10.md)。本步没有下单、交易或下一步完整市场工作台。第10步按用户独立授权准备功能分支/PR交付；发布轮完整检查及干净源码锁定安装/根CMD启动、重启历史复验通过，见EVIDENCE第27节。最终PR、远程CI与合并状态以GitHub及发布回执为准。
+本轮用户选择先模拟：完整Python225、Node8、真实Electron15通过，真实Longbridge/Massive查询未执行。入口、少量真实查询命令与缺口见 [第10步验收](docs/ACCEPTANCE-step10.md)，固定Folio版本与24条目/参数边界见 [能力覆盖表](docs/PROVIDER-COVERAGE-step10.md)。本步没有下单、交易或下一步完整市场工作台。第10步按用户独立授权通过 [PR #9](https://github.com/ydflow/research-trail/pull/9)交付；发布轮完整检查及干净源码锁定安装/根CMD启动、重启历史复验通过，见EVIDENCE第27节。最终PR、远程CI与合并状态以GitHub及发布回执为准。
