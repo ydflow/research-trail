@@ -690,3 +690,49 @@ README/ROADMAP、tutorial C05、practice第9步及ACCEPTANCE-step9同步；一�
 发布准备完成。仅在最终PR head全部检查通过、无未解决讨论与合并阻塞后，按本轮授权普通merge保留提交、fast-forward本地main；最终链接、SHA和CI由Git/GitHub及发布回执核实。
 
 已创建 [第9步PR #8](https://github.com/ydflow/research-trail/pull/8)，base main、head feat/step-9-openai-agent、非draft。初始head=2fe844cf5552134d0826e951a3df720ee8969275；保留Python新实现0fa115348bf1dd1a6eaa616ee563151c9002c71e、桌面接入8bb3b21abdea236ee8f0f66874a3a261230106f7、来源与验收文档2fe844cf5552134d0826e951a3df720ee8969275，作者ydflow与实际提交时间2026-10-05 20:57:12 +08:00。推送/创建前均重新核验账号、目标与origin，无账号切换；本次只补PR链接与记录，不改运行代码。初次查询MERGEABLE、reviews及未解决讨论为空，push/pull_request两项Windows Actions仍运行，不提前记作CI通过。最终head检查见 [PR #8 checks](https://github.com/ydflow/research-trail/pull/8/checks)，最终合并与main同步由实际Git/GitHub及本轮回执确认，不在本文虚构自身合并SHA。
+
+
+## 26. 第10步：Longbridge SDK、只读CLI缺口与Massive模拟验收（2026-10-05）
+
+用户本轮只授权第10步开发，并回复“尚未配置，先完成模拟验收”。基线main/HEAD=e9c2350de2ed4973f45dd207ff9fa24104a8f74e（第9步PR #8普通合并），开始时工作区干净；仓库规则、路线/证据及实现已读取。开发默认不提交/上传；没有实施第11步、修改标签/Release或启用定时付费评测。本节不改写第9步此前未配置与后来少量真实模型验证的历史记录。
+
+### 实现、来源与覆盖
+
+- 固定Folio ba5dcdfd31b162f5edb8b908f7f099a560389326：读取providers/longbridge/adapter.ts 16项、broker.ts 5项、massive/adapter.ts 3项及longbridge-tools的参数/JSON正规化，逐项 [覆盖表](PROVIDER-COVERAGE-step10.md)记录当前SDK支持、缺口CLI、收窄参数及真实缺口。没有复制原TS业务内核、账户样本或作者历史。本步Python适配、设置、契约、迁移和测试为新实现；桌面是新增薄验收面板，不整体导入Folio页面。现有来源/版权/第三方声明及用户确认授权第9—11节保留，未独立核验原始授权，不宣称全仓MIT。
+- 核对当前官方包已由longport改名longbridge，实际安装并锁定5.2.0，读取已安装openapi.pyi和运行时方法；仅新增此Python依赖，Bun/frontend锁文件未改。官方Python API现已支持FundamentalContext/ContentContext/MarketContext/CalendarContext，未把新SDK已有财报/新闻/状态错误地判作CLI缺口。保留依赖 [NOTICE](third-party/longbridge/NOTICE)及官方仓库main原样LICENSE-MIT/LICENSE-APACHE；wheel未附许可元数据/文件，记录分发核验边界，不上传SDK二进制或声明整个项目许可。
+- 新provider_contracts/ProviderSettings/0006_data_providers：Longbridge行情、Longbridge只读账户和Massive独立非敏感配置、系统凭证UUID、修订号；三项SDK凭证一束/单项Massive Key只由Python WindowsCredentialVault保存。无读回KeyAPI、环境凭证或明文回退；先写新系统条目后提交UUID、失败清理。旧设置/资料/会话/运行/事件不改，已有旧库迁移与重复迁移检查通过。
+- ProviderService按显式mode选自主模拟或真实，固定capability枚举，状态按provider/capability/revision独立，不扩散一次成功。默认真实行情延迟未知，自行声明时效保留user-declared依据，不证明实时权限。Provenance包含fixture/sdk/cli/http、mode、fetched_at/served_at/market_time、缓存与权限。成功只证明请求能力；模拟只能标simulated。
+- SDK_METHODS为19种只读方法；TradeContext仅stock_positions/account_balance/cash_flow。SDK缺完整账户身份/组合，以及symbol日历过滤、独立financial分类、特定年份/季度report时，采用Python CLI参数数组，shell=False、longbridge.exe绝对路径、代码/日期/周期/count白名单与auth status前置检查。修正基线calendar实际分组list/infos，以及portfolio的overview.total_asset/market_cap/total_cash、market_accounts和holdings，不把错字段变成虚假零值；金融JSON仅投影必要数据。项目不执行CLI安装、登录、刷新或交易命令；外部CLI原有OAuth存储/内部续期不由研迹管理，真实兼容性未验证。
+- Massive沿基线三能力，httpx请求固定api.massive.com REST，Key仅Authorization头；US股票、无重试/重定向/环境代理、无host或模型回退。LastTrade缺失不能用日线假充实时；K线检查时间/有限OHLC/量/重复时间。401/403/429、SDK已核对错误码、网络/超时/异常响应固定安全码，供应商正文/异常/stderr不入API/日志/诊断。
+- SDK和Massive真实读取放在所属Python worker，凭证stdin、argv/env无Key、256KiB输出与1—60秒总时限；受控进程超时/取消回收，Windows Job Object绑定新子进程，后端异常结束也回收进程树，新增实际父进程强退回归通过。此为生命周期保护，不宣称OS网络隔离。CLI前置检查与查询共用总预算。
+- 行情只有进程内≤128键、TTL≤300秒缓存；账户不缓存、不落库、不进诊断。配置/凭证变更、删除重建及系统凭证外部移除会清除旧状态/缓存；缺凭证先于缓存检查。命中保留获取时间，更新服务时间；过期真实请求失败不回退旧缓存或模拟。各能力状态重启后未验证，不伪称持久健康证明。
+- Electron/preload扩为37项命名白名单，新增7个提供商设置/凭证/能力/只读查询操作；main验证来源及provider ID，只有只读query本机请求上限65秒以覆盖Python总时限，其他操作保持3秒上限。ProviderPanel默认模拟，保存/删除凭证后密码清空，切提供商/能力/mode后清除旧结果及过期响应；显示真实/延迟/历史/缓存/受限/未配置错误。现有Agent工具仍为原Fixture，不提前移植完整市场/组合工作台。
+- verify_data默认只读日常库指定provider与对应系统条目，不枚举凭证；--run才执行一次quote/positions SDK或HTTP业务查询（SDK初始化另有握手），不运行CLI、不缓存/写库，不输出价格、账户、持仓、Key或URL，仅安全结果与查询数。三项只读配置检查均not_executed/PROVIDER_UNCONFIGURED/queries_started=0；没有真实供应商请求，也未使用已配置第9步模型Key。
+
+### 实际验证与修正
+
+新增Python95项模拟契约/生命周期通过：24提供商能力模拟、19 SDK调度与实际版本方法/枚举、日期历史参数、CLI只读argv/身份/组合/分组日历/报告JSON及未登录零业务查询、Massive3假HTTP/认证/权限/限流/超时/异常/大小/US边界、输入拒绝与密钥反射、系统凭证保存/删除/回滚/数据库非敏感、独立状态/行情缓存/账户无缓存、外部凭证移除先于缓存、所属进程超时/取消/溢出/父进程强退回收、只读验证入口0查询默认与1查询显式预算。MockTransport/Fake SDK context/CLI executor不是外部服务验收。
+
+首次测试中修正市场状态的market_time分组不能当价格时间、SDK事件测试应使用无symbol的Report路径、HTTP头占位Key应使用ASCII，以及超大参数ID导致Windows临时路径异常；后续加强凭证前置缓存检查，删除配置后必须重新保存凭证才测试网络失败，不放宽正确缺凭证结果。最初桌面exact-label查询因select的隐式标签包含option文字而超时，补显式aria-label后通过；新增CLI实际基线JSON回归。早期失败没有记作最终通过，未修改固定价格来迎合预期。
+
+最终代码完整check.cmd（离线guard、本机通信）退出0：Python225/Node8/真实Electron15全部通过、无跳过，契约一致性/类型/构建及0006_data_providers重复迁移/current/check通过。最后回执临时库research-trail-verify-3WY5oj；此前一轮research-trail-verify-TwSP0j通过后又补强凭证外部移除/删除重建回归并重跑，不以旧结果代替最终结果。仅既有Starlette/TestClient/httpx弃用提示1条，未为提示换依赖。
+
+Electron新增流程：模拟quote成功且仅单项模拟通过→切真实未配置零外部请求→保存配置缺凭证→Windows临时占位凭证保存/清空/删除→换账户模拟持仓（assets未验证）→换Massive模拟；1100×800与600×680，标题研迹 · ResearchTrail、file:///.../apps/desktop/dist/renderer/index.html、非空/无overlay/无console warning或error/无横向溢出，交互及实际所属退出通过。Browser plugin not available，按已读取frontend-testing-debugging采用项目已有Playwright Electron；截图只在系统临时research-trail-step10-qa，已读取宽/窄图，无新增浏览器依赖，截图不进源码。
+
+未验证：真实Longbridge/Massive请求/数据/权限/外部限流和异常、实际SDK网络握手与真实阻塞取消、CLI版本兼容及其原有OAuth存储/内部续期、完整分页/批量与所有报告参数；安装包/其他OS/干净无工具机器/本步干净源码新装、远程CI/长期负载、用户亲自清单/练习。用户无凭证不是权限受限；权限受限只在假响应中证明错误分支。交付 [第10步本机清单](ACCEPTANCE-step10.md) 与tutorial C06/practice练习后停止，不提前实施第11步。
+
+
+最终范围检查：19个已有文件修改、21个新增文本文件，共40项，均属于本步SDK/CLI/Massive、设置/查询/契约/迁移/回归、来源和交付文档；此前上游组件、原Agent/Fixture、Bun锁文件、旧第三方声明无差异。本轮120份候选源码文本、34个本地Markdown链接、9项.env/运行库/WAL/账户/日志/私密截图/依赖/构建忽略探针检查无异常，密钥签名与二进制/账户产物未发现；签名扫描只是辅助审核。首次ignore探针的Windows文本stdin带CR造成路径引用问题，改NUL分隔精确检查全部9项通过，没有改忽略规则放宽标准。git diff --check通过，仅已有文档CRLF→LF提示；index为空、main/HEAD仍e9c2350de2ed4973f45dd207ff9fa24104a8f74e。Python/Electron项目进程读查无残留；测试Windows原生凭证全部占位值/独立命名空间并清理。截图、临时库/日志/缓存均在仓库外。ROADMAP记验收通过（模拟/本机自动），全部真实数据验证仍未执行；本轮无提交、GitHub写入、标签或Release，完成第10步后停止。
+
+## 27. 第10步发布复验与PR交付（2026-10-05）
+
+用户独立授权仅发布已验收第10步，真实改动分类提交功能分支/PR，全部检查通过且无未解决阻塞时普通merge保留提交并同步main。本节是发布轮次，第26节开发事实保留。不实施第11步，不打标签/创建Release/定时付费评测，不补写用户亲自操作或学习记录。
+
+- 基线：本机main、origin/main和GitHub main均e9c2350de2ed4973f45dd207ff9fa24104a8f74e（第9步PR #8）。实时gh api user=ydflow；现有目标为公开/非fork/非归档ydflow/research-trail，默认main，origin fetch/push均https://github.com/ydflow/research-trail.git，项目历史一致。未发现开放PR或同名feat/step-10-data-providers远程分支；正常新建该功能分支，不覆盖/删除无关仓库、不强推。每次GitHub写入前重新核对身份/目标/remote。
+- 差异：19个已有文件修改、21个新增，共40项；仅提供商/只读账户、配置/凭证/状态/缓存、生成契约/迁移/回归、桌面入口、来源和验收文档。旧Agent与Fixture、上游局部组件、Bun锁文件、旧第三方声明无差异。120份候选UTF-8文本/9项忽略探针及常见密钥签名/禁传产物审核通过，扫描仅为辅助检查。按明确路径暂存，系统凭证/日常库/账户/日志/缓存/截图/依赖二进制均未纳入。
+- 来源与责任：沿用第9—11节用户确认的原作者复用授权记录，未独立取得授权原文，不宣称全仓MIT。固定Folio参考版本ba5dcdfd31b162f5edb8b908f7f099a560389326仅核对能力/CLI语义；没有新TS核心或账户数据导入。Longbridge上游两份许可与NOTICE单独提交（仅保留声明，不伪称源代码导入或wheel分发许可已确认）；Python新实现、桌面接入、文档分别提交。真实修正包含在相应实现中，没有编造独立修复提交、上游作者或开发时间；作者ydflow/noreply，使用实际当前时间。
+- 发布轮完整check.cmd退出0：Python225、Node8、真实Electron15全部通过、无跳过，契约/TS/构建及临时库两次upgrade/current/check通过，head=0006_data_providers。临时迁移research-trail-verify-j0GkL2；仅既有TestClient/httpx弃用提示1条。新增95项Python/1项Electron及旧取消/恢复/工具链严格回归均保持。
+- 干净源码verify:clean退出0：120份源文本导出至系统临时research-trail-clean-jIZSUY/clean source，不复制Git/依赖/构建/运行数据；锁定新装71前端/29Python包（longbridge 5.2.0）并准备Electron，完整225/8/15、契约/类型/构建/0006重复迁移再次通过，临时迁移research-trail-verify-n6m2Cp。根CMD实窗选股→会话→行情→取消→关闭/重启历史通过，保存快照一致、无新运行、所属进程退出；独立证据research-trail-cmd-qa-pNlKFg。下载可复用本机缓存，不称空缓存或无工具机器。之后仅追加发布文档，运行源码未变。
+- 验证边界：所有供应商验收为模拟SDK/CLI/HTTP与本机通信，原生凭证测试仅临时唯一命名空间/自造占位值并清理，不使用已配置模型Key。真实Longbridge/Massive数据/权限/错误/SDK握手阻塞、CLI OAuth存储/续期与版本兼容、完整分页/批量报告参数、用户亲自操作/练习、安装包/其他OS/长期负载仍未验证。未配置不当作权限受限，单项成功不扩散到其他连接/能力；真实失败不回退模拟。公开不包含私人持仓/账户或敏感截图。
+
+PR与Actions结果以本轮实时查询及最终回执为准。合并前核对最终head/base、全部检查、review与未解决讨论；只有没有阻塞且最终head通过才普通merge、fast-forward本地main。最终合并SHA不在本文预写自身结果。
