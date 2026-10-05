@@ -10,6 +10,13 @@ export interface BackendState {
   pythonVersion?: string;
 }
 export interface ResearchTrailBridge {
+  providerProfiles(): Promise<import('./provider-types').ProviderProfile[]>;
+  saveProvider(provider: import('./provider-types').ProviderId, input: import('./provider-types').ProviderConfiguration): Promise<import('./provider-types').ProviderProfile>;
+  deleteProvider(provider: import('./provider-types').ProviderId): Promise<import('./provider-types').ProviderProfile>;
+  saveProviderCredential(provider: import('./provider-types').ProviderId, input: import('./provider-types').ProviderCredentials): Promise<import('./provider-types').ProviderProfile>;
+  deleteProviderCredential(provider: import('./provider-types').ProviderId): Promise<import('./provider-types').ProviderProfile>;
+  providerCapabilities(): Promise<import('./provider-types').CapabilityView[]>;
+  queryProvider(provider: import('./provider-types').ProviderId, input: import('./provider-types').ReadQuery): Promise<import('./provider-types').ProviderResult>;
   connections(): Promise<import('./settings-types').ConnectionView[]>;
   saveConnection(kind: import('./settings-types').ConnectionKind, input: import('./settings-types').ConnectionInput): Promise<import('./settings-types').ConnectionView>;
   deleteConnection(kind: import('./settings-types').ConnectionKind): Promise<import('./settings-types').ConnectionView>;

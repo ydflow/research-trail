@@ -133,7 +133,7 @@ export class BackendManager extends EventEmitter {
     return { checkedAt: new Date().toISOString(), pythonVersion: body.python_version as string };
   }
 
-  private async localRequest(path: string, method = 'GET', payload?: unknown, sse = false): Promise<{ status: number; body: unknown }> {
+  private async localRequest(path: string, method = 'GET', payload?: unknown, sse = false, timeoutMs = 3000): Promise<{ status: number; body: unknown }> {
     if (this.state.phase !== 'healthy' || !this.port || this.quitting) throw new Error('本地服务尚未就绪，请检查后端连接。');
     const child = this.child;
     const port = this.port;
@@ -159,7 +159,7 @@ export class BackendManager extends EventEmitter {
           catch { reject(new Error('本地接口返回了无效 JSON。')); }
         });
       });
-      const timer = setTimeout(() => request.destroy(new Error('本地请求超过 3 秒。')), 3000);
+      const timer = setTimeout(() => request.destroy(new Error('本地请求超时。')), timeoutMs);
       request.once('close', () => clearTimeout(timer));
       request.once('error', reject);
       request.end(dataOut);
@@ -193,8 +193,8 @@ export class BackendManager extends EventEmitter {
     return value;
   }
 
-  private async business<T>(path: string, method = 'GET', payload?: unknown): Promise<T> {
-    const result = await this.localRequest(path, method, payload);
+  private async business<T>(path: string, method = 'GET', payload?: unknown, timeoutMs = 3000): Promise<T> {
+    const result = await this.localRequest(path, method, payload, false, timeoutMs);
     if (result.status < 200 || result.status >= 300) {
       const detail = (result.body as { detail?: unknown })?.detail;
       throw new Error(typeof detail === 'string' ? detail : `请求不符合契约（HTTP ${result.status}）。请检查输入。`);
@@ -208,6 +208,17 @@ export class BackendManager extends EventEmitter {
     return value;
   }
   connections() { return this.business<import('../settings-types').ConnectionView[]>('/settings/connections'); }
+  private providerId(value: unknown) {
+    if (typeof value !== 'string' || !['longbridge', 'longbridge-account', 'massive'].includes(value)) throw new Error('不支持的数据提供商。');
+    return value;
+  }
+  providerProfiles() { return this.business<import('../provider-types').ProviderProfile[]>('/settings/providers'); }
+  saveProvider(provider: unknown, body: unknown) { return this.business<import('../provider-types').ProviderProfile>(`/settings/providers/${this.providerId(provider)}`, 'PUT', body); }
+  deleteProvider(provider: unknown) { return this.business<import('../provider-types').ProviderProfile>(`/settings/providers/${this.providerId(provider)}`, 'DELETE'); }
+  saveProviderCredential(provider: unknown, body: unknown) { return this.business<import('../provider-types').ProviderProfile>(`/settings/providers/${this.providerId(provider)}/credential`, 'PUT', body); }
+  deleteProviderCredential(provider: unknown) { return this.business<import('../provider-types').ProviderProfile>(`/settings/providers/${this.providerId(provider)}/credential`, 'DELETE'); }
+  providerCapabilities() { return this.business<import('../provider-types').CapabilityView[]>('/providers/capabilities'); }
+  queryProvider(provider: unknown, body: unknown) { return this.business<import('../provider-types').ProviderResult>(`/providers/${this.providerId(provider)}/query`, 'POST', body, 65000); }
   saveConnection(kind: unknown, body: unknown) {
     return this.business<import('../settings-types').ConnectionView>(`/settings/connections/${this.connectionKind(kind)}`, 'PUT', body);
   }
