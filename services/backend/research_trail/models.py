@@ -62,3 +62,28 @@ class EventRecord(Base):
     type: Mapped[str] = mapped_column(String(40))
     timestamp: Mapped[str] = mapped_column(String(40))
     envelope: Mapped[dict] = mapped_column(JSON)
+
+
+class ConnectionRecord(Base):
+    __tablename__ = "connections"
+    __table_args__ = (CheckConstraint("kind IN ('model','market','account','skills','runtime')"),
+                     CheckConstraint("revision >= 1"))
+    kind: Mapped[str] = mapped_column(String(20), primary_key=True)
+    enabled: Mapped[bool]
+    endpoint: Mapped[str] = mapped_column(String(200))
+    model: Mapped[str] = mapped_column(String(80))
+    requires_credential: Mapped[bool]
+    fake_result: Mapped[str] = mapped_column(String(20))
+    credential_ref: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(20))
+    reason: Mapped[str] = mapped_column(String(40))
+    checked_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
+class ProfileRecord(Base):
+    __tablename__ = "profile"
+    __table_args__ = (CheckConstraint("id = 1"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    display_name: Mapped[str] = mapped_column(String(40))
+    research_style: Mapped[str] = mapped_column(String(20))

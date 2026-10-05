@@ -587,3 +587,52 @@ README架构图改为当前真实Python调用链，未来研究/账户不混写�
 断流修复针对性实窗测试1通过，最终本机check.cmd再次完整73/8/12及类型/构建/重复迁移全部通过、退出0，隔离迁移证据research-trail-verify-kmXine。修复后 [push CI 37213537186](https://github.com/ydflow/research-trail/actions/runs/37213537186)实测success，head=c37a9875a85f4da0415360e4878733d8ae3c43d8；对应PR检查及本文随后文档提交的最终检查以 [PR #6检查](https://github.com/ydflow/research-trail/pull/6/checks)中实际head为准。原失败保留为调查记录，不能替代最终检查。
 
 本次仅同步PR链接、修复与已验证记录，独立文档提交，不改变已验证运行代码。合并前再核验最终head/base、全部检查、账号/目标、未解决讨论及文件清单；检查全通过且无阻塞才按用户授权普通merge保留提交，本地main只fast-forward。最终合并SHA、main同步及远程最新检查由Git/GitHub和交付回执确认，不提前写作已合并；没有标签、Release、删分支、强推或下一步功能。
+
+## 22. 第8步：设置、独立假连接、系统凭证与脱敏诊断（2026-10-05）
+
+用户授权本步在D:\folio\research-trail先读规则和实现，移植必要的模型设置、连接、个人资料和诊断界面；Python分别管理模型/行情/账户/技能/运行时配置及健康，密钥存系统凭证存储，DB仅非敏感配置；只用假连接验证，不发送真实请求，完成即停止。开始时main工作区干净，HEAD=716543305ba5d74f57336c589c4b2dffaf6e3592（v0.1.0源码标签解析提交）；开发未创建提交/分支、未暂存或上传，标签/Release不包含本地第8步。
+
+### 来源与实际实现
+
+- 只读Folio固定ZIP来源ba5dcdfd31b162f5edb8b908f7f099a560389326，读取`packages/ui/src/components/settings/SettingsView.tsx`、`ModelsTab.tsx`、`ConnectionsCenter.tsx`、`DiagnosticsTab.tsx`、`components/profile/ProfileSecurityView.tsx`。这些依赖Jotai、i18n、原client、primitives和原UI样式，未整体导入；本步局部适配分区、连接卡片、编辑/删除/测试动作、个人资料/健康概览和诊断导出的信息流，实际React实现为`settings/SettingsPanel.tsx`，附来源注释。没有导入原TS业务内核、账户实现或新前端依赖。第9—11节用户确认的原作者复用授权边界及现有第三方LICENSE/NOTICE保留，不宣称全仓MIT，不改只读参考目录。
+- Python新增`settings.py`、`credentials.py`：五类显式kind独立配置/状态、首次待测试/变更失效/假成功/失败/失效/停用，缺凭证及存储不可用分别识别；编辑/测试串行，连接成功只写自己的记录。配置/凭证变更清除测试时间，重启保留状态但不自动重测。技能/运行时只配置启用和假结果，拒绝凭证；完整技能注册/真实Runtime属于后续步骤。
+- 新增Alembic `0004_settings`和SQLAlchemy connections/profile表，只存非敏感字段、随机系统凭证引用和状态。Python通过ctypes调用Windows CredWriteW/CredReadW/CredDeleteW/CredFree，使用GENERIC/LOCAL_MACHINE（同本机用户持久化），原文不入DB或文件。API SecretStr校验1—2560字节，不允许空/NUL；不提供密钥读回。命名空间按数据库绝对路径哈希隔离，写新条目→提交引用→清理旧条目，提交失败保留旧引用并尝试清理新条目。系统存储失败固定报错，无明文降级。
+- `/settings`白名单鉴权接口包含配置/凭证保存删除、单类假测试、资料保存删除、诊断读取；Pydantic生成OpenAPI/TS，新增桥11项，原19项保留，总30项。main只接五类kind，所有HTTP请求仍发随机本机Python地址；配置的endpoint不作为请求目标。密码框立即清空，UI只有显示缓存，清理卸载/后端变化后的过期结果。“重新读取状态”从Python读取而非制造健康。
+- 验证失败返回固定422消息，避免FastAPI默认error.input回显原始凭证；系统/存储异常不传异常原文或traceback到页面/日志。endpoint拒绝用户名/密码、查询参数和fragment，未知敏感字段拒绝。诊断显式白名单投影，排除endpoint/model/资料/凭证引用/路径/环境；main用系统保存对话框选择目的地写JSON，不暴露任意文件接口。
+
+### 本轮验证
+
+| 项目 | 实际结果 | 证明及限制 |
+| --- | --- | --- |
+| 统一`check.cmd` | 通过、退出0 | 契约/TS、完整Python90、Node8、真实Electron13项均无跳过，构建、两次迁移/current/check通过，head=0004_settings；原TestClient/httpx弃用提示1条 |
+| 新增Python设置回归 | 17通过 | 五类状态隔离、变更/缺凭证失效、停用、鉴权、输入错误不回显、URL嵌入密钥拒绝、存储错误脱敏、替换/删/提交失败保留旧凭证、诊断白名单、旧会话迁移快照不变 |
+| 真实Windows凭证 | 通过 | 临时唯一命名空间和自造测试占位值，原生写/读/替换/删除/重复删除、独立native实例读回，最终清理；无真实API密钥 |
+| 真实Electron第8步 | 1项新增通过 | 模型假成功与行情假失败/账户假失效互不影响、其余未配置；密码框清空、sessionStorage无凭证、资料/诊断/删/重启与状态时间保持、所属退出；运行在离线网络保护下 |
+| 最终界面复验 | 通过 | 补充状态刷新/过期结果保护/选中态后重新check/build并重复同一实窗测试；改模型名保存失效、未保存禁测试及刷新状态也验证，不修改fixture或测试预期 |
+| 导出诊断 | 通过（保存对话框返回值由测试注入） | 主进程真实读取白名单并写临时JSON、页面反馈；文件/页面均无测试凭证、地址、姓名、路径。人工系统对话框点击/取消待用户亲自操作 |
+| 桌面QA | 通过 | Browser plugin not available，使用项目已有Playwright Electron；dist页URL/标题正确、非空、无overlay/相关console warning/error/pageerror，1100×800与600×620已看截图，无横向溢出，长表单纵向滚动 |
+| 数据及日志 | 通过 | 测试DB/WAL/SHM、配置/诊断响应和caplog没有测试秘密；异常内容含同一测试秘密时也不回显。本项目uvicorn access_log=False，不记录请求体 |
+
+统一验收隔离迁移目录：`C:\Users\38905\AppData\Local\Temp\research-trail-verify-kIWcvC`。截图：`C:\Users\38905\AppData\Local\Temp\research-trail-step8-qa\step8-overview.png`、`step8-model.png`、`step8-connections.png`、`step8-diagnostics.png`、`step8-compact.png`。实际设置QA的库/导出JSON位于`research-trail-settings-qa-*`临时目录，均为测试配置/假连接/占位凭证，系统凭证已清理。没有读取日常运行库、真实模型/行情/账户、付费评测或外部追踪；未重做v0.1.0的干净源码发布验收，本轮依赖/锁文件未改、未安装。
+
+### 边界与停止
+
+第8步自动验收通过，用户亲自清单/练习仍待填写；[第8步清单](ACCEPTANCE-step8.md)、README、ROADMAP、tutorial C06与practice同步，本轮不代填用户掌握程度。真实Provider健康、多轮模型工具循环、行情/账户接入、技能注册、其他OS/安装包未实现或未验证。凭证绑定本机用户与数据库路径，复制/移动DB不迁移系统凭证；极端进程崩溃/系统清理失败可能留下孤立系统条目，普通Python字符串不承诺内存完全擦除，未穷举全部崩溃点。诊断白名单/测试脱敏不等于完整安全认证。本轮main/HEAD不变，所有开发改动在本地，不暂存/提交/推送/打标签/发布、不开始第9步，交付后停止。
+
+
+## 23. 第8步发布复验与PR交付（2026-10-05）
+
+用户另行授权只发布当前已验收的第8步，按真实改动提交功能分支、创建PR；检查全通过且没有未解决阻塞后普通合并、保留提交并同步本地main。本节独立于第22节的开发轮次，不代填用户亲自操作或学习记录，不执行第9步，不打标签、创建Release或启用定时付费评测。
+
+- 发布基线：本机main、origin/main和GitHub main均为716543305ba5d74f57336c589c4b2dffaf6e3592。实时gh api user为ydflow；目标公开、非fork、非归档的ydflow/research-trail，默认main，origin fetch/push均为https://github.com/ydflow/research-trail.git。现有仓库与本项目历史一致，无既有开放PR或同名发布分支；创建feat/step-8-settings-credentials，不覆盖无关仓库，不强推或删除。每次GitHub写入前重新验证账号和目标。
+- 范围审核：18个已有文件修改、7个新增，共25个，均属于设置/凭证/独立假连接/诊断、契约/迁移/回归与文档；依赖锁文件、旧Agent/fixture和第三方LICENSE/NOTICE无差异。文档更新前94份候选文本共800482字节，常见密钥签名及运行/账户/日志/缓存/图片产物检查无异常；10项.env、运行库/WAL、日志、账户、截图、依赖/虚拟环境/构建忽略探针通过。按明确路径暂存，测试库/导出/截图在仓库外。扫描是辅助审核，不是完整安全认证。
+- 来源与公开范围：沿用第9—11节用户确认的原作者复用授权，未独立核验原始授权文件，不宣称全仓MIT。本步Folio设置页只局部适配分区/卡片/表单及动作信息流，保留固定ZIP来源注释；未整体复制原组件、原TS内核、账户实现或作者历史。Python配置/系统凭证管理、迁移、契约与回归为本项目新实现，桌面接入与界面流程适配单独提交，文档另提交；没有制造不存在的原样导入或独立修复提交。作者沿用ydflow/noreply，使用实际当前时间。
+- 发布轮次本机完整复验：实际cmd.exe /d /c check.cmd退出0，Python90项、Node8项、真实Electron13项均通过且无跳过；生成契约/类型/构建及临时库两次upgrade/current/check通过，head=0004_settings。仅既有Starlette/TestClient httpx弃用提示1条，未更换依赖。临时迁移证据research-trail-verify-ZRCqMH；本轮独立重跑，不拿第22节旧记录当新结果。
+- 发布轮次干净源码：bun run verify:clean退出0，94份文本导出至系统临时research-trail-clean-g9r6zM/clean source，不复制.git、依赖、构建或运行数据；锁定新安装71个前端包、28个Python包并准备Electron。副本完整90/8/13及契约/类型/构建/重复迁移再次通过，副本自己的根CMD实窗完成选股→会话→行情→取消→关闭/重启历史，保存快照相同、无新运行、所属进程退出；证据research-trail-cmd-qa-iLAYLH。下载可复用本机缓存，不称空缓存/无工具机器验证。随后发布文档更新未改变运行代码。
+- 验证边界：所有连接测试都是确定性假连接，离线保护下没有真实模型/行情/账户请求。Windows原生凭证测试只用临时唯一命名空间与自造占位值并清理；接口/日志/诊断不回显凭证，五类健康独立。用户亲自清单与练习、人工系统保存对话框点击/取消、真实Provider、安装包/无工具机器、其他OS、凭证跨机器迁移/全部极端崩溃点未验证。公开不包含运行库、账户数据、日志、缓存或敏感截图。
+
+PR、远程Actions和合并结果以本轮实际Git/GitHub查询及最终回执为准，不由本机通过推定远程成功；只有最终head全部检查通过、没有未解决讨论或阻塞时才普通merge并fast-forward本地main。
+
+发布分支创建 [PR #7](https://github.com/ydflow/research-trail/pull/7)，base main、非draft，初始head为98eb73ce8d924b1b953c424bdd6c4a110be8630d。已核对25文件与三个实际当前时间提交：Python新实现ae6b6461e4e01dac3edb023333ff15707016d694、Folio界面流程适配/桌面接入e785dd68d32e33dc4a15b8cc88babe4e2d0a184c、验收来源文档98eb73ce8d924b1b953c424bdd6c4a110be8630d；均为ydflow，不重写上游作者或导入历史。本次只补PR链接与查询记录，不改运行代码。
+
+创建后push与pull_request两项Windows Actions已启动，尚在运行，不提前记作通过；最终检查以 [PR #7检查](https://github.com/ydflow/research-trail/pull/7/checks)的实际最新head为准。合并前重新读取head/base、全部检查、review及未解决讨论，并再次核对账号/目标；满足用户授权条件才普通merge保留提交，同步本地main。最终检查与合并SHA由Git/GitHub及发布回执核实，不在本文预写自己的合并结果。

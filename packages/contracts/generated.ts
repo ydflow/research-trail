@@ -207,6 +207,112 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/settings/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Connections */
+        get: operations["connections_settings_connections_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/connections/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save Connection */
+        put: operations["save_connection_settings_connections__kind__put"];
+        post?: never;
+        /** Delete Connection */
+        delete: operations["delete_connection_settings_connections__kind__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/connections/{kind}/credential": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save Credential */
+        put: operations["save_credential_settings_connections__kind__credential_put"];
+        post?: never;
+        /** Delete Credential */
+        delete: operations["delete_credential_settings_connections__kind__credential_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/connections/{kind}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Test Connection */
+        post: operations["test_connection_settings_connections__kind__test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/diagnostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Diagnostics */
+        get: operations["diagnostics_settings_diagnostics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Profile */
+        get: operations["profile_settings_profile_get"];
+        /** Save Profile */
+        put: operations["save_profile_settings_profile_put"];
+        post?: never;
+        /** Delete Profile */
+        delete: operations["delete_profile_settings_profile_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -256,6 +362,92 @@ export interface components {
              */
             stop_reason: "completed" | "error" | "cancelled" | "timeout" | "interrupted";
         };
+        /** ConnectionInput */
+        ConnectionInput: {
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /**
+             * Endpoint
+             * @default
+             */
+            endpoint: string;
+            /**
+             * Fake Result
+             * @default success
+             * @enum {string}
+             */
+            fake_result: "success" | "failure" | "invalid";
+            /**
+             * Model
+             * @default
+             */
+            model: string;
+            /**
+             * Requires Credential
+             * @default false
+             */
+            requires_credential: boolean;
+        };
+        /** ConnectionView */
+        ConnectionView: {
+            /** Checked At */
+            checked_at?: string | null;
+            /** Configured */
+            configured: boolean;
+            /** Credential Present */
+            credential_present: boolean;
+            /** Detail */
+            detail: string;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /**
+             * Endpoint
+             * @default
+             */
+            endpoint: string;
+            /**
+             * Fake Result
+             * @default success
+             * @enum {string}
+             */
+            fake_result: "success" | "failure" | "invalid";
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "model" | "market" | "account" | "skills" | "runtime";
+            /**
+             * Model
+             * @default
+             */
+            model: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Requires Credential
+             * @default false
+             */
+            requires_credential: boolean;
+            /** Revision */
+            revision: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "unconfigured" | "untested" | "ready" | "failed" | "invalid" | "disabled";
+            /**
+             * Test Mode
+             * @default fake
+             * @constant
+             */
+            test_mode: "fake";
+        };
         /** CreateSession */
         CreateSession: {
             /**
@@ -263,6 +455,66 @@ export interface components {
              * @default 新会话
              */
             title: string;
+        };
+        /** CredentialInput */
+        CredentialInput: {
+            /**
+             * Secret
+             * Format: password
+             */
+            secret: string;
+        };
+        /** DiagnosticConnection */
+        DiagnosticConnection: {
+            /** Checked At */
+            checked_at: string | null;
+            /** Configured */
+            configured: boolean;
+            /** Credential Present */
+            credential_present: boolean;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "model" | "market" | "account" | "skills" | "runtime";
+            /** Reason */
+            reason: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "unconfigured" | "untested" | "ready" | "failed" | "invalid" | "disabled";
+        };
+        /** Diagnostics */
+        Diagnostics: {
+            /** Connections */
+            connections: components["schemas"]["DiagnosticConnection"][];
+            /**
+             * Credential Storage
+             * @default windows-credential-manager
+             * @constant
+             */
+            credential_storage: "windows-credential-manager";
+            /** Generated At */
+            generated_at: string;
+            /**
+             * Real Requests Sent
+             * @default false
+             * @constant
+             */
+            real_requests_sent: false;
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /**
+             * Test Mode
+             * @default fake
+             * @constant
+             */
+            test_mode: "fake";
         };
         /** EmptyPayload */
         EmptyPayload: Record<string, never>;
@@ -535,6 +787,20 @@ export interface components {
         PartialText: {
             /** Text */
             text: string;
+        };
+        /** Profile */
+        Profile: {
+            /**
+             * Display Name
+             * @default
+             */
+            display_name: string;
+            /**
+             * Research Style
+             * @default balanced
+             * @enum {string}
+             */
+            research_style: "balanced" | "cautious" | "exploratory";
         };
         /** Quote */
         Quote: {
@@ -1439,6 +1705,338 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SessionSnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    connections_settings_connections_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionView"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_connection_settings_connections__kind__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                kind: "model" | "market" | "account" | "skills" | "runtime";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectionInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_connection_settings_connections__kind__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                kind: "model" | "market" | "account" | "skills" | "runtime";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_credential_settings_connections__kind__credential_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                kind: "model" | "market" | "account" | "skills" | "runtime";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_credential_settings_connections__kind__credential_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                kind: "model" | "market" | "account" | "skills" | "runtime";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_connection_settings_connections__kind__test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                kind: "model" | "market" | "account" | "skills" | "runtime";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    diagnostics_settings_diagnostics_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Diagnostics"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    profile_settings_profile_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Profile"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_profile_settings_profile_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Profile"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Profile"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_profile_settings_profile_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Profile"];
                 };
             };
             /** @description Validation Error */

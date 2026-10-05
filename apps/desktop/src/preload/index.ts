@@ -2,6 +2,17 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendState, ResearchTrailBridge, RunStreamUpdate } from '../bridge';
 
 const bridge: ResearchTrailBridge = {
+  connections: () => ipcRenderer.invoke('settings:connections'),
+  saveConnection: (kind, input) => ipcRenderer.invoke('settings:save', kind, input),
+  deleteConnection: (kind) => ipcRenderer.invoke('settings:delete', kind),
+  saveCredential: (kind, secret) => ipcRenderer.invoke('settings:credential-save', kind, secret),
+  deleteCredential: (kind) => ipcRenderer.invoke('settings:credential-delete', kind),
+  testConnection: (kind) => ipcRenderer.invoke('settings:test', kind),
+  profile: () => ipcRenderer.invoke('settings:profile'),
+  saveProfile: (input) => ipcRenderer.invoke('settings:profile-save', input),
+  deleteProfile: () => ipcRenderer.invoke('settings:profile-delete'),
+  diagnostics: () => ipcRenderer.invoke('settings:diagnostics'),
+  exportDiagnostics: () => ipcRenderer.invoke('settings:diagnostics-export'),
   status: () => ipcRenderer.invoke('backend:status'),
   checkHealth: () => ipcRenderer.invoke('backend:check'),
   retryBackend: () => ipcRenderer.invoke('backend:retry'),

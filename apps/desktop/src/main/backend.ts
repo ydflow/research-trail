@@ -203,6 +203,31 @@ export class BackendManager extends EventEmitter {
   }
 
   listSessions() { return this.business<SessionDTO[]>('/sessions'); }
+  private connectionKind(value: unknown): string {
+    if (typeof value !== 'string' || !['model', 'market', 'account', 'skills', 'runtime'].includes(value)) throw new Error('未知连接类别。');
+    return value;
+  }
+  connections() { return this.business<import('../settings-types').ConnectionView[]>('/settings/connections'); }
+  saveConnection(kind: unknown, body: unknown) {
+    return this.business<import('../settings-types').ConnectionView>(`/settings/connections/${this.connectionKind(kind)}`, 'PUT', body);
+  }
+  deleteConnection(kind: unknown) {
+    return this.business<import('../settings-types').ConnectionView>(`/settings/connections/${this.connectionKind(kind)}`, 'DELETE');
+  }
+  saveCredential(kind: unknown, secret: unknown) {
+    if (typeof secret !== 'string' || !secret.trim() || Buffer.byteLength(secret, 'utf8') > 2560 || secret.includes('\0')) throw new Error('凭证格式或长度无效。');
+    return this.business<import('../settings-types').ConnectionView>(`/settings/connections/${this.connectionKind(kind)}/credential`, 'PUT', { secret });
+  }
+  deleteCredential(kind: unknown) {
+    return this.business<import('../settings-types').ConnectionView>(`/settings/connections/${this.connectionKind(kind)}/credential`, 'DELETE');
+  }
+  testConnection(kind: unknown) {
+    return this.business<import('../settings-types').ConnectionView>(`/settings/connections/${this.connectionKind(kind)}/test`, 'POST');
+  }
+  profile() { return this.business<import('../settings-types').Profile>('/settings/profile'); }
+  saveProfile(body: unknown) { return this.business<import('../settings-types').Profile>('/settings/profile', 'PUT', body); }
+  deleteProfile() { return this.business<import('../settings-types').Profile>('/settings/profile', 'DELETE'); }
+  diagnostics() { return this.business<import('../settings-types').Diagnostics>('/settings/diagnostics'); }
   createSession(title: unknown) {
     if (typeof title !== 'string' || title.length > 80 || !title.trim()) throw new Error('标题需要1至80个字符。');
     return this.business<SessionDTO>('/sessions', 'POST', { title });

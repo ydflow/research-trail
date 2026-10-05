@@ -6,33 +6,37 @@
 
 ## 当前状态
 
-截至 2026-10-04：**第0/2/3/4/5/6/7步验收通过；第1步代码完成、自动化通过**。首版源码标记为**可发布（仅假模型＋模拟数据）**：完整本机检查和干净源码实窗流程已通过。桌面支持模拟行情、持久会话、规则Agent、取消/超时/中断，以及快照恢复和SSE续读。界面明确标注“规则演示／假模型”，没有真实LLM。用户逐项亲自操作和学习记录仍待填写；本轮按功能分支/PR交付第7步，结果见EVIDENCE第21节。
+截至 2026-10-05：**第0/2/3/4/5/6/7/8步自动验收通过；第1步原用户手动记录仍待填写**。v0.1.0源码版已发布，仅假模型＋模拟数据。第8步新增设置/连接/个人资料/脱敏诊断，五类配置和健康由Python独立管理、凭证存于Windows系统凭证管理器；本步所有测试入口都是假连接，不请求真实模型/行情/账户。用户逐项亲自操作和学习记录仍待填写，本步按独立授权通过 [PR #7](https://github.com/ydflow/research-trail/pull/7)交付，开发与发布复验见EVIDENCE第22—23节；最终合并状态以GitHub与发布回执为准。
 
 - 默认分支 `main`；初始公开提交为 `55b1a3d`，第2步按功能分支/PR保留导入、Python新实现、修复与桌面适配提交。
 - 第2步公开复用依据为用户本轮确认的原作者授权，保留适配来源与依赖声明；交付见 [PR #1](https://github.com/ydflow/research-trail/pull/1)，发布检查和授权记录见EVIDENCE第9—11节，最终提交/合并状态以Git与发布回执为准。
 - 公开仓库：[ydflow/research-trail](https://github.com/ydflow/research-trail)。仅上传源码、测试、文档、依赖清单与锁文件；不包含运行数据或截图。
 - 第2步已普通合并，main基线为 `0e1dfd5ccf7e99c66d58188dcac9497ddd6e2bd8`；第3步以 [PR #2](https://github.com/ydflow/research-trail/pull/2) 交付，开发与发布验证见EVIDENCE第12—13节，最终提交和合并状态以Git与发布回执为准。
 - 第3步合并基线为 `7f925dee768ff33c076582dd9d41055aca9a5932`；第4步以 [PR #3](https://github.com/ydflow/research-trail/pull/3) 交付，开发及发布复验见EVIDENCE第14—15节，按功能分支/PR保留提交，最终远程状态以GitHub和发布回执为准。
-- 第5步开发基线为 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`；以 [PR #4](https://github.com/ydflow/research-trail/pull/4) 普通合并，第6步发布基线为`a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677`。第6步 [PR #5](https://github.com/ydflow/research-trail/pull/5)已普通合并，第7步发布基线为`f51b802d61896f9da30cd1f6df331c90e75e24b9`。第7步以 [PR #6](https://github.com/ydflow/research-trail/pull/6)交付，开发与发布证据见EVIDENCE第20—21节；第8—24步未开始。
-- 首版 `v0.1.0`源码验收通过、可发布，仅验证假模型与模拟数据；详见 [首版清单](docs/ACCEPTANCE-v0.1.0.md)。这不是已经发布的版本；没有标签、Release或安装包，完整版本 `v1.0.0`仍为计划。
+- 第5步开发基线为 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`；以 [PR #4](https://github.com/ydflow/research-trail/pull/4) 普通合并，第6步发布基线为`a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677`。第6步 [PR #5](https://github.com/ydflow/research-trail/pull/5)已普通合并，第7步发布基线为`f51b802d61896f9da30cd1f6df331c90e75e24b9`。第7步以 [PR #6](https://github.com/ydflow/research-trail/pull/6)交付，开发与发布证据见EVIDENCE第20—21节；第9—24步未开始。
+- [v0.1.0源码Release](https://github.com/ydflow/research-trail/releases/tag/v0.1.0)对应main `716543305ba5d74f57336c589c4b2dffaf6e3592`，没有安装包。第8步改动不在此标签内；[首版清单](docs/ACCEPTANCE-v0.1.0.md)保留标签创建前的验收快照，完整版本 `v1.0.0`仍为计划。
 - Folio 功能和测试属于参考项目，不代表研迹已实现或用户已完成的贡献。
 
 ## 架构与当前边界
 
 ```text
 React 页面
-  → preload：19个命名操作，无任意文件/进程/URL能力
+  → preload：30个命名操作，无任意文件/进程/URL能力
     → Electron main：随机端口/令牌、所属Python进程、SSE续读
       → 本机 Python / FastAPI：鉴权与Pydantic契约
         ├─ 行情：FixtureMarketProvider（四股票固定示例）
         ├─ 运行：RunManager → FakeModelProvider → ToolRegistry → 行情工具
         └─ Store / SQLAlchemy / SQLite：会话、消息、运行、事件
             → 事务提交 → 快照/SSE → main校验 → React显示缓存
+设置页面 → 同一白名单桥 → Python SettingsService
+  ├─ SQLite：五类独立非敏感配置、测试状态和本机个人资料
+  ├─ Windows Credential Manager：凭证原文（只在保存请求中进入Python）
+  └─ 确定性假连接测试 → 独立健康状态 → 白名单脱敏诊断JSON
 ```
 
 Python 统一管理业务状态，前端维护显示缓存。假模型和模拟行情分别实现，后续分别替换为真实连接。真实数据来源与模型回答不能混为一谈。
 
-行情调用链：股票选择 → `MarketPanel` → preload 的 `marketSnapshot` → Electron 主进程 → 带令牌的 `/market/snapshot/{symbol}` → Python `FixtureMarketProvider` → 同一份 `MarketSnapshot` → 行情卡片与 K 线。桥现在共19个命名操作：健康/行情六项、会话六项、运行七项（新增sessionSnapshot、subscribeRun）。订阅返回解除函数；页面不能指定URL、端口、令牌、文件或进程。Python无reload worker，直接作为Electron子进程启动。
+行情调用链：股票选择 → `MarketPanel` → preload 的 `marketSnapshot` → Electron 主进程 → 带令牌的 `/market/snapshot/{symbol}` → Python `FixtureMarketProvider` → 同一份 `MarketSnapshot` → 行情卡片与 K 线。桥共30个命名操作：原健康/行情/会话/运行19项，加设置/凭证/资料/诊断11项。订阅返回解除函数；页面不能指定后端URL、端口、令牌、文件或进程。诊断导出只通过主进程系统保存对话框选择目的地，不给页面任意文件能力。Python无reload worker，直接作为Electron子进程启动。
 
 会话调用链：`SessionPanel` → preload.sessionSnapshot → main → GET /sessions/{id}/snapshot → Store单一SQLite读事务。消息、运行、事件及各运行last_sequence来自同一快照；页面先显示它，再通过subscribeRun从活动运行的水位订阅SSE。订阅间隙提交的事件会重放，不丢失或重新调用工具。工作区/会话/运行选择只作为sessionStorage显示偏好，业务内容仍从Python数据库读取。
 
@@ -54,6 +58,12 @@ Pydantic 是业务契约来源。离线导出 OpenAPI 后，`openapi-typescript`
 
 ## 开发与学习路线
 
+第8步入口为“设置与诊断”。模型设置单列模型；连接设置列行情、账户、技能和运行时。各类先保存非敏感配置，再分别点“测试假连接”；可选成功/失败/失效，仅为状态流程演示。配置或凭证变更后原测试失效；所需凭证丢失、系统存储不可用分别显示失效/失败。停用和未配置不会成为成功。更改服务地址或模型名称不会改变现有规则Agent和模拟行情。
+
+凭证输入为密码框，保存后立即清空、不回显、不写浏览器存储。Python直接调用Windows CredWriteW/CredReadW/CredDeleteW，原文只保存在系统凭证管理器；SQLite仅存随机引用及非敏感配置，按数据库路径隔离凭证命名空间。删除配置同时清理所属凭证，替换凭证先写新条目再提交引用，旧条目随后清理；若旧清理失败会明确返回失败说明，极端进程崩溃/系统清理失败可能留下孤立系统条目，不回退明文。数据库移动/备份恢复不会搬运系统凭证，需重新本机配置。普通Python字符串不承诺内存完全擦除。
+
+本步仅实现Windows系统凭证存储。系统存储失败拒绝保存，其他OS不静默改用文件。个人资料只存本机显示名称/研究偏好。诊断JSON白名单只有各连接状态、是否存在凭证、测试时间和假连接标识；不含密钥、endpoint、模型名、资料、凭证引用、路径、环境或异常原文。说明和操作清单见 [第8步验收](docs/ACCEPTANCE-step8.md)。
+
 | 阶段 | 内容 | 当前状态 |
 | --- | --- | --- |
 | 0 | 项目约定、本地 Git、路线与学习大纲 | 验收通过 |
@@ -64,7 +74,8 @@ Pydantic 是业务契约来源。离线导出 OpenAPI 后，`openapi-typescript`
 | 5 | 运行取消、超时竞争、删除与重启中断 | 验收通过；67项Python、10项实窗复验＋用户发布确认 |
 | 6 | 会话界面、数据库快照恢复、SSE续读和去重 | 验收通过；第6步发布复验见EVIDENCE第19节 |
 | 7 | 首版验收、离线CI、干净源码启动 | 验收通过；源码可发布，仅假模型＋模拟数据；远程CI与发布复验见EVIDENCE第21节 |
-| 8—13 | 设置与凭证、真实模型/行情、市场工作台、组合及对比 | 未开始 |
+| 8 | 设置、凭证、个人资料与脱敏诊断 | 自动验收通过；仅假连接，未提交/上传，用户操作待填 |
+| 9—13 | 真实模型/行情、市场工作台、组合及对比 | 未开始 |
 | 14—20 | 能力技能、研究策略/报告/恢复、论点、筛选与事件 | 未开始 |
 | 21—24 | 提醒与 Today、评测、研究结果校准、Windows 交付 | 未开始 |
 

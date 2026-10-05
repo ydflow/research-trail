@@ -7,6 +7,7 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel
 from .conversation import CreateSession, SessionDTO, MessageDTO, StartRun, RunDTO, EventPage, SessionSnapshot
 from .database import Database, default_database_path
@@ -16,6 +17,8 @@ from .market import FixtureMarketProvider, MarketError, MarketProvider, MarketSn
 from .agent import AgentRunner
 from .model_provider import FakeModelProvider, ModelProvider
 from .tools import market_tools
+from .credentials import CredentialUnavailable
+from .settings import SettingsService, SettingsError, ConnectionKind, ConnectionInput, ConnectionView, CredentialInput, Profile, Diagnostics
 
 
 class Health(BaseModel):
@@ -26,7 +29,7 @@ class Health(BaseModel):
 
 def create_app(token: str, market_provider: MarketProvider | None = None, *,
                database_path: Path | str | None = None, model_provider: ModelProvider | None = None,
-               run_timings=None) -> FastAPI:
+               run_timings=None, credential_vault=None) -> FastAPI:
     if len(token) < 32:
         raise ValueError("启动令牌缺失或过短；请由 Electron 启动服务。")
     @asynccontextmanager
@@ -38,6 +41,7 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             lease = DatabaseLease(database.path)
             database.migrate()
             app.state.store = Store(database)
+            app.state.settings = SettingsService(database, credential_vault)
             app.state.store.recover_interrupted()
             manager = app.state.manager = RunManager(app.state.store, runner, run_timings)
             yield
@@ -68,6 +72,72 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
         return JSONResponse(status_code=409, content={"detail": str(error)})
 
     protected = [Depends(authorize)]
+
+    @app.middleware("http")
+    async def protect_settings_errors(request, call_next):
+        try:
+            return await call_next(request)
+        except Exception:
+            if request.url.path.startswith("/settings"):
+                # Do not let an injected/native/storage exception echo the request in logs.
+                return JSONResponse(status_code=503, content={"detail": "设置存储操作失败，请检查本机环境后重试。"})
+            raise
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_error(request, error):
+        if request.url.path.startswith("/settings"):
+            # FastAPI's default errors include the raw rejected input, including secrets.
+            return JSONResponse(status_code=422, content={"detail": "设置输入不符合契约，请检查字段、长度与地址格式。"})
+        return JSONResponse(status_code=422, content={"detail": [{"loc": list(item["loc"]),
+                            "type": item["type"], "msg": item["msg"]} for item in error.errors()]})
+
+    @app.exception_handler(CredentialUnavailable)
+    async def vault_error(_request, _error):
+        return JSONResponse(status_code=503, content={"detail": "系统凭证存储不可用；未回退到明文存储。"})
+
+    @app.exception_handler(SettingsError)
+    async def settings_error(_request, error):
+        return JSONResponse(status_code=409, content={"detail": str(error)})
+
+    @app.get("/settings/connections", response_model=list[ConnectionView], dependencies=protected)
+    def connections():
+        return app.state.settings.connections()
+
+    @app.put("/settings/connections/{kind}", response_model=ConnectionView, dependencies=protected)
+    def save_connection(kind: ConnectionKind, body: ConnectionInput):
+        return app.state.settings.save(kind, body)
+
+    @app.delete("/settings/connections/{kind}", response_model=ConnectionView, dependencies=protected)
+    def delete_connection(kind: ConnectionKind):
+        return app.state.settings.delete(kind)
+
+    @app.put("/settings/connections/{kind}/credential", response_model=ConnectionView, dependencies=protected)
+    def save_credential(kind: ConnectionKind, body: CredentialInput):
+        return app.state.settings.credential(kind, body)
+
+    @app.delete("/settings/connections/{kind}/credential", response_model=ConnectionView, dependencies=protected)
+    def delete_credential(kind: ConnectionKind):
+        return app.state.settings.delete_credential(kind)
+
+    @app.post("/settings/connections/{kind}/test", response_model=ConnectionView, dependencies=protected)
+    def test_connection(kind: ConnectionKind):
+        return app.state.settings.test(kind)
+
+    @app.get("/settings/profile", response_model=Profile, dependencies=protected)
+    def profile():
+        return app.state.settings.profile()
+
+    @app.put("/settings/profile", response_model=Profile, dependencies=protected)
+    def save_profile(body: Profile):
+        return app.state.settings.save_profile(body)
+
+    @app.delete("/settings/profile", response_model=Profile, dependencies=protected)
+    def delete_profile():
+        return app.state.settings.delete_profile()
+
+    @app.get("/settings/diagnostics", response_model=Diagnostics, dependencies=protected)
+    def diagnostics():
+        return app.state.settings.diagnostics()
 
     @app.post("/sessions", response_model=SessionDTO, status_code=201, dependencies=protected)
     def create_session(body: CreateSession):

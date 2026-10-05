@@ -1,4 +1,5 @@
-import { app, BrowserWindow, ipcMain, type IpcMainInvokeEvent, type IpcMainEvent } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent, type IpcMainEvent } from 'electron';
+import { writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { BackendManager } from './backend';
@@ -36,6 +37,27 @@ app.whenReady().then(async () => {
   ipcMain.handle('backend:status', (event) => { assertSender(event); return backend.snapshot(); });
   ipcMain.handle('backend:check', (event) => { assertSender(event); return backend.check(); });
   ipcMain.handle('backend:retry', (event) => { assertSender(event); return backend.retry(); });
+  ipcMain.handle('settings:connections', (event) => { assertSender(event); return backend.connections(); });
+  ipcMain.handle('settings:save', (event, kind: unknown, body: unknown) => { assertSender(event); return backend.saveConnection(kind, body); });
+  ipcMain.handle('settings:delete', (event, kind: unknown) => { assertSender(event); return backend.deleteConnection(kind); });
+  ipcMain.handle('settings:credential-save', (event, kind: unknown, secret: unknown) => { assertSender(event); return backend.saveCredential(kind, secret); });
+  ipcMain.handle('settings:credential-delete', (event, kind: unknown) => { assertSender(event); return backend.deleteCredential(kind); });
+  ipcMain.handle('settings:test', (event, kind: unknown) => { assertSender(event); return backend.testConnection(kind); });
+  ipcMain.handle('settings:profile', (event) => { assertSender(event); return backend.profile(); });
+  ipcMain.handle('settings:profile-save', (event, body: unknown) => { assertSender(event); return backend.saveProfile(body); });
+  ipcMain.handle('settings:profile-delete', (event) => { assertSender(event); return backend.deleteProfile(); });
+  ipcMain.handle('settings:diagnostics', (event) => { assertSender(event); return backend.diagnostics(); });
+  ipcMain.handle('settings:diagnostics-export', async (event) => {
+    assertSender(event);
+    const report = await backend.diagnostics();
+    // Only a user-selected destination and a Python-generated whitelist report.
+    const chosen = await dialog.showSaveDialog(window!, { defaultPath: 'research-trail-diagnostics.json',
+      filters: [{ name: 'JSON', extensions: ['json'] }] });
+    if (chosen.canceled || !chosen.filePath) return false;
+    try { await writeFile(chosen.filePath, JSON.stringify(report, null, 2) + '\n', { encoding: 'utf8', mode: 0o600 }); }
+    catch { throw new Error('诊断文件未保存，请检查所选位置。'); }
+    return true;
+  });
   ipcMain.handle('market:symbols', (event) => { assertSender(event); return backend.marketSymbols(); });
   ipcMain.handle('market:snapshot', (event, symbol: unknown) => { assertSender(event); return backend.marketSnapshot(symbol); });
   ipcMain.handle('sessions:list', (event) => { assertSender(event); return backend.listSessions(); });

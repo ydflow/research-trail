@@ -10,6 +10,17 @@ export interface BackendState {
   pythonVersion?: string;
 }
 export interface ResearchTrailBridge {
+  connections(): Promise<import('./settings-types').ConnectionView[]>;
+  saveConnection(kind: import('./settings-types').ConnectionKind, input: import('./settings-types').ConnectionInput): Promise<import('./settings-types').ConnectionView>;
+  deleteConnection(kind: import('./settings-types').ConnectionKind): Promise<import('./settings-types').ConnectionView>;
+  saveCredential(kind: import('./settings-types').ConnectionKind, secret: string): Promise<import('./settings-types').ConnectionView>;
+  deleteCredential(kind: import('./settings-types').ConnectionKind): Promise<import('./settings-types').ConnectionView>;
+  testConnection(kind: import('./settings-types').ConnectionKind): Promise<import('./settings-types').ConnectionView>;
+  profile(): Promise<import('./settings-types').Profile>;
+  saveProfile(input: import('./settings-types').Profile): Promise<import('./settings-types').Profile>;
+  deleteProfile(): Promise<import('./settings-types').Profile>;
+  diagnostics(): Promise<import('./settings-types').Diagnostics>;
+  exportDiagnostics(): Promise<boolean>;
   status(): Promise<BackendState>;
   checkHealth(): Promise<BackendState>;
   retryBackend(): Promise<BackendState>;
