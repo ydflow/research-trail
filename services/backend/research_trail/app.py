@@ -23,6 +23,9 @@ from .settings import SettingsService, SettingsError, ConnectionKind, Connection
 from .provider_contracts import ProviderId, ProviderConfiguration, ProviderCredentials, ProviderProfile, ReadQuery, ProviderResult, CapabilityView
 from .provider_settings import ProviderSettings
 from .provider_service import ProviderService
+from .watchlist import WatchlistStore, WatchlistError
+from .security_workspace import SecurityWorkspace
+from .workspace_contracts import SymbolInput, WorkspaceState, SecurityQuery, SecurityPage
 
 
 class Health(BaseModel):
@@ -48,6 +51,8 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             app.state.settings = SettingsService(database, credential_vault)
             app.state.provider_settings = ProviderSettings(app.state.settings)
             app.state.providers = ProviderService(app.state.provider_settings, **(provider_options or {}))
+            app.state.watchlist = WatchlistStore(database)
+            app.state.security_workspace = SecurityWorkspace(app.state.watchlist,app.state.providers)
             app.state.store.recover_interrupted()
             manager = app.state.manager = RunManager(app.state.store, runner, run_timings)
             yield
@@ -86,14 +91,14 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
         try:
             return await call_next(request)
         except Exception:
-            if request.url.path.startswith(("/settings", "/providers")):
+            if request.url.path.startswith(("/settings", "/providers", "/workspace")):
                 # Do not let an injected/native/storage exception echo the request in logs.
-                return JSONResponse(status_code=503, content={"detail": "设置存储操作失败，请检查本机环境后重试。"})
+                return JSONResponse(status_code=503, content={"detail": "证券工作区操作失败，请检查本机环境后重试。" if request.url.path.startswith('/workspace') else "设置存储操作失败，请检查本机环境后重试。"})
             raise
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request, error):
-        if request.url.path.startswith(("/settings", "/providers")):
+        if request.url.path.startswith(("/settings", "/providers", "/workspace")):
             # FastAPI's default errors include the raw rejected input, including secrets.
             return JSONResponse(status_code=422, content={"detail": "设置输入不符合契约，请检查字段、长度与地址格式。"})
         return JSONResponse(status_code=422, content={"detail": [{"loc": list(item["loc"]),
@@ -106,6 +111,30 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     @app.exception_handler(SettingsError)
     async def settings_error(_request, error):
         return JSONResponse(status_code=409, content={"detail": str(error)})
+
+    @app.exception_handler(WatchlistError)
+    async def watchlist_error(_request,error):
+        return JSONResponse(status_code=409,content={'detail':str(error)})
+
+    @app.get('/workspace',response_model=WorkspaceState,dependencies=protected)
+    def workspace_state():
+        return app.state.watchlist.state()
+
+    @app.post('/workspace/watchlist',response_model=WorkspaceState,dependencies=protected)
+    def add_watch(body:SymbolInput):
+        return app.state.watchlist.add(body.symbol)
+
+    @app.post('/workspace/watchlist/remove',response_model=WorkspaceState,dependencies=protected)
+    def remove_watch(body:SymbolInput):
+        return app.state.watchlist.delete(body.symbol)
+
+    @app.put('/workspace/selection',response_model=WorkspaceState,dependencies=protected)
+    def select_security(body:SymbolInput):
+        return app.state.watchlist.select(body.symbol)
+
+    @app.post('/workspace/page',response_model=SecurityPage,dependencies=protected)
+    def security_page(body:SecurityQuery):
+        return app.state.security_workspace.page(body)
 
     @app.get("/settings/connections", response_model=list[ConnectionView], dependencies=protected)
     def connections():

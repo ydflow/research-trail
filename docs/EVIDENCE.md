@@ -740,3 +740,63 @@ PR与Actions结果以本轮实时查询及最终回执为准。合并前核对�
 发布分支已创建 [PR #9](https://github.com/ydflow/research-trail/pull/9)，base main、非draft、初始head e4b87c79dc20b41739d89873692d1ce5d1ec378c。40项差异与四个分类提交核对：上游依赖声明7ac8a323f955598522414be8ab3f843ce2fff02d、Python新实现fde2625b15a695b602d31ccec16ecc972c5b11bf、桌面接入218cde38bdb070c93300d9face0faf02ce10e5ec、验收文档e4b87c79dc20b41739d89873692d1ce5d1ec378c；实际作者ydflow/noreply、当前时间。本次另补PR记录提交，不改变运行源码。
 
 创建后Windows Actions已启动，尚在运行，不提前记作通过；仅最终head的全部检查通过且无未解决阻塞才合并。最终Actions见 [PR #9检查](https://github.com/ydflow/research-trail/pull/9/checks)，最终提交/检查/合并与本地main同步由实时Git/GitHub及发布回执核实，不在本文预写自己的合并SHA。
+
+## 28. 第11步：证券工作台与持久自选（2026-10-06）
+
+按用户当前第11步指令先读规则、路线、来源及实现，业务根D:\folio\research-trail，初始main/HEAD ae1759229f477bb59103c6fd818cba1dd9c074be、工作区干净（第10步普通合并基线）。沿用用户此前“尚未配置，先完成模拟验收”选择；不读取已配置第9步模型Key、不请求真实行情/账户/模型。本节仅本机开发与自动验收，不做Git暂存/提交/远程写入、不扩展报告/组合/交易或第12步。
+
+### 上游观察与逐页适配
+
+只读Folio固定ZIP commit ba5dcdfd31b162f5edb8b908f7f099a560389326，来源https://github.com/helsome/folio，参考目录D:\folio\主分支和简历skill\folio-main；没有修改参考。沿用第9—11节用户确认的原作者复用授权，未独立取得授权原文，不把skills/LICENSE作为整仓MIT。新逐文件注释保留上游URL/版本/路径与适配责任，旧出处与第三方LICENSE/NOTICE不删除。以下是局部界面/信息流移植与重新适配，不是原样导入全部组件，也不移植TS client/atoms/业务内核。
+
+| 固定上游路径（相对packages/ui/src/components） | 本项目路径（相对apps/desktop/src） | 适配与有意差异 |
+| --- | --- | --- |
+| workspace/FinanceWorkspace.tsx、SecurityHeader.tsx；stock/Watchlist.tsx | renderer/securities/SecurityWorkspace.tsx | 证券上下文、页签、自选增删行；Python持久化替代atoms/client；移除组合/研究入口 |
+| workspace/OverviewView.tsx | renderer/securities/SecurityViews.tsx: OverviewView | 资料/估值指标卡，缺失—；不估算年内区间、不引入组合统计 |
+| workspace/SecurityHeader.tsx；agent/structured/QuoteCard.tsx | 同上: QuoteView、MarketStatusView | 价格/统计、证券市场后缀；保留原始市场状态及时间，不推断权限或交易时段 |
+| workspace/ChartView.tsx | 同上: ChartView；renderer/market/FinancialKLineChart.tsx | 复用此前带出处图表适配，增加period和来源标签；真正canvas loader依旧消费Python bars |
+| workspace/FinancialsView.tsx | SecurityViews.tsx: FinancialsView | 财务表格/卡片扩为IS/BS/CF报告DTO，报告期/币种逐行保留；不补零、无跨币种合计 |
+| workspace/NewsView.tsx | SecurityViews.tsx: NewsView | 原来源链接列表，缺时间/链接—；无当前时间/主页URL兜底、无HTML渲染 |
+| stock/Watchlist.tsx | SecurityViews.tsx: WatchlistView | 单股票行情卡与选择入口，每组4只，各自来源与错误 |
+
+未新增前端/后端依赖，Bun/uv锁定文件无差异。SDK仍锁定Longbridge5.2.0；代码核对发现NewsItem运行时存在而openapi.pyi遗漏声明，provider_normalize.sdk_fields补充id/title/description/url/published_at及三种计数的明确白名单，未开放__dict__、Config或异常。属性由本机运行时描述符及官方[Python引用](https://longbridge.github.io/openapi/python/reference_all/)、[内容类型源码](https://longbridge.github.io/openapi/cpp/types_8hpp_source.html)核对；契约测试注入假ContentContext，未执行SDK网络。
+
+### Python新实现与桌面调用链
+
+- 新workspace_contracts、WatchlistStore、SecurityWorkspace与workspace_normalize；Pydantic extra=forbid、证券代码/提供商/周期/页码白名单。0007_security_workspace只增watchlist与security_workspace，保留旧会话/profile/提供商配置。Python按BEGIN IMMEDIATE事务串行管理最多20只、有序/去重/一次种子/清空不复种/当前选择/revision，删当前回退第一只或空。名称来自原四股票catalog，其他代码不编公司身份。
+- 页面→preload六个命名操作（共43）→main IPC来源校验→BackendManager带启动令牌→五个/workspace API→Python ProviderService。只有openNewsSource属于main显式HTTP(S)链接操作；页面不能访问文件/系统凭证/进程或任意本机URL。新闻校验禁止自定义协议、嵌入用户密码、空白控制字符/反斜线，保留合法原URL而非重新生成。
+- 七视图复用Step10 SDK/只读CLI/Massive适配与配置/凭证/缓存/能力健康链；自选每页≤4独立quote、概览profile/valuation、其他单能力，最多4并发。无账户查询/写入、无新增Agent工具，旧规则/真实模型工具仍为原Fixture。Massive profile/quote/kline支持，其他明确UNSUPPORTED_CAPABILITY。NO_DATA→missing；部分成功保留独立失败，不扩散成功或真实失败回退模拟。
+- DTO仅含显示字段，不返回供应商raw字典。缺数字/时间/报告期/币种为None/—，数值0保留；拒绝非有限数/非法OHLC/重复bar时间/错股票，未知整数交易状态显示代码及含义未知。市场状态元数据选对应市场时钟，不当作quote时间；缺发布时间不补现在，原新闻链接与来源保留。各块统一来源、mode/transport、时效及依据、缓存、市场/fetched/served时间。
+- 桌面SecurityWorkspace持久状态仅从Python读取，UI mutation队列保持意图顺序；revision/generation/query key及回包身份阻止迟到跨股票/页/提供商数据。换上下文清除显示，真实模式只在按钮显式请求，重启默认模拟。模拟自造新闻与年度财报/固定日线均显著标注，不证明其他周期真实能力；missing/failure/delayed夹具仅offline启动注入，产品API无假成功开关。
+
+### 实际验收、修正与限制
+
+新增Python29项：7×3 API矩阵、持久/清空/重复/上限/并发、自选分页、真实未配置0执行/部分受限无模拟回退、Massive缺口、原URL/缺时间/非法响应、真实SDK运行时白名单、API鉴权与敏感输入不回显、旧0006库升级历史/profile/config不变。另新增Electron4项包含7×3 UI矩阵和上下文流程，原225项Python/15项Electron严格保留；此前仅迁移head预期更新到0007。
+
+首次pytest从根误运行导致导入失败，改为后端cwd/离线环境；首个新测试错误假设NVDA/MSFT初始顺序，修正测试以保留原Fixture顺序。随后新增29+原Provider95共124通过；Step11定向实窗4通过。第一个完整check.cmd 254/8/19通过后实际截图发现“移除”继承158px全局宽度，将股票挤竖排；修正此局部按钮为44px并增加实际证券代码盒宽≥70/高<30断言，补窄窗口内容截图，没有降低断言或改数据迎合测试。
+
+修正后的最终check.cmd退出0：Python254、Node8、真实Electron19全部通过无跳过；契约一致性、TS、构建、0007两次upgrade/current/check通过。最终临时迁移证据research-trail-verify-maZR87；上一完整轮research-trail-verify-0Gts1f为修正前，不代替最终结果。只有既有Starlette/TestClient/httpx弃用提示1条，不因此擅自升级依赖。
+
+Electron实窗标题“研迹 · ResearchTrail”、URL file:///.../apps/desktop/dist/renderer/index.html，1100×800与600×680，非空、无overlay、无相关console warning/error/pageerror与横向溢出。实际交互：七视图/三态→画布实际代码收盘→新闻点击保留原URL（shell.openExternal桩、不外网导航）→延迟AAPL/选择NVDA不串数据→周线actual loadedPeriod→添加700.HK缺失→跨页/会话离开重入→Massive不支持→真实未配置→关窗/同库重启保持选择/自选→删除当前回退。所有所属测试进程退出。Browser plugin not available，采用已有Playwright Electron，未装新浏览器依赖。
+
+截图在系统临时research-trail-step11-qa，宽概览/新闻/财报缺失/行情失败及窄新闻首区域和内容截图已读取复核，不入仓库。缺数据、失败与成功画面各有独立存档；不是用户亲自验收或真实数据截图。交付README/ROADMAP、[第11步清单](ACCEPTANCE-step11.md)、tutorial C06新展开与practice练习，用户回答保留。
+
+未验证：真实供应商请求/数据/权限/时效/财报周期/新闻内容及外部错误，CLI实际兼容、完整分页/全部字段、长期缓存/并发负载、用户亲自操作与练习、干净源码重装、其他OS/安装包、远程CI。无凭证标未执行，不能标为权限受限；受限只用模拟响应分支证明。本步与现有模型是独立数据链路，不能称模型已能调用这些新增证券视图工具。交付完成后停止，第12—24步未开始。
+
+最终范围复核：22项已跟踪修改、12份新增文本，共34项本步骤源码/契约/迁移/测试/交付文档；仓库外PROJECT_STATE仅增最新回执、保留历史。132份候选文件均UTF-8文本，本地Markdown链接无缺失，9项NUL分隔密钥/数据库WAL/账户/日志/私密截图/依赖/构建忽略探针通过，常见密钥签名/禁传产物扫描无异常（仅辅助审核）。git diff --check通过，Bun/uv锁文件、原Agent及Fixture文件、第三方声明无差异；main/HEAD仍ae1759229f477bb59103c6fd818cba1dd9c074be、index为空。项目Python/Electron/Node进程读查无残留。本轮没有安装依赖、提交、推送、PR、标签、Release或定时评测。
+
+## 29. 第11步发布复验与PR交付（2026-10-06）
+
+用户独立授权仅发布已验收第11步，真实改动分类提交、功能分支/PR，最终检查通过且无未解决阻塞时普通merge保留提交并同步main。本节是发布轮，第28节开发轮事实保留；未实施第12步，不打标签/创建Release/定时付费评测，不代填用户亲自清单或学习回答。
+
+- 发布前实时核对gh api user=ydflow，现有目标公开/非fork/非归档ydflow/research-trail、默认main，origin fetch/push均https://github.com/ydflow/research-trail.git；本机main/HEAD、origin/main与GitHub main均ae1759229f477bb59103c6fd818cba1dd9c074be（第10步PR #9），属于本项目。开放PR为空，同名feat/step-11-security-workspace远程分支不存在；正常新建该功能分支，不覆盖/删除无关仓库、不强推，每次外部写入前重新核对账号/目标/remote。
+- 实际34项差异（22修改/12新增）仅证券七视图/持久自选/Python投影、0007迁移、白名单通信/图表/新闻链接、契约/三态与上下文测试、来源/验收材料。132份UTF-8候选文本、42本地Markdown链接、9项NUL忽略探针、常见密钥签名与禁传产物审核无异常；git diff --check通过。签名扫描仅辅助，不读取系统真实凭证。日常库/WAL/账户/持仓/日志/缓存/截图/依赖/构建均不纳入。
+- 来源沿用第9—11节用户确认原作者授权及本轮发布指令，固定Folio ba5dcdfd局部UI适配保留第28节映射及逐文件出处，旧LICENSE/NOTICE不删除；未独立取得授权原文，不宣称Folio全仓MIT。没有原样导入上游历史或伪造上游作者。009b2d8d316eff21639dc4486e508dcbeca22e29为既有SDK NewsItem投影修复；7456ef41b435d8fc349e494300954fed399e0aa3为Python新实现/迁移/契约/测试；cbca4929f7135e4f1e814f95eb635c0c7c9cbdd8为Folio局部界面适配/桌面接入/实窗回归。文档另提交，作者ydflow/noreply、实际当前时间，无Git作者或日期环境覆盖，不制造未发生的独立修复历史。
+- 发布轮check.cmd退出0：Python254、Node8、真实Electron19无跳过，契约/TS/构建/临时0007两次upgrade/current/check通过，临时迁移research-trail-verify-DR4g2h。只有既有TestClient/httpx弃用提示1条；原225/8/15与新增29 Python/4 Electron保持严格回归。宽/窄截图在系统临时research-trail-step11-publication-qa并读取复核，不上传，标题/URL/非空/无overlay/console错误/横溢出与实际交互通过；新闻native open桩无外网导航。
+- 干净源码verify:clean退出0：132份源码导出到系统临时research-trail-clean-fI6gJY/clean source，不带Git/依赖/构建/运行数据；锁定新装71前端/29Python包（SDK5.2.0）并准备Electron，完整254/8/19、契约/类型/构建/0007重复迁移再次通过，临时迁移research-trail-verify-8YDIP5。根CMD实窗选股→会话→行情→取消→关窗/同库重启历史通过，同快照/无新运行/所属进程退出，证据research-trail-cmd-qa-WoxUmi。下载可复用本机缓存，不称无工具机器或空缓存；之后只补发布文档，运行源码不变。
+- 验证边界：均模拟响应或本机协议，未发送真实行情/账户/模型请求，未读取已配置模型Key；Windows原生凭证测试仅独立临时占位值并清理。真实供应商数据/权限/时效/外部错误/财报周期/新闻内容、CLI实际兼容、完整分页/长期负载、用户亲自操作/练习、其他OS/安装包仍未验证。未配置不称受限，真实失败不回退模拟，单项成功不扩散。
+
+最终PR head/base、Actions、review与未解决讨论须合并前实时核对；只有最终head通过、没有阻塞才普通merge并fast-forward同步本地main。PR及最终合并结果由实时Git/GitHub与发布回执确认，不预写自身文档提交的合并SHA。
+
+
+已创建[第11步PR #10](https://github.com/ydflow/research-trail/pull/10)，base main ae1759229f477bb59103c6fd818cba1dd9c074be、非draft，初始head f77dc799c562eb8f62af9a8f6303c634bd65133c。四个分类提交及34项差异已与远程核对；文档提交f77dc799c562eb8f62af9a8f6303c634bd65133c。创建后Windows push/PR Actions已启动，尚在运行，不能先记通过；本次仅补PR链接文档，不改运行源码。最终检查见[PR检查](https://github.com/ydflow/research-trail/pull/10/checks)，最终提交/检查/合并与本地同步以实时Git/GitHub和发布回执为准。

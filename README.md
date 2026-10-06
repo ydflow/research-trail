@@ -6,22 +6,22 @@
 
 ## 当前状态
 
-截至 2026-10-05：**第0/2/3/4/5/6/7/8/9/10步自动验收通过（第9步含一次真实模型工具验证，行情仍为模拟）；第1步原用户手动记录仍待填写**。v0.1.0源码版已发布，仅假模型＋模拟数据。第8步新增设置/连接/个人资料/脱敏诊断，五类配置和健康由Python独立管理、凭证存于Windows系统凭证管理器；第8步连接探针仍是假测试；第9步真实模型运行需显式选择，第10步SDK/只读CLI/Massive适配已实现并通过模拟验收，真实行情/账户因未配置仍未验证。用户逐项亲自操作和学习记录仍待填写，第8步按独立授权通过 [PR #7](https://github.com/ydflow/research-trail/pull/7)交付，开发与发布复验见EVIDENCE第22—23节；最终合并状态以GitHub与发布回执为准。
+截至 2026-10-06：**第0/2/3/4/5/6/7/8/9/10/11步自动验收通过（第11步为模拟与本机实窗，第9步历史含一次真实模型工具验证）；第1步原用户手动记录仍待填写**。v0.1.0源码版已发布，仅假模型＋模拟数据。第8步新增设置/连接/个人资料/脱敏诊断，五类配置和健康由Python独立管理、凭证存于Windows系统凭证管理器；第8步连接探针仍是假测试；第9步真实模型运行需显式选择，第10步SDK/只读CLI/Massive适配已实现并通过模拟验收，真实行情/账户因未配置仍未验证。用户逐项亲自操作和学习记录仍待填写，第8步按独立授权通过 [PR #7](https://github.com/ydflow/research-trail/pull/7)交付，开发与发布复验见EVIDENCE第22—23节；最终合并状态以GitHub与发布回执为准。
 
 - 默认分支 `main`；初始公开提交为 `55b1a3d`，第2步按功能分支/PR保留导入、Python新实现、修复与桌面适配提交。
 - 第2步公开复用依据为用户本轮确认的原作者授权，保留适配来源与依赖声明；交付见 [PR #1](https://github.com/ydflow/research-trail/pull/1)，发布检查和授权记录见EVIDENCE第9—11节，最终提交/合并状态以Git与发布回执为准。
 - 公开仓库：[ydflow/research-trail](https://github.com/ydflow/research-trail)。仅上传源码、测试、文档、依赖清单与锁文件；不包含运行数据或截图。
 - 第2步已普通合并，main基线为 `0e1dfd5ccf7e99c66d58188dcac9497ddd6e2bd8`；第3步以 [PR #2](https://github.com/ydflow/research-trail/pull/2) 交付，开发与发布验证见EVIDENCE第12—13节，最终提交和合并状态以Git与发布回执为准。
 - 第3步合并基线为 `7f925dee768ff33c076582dd9d41055aca9a5932`；第4步以 [PR #3](https://github.com/ydflow/research-trail/pull/3) 交付，开发及发布复验见EVIDENCE第14—15节，按功能分支/PR保留提交，最终远程状态以GitHub和发布回执为准。
-- 第5步开发基线为 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`；以 [PR #4](https://github.com/ydflow/research-trail/pull/4) 普通合并，第6步发布基线为`a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677`。第6步 [PR #5](https://github.com/ydflow/research-trail/pull/5)已普通合并，第7步发布基线为`f51b802d61896f9da30cd1f6df331c90e75e24b9`。第7步以 [PR #6](https://github.com/ydflow/research-trail/pull/6)交付，开发与发布证据见EVIDENCE第20—21节；第11—24步未开始。
-- [v0.1.0源码Release](https://github.com/ydflow/research-trail/releases/tag/v0.1.0)对应main `716543305ba5d74f57336c589c4b2dffaf6e3592`，没有安装包。第8/9/10步改动不在此标签内；[首版清单](docs/ACCEPTANCE-v0.1.0.md)保留标签创建前的验收快照，完整版本 `v1.0.0`仍为计划。
+- 第5步开发基线为 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`；以 [PR #4](https://github.com/ydflow/research-trail/pull/4) 普通合并，第6步发布基线为`a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677`。第6步 [PR #5](https://github.com/ydflow/research-trail/pull/5)已普通合并，第7步发布基线为`f51b802d61896f9da30cd1f6df331c90e75e24b9`。第7步以 [PR #6](https://github.com/ydflow/research-trail/pull/6)交付，开发与发布证据见EVIDENCE第20—21节；第11步本机开发交付见下方；第12—24步未开始。
+- [v0.1.0源码Release](https://github.com/ydflow/research-trail/releases/tag/v0.1.0)对应main `716543305ba5d74f57336c589c4b2dffaf6e3592`，没有安装包。第8—11步改动不在此标签内；[首版清单](docs/ACCEPTANCE-v0.1.0.md)保留标签创建前的验收快照，完整版本 `v1.0.0`仍为计划。
 - Folio 功能和测试属于参考项目，不代表研迹已实现或用户已完成的贡献。
 
 ## 架构与当前边界
 
 ```text
 React 页面
-  → preload：37个命名操作，无任意文件/进程/URL能力
+  → preload：43个命名操作，新闻只允许显式点击打开HTTP(S)来源
     → Electron main：随机端口/令牌、所属Python进程、SSE续读
       → 本机 Python / FastAPI：鉴权与Pydantic契约
         ├─ 行情：FixtureMarketProvider（四股票固定示例）
@@ -37,7 +37,7 @@ React 页面
 
 Python 统一管理业务状态，前端维护显示缓存。假模型和模拟行情分别实现；会话可主动选择OpenAI兼容真实模型，行情仍为模拟数据。真实数据来源与模型回答不能混为一谈。
 
-行情调用链：股票选择 → `MarketPanel` → preload 的 `marketSnapshot` → Electron 主进程 → 带令牌的 `/market/snapshot/{symbol}` → Python `FixtureMarketProvider` → 同一份 `MarketSnapshot` → 行情卡片与 K 线。桥共37个命名操作：原健康/行情/会话/运行19项、设置/凭证/资料/诊断11项、提供商配置/凭证/能力/只读查询7项。订阅返回解除函数；页面不能指定后端URL、端口、令牌、文件或进程。诊断导出只通过主进程系统保存对话框选择目的地，不给页面任意文件能力。Python无reload worker，直接作为Electron子进程启动。
+行情调用链：股票选择 → `MarketPanel` → preload 的 `marketSnapshot` → Electron 主进程 → 带令牌的 `/market/snapshot/{symbol}` → Python `FixtureMarketProvider` → 同一份 `MarketSnapshot` → 行情卡片与 K 线。桥共43个命名操作：原健康/行情/会话/运行19项、设置/凭证/资料/诊断11项、提供商配置/凭证/能力/只读查询7项、证券工作区/自选/页面/新闻6项。订阅返回解除函数；页面不能指定后端URL、端口、令牌、文件或进程。诊断导出只通过主进程系统保存对话框选择目的地，不给页面任意文件能力。Python无reload worker，直接作为Electron子进程启动。
 
 会话调用链：`SessionPanel` → preload.sessionSnapshot → main → GET /sessions/{id}/snapshot → Store单一SQLite读事务。消息、运行、事件及各运行last_sequence来自同一快照；页面先显示它，再通过subscribeRun从活动运行的水位订阅SSE。订阅间隙提交的事件会重放，不丢失或重新调用工具。工作区/会话/运行选择只作为sessionStorage显示偏好，业务内容仍从Python数据库读取。
 
@@ -77,7 +77,9 @@ Pydantic 是业务契约来源。离线导出 OpenAPI 后，`openapi-typescript`
 | 7 | 首版验收、离线CI、干净源码启动 | 验收通过；源码可发布，仅假模型＋模拟数据；远程CI与发布复验见EVIDENCE第21节 |
 | 8 | 设置、凭证、个人资料与脱敏诊断 | 自动验收通过，PR #7已合并；连接探针仍是假测试，用户操作待填 |
 | 9 | OpenAI兼容模型与受限只读工具循环 | 自动验收通过；一次真实模型工具验证通过（2次请求、1次工具，行情仍为模拟）；交付 [PR #8](https://github.com/ydflow/research-trail/pull/8) |
-| 10—13 | 真实行情、市场工作台、组合及对比 | 未开始 |
+| 10 | Longbridge/只读CLI/Massive数据与只读账户 | 验收通过（模拟）；真实数据未验证 |
+| 11 | 持久自选、概览、行情、K线、财报、新闻、市场状态 | 验收通过（模拟/本机实窗）；独立授权交付[PR #10](https://github.com/ydflow/research-trail/pull/10)，发布复验见EVIDENCE第29节 |
+| 12—13 | 组合导入、风险及股票对比 | 未开始 |
 | 14—20 | 能力技能、研究策略/报告/恢复、论点、筛选与事件 | 未开始 |
 | 21—24 | 提醒与 Today、评测、研究结果校准、Windows 交付 | 未开始 |
 
@@ -216,7 +218,7 @@ uv run --directory services\backend --frozen python -m alembic -c alembic.ini cu
 uv run --directory services\backend --frozen python -m alembic -c alembic.ini check
 ```
 
-`current`应显示 `0003_lifecycle (head)`，`check`确认模型与迁移一致。0003允许运行完成时间为空，并增加每会话唯一活动运行/每运行每角色唯一消息索引；保留旧历史及外键、序号约束。SQLite表重建只在迁移连接临时关闭外键，提交前检查完整性，再开启；业务连接仍开启外键。重复upgrade不清空历史。0003不提供自动降级；离线SQL与备份恢复未验证。
+`current`应显示 `0007_security_workspace (head)`，`check`确认模型与迁移一致。0003允许运行完成时间为空，并增加每会话唯一活动运行/每运行每角色唯一消息索引；保留旧历史及外键、序号约束。SQLite表重建只在迁移连接临时关闭外键，提交前检查完整性，再开启；业务连接仍开启外键。重复upgrade不清空历史。0003不提供自动降级；离线SQL与备份恢复未验证。
 
 ## 来源与公开边界
 
@@ -231,4 +233,14 @@ uv run --directory services\backend --frozen python -m alembic -c alembic.ini ch
 
 官方Longbridge Python SDK（锁定5.2.0）、SDK缺口只读CLI和Massive美股REST已接入“数据与只读账户”配置/验收面板。Python管理三个独立配置、系统凭证和逐项能力状态；行情仅内存缓存，账户数据不落库。默认模拟，真实失败显示固定错误码，不回退模拟；现有Agent工具仍使用Fixture。
 
-本轮用户选择先模拟：完整Python225、Node8、真实Electron15通过，真实Longbridge/Massive查询未执行。入口、少量真实查询命令与缺口见 [第10步验收](docs/ACCEPTANCE-step10.md)，固定Folio版本与24条目/参数边界见 [能力覆盖表](docs/PROVIDER-COVERAGE-step10.md)。本步没有下单、交易或下一步完整市场工作台。第10步按用户独立授权通过 [PR #9](https://github.com/ydflow/research-trail/pull/9)交付；发布轮完整检查及干净源码锁定安装/根CMD启动、重启历史复验通过，见EVIDENCE第27节。最终PR、远程CI与合并状态以GitHub及发布回执为准。
+本轮用户选择先模拟：完整Python225、Node8、真实Electron15通过，真实Longbridge/Massive查询未执行。入口、少量真实查询命令与缺口见 [第10步验收](docs/ACCEPTANCE-step10.md)，固定Folio版本与24条目/参数边界见 [能力覆盖表](docs/PROVIDER-COVERAGE-step10.md)。该第10步交付当时没有下单、交易或完整市场工作台；第11步工作台见下方。第10步按用户独立授权通过 [PR #9](https://github.com/ydflow/research-trail/pull/9)交付；发布轮完整检查及干净源码锁定安装/根CMD启动、重启历史复验通过，见EVIDENCE第27节。最终PR、远程CI与合并状态以GitHub及发布回执为准。
+
+## 第11步：证券工作台
+
+“证券工作台”逐页适配Folio的自选、概览、行情、K线、财务报表、新闻和市场状态。页面→命名preload→main→Python SecurityWorkspace→ProviderService→严格展示DTO；没有TypeScript行情业务内核。Python/SQLite保存最多20只自选及当前股票，0007迁移保留会话和配置；请求上下文与revision防止迟到数据写入其他股票。
+
+默认模拟，真实查询需显式点击；各块显示提供商、SDK/CLI/HTTP或模拟来源、缓存、时效依据、市场/获取/服务时间。缺失显示“—”，0保持0；新闻保留原始合法HTTP(S)链接，点击由main打开。Massive未覆盖财报/新闻/状态如实显示不支持，真实失败不替换模拟数据。模拟K线和财报是固定日线/年度样例，不证明其他周期真实可用。
+
+2026-10-06本机完整check.cmd通过：Python254、Node8、真实Electron19；七视图各成功/缺失/失败21例均在API和窗口验证，另有重启持久化、股票切换/迟到响应、来源切换与真实未配置检查。本轮无真实数据或模型请求、未提交/发布；第12—24步未开始。入口、操作和缺口见[第11步验收](docs/ACCEPTANCE-step11.md)，来源/轮次见EVIDENCE第28节，课程/练习保留待用户填写。
+
+第11步发布轮完整检查及干净源码锁定安装/根CMD启动、重启历史复验通过，见EVIDENCE第29节。按本轮独立授权通过[PR #10](https://github.com/ydflow/research-trail/pull/10)交付，最终CI/合并状态以GitHub和发布回执为准；开发轮未提交记录保留为历史。

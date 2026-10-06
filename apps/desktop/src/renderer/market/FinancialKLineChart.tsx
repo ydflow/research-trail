@@ -9,7 +9,7 @@ import type { Kline } from '../../market-types';
 function resolveColor(el: HTMLElement, name: string, fallback: string) {
   return window.getComputedStyle(el).getPropertyValue(name).trim() || fallback;
 }
-export function FinancialKLineChart({ bars, symbol }: { bars: Kline[]; symbol: string }) {
+export function FinancialKLineChart({ bars, symbol, period = '1d', dataLabel = '模拟' }: { bars: Kline[]; symbol: string; period?: '1m' | '5m' | '15m' | '1h' | '1d' | '1w'; dataLabel?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<Chart | null>(null);
   const barsRef = useRef(bars);
@@ -44,6 +44,7 @@ export function FinancialKLineChart({ bars, symbol }: { bars: Kline[]; symbol: s
       el.dataset.loadedSymbol = chart.getSymbol()?.ticker || '';
       el.dataset.loadedClose = String(loaded.at(-1)?.close ?? '');
       el.dataset.loadedCount = String(loaded.length);
+      el.dataset.loadedPeriod = JSON.stringify(chart.getPeriod());
       requestAnimationFrame(() => requestAnimationFrame(() => {
         if (chartRef.current !== chart) return;
         const range = chart.getVisibleRange();
@@ -65,8 +66,8 @@ export function FinancialKLineChart({ bars, symbol }: { bars: Kline[]; symbol: s
     if (!chart) return;
     barsRef.current = bars;
     chart.setSymbol({ exchange: '', shortName: symbol.split('.')[0], ticker: symbol });
-    chart.setPeriod({ type: 'day', span: 1 });
+    chart.setPeriod(period === '1d' ? { type: 'day', span: 1 } : period === '1w' ? { type: 'week', span: 1 } : { type: 'minute', span: period === '1h' ? 60 : Number(period.slice(0, -1)) });
     chart.resetData();
-  }, [symbol, bars]);
-  return <div ref={containerRef} data-testid="chart-canvas" className="chart-canvas" aria-label={`${symbol} 模拟日K线`} />;
+  }, [symbol, bars, period]);
+  return <div ref={containerRef} data-testid="chart-canvas" className="chart-canvas" aria-label={`${symbol} ${dataLabel}${period === '1d' ? '日K线' : period + ' K线'}`} />;
 }

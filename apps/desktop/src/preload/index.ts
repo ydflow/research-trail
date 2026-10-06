@@ -2,6 +2,12 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendState, ResearchTrailBridge, RunStreamUpdate } from '../bridge';
 
 const bridge: ResearchTrailBridge = {
+  workspaceState: () => ipcRenderer.invoke('workspace:state'),
+  addWatch: symbol => ipcRenderer.invoke('workspace:add', symbol),
+  removeWatch: symbol => ipcRenderer.invoke('workspace:remove', symbol),
+  selectSecurity: symbol => ipcRenderer.invoke('workspace:select', symbol),
+  securityPage: query => ipcRenderer.invoke('workspace:page', query),
+  openNewsSource: url => ipcRenderer.invoke('workspace:news-link', url),
   providerProfiles: () => ipcRenderer.invoke('providers:profiles'),
   saveProvider: (provider, input) => ipcRenderer.invoke('providers:save', provider, input),
   deleteProvider: (provider) => ipcRenderer.invoke('providers:delete', provider),
