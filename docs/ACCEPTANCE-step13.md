@@ -105,3 +105,5 @@ Browser技能/插件不可用，沿用项目已安装Playwright/Electron，无�
 ## 第13步独立发布
 
 用户另行授权发布已验收第13步。源码/隐私与来源审查、舍入边界修复、修复后完整检查与干净源码验收、对应PR/CI/合并分别记在EVIDENCE第33节；第32节及上文334/8/26是开发轮历史，不替代发布轮新head结果。没有新增交易接口、下一步、标签、Release或定时付费评测。
+
+交付[PR #12](https://github.com/ydflow/research-trail/pull/12)，最终提交/远程检查/合并状态以实际GitHub与发布回执为准。

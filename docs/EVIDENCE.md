@@ -935,3 +935,5 @@ HTTP /analytics/risk与/compare、portfolio.risk与stocks.compare共用app.state
 仅推送feat/step-13-analytics，创建对应PR后核验最终head/base、全部远程检查与review/未解决讨论，全部通过无阻塞才按匹配head普通merge并同步main。既有v0.1.0标签object仍3dd216557cdc81ac8fc35b14e0585dc43731be86，Release非draft/非prerelease、assets0；不打标签、创建Release或定时付费评测。
 
 尚未验证真实Longbridge/Massive/CLI数据、权限及字段映射、真实模型风险/对比、长期负载、其他OS/安装包和用户亲自操作/练习。远程CI与合并由实际GitHub检查和外部PROJECT_STATE发布回执确认，不把本机检查当远程通过。第14—24步未实施。
+
+已创建[第13步PR #12](https://github.com/ydflow/research-trail/pull/12)，base main 3359c38bb23ae44ae7edd36f8b44d7d969a2a43c，初始head 2a3e727ebd4baedd43064f9cfe450dc605a5ca1b，四个真实分类提交已推送。创建后远程检查当时尚未完成；本次仅补PR链接，不改运行源码，最终head全部检查与普通merge结果见[PR检查](https://github.com/ydflow/research-trail/pull/12/checks)及外部PROJECT_STATE发布回执。文档补充提交自身SHA由实际Git核对，不循环写自身SHA。
