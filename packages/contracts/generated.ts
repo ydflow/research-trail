@@ -1,5 +1,39 @@
 /** Generated from Python OpenAPI by scripts/contracts.mjs. Do not edit. */
 export interface paths {
+    "/analytics/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Compare Stocks */
+        post: operations["compare_stocks_analytics_compare_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/risk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Portfolio Risk */
+        post: operations["portfolio_risk_analytics_risk_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -592,6 +626,31 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Allocation */
+        Allocation: {
+            /** Market Value */
+            market_value: string | null;
+            /** Price */
+            price: string | null;
+            /** Quantity */
+            quantity: string;
+            /** Symbol */
+            symbol: string;
+            /** Weight */
+            weight: string | null;
+        };
+        /** AnalysisRead */
+        AnalysisRead: {
+            /** Capability */
+            capability: string;
+            /** Code */
+            code?: string | null;
+            provenance?: components["schemas"]["Provenance"] | null;
+            /** Status */
+            status: string;
+            /** Symbol */
+            symbol: string | null;
+        };
         /** CancelledEvent */
         CancelledEvent: {
             /** Message Id */
@@ -668,6 +727,107 @@ export interface components {
             amount?: string | null;
             /** Currency */
             currency: string;
+        };
+        /** CompareCell */
+        CompareCell: {
+            /** Currency */
+            currency?: string | null;
+            /** Period */
+            period?: string | null;
+            /** Reason */
+            reason?: string | null;
+            /** Value */
+            value?: string | null;
+        };
+        /** CompareQuery */
+        CompareQuery: {
+            /**
+             * Currency
+             * @default USD
+             */
+            currency: string;
+            /**
+             * Mode
+             * @default simulated
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /**
+             * Provider
+             * @default longbridge
+             * @enum {string}
+             */
+            provider: "longbridge" | "massive";
+            /**
+             * Refresh
+             * @default false
+             */
+            refresh: boolean;
+            /**
+             * Report Year
+             * @default 2023
+             */
+            report_year: number;
+            /** Symbols */
+            symbols: string[];
+        };
+        /** CompareRow */
+        CompareRow: {
+            /** Cells */
+            cells: {
+                [key: string]: components["schemas"]["CompareCell"];
+            };
+            /** Label */
+            label: string;
+            /** Metric */
+            metric: string;
+            /** Unit */
+            unit: string;
+        };
+        /** CompareToolData */
+        CompareToolData: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "compare";
+            report: components["schemas"]["Comparison"];
+        };
+        /** Comparison */
+        Comparison: {
+            /** Calculated At */
+            calculated_at: string;
+            /** Currency */
+            currency: string;
+            /** Limitations */
+            limitations: string[];
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "longbridge" | "massive";
+            /** Reads */
+            reads: components["schemas"]["AnalysisRead"][];
+            /** Report Period */
+            report_period: string;
+            /** Rows */
+            rows: components["schemas"]["CompareRow"][];
+            /** Snapshot Id */
+            snapshot_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "partial" | "missing";
+            /** Summary */
+            summary: string;
+            /** Symbols */
+            symbols: string[];
         };
         /** CompletedPayload */
         CompletedPayload: {
@@ -1734,6 +1894,126 @@ export interface components {
              */
             use_cache: boolean;
         };
+        /** RiskGroup */
+        RiskGroup: {
+            /** Allocation */
+            allocation: components["schemas"]["Allocation"][];
+            /** Currency */
+            currency: string;
+            /** Herfindahl */
+            herfindahl?: string | null;
+            portfolio_volatility?: components["schemas"]["SeriesStats"] | null;
+            /** Series */
+            series: components["schemas"]["SeriesStats"][];
+            /** Signals */
+            signals: components["schemas"]["RiskSignal"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "empty" | "partial";
+            /** Top1 Weight */
+            top1_weight?: string | null;
+            /** Top5 Weight */
+            top5_weight?: string | null;
+            /** Total Market Value */
+            total_market_value: string | null;
+            /** Unavailable */
+            unavailable: string[];
+        };
+        /** RiskQuery */
+        RiskQuery: {
+            /**
+             * Mode
+             * @default simulated
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /** Portfolio Id */
+            portfolio_id: string;
+            /**
+             * Provider
+             * @default longbridge
+             * @enum {string}
+             */
+            provider: "longbridge" | "massive";
+            /**
+             * Refresh
+             * @default false
+             */
+            refresh: boolean;
+        };
+        /** RiskReport */
+        RiskReport: {
+            /** Account Id */
+            account_id: string;
+            /** Account Kind */
+            account_kind: string;
+            /** Calculated At */
+            calculated_at: string;
+            /** Groups */
+            groups: components["schemas"]["RiskGroup"][];
+            /** Input Code */
+            input_code?: string | null;
+            /** Input Message */
+            input_message?: string | null;
+            /** Input Source */
+            input_source: string;
+            /** Input Status */
+            input_status: string;
+            /** Input Time */
+            input_time: string | null;
+            /** Limitations */
+            limitations: string[];
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /** Portfolio Id */
+            portfolio_id: string;
+            /** Portfolio Revision */
+            portfolio_revision: number;
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "longbridge" | "massive";
+            /** Reads */
+            reads: components["schemas"]["AnalysisRead"][];
+            /** Snapshot Id */
+            snapshot_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "empty" | "partial" | "failed";
+            /** Summary */
+            summary: string;
+        };
+        /** RiskSignal */
+        RiskSignal: {
+            /** Detail */
+            detail: string;
+            /** Kind */
+            kind: string;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "low" | "medium" | "high";
+            /** Symbol */
+            symbol?: string | null;
+        };
+        /** RiskToolData */
+        RiskToolData: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "risk";
+            report: components["schemas"]["RiskReport"];
+        };
         /** RunCompletedEvent */
         RunCompletedEvent: {
             payload: components["schemas"]["CompletedPayload"];
@@ -1927,6 +2207,38 @@ export interface components {
              */
             view: "watchlist" | "overview" | "quote" | "kline" | "financials" | "news" | "status";
         };
+        /** SeriesStats */
+        SeriesStats: {
+            /** Annualized Volatility */
+            annualized_volatility?: string | null;
+            /**
+             * Bars
+             * @default 0
+             */
+            bars: number;
+            /** Daily Volatility */
+            daily_volatility?: string | null;
+            /** Drawdown */
+            drawdown?: string | null;
+            /** End */
+            end?: string | null;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Returns
+             * @default 0
+             */
+            returns: number;
+            /** Start */
+            start?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "missing" | "invalid";
+            /** Symbol */
+            symbol: string;
+        };
         /** SessionDTO */
         SessionDTO: {
             /**
@@ -2106,7 +2418,7 @@ export interface components {
              * Name
              * @enum {string}
              */
-            name: "market.quote" | "market.kline";
+            name: "market.quote" | "market.kline" | "portfolio.risk" | "stocks.compare";
             /** Result */
             result: components["schemas"]["ToolSuccess"] | components["schemas"]["ToolFailure"];
         };
@@ -2140,17 +2452,18 @@ export interface components {
         ToolStartedPayload: {
             /** Call Id */
             call_id: string;
-            input: components["schemas"]["ToolArguments"];
+            /** Input */
+            input: components["schemas"]["ToolArguments"] | components["schemas"]["RiskQuery"] | components["schemas"]["CompareQuery"];
             /**
              * Name
              * @enum {string}
              */
-            name: "market.quote" | "market.kline";
+            name: "market.quote" | "market.kline" | "portfolio.risk" | "stocks.compare";
         };
         /** ToolSuccess */
         ToolSuccess: {
             /** Data */
-            data: components["schemas"]["QuoteToolData"] | components["schemas"]["KlineToolData"];
+            data: components["schemas"]["QuoteToolData"] | components["schemas"]["KlineToolData"] | components["schemas"]["RiskToolData"] | components["schemas"]["CompareToolData"];
             /**
              * Ok
              * @default true
@@ -2205,6 +2518,76 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    compare_stocks_analytics_compare_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompareQuery"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Comparison"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    portfolio_risk_analytics_risk_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RiskQuery"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RiskReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     health_health_get: {
         parameters: {
             query?: never;

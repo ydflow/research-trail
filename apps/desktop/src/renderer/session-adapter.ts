@@ -1,4 +1,7 @@
 import type { MessageDTO, RunDTO, StreamEvent, SessionSnapshot } from '../conversation-types';
+function toolTarget(input: Extract<StreamEvent, { type: 'tool_started' }>['payload']['input']) {
+  return 'symbol' in input ? input.symbol : 'portfolio_id' in input ? input.portfolio_id : input.symbols.join(', ');
+}
 
 export function runStatus(status: RunDTO['status']) {
   return { running: '运行中', completed: '已完成', failed: '运行失败', cancelled: '已取消',
@@ -21,7 +24,7 @@ export function eventDetail(event: StreamEvent): string {
     case 'cancelled': return '主动取消；已保存内容保留';
     case 'message_started': return '回复开始';
     case 'message_completed': return '回复已保存';
-    case 'tool_started': return `调用Python工具 ${event.payload.name}，参数 ${event.payload.input.symbol}`;
+    case 'tool_started': return `调用Python工具 ${event.payload.name}，参数 ${toolTarget(event.payload.input)}`;
     case 'tool_result': return event.payload.result.ok ? `Python工具 ${event.payload.name} 返回数据，详见结果卡片` : `${event.payload.result.error.code}：${event.payload.result.error.message}`;
     case 'error': return `${event.payload.code}：${event.payload.message}`;
   }
@@ -58,7 +61,7 @@ export function toolViews(events: StreamEvent[], run: RunDTO): ToolView[] {
   for (const event of events) {
     if (event.run_id !== run.id) continue;
     if (event.type === 'tool_started') calls.set(event.payload.call_id, { id: event.payload.call_id, name: event.payload.name,
-      symbol: event.payload.input.symbol, startedAt: Date.parse(event.timestamp), status: 'running' });
+      symbol: toolTarget(event.payload.input), startedAt: Date.parse(event.timestamp), status: 'running' });
     if (event.type === 'tool_result') {
       const call = calls.get(event.payload.call_id);
       if (call) { call.status = event.payload.result.ok ? 'success' : 'error'; call.completedAt = Date.parse(event.timestamp); }

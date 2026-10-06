@@ -6,6 +6,7 @@ Wire names are snake_case and UTC ISO times; legacy UI conversions belong in TS.
 from typing import Annotated, Literal
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, TypeAdapter, field_validator, model_validator
 from .market import Quote, Kline
+from .analytics_contracts import RiskQuery, CompareQuery, RiskReport, Comparison
 
 MODEL_LABEL = "规则演示／假模型"
 LIVE_MODEL_LABEL = "OpenAI兼容／真实模型"
@@ -67,12 +68,13 @@ class ToolArguments(DTO):
     symbol: str = Field(pattern=r"^[A-Z0-9]{1,6}\.US$")
 
 
-ToolName = Literal["market.quote", "market.kline"]
+ToolName = Literal["market.quote", "market.kline", "portfolio.risk", "stocks.compare"]
+ToolInput = ToolArguments | RiskQuery | CompareQuery
 
 
 class ToolCall(DTO):
     name: ToolName
-    arguments: ToolArguments
+    arguments: ToolInput
 
 
 class MarketProvenance(DTO):
@@ -96,7 +98,15 @@ class KlineToolData(MarketProvenance):
     klines: list[Kline] = Field(min_length=2)
 
 
-ToolData = Annotated[QuoteToolData | KlineToolData, Field(discriminator="kind")]
+class RiskToolData(DTO):
+    kind: Literal['risk'] = 'risk'
+    report: RiskReport
+
+class CompareToolData(DTO):
+    kind: Literal['compare'] = 'compare'
+    report: Comparison
+
+ToolData = Annotated[QuoteToolData | KlineToolData | RiskToolData | CompareToolData, Field(discriminator="kind")]
 
 
 class ToolSuccess(DTO):
@@ -168,7 +178,7 @@ class CancelledPayload(DTO):
 class ToolStartedPayload(DTO):
     call_id: str
     name: ToolName
-    input: ToolArguments
+    input: ToolInput
 
 
 class ToolResultPayload(DTO):

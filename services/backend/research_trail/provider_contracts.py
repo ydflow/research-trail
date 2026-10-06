@@ -68,7 +68,7 @@ class ReadQuery(Boundary):
     mode: Literal['simulated', 'real'] = 'simulated'
     symbol: str | None = Field(default=None, pattern=r'^[A-Z0-9]{1,6}\.(US|HK|SG|SH|SZ|HAS)$')
     period: Literal['1m', '5m', '15m', '1h', '1d', '1w'] = '1d'
-    count: int = Field(default=20, ge=1, le=100, strict=True)
+    count: int = Field(default=20, ge=1, le=260, strict=True)
     market: Literal['US', 'HK', 'CN', 'SG'] = 'US'
     start: date | None = None
     end: date | None = None
@@ -79,6 +79,7 @@ class ReadQuery(Boundary):
 
     @model_validator(mode='after')
     def valid_read(self):
+        if self.count>100 and self.capability!='market.kline': raise ValueError('仅K线支持最多260根，其余查询最多100条。')
         if self.capability not in ('market.sentiment', 'market.status', 'research.events', *ACCOUNT_CAPABILITIES) and self.symbol is None:
             raise ValueError('此能力需要股票代码。')
         if bool(self.start) != bool(self.end) or (self.start and (self.start > self.end or (self.end-self.start).days > 366)):

@@ -18,7 +18,8 @@
 - 第10步：验收通过（模拟与本机自动验收）；官方Longbridge 5.2.0 SDK、缺口只读CLI、Massive REST、独立配置/凭证/能力状态、来源/时效/缓存标记及本机查询入口已实现。完整Python225/Node8/Electron15通过；本轮无凭证，三个真实验证均未执行/0业务查询。范围见PROVIDER-COVERAGE-step10.md，开发证据见EVIDENCE第26节，独立发布复验与 [PR #9](https://github.com/ydflow/research-trail/pull/9)交付见第27节。
 - 第11步：验收通过（模拟与本机自动实窗）；持久自选及七个证券视图接入Python，七视图各成功/缺失/失败案例、股票上下文/迟到响应/重启保持通过。完整Python254/Node8/Electron19通过，证据见EVIDENCE第28节及ACCEPTANCE-step11.md。开发轮无真实行情请求或提交/发布；独立发布轮复验及[PR #10](https://github.com/ydflow/research-trail/pull/10)交付记录见EVIDENCE第29节。
 - 第12步：验收通过（自造CSV、模拟/假SDK与本机实窗）；Python Decimal组合计算、CSV预览/非法与重复检查/事务确认/撤销、账户隔离、0008持久化及组合页面已实现。最终Python289/Node8/Electron22与契约/类型/构建/重复迁移通过，见ACCEPTANCE-step12.md及EVIDENCE第30节；真实账户未验证、用户亲自记录待填写。开发轮未提交/发布；本次独立发布复验通过，[PR #11](https://github.com/ydflow/research-trail/pull/11)及最终合并见EVIDENCE第31节和实际GitHub回执。
-- 第13—24步：未开始；没有用户具体指令不继续。
+- 第13步：验收通过（自造组合、固定行情/模拟协议及本机实窗）；Python风险与13项股票对比、分币种/期间/缺失处理、同源HTTP/Agent快照和结果组件已实现。开发334/8/26见第32节；独立发布审查修复舍入边界，修复后Python340/Node8/Electron26及契约/类型/构建/0008重复迁移和干净源码/CMD重启通过，见ACCEPTANCE-step13.md及EVIDENCE第33节；通过[PR #12](https://github.com/ydflow/research-trail/pull/12)交付，真实数据和用户亲自记录未验证，最终远程CI/合并以GitHub与回执为准。
+- 第14—24步：未开始；没有用户具体指令不继续。
 - 默认分支 `main`；第0/1步首次上传检查见EVIDENCE第7节，第2步发布检查见第9—10节，提交历史和远程状态以Git为准。
 - 状态取值：未开始 / 进行中 / 代码完成/待验收 / 验收通过 / 受阻。
 - 来源：固定 ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`，本地只读路径 `D:\folio\主分支和简历skill\folio-main`。
@@ -40,7 +41,7 @@
 | 10 | Longbridge、Massive 与只读账户适配 | 9 | 能力覆盖表；权限/缓存/延迟标识；真实失败不静默回退模拟 | 验收通过（模拟；真实未验证） |
 | 11 | 自选、概览、行情、K线、财报、新闻、市场状态 | 10 | 股票上下文正确，来源时间可见，缺指标为 —，视图故障案例 | 验收通过（模拟/本机自动） |
 | 12 | 组合 CSV 导入、现金/持仓和资产计算 | 11 | 预览、重复/非法检查、撤销；模拟账户隔离；多币种不直接加 | 验收通过（模拟/本机自动） |
-| 13 | 组合风险与 2—4 股票对比 | 12 | 确定性数值可手算，页面/Agent同源，空组合/缺指标可解释 | 未开始 |
+| 13 | 组合风险与 2—4 股票对比 | 12 | 确定性数值可手算，页面/Agent同源，空组合/缺指标可解释 | 验收通过（模拟/本机自动） |
 | 14 | 单一能力注册、技能目录、依赖与按需加载 | 13 | 工具/UI/技能同状态，启用禁用准确，拒绝路径越界 | 未开始 |
 | 15 | 8 种研究策略和结构化能力采集 | 14 | 默认并发 4、单项 20 秒；取消/部分失败；全失败不标成功 | 未开始 |
 | 16 | 结构报告、证据、导出、Research Diff | 15 | 数据包驱动；事实/分析/预测分开；证据可追；两报告真实差异 | 未开始 |
@@ -57,7 +58,7 @@
 
 ## 功能对照与来源索引
 
-以下相对路径都相对于 **只读参考 Folio**。研迹第1—6步健康、固定行情、持久化、规则Agent、运行生命周期及会话快照/事件恢复、第8步设置/凭证/假连接/诊断、第9步模型适配/受限工具循环及第10步数据/只读账户适配、第11步七个证券视图及第12步组合导入/计算已实现，其余业务未开始；参考源码存在仅能证明有可阅读的实现，不能证明本机运行或生产正确。
+以下相对路径都相对于 **只读参考 Folio**。研迹第1—6步健康、固定行情、持久化、规则Agent、运行生命周期及会话快照/事件恢复、第8步设置/凭证/假连接/诊断、第9步模型适配/受限工具循环及第10步数据/只读账户适配、第11步七个证券视图、第12步组合导入/计算及第13步风险/股票对比已实现，其余业务未开始；参考源码存在仅能证明有可阅读的实现，不能证明本机运行或生产正确。
 
 | 功能组 | 参考源码位置 | 研迹计划承担方 / 步骤 | 研迹实现 / 验证 |
 | --- | --- | --- | --- |
@@ -69,7 +70,7 @@
 | 设置、凭证、诊断 | `packages/ui/src/components/settings`；`packages/ui/src/components/profile/ProfileSecurityView.tsx` | Python 健康/系统凭证 + 页面，步骤8 | 五类独立配置/假健康、Windows系统凭证、资料和脱敏JSON导出已实现 / 自动验收通过；真实连接未验证 |
 | 行情/账户提供商 | `packages/shared/src/providers/router.ts`、`longbridge`、`massive` | Python SDK/只读CLI适配，步骤10 | 24提供商能力条目、SDK/缺口CLI/Massive已实现；模拟验收通过；真实未验证，见覆盖表 |
 | 组合导入与计算 | `packages/shared/src/portfolio-import/parsers.ts`；`packages/core/src/account.ts` | Python 校验/SQLite/计算，步骤12 | 已实现 / 模拟和本机自动验收通过；真实账户未验证 |
-| 风险与股票对比 | `packages/shared/src/portfolio-risk/service.ts`；`compare/service.ts` | Python 确定性计算，步骤13 | 未实现 / 未执行 |
+| 风险与股票对比 | `packages/shared/src/portfolio-risk/service.ts`；`compare/service.ts` | Python 确定性计算，步骤13 | 已实现 / 手算、模拟协议与本机实窗通过；真实数据未验证，见第13步覆盖表 |
 | 能力与技能 | `packages/shared/src/capabilities`；`packages/skill-hub/src/index.ts`；`skills` | Python 注册/读取 + 技能页，步骤14 | 未实现 / 未执行 |
 | 研究策略与采集 | `packages/core/src/strategy.ts`；`packages/shared/src/research/planner.ts`、`runner.ts` | Python 编排，步骤15 | 未实现 / 未执行 |
 | 研究报告与证据 | `packages/core/src/research.ts`；`packages/shared/src/research/agent-synth.ts`；`claim-verifier.ts` | Python 数据包/报告/证据，步骤16 | 未实现 / 未执行 |
@@ -101,7 +102,7 @@
 
 ## 本地操作和下一条提示词
 
-当前可通过根目录 `start-dev.cmd` 运行第1—6步业务、第8步设置、第9步模型适配和第10步提供商验收入口、第11步证券工作台与第12步组合工作台。统一检查为`check.cmd`，干净源码检查为`bun run verify:clean`；用户逐项手动记录、练习与回答待补。第8步PR #7已合并；第9步按用户独立授权通过 [PR #8](https://github.com/ydflow/research-trail/pull/8)交付，开发与发布证据见EVIDENCE第24—25节；最终合并状态以GitHub与发布回执为准，该发布轮未执行第10步；第10步开发模拟验收另见EVIDENCE第26节，发布复验及PR交付见第27节。下面保留第1步原始范围供历史对照，不是重复执行指令。
+当前可通过根目录 `start-dev.cmd` 运行第1—6步业务、第8步设置、第9步模型适配和第10步提供商验收入口、第11步证券工作台、第12步组合工作台与第13步风险/对比页面。统一检查为`check.cmd`，干净源码检查为`bun run verify:clean`；用户逐项手动记录、练习与回答待补。第8步PR #7已合并；第9步按用户独立授权通过 [PR #8](https://github.com/ydflow/research-trail/pull/8)交付，开发与发布证据见EVIDENCE第24—25节；最终合并状态以GitHub与发布回执为准，该发布轮未执行第10步；第10步开发模拟验收另见EVIDENCE第26节，发布复验及PR交付见第27节。下面保留第1步原始范围供历史对照，不是重复执行指令。
 
 ```text
 在D:\folio\research-trail执行第1步。先读取AGENTS.md、docs/ROADMAP.md、docs/EVIDENCE.md和已有文件。

@@ -111,7 +111,7 @@ def finish(client, sid, record):
 def test_multiround_returns_tool_data_and_shares_events_with_fake(setup):
     def model(body, n):
         assert body["model"] == "offline-test-model" and body["stream"] is False
-        assert {t["function"]["name"] for t in body["tools"]} == {"market_quote", "market_kline"}
+        assert {t["function"]["name"] for t in body["tools"]} == {"market_quote", "market_kline", "portfolio_risk", "stocks_compare"}
         assert all(t["function"]["parameters"]["additionalProperties"] is False for t in body["tools"])
         if n == 1:
             assert [m["role"] for m in body["messages"]] == ["system", "user"]
