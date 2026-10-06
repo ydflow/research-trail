@@ -8,7 +8,7 @@
 - 参考来源：ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`；本地无Git，不能保证逐文件无本地变化。
 - 新项目根：`D:\folio\research-trail`，当前有第1—6步业务、第7步验收脚本/离线CI文件、第8步设置/凭证/假连接/诊断。v0.1.0源码发布只包含第1—7步，第8步已通过PR #7交付，第9步实现模型适配/受限工具循环；发布轮一次真实模型工具验证通过（2次请求、1次工具），真实行情未接入。
 - 本次覆盖：入口、界面/客户端、模型与数据、持久化/事件、组合、技能、研究、监控、评测与打包的阅读路线。
-- C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；C06已展开第8步设置/凭证/假健康，C05已补第9步模型协议/工具循环；一次真实模型工具验证通过（模拟行情），第10步数据与只读账户适配及第11步证券工作台已展开，真实行情查询未执行，C07—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
+- C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；C06已展开第8步设置/凭证/假健康，C05已补第9步模型协议/工具循环；一次真实模型工具验证通过（模拟行情），第10步数据与只读账户适配及第11步证券工作台已展开，真实行情查询未执行，第12步C07已展开组合CSV与账户计算；C08—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
 - 前置知识：Python函数/类与异步、HTTP/JSON、TypeScript接口、React状态、进程与IPC、SQLite基本操作；按课程需要补，不要求先学完全部框架。
 
 主链先建立整体印象：
@@ -239,7 +239,7 @@ Windows系统存储不可用时拒绝保存，无明文后备。凭证命名空�
 
 ## C07：导入持仓怎样校验而不污染账户？
 
-状态：大纲。关联步骤12。
+状态：第12步已实现，模拟/假SDK与本机验收单独记录；用户练习待完成。关联步骤12。
 
 - 主链：CSV/粘贴输入 → 解析/标准化 → 草稿校验 → 确认导入 → 组合记录。
 - 必读1：`packages/shared/src/portfolio-import/parsers.ts` / `parseImportText`、`parseCsv`、`flagDuplicates`：输入文本到标准化行/重复标志。
@@ -248,7 +248,22 @@ Windows系统存储不可用时拒绝保存，无明文后备。凭证命名空�
 - 验证选读：`packages/shared/src/portfolio-import/parsers.test.ts`、`repository.test.ts`。
 - 暂缓：风险/对比由C08。
 
+### 研迹第12步真实调用链
+
+1. `apps/desktop/src/renderer/portfolio/PortfolioPanel.tsx`保留Folio组合卡、持仓和显式草稿确认的必要展示结构，不使用原TS业务内核。文件输入由页面读取UTF-8文本，不将文件路径交给main；Python才做领域校验和计算。
+2. `bridge.ts`/preload的portfolioList、createPortfolio、portfolioView、previewPortfolio、confirmPortfolio、undoPortfolio、refreshPortfolio七个命名操作，经main来源验证、UUID/大小检查和随机启动令牌转发到固定`/portfolios`接口。总桥50项，不暴露任意文件/URL。
+3. `portfolio_contracts.py`约束独立账户/组合ID、数据来源、十进制字符串和缺失值；`portfolio_csv.parse_csv`校验七列表头、记录类型、代码/币种/十进制/非法行/重复行。`fingerprint`对规范化内容排序，不因BOM、行序或2.0与2差异重复导入。
+4. `PortfolioService.preview`只保存有效草稿到有界内存，返回Python估值，不改变SQLite。整批非法则没有可确认draft_id。确认检查归属/期限/revision/重复，然后在`Database.write`的BEGIN IMMEDIATE事务里保存整个快照、前态和批次链接。
+5. `portfolio_calculate.calculate`以Decimal逐持仓算成本/市值/盈亏，再按币种归并；现金未知不会冒充0，缺一份价格则完整资产为—。输出全部计算值，React只显示字符串，LLM不参与数值计算。
+6. `PortfolioService.undo`只恢复最新导入的before_snapshot及previous_batch；revision继续递增，旧草稿失效。`0008_portfolios`新增三张本机表并保留旧会话/设置；真实余额/持仓仅内存，不入这三张表。CSV/运行库均被Git忽略。
+7. 真实只读刷新主动调用既有ProviderService的account.positions和account.assets，两个独立请求并发；无凭证/受限/失败不返回模拟数据。提供商报告净资产单列，SDK缺单价则保持缺失。页面key和generation让迟到的旧组合响应不能覆盖新账户。
+8. 模拟账户CSV导入后，账户性质仍“模拟”，数据来源变为“CSV快照”、市场时间为—；撤销至内置样例后恢复固定来源/时间。来源、账户性质和是否已保存不能混为一个标记。
+
+用[第12步清单](docs/ACCEPTANCE-step12.md)的2股样例手算340，再沿上述链核对预览/保存/重启/撤销。[Python案例](services/backend/tests/test_portfolio.py)和[实窗案例](tests/desktop.test.cjs)是本项目自造模拟证据，不代表真实账户或用户掌握。
+
 ## C08：风险和股票对比的数字如何产生？
+
+前置：第12步组合输入与确定性计算已在C07实现；本课仍为第13步大纲，本轮不执行。
 
 状态：大纲。关联步骤13。
 
