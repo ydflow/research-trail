@@ -1,7 +1,7 @@
 // Adapted from Folio FinanceWorkspace.tsx, SecurityHeader.tsx and Watchlist.tsx:
 // security context, view navigation and add/remove rows. Local Python APIs replace atoms/client.
 // https://github.com/helsome/folio; ZIP ba5dcdfd31b162f5edb8b908f7f099a560389326.
-// Source/scope declarations: docs/EVIDENCE.md §28. No portfolio/research views imported.
+// Source/scope declarations: docs/EVIDENCE.md §28/36. Step15 adds a contextual research entry.
 import { useEffect, useRef, useState } from 'react';
 import type { SecurityPage, SecurityQuery, SecurityView, WorkspaceState } from '../../workspace-types';
 import { ChartView, FinancialsView, MarketStatusView, NewsView, OverviewView, QuoteView, WatchlistView } from './SecurityViews';
@@ -9,7 +9,7 @@ import { ChartView, FinancialsView, MarketStatusView, NewsView, OverviewView, Qu
 const views: Record<SecurityView, string> = { watchlist: '自选列表', overview: '证券概览', quote: '行情', kline: 'K线', financials: '财务报表', news: '新闻', status: '市场状态' };
 const states = { ready: '数据就绪', missing: '缺失数据', partial: '部分数据缺失或失败', failed: '提供商失败' };
 
-export function SecurityWorkspace({ available }: { available: boolean }) {
+export function SecurityWorkspace({ available, onResearch }: { available: boolean; onResearch?: (symbol: string) => void }) {
   const [state, setState] = useState<WorkspaceState>();
   const [view, setView] = useState<SecurityView>('overview');
   const [provider, setProvider] = useState<SecurityQuery['provider']>('longbridge');
@@ -82,7 +82,9 @@ export function SecurityWorkspace({ available }: { available: boolean }) {
         {state?.entries.length === 0 ? <p>自选列表为空 · —</p> : null}
       </aside>
       <div className="security-content">
-        <header className="security-header"><strong data-testid="security-symbol">{state?.active_symbol ?? '—'}</strong><span> {state?.entries.find(r => r.symbol === state.active_symbol)?.name ?? '—'}</span></header>
+        <header className="security-header"><strong data-testid="security-symbol">{state?.active_symbol ?? '—'}</strong><span> {state?.entries.find(r => r.symbol === state.active_symbol)?.name ?? '—'}</span>
+          {onResearch && <button disabled={!available || !state?.active_symbol} onClick={() => state?.active_symbol && onResearch(state.active_symbol)}>采集此股票研究数据</button>}
+        </header>
         <nav className="security-tabs" aria-label="证券视图">{Object.entries(views).map(([id, label]) => <button key={id} aria-pressed={view === id} onClick={() => setView(id as SecurityView)}>{label}</button>)}</nav>
         {view === 'kline' ? <label>K线周期<select aria-label="证券K线周期" value={period} onChange={e => setPeriod(e.target.value as typeof period)}>{['1m','5m','15m','1h','1d','1w'].map(p => <option key={p}>{p}</option>)}</select></label> : null}
         {view === 'financials' ? <div className="security-toolbar"><label>报表类型<select aria-label="报表类型" value={kind} onChange={e => setKind(e.target.value as typeof kind)}><option value="ALL">全部</option><option value="IS">利润表</option><option value="BS">资产负债表</option><option value="CF">现金流量表</option></select></label><label>报表周期<select aria-label="报表周期" value={report} onChange={e => setReport(e.target.value as typeof report)}><option value="annual">年度</option><option value="interim">半年度</option><option value="quarter">季度</option></select></label></div> : null}

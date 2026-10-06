@@ -10,6 +10,13 @@ export interface BackendState {
   pythonVersion?: string;
 }
 export interface ResearchTrailBridge {
+  researchStrategies(): Promise<import('./research-types').ResearchStrategy[]>;
+  researchPlan(input: import('./research-types').ResearchInput): Promise<import('./research-types').ResearchPlan>;
+  researchRuns(): Promise<import('./research-types').ResearchSummary[]>;
+  startResearch(input: import('./research-types').ResearchInput): Promise<import('./research-types').ResearchRun>;
+  researchRun(id: string): Promise<import('./research-types').ResearchRun>;
+  cancelResearch(id: string): Promise<import('./research-types').ResearchRun>;
+  researchData(id: string, capability: string): Promise<import('./research-types').ResearchData>;
   capabilities(context: import('./skill-types').SkillContext): Promise<import('./skill-types').CapabilityState[]>;
   skills(context: import('./skill-types').SkillContext): Promise<import('./skill-types').SkillView[]>;
   setSkillEnabled(id: string, enabled: boolean, context: import('./skill-types').SkillContext): Promise<import('./skill-types').SkillView>;
