@@ -100,3 +100,19 @@ class ProfileRecord(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     display_name: Mapped[str] = mapped_column(String(40))
     research_style: Mapped[str] = mapped_column(String(20))
+
+
+class WatchlistRecord(Base):
+    __tablename__ = 'watchlist'
+    __table_args__ = (CheckConstraint('position >= 0'),)
+    symbol: Mapped[str] = mapped_column(String(20), primary_key=True)
+    name: Mapped[str] = mapped_column(String(80))
+    position: Mapped[int] = mapped_column(Integer)
+
+
+class WorkspaceRecord(Base):
+    __tablename__ = 'security_workspace'
+    __table_args__ = (CheckConstraint('id = 1'), CheckConstraint('revision >= 0'))
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    active_symbol: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    revision: Mapped[int] = mapped_column(Integer)

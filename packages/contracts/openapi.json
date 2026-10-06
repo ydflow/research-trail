@@ -669,6 +669,63 @@
         "title": "EventPage",
         "type": "object"
       },
+      "FinancialRow": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period"
+          },
+          "statement": {
+            "enum": [
+              "IS",
+              "BS",
+              "CF"
+            ],
+            "title": "Statement",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "statement",
+          "label"
+        ],
+        "title": "FinancialRow",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1076,6 +1133,115 @@
           "payload"
         ],
         "title": "MessageStartedEvent",
+        "type": "object"
+      },
+      "Metric": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "Metric",
+        "type": "object"
+      },
+      "News": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "News",
         "type": "object"
       },
       "PartialText": {
@@ -2062,6 +2228,291 @@
         "title": "RunStartedEvent",
         "type": "object"
       },
+      "SecurityBlock": {
+        "additionalProperties": false,
+        "properties": {
+          "bars": {
+            "items": {
+              "$ref": "#/components/schemas/Kline"
+            },
+            "title": "Bars",
+            "type": "array"
+          },
+          "capability": {
+            "title": "Capability",
+            "type": "string"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "financials": {
+            "items": {
+              "$ref": "#/components/schemas/FinancialRow"
+            },
+            "title": "Financials",
+            "type": "array"
+          },
+          "markets": {
+            "items": {
+              "$ref": "#/components/schemas/TradingStatus"
+            },
+            "title": "Markets",
+            "type": "array"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/Metric"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "news": {
+            "items": {
+              "$ref": "#/components/schemas/News"
+            },
+            "title": "News",
+            "type": "array"
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "missing",
+              "failed",
+              "restricted",
+              "unsupported",
+              "unconfigured",
+              "disabled",
+              "timed_out",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "capability",
+          "status"
+        ],
+        "title": "SecurityBlock",
+        "type": "object"
+      },
+      "SecurityPage": {
+        "additionalProperties": false,
+        "properties": {
+          "blocks": {
+            "items": {
+              "$ref": "#/components/schemas/SecurityBlock"
+            },
+            "title": "Blocks",
+            "type": "array"
+          },
+          "mode": {
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "longbridge",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "requested_at": {
+            "format": "date-time",
+            "title": "Requested At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "missing",
+              "partial",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          },
+          "view": {
+            "enum": [
+              "watchlist",
+              "overview",
+              "quote",
+              "kline",
+              "financials",
+              "news",
+              "status"
+            ],
+            "title": "View",
+            "type": "string"
+          }
+        },
+        "required": [
+          "view",
+          "symbol",
+          "provider",
+          "mode",
+          "status",
+          "requested_at",
+          "blocks"
+        ],
+        "title": "SecurityPage",
+        "type": "object"
+      },
+      "SecurityQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "default": "ALL",
+            "enum": [
+              "ALL",
+              "IS",
+              "BS",
+              "CF"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "mode": {
+            "default": "simulated",
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "offset": {
+            "default": 0,
+            "maximum": 16,
+            "minimum": 0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "period": {
+            "default": "1d",
+            "enum": [
+              "1m",
+              "5m",
+              "15m",
+              "1h",
+              "1d",
+              "1w"
+            ],
+            "title": "Period",
+            "type": "string"
+          },
+          "provider": {
+            "default": "longbridge",
+            "enum": [
+              "longbridge",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "report": {
+            "default": "annual",
+            "enum": [
+              "annual",
+              "interim",
+              "quarter"
+            ],
+            "title": "Report",
+            "type": "string"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z0-9]{1,6}\\.(US|HK|SG|SH|SZ|HAS)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          },
+          "view": {
+            "enum": [
+              "watchlist",
+              "overview",
+              "quote",
+              "kline",
+              "financials",
+              "news",
+              "status"
+            ],
+            "title": "View",
+            "type": "string"
+          }
+        },
+        "required": [
+          "view"
+        ],
+        "title": "SecurityQuery",
+        "type": "object"
+      },
       "SessionDTO": {
         "additionalProperties": false,
         "properties": {
@@ -2303,6 +2754,21 @@
           "detail"
         ],
         "title": "StatusPayload",
+        "type": "object"
+      },
+      "SymbolInput": {
+        "additionalProperties": false,
+        "properties": {
+          "symbol": {
+            "pattern": "^[A-Z0-9]{1,6}\\.(US|HK|SG|SH|SZ|HAS)$",
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "title": "SymbolInput",
         "type": "object"
       },
       "TextDeltaEvent": {
@@ -2595,6 +3061,43 @@
         "title": "ToolSuccess",
         "type": "object"
       },
+      "TradingStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "market": {
+            "title": "Market",
+            "type": "string"
+          },
+          "market_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Time"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "required": [
+          "market"
+        ],
+        "title": "TradingStatus",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -2633,6 +3136,60 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "WatchEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "symbol": {
+            "pattern": "^[A-Z0-9]{1,6}\\.(US|HK|SG|SH|SZ|HAS)$",
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "name"
+        ],
+        "title": "WatchEntry",
+        "type": "object"
+      },
+      "WorkspaceState": {
+        "additionalProperties": false,
+        "properties": {
+          "active_symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Symbol"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/WatchEntry"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "revision",
+          "active_symbol",
+          "entries"
+        ],
+        "title": "WorkspaceState",
         "type": "object"
       }
     }
@@ -4559,6 +5116,276 @@
           }
         },
         "summary": "Provider Credential"
+      }
+    },
+    "/workspace": {
+      "get": {
+        "operationId": "workspace_state_workspace_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Workspace State"
+      }
+    },
+    "/workspace/page": {
+      "post": {
+        "operationId": "security_page_workspace_page_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SecurityQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Security Page"
+      }
+    },
+    "/workspace/selection": {
+      "put": {
+        "operationId": "select_security_workspace_selection_put",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SymbolInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Select Security"
+      }
+    },
+    "/workspace/watchlist": {
+      "post": {
+        "operationId": "add_watch_workspace_watchlist_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SymbolInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Watch"
+      }
+    },
+    "/workspace/watchlist/remove": {
+      "post": {
+        "operationId": "remove_watch_workspace_watchlist_remove_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SymbolInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Watch"
       }
     }
   }

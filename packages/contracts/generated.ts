@@ -400,6 +400,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/workspace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Workspace State */
+        get: operations["workspace_state_workspace_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspace/page": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Security Page */
+        post: operations["security_page_workspace_page_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspace/selection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Select Security */
+        put: operations["select_security_workspace_selection_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspace/watchlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Watch */
+        post: operations["add_watch_workspace_watchlist_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspace/watchlist/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove Watch */
+        post: operations["remove_watch_workspace_watchlist_remove_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -719,6 +804,22 @@ export interface components {
             /** Last Sequence */
             last_sequence: number;
         };
+        /** FinancialRow */
+        FinancialRow: {
+            /** Currency */
+            currency?: string | null;
+            /** Label */
+            label: string;
+            /** Period */
+            period?: string | null;
+            /**
+             * Statement
+             * @enum {string}
+             */
+            statement: "IS" | "BS" | "CF";
+            /** Value */
+            value?: number | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -939,6 +1040,30 @@ export interface components {
              * @enum {string}
              */
             type: "message_started";
+        };
+        /** Metric */
+        Metric: {
+            /** Label */
+            label: string;
+            /** Unit */
+            unit?: string | null;
+            /** Value */
+            value?: number | string | null;
+        };
+        /** News */
+        News: {
+            /** Id */
+            id: string;
+            /** Published At */
+            published_at?: string | null;
+            /** Source */
+            source?: string | null;
+            /** Summary */
+            summary?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Url */
+            url?: string | null;
         };
         /** PartialText */
         PartialText: {
@@ -1390,6 +1515,112 @@ export interface components {
              */
             type: "run_started";
         };
+        /** SecurityBlock */
+        SecurityBlock: {
+            /** Bars */
+            bars?: components["schemas"]["Kline"][];
+            /** Capability */
+            capability: string;
+            /** Code */
+            code?: string | null;
+            /** Financials */
+            financials?: components["schemas"]["FinancialRow"][];
+            /** Markets */
+            markets?: components["schemas"]["TradingStatus"][];
+            /** Message */
+            message?: string | null;
+            /** Metrics */
+            metrics?: components["schemas"]["Metric"][];
+            /** News */
+            news?: components["schemas"]["News"][];
+            provenance?: components["schemas"]["Provenance"] | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "missing" | "failed" | "restricted" | "unsupported" | "unconfigured" | "disabled" | "timed_out" | "cancelled";
+            /** Symbol */
+            symbol?: string | null;
+            /** Title */
+            title: string;
+        };
+        /** SecurityPage */
+        SecurityPage: {
+            /** Blocks */
+            blocks: components["schemas"]["SecurityBlock"][];
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "longbridge" | "massive";
+            /**
+             * Requested At
+             * Format: date-time
+             */
+            requested_at: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "missing" | "partial" | "failed";
+            /** Symbol */
+            symbol: string | null;
+            /**
+             * View
+             * @enum {string}
+             */
+            view: "watchlist" | "overview" | "quote" | "kline" | "financials" | "news" | "status";
+        };
+        /** SecurityQuery */
+        SecurityQuery: {
+            /**
+             * Kind
+             * @default ALL
+             * @enum {string}
+             */
+            kind: "ALL" | "IS" | "BS" | "CF";
+            /**
+             * Mode
+             * @default simulated
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /**
+             * Offset
+             * @default 0
+             */
+            offset: number;
+            /**
+             * Period
+             * @default 1d
+             * @enum {string}
+             */
+            period: "1m" | "5m" | "15m" | "1h" | "1d" | "1w";
+            /**
+             * Provider
+             * @default longbridge
+             * @enum {string}
+             */
+            provider: "longbridge" | "massive";
+            /**
+             * Report
+             * @default annual
+             * @enum {string}
+             */
+            report: "annual" | "interim" | "quarter";
+            /** Symbol */
+            symbol?: string | null;
+            /**
+             * View
+             * @enum {string}
+             */
+            view: "watchlist" | "overview" | "quote" | "kline" | "financials" | "news" | "status";
+        };
         /** SessionDTO */
         SessionDTO: {
             /**
@@ -1481,6 +1712,11 @@ export interface components {
              * @constant
              */
             phase: "working";
+        };
+        /** SymbolInput */
+        SymbolInput: {
+            /** Symbol */
+            symbol: string;
         };
         /** TextDeltaEvent */
         TextDeltaEvent: {
@@ -1616,6 +1852,15 @@ export interface components {
              */
             ok: true;
         };
+        /** TradingStatus */
+        TradingStatus: {
+            /** Market */
+            market: string;
+            /** Market Time */
+            market_time?: string | null;
+            /** Status */
+            status?: string | null;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -1628,6 +1873,22 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** WatchEntry */
+        WatchEntry: {
+            /** Name */
+            name: string;
+            /** Symbol */
+            symbol: string;
+        };
+        /** WorkspaceState */
+        WorkspaceState: {
+            /** Active Symbol */
+            active_symbol: string | null;
+            /** Entries */
+            entries: components["schemas"]["WatchEntry"][];
+            /** Revision */
+            revision: number;
         };
     };
     responses: never;
@@ -2709,6 +2970,177 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProviderProfile"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    workspace_state_workspace_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    security_page_workspace_page_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SecurityQuery"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecurityPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    select_security_workspace_selection_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SymbolInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_watch_workspace_watchlist_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SymbolInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_watch_workspace_watchlist_remove_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SymbolInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceState"];
                 };
             };
             /** @description Validation Error */
