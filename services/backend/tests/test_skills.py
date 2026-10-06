@@ -103,6 +103,42 @@ def test_junction_cannot_escape_catalog(api,tmp_path):
 def test_parser_rejects_invalid_frontmatter(text):
     with pytest.raises(SkillError): parse_skill(text)
 
+@pytest.mark.parametrize('block',[
+    '    - options.chain',
+    '  - market.quote\n    - options.chain',
+    ''])
+def test_malformed_dependency_block_cannot_claim_ready(api, block):
+    c,app,root=api
+    (root/'test-skill/SKILL.md').write_text(
+        '---\nname: test-skill\ndescription: x\nrequired-capabilities:\n'+block+'\n---',encoding='utf-8')
+    entry=c.get('/skills').json()[0]
+    assert (entry['status'],entry['code'])==('invalid','INVALID_SKILL')
+    model=Mock(); model.label='test'
+    runner=AgentRunner(model,app.state.manager.runner.tools)
+    assert 'invalid / INVALID_SKILL' in runner.run('技能 test-skill 状态',lambda *a:None).answer
+    assert runner.run('读取技能 test-skill SKILL.md',lambda *a:None).status=='failed'
+    assert model.complete.call_count==0
+
+def test_valid_dependency_block_keeps_missing_requirement(api):
+    c,_,root=api
+    (root/'test-skill/SKILL.md').write_text(
+        '---\nname: test-skill\ndescription: x\nrequired-capabilities:\n  - market.quote\n\n  - options.chain\n---',encoding='utf-8')
+    entry=c.get('/skills').json()[0]
+    assert entry['status']=='unavailable'
+    assert entry['required'][1]['code']=='NOT_IMPLEMENTED'
+
+def test_agent_status_is_bounded_without_losing_unavailable_state(api):
+    _,app,root=api
+    dependencies=','.join('options.'+'a'*60+chr(97+i//26)+chr(97+i%26) for i in range(40))
+    skill(root,required=dependencies,optional=dependencies)
+    model=Mock(); model.label='test'
+    answer=AgentRunner(model,app.state.manager.runner.tools).run('技能 test-skill 状态',lambda *a:None).answer
+    assert len(answer)<=4000
+    assert 'unavailable / REQUIRED_CAPABILITY_MISSING' in answer
+    assert '截断' in answer
+    assert '不证明真实数据' in answer
+    assert model.complete.call_count==0
+
 def test_missing_frontmatter_and_undeclared_dependencies(api):
     c,_,root=api
     p=root/'test-skill/SKILL.md'; p.write_text('---\nname: test-skill\ndescription: x\n---')

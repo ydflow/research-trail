@@ -80,8 +80,9 @@ class AgentRunner:
                 if state:
                     entry = catalog.get(state[1], 'real' if state[2] else 'simulated')
                     detail = ', '.join(f'{c.id}: {c.code}' for c in [*entry.required, *entry.optional])
-                    return AgentOutcome(f'技能 {entry.id}: {entry.status} / {entry.code}（{entry.mode}）。\n{detail}\n缺少资料：' +
-                        ', '.join(entry.missing_resources) + '。就绪仅表示声明依赖可用，不证明真实数据、指标或策略完成。', 'completed')
+                    answer = f'技能 {entry.id}: {entry.status} / {entry.code}（{entry.mode}）。\n{detail}\n缺少资料：' + ', '.join(entry.missing_resources)
+                    if len(answer) > 3800: answer = answer[:3800] + '\n[状态明细截断；完整列表请在技能页查看]'
+                    return AgentOutcome(answer + '。就绪仅表示声明依赖可用，不证明真实数据、指标或策略完成。', 'completed')
                 mode = 'real' if '真实' in text else 'simulated'
                 if capability:
                     cap = self.tools.capabilities.state(capability[1], 'real' if capability[2] else 'simulated')

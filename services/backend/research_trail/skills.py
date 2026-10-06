@@ -96,8 +96,12 @@ def parse_skill(markdown):
                 result = [s.strip().strip('\"\'') for s in value[1:-1].split(',') if s.strip()]
             else:
                 result = []
-                while i < end and lines[i].startswith('  - '):
-                    result.append(lines[i][4:].strip().strip('\"\'')); i += 1
+                while i < end and (not lines[i].strip() or lines[i][0].isspace()):
+                    item = lines[i]; i += 1
+                    if not item.strip(): continue
+                    if not item.startswith('  - '): raise SkillError('INVALID_SKILL')
+                    result.append(item[4:].strip().strip('\"\''))
+                if not result: raise SkillError('INVALID_SKILL')  # explicit [] declares no dependencies
             if len(result) > 40 or len(set(result)) != len(result) or any(not CAP.fullmatch(c) for c in result):
                 raise SkillError('INVALID_SKILL')
             fields[key] = result
