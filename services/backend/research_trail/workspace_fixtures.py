@@ -4,6 +4,10 @@ from .provider_service import authored_data
 
 def fixture_executor(case):
     def execute(query):
+        if case=='research-partial' and query.capability=='company.financials': raise ProviderFault('NETWORK_ERROR',retryable=True)
+        if case=='research-delayed' and query.capability=='company.profile':
+            import time
+            time.sleep(2)
         if case=='delayed' and query.symbol=='AAPL.US' and query.capability=='company.profile':
             import time
             time.sleep(0.8)

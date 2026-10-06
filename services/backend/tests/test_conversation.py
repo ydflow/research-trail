@@ -114,7 +114,7 @@ def test_repeat_migration_and_parallel_runs(tmp_path):
         for run in runs:
             assert [e.sequence for e in store.events(sid, run.id).events] == list(range(1, 8))
         with database.engine.connect() as connection:
-            assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0009_skills"
+            assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0010_research"
             assert connection.exec_driver_sql("PRAGMA foreign_key_check").all() == []
     finally:
         database.close()

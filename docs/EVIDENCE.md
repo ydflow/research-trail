@@ -990,3 +990,132 @@ Agent显式技能/能力状态和资料读取由Python响应，不调用模型�
 - 发布文档提交记录来源、验收和边界；自身SHA与最终PR/普通merge由实际Git和外部PROJECT_STATE回执确认，不循环写自身SHA。
 
 尚未验证真实Longbridge/Massive/CLI数据、账户权限/字段映射、真实模型技能/风险/对比、实际指标和研究策略执行、任意自定义技能质量、长期负载、其他OS/安装包、用户亲自操作/练习。远程CI和合并必须按最终head的实际GitHub检查确认，不能由本机验收代替。第15—24步未实施；不新增标签、Release或定时付费评测。
+
+## 36. 第15步Python研究策略与结构化采集（2026-10-07）
+
+用户当前授权仅第15步，完成交付后停止。起点D:\folio\research-trail、main/HEAD
+67fb0c2628ec2a8c2172aac582dbeff016e8d627（第14步PR #13合并），工作区及index为空，
+origin为https://github.com/ydflow/research-trail.git。先读取项目规则、路线、第34—35节及
+现有注册表、技能、提供商、存储、股票入口和白名单桥。本轮没有GitHub写入、提交、推送或发布，
+不执行第16步。日期按用户客户端Asia/Shanghai记录，业务时间仍由实际查询/存储产生，不修改时钟。
+
+### 来源与真实改动
+
+Python新实现ResearchService、ResearchStore及契约/迁移0010_research；引用应用同一
+CapabilityRegistry、SkillCatalog、ProviderService。采集直接调用现有ProviderService.query，
+不复制SDK/CLI/HTTP/fixture或Agent数据访问代码，不运行原TS内核。
+固定Folio ba5dcdfd31b162f5edb8b908f7f099a560389326的presets.ts八种策略技能/能力列表及顺序
+逐项核对一致：全面16、价值4、成长3、技术面5、财报3、事件驱动4、风险复核4、稳健收益4。
+策略/研究planner与runner供编排参考，ResearchPanel、StrategyPicker及其中进度/能力列表作必要UI适配，
+中文名称来自zh-CN/research.ts；不导入原合成器、提示、状态atoms或业务service。
+七份参考文件SHA256、适配目标和完整映射见[SOURCES-step15](SOURCES-step15.json)。
+
+第14步技能及许可30份原字节保持一致，未扩大技能导入范围。固定映射引用的13个技能仅2项已导入，
+其余11项为missing/SKILL_NOT_IMPORTED；既有技能禁用、依赖和上游断链继续如实显示，未伪装ready。
+本步选择技能目录引用并保存状态，不执行或读取技能正文；独立可用数据能力仍能采集。
+禁用技能不会删掉其他页面共享的数据能力，采集完成不证明技能指标、投资评分或分析报告实现。
+原作者复用授权确认沿第9—11节，未独立取得授权原文；skills/LICENSE局部MIT及版权声明保留，
+不把全仓声明为MIT。本轮没有新的原样技能资源导入或第三方依赖。
+
+### 执行与存储证据
+
+默认最多4项物理调用，API允许1—4，公开单项限时固定20秒；每个后端/数据库只接受一个活动研究。
+计划保存股票、模式、提供商、策略、配置revision、技能/能力状态及ReadQuery。分发重查注册表和revision；
+配置变化后的未启动项固定CONFIG_CHANGED，不将新配置混入计划。公共查询增加可选请求停止标记及预算，
+原调用者行为保持；SDK/CLI/HTTP沿原适配器，单次真实运输预算至多20秒，配置原值不改。
+取消只停止本研究，超时/关闭/重启和迟到返回有明确状态。非协作调用继续占槽，不无限替代；
+已超时且占满槽位经过1秒清理宽限，排队项EXECUTOR_DRAINING，旧调用退出前拒绝新任务。
+没有声称任意线程或真实HTTP调用瞬间退出。
+
+research_runs原子保存计划，research_steps逐项保存执行状态/错误码/时间及成功ProviderSuccess。
+仅协调器写研究结果，终态不覆盖；3成功/1失败为partial，零成功failed，全部成功collected；
+取消为cancelled，关闭/重启未完成为interrupted，已有成功项不丢失。重新读取历史及成功数据零查询，
+也不创建Agent run。元数据与按项数据读取分开，列表最近100项，沿公共256KiB结果限制。
+取消/超时停止标记防止迟到返回更新公共健康；不设置ProviderService全局停止来影响其他页面。
+启动清理未完成状态不等于续跑，没有检查点恢复、报告/证据综合、Research Diff、导出或调度。
+
+研究页由Python提供策略列表，股票上下文来自现有证券入口；计划预览不写库、不查数据；
+最多4项采集进度、逐项错误、取消、已保存任务和按需结果显示已接入。新增7项命名IPC，共63项；
+参数白名单、股票/UUID/能力路径限制、后端令牌及发送者校验保留；无任意文件或URL接口。
+前端OpenAPI类型生成，不维护第二份策略业务映射，视图清理和generation防迟到覆盖。
+
+### 验收与修复记录
+
+新增Python27项、Electron5项。首轮研究测试17通过/8失败：market.sentiment和market.status是地区查询，
+原ReadQuery不接受股票参数；修正计划参数适配为symbol=None，未放宽查询契约或改fixture。
+修正后当时25项研究测试全通过；再补2项假SDK预算/取消健康回归，最终全套包含27项新用例。
+另一次从根目录手动pytest为401通过/1失败：原SDK子进程用受限环境，不继承该命令临时PYTHONPATH，
+根cwd不能导入后端模块，导致既有缺凭证测试返回PROVIDER_ERROR。改用项目check.cmd既定backend cwd
+与离线护栏后402项全通过；未改子进程环境隔离或降低测试断言。
+
+Python覆盖8策略、对象同一、预览零执行、技能缺失/禁用、Massive缺能力与真实未配置、部分/全失败、
+1/4实测并发、配置变化、单项/全部超时、物理槽位/新任务拒绝、取消/关闭/重启、鉴权与非法输入、
+假SDK预算及公共健康隔离。超时缩短仅应用测试注入，产品不能传timeout_seconds。
+Electron实际后端验证MSFT股票入口、16→4计划与8选项、保存来源及同库重启无新执行、3/1与0/4故障，
+实际延迟fixture调用取消后3项成功保留、迟到结果不写回及槽位释放后可新建任务。
+只有迟到计划分支通过命名IPC延迟实际Python计划响应验证页面竞争，不称为真实提供商证据。
+离线故障fixture扩展仅OFFLINE=1启用，不增加产品场景切换。
+
+最终check.cmd退出0：Python402（原375+新增27）、Node8、真实Electron33（原28+新增5），无跳过；
+OpenAPI/生成契约一致、类型、main/preload/renderer构建、隔离0010重复upgrade/current/check及
+No new upgrade operations通过。日志Temp/research-trail-step15-acceptance.log，迁移目录
+research-trail-verify-eSu0N2。此前Step15定向5项实窗也通过。仅既有TestClient弃用与Vite主chunk提示，
+没有更改依赖、锁文件或CI工作流。五份截图仅Temp/research-trail-step15-qa，1100×800/600×680均已查看；
+无横向溢出、相关pageerror或错误overlay，失败与取消不显示采集成功。
+
+最终来源/隐私/文件审查：207份UTF-8可审文件、85个可访问本地Markdown链接、8个受保护路径忽略探针通过；
+固定八映射及七源SHA256、30份技能原字节及Git blob一致，
+四处已登记上游断链和十处上游行尾空格保留；自写/适配文件无新增行尾空格、秘密签名或禁传产物。
+运行库、日志、缓存、账户、凭证及截图仍忽略，未入index。范围/CMD操作见
+[ACCEPTANCE-step15](ACCEPTANCE-step15.md)，真实链和可撤销练习/三题见tutorial/practice C10。
+用户回答保留，操作/学习未代填；HEAD保持起点。本轮未执行真实模型/行情/账户/权限或真实超时取消、
+长期负载、其他OS、源码新装、远程CI、安装包及用户亲自操作；第16—24步未开始，完成后停止。
+
+## 37. 第15步发布复验与公开范围（2026-10-07）
+
+用户独立授权仅发布已验收第15步，不实现第16步。读取规则、路线、第36节、验收清单及实际37份差异。
+起点main 67fb0c2628ec2a8c2172aac582dbeff016e8d627。实时核验gh账号ydflow、公开非fork非归档
+ydflow/research-trail、默认main及origin fetch/push均https://github.com/ydflow/research-trail.git；
+远程main同基线，无同名分支或开放PR，不创建重复仓库、切账号、删除、强推或绕过保护。
+
+公开范围按第9—11节原作者复用授权确认及本轮明确上传授权；未独立取得授权原文，不将全仓标MIT。
+固定Folio ba5dcdfd七份参考源SHA256、八策略技能/能力ID及顺序再次核对一致，适配目标存在。
+原技能29份Markdown及LICENSE、版权声明与30份SHA256/Git blob保持一致；本轮未新增原样资源导入。
+207份UTF-8可审文件、85个本地Markdown链接、8个受保护忽略探针通过，秘密签名/禁传产物无发现；
+4个上游断链和10处原行尾空格保留。待上传仅本步源码、生成契约、测试、来源/验收/课程文档。
+密钥、真实账户/CSV、运行库/WAL、日志、缓存/依赖/构建及截图未纳入提交。
+
+完整check.cmd退出0：Python402、Node8、实际Electron33，无跳过；OpenAPI/生成契约、类型、
+main/preload/renderer构建及隔离0010_research重复upgrade/current/check和No new upgrade operations通过。
+日志Temp/research-trail-step15-publication-check.log，迁移目录research-trail-verify-aLE5Th。
+新增5项Step15均通过，旧功能回归保留。暂存检查发现两个新增Python文件末尾多余空行，规范后完整
+本步提交差异git diff --check通过，bun run check再通过；业务逻辑未改，没有新增失败业务用例或单独修复提交。
+既有市场温度/状态查询参数修正在第36节如实记录，包含于Python新实现，不伪造中间故障提交。
+
+隔离源码bun run verify:clean退出0：207份文本导出至Temp/research-trail-clean-HavoCF/clean source，
+无Git/依赖/构建或运行资料；按锁文件安装71项前端/29项Python及Electron准备。同一完整402/8/33、
+契约/类型/构建/0010检查全部通过，无跳过，迁移目录research-trail-verify-mblhIt。实际根CMD
+股票→会话→quote→取消→关闭重启→历史恢复通过，同一保存快照、无新运行、自有进程退出；
+证据research-trail-cmd-qa-1uWVKi，日志Temp/research-trail-step15-publication-clean.log。
+150份运行文件中148份与导出逐字节一致；另两份仅上述EOF空行规范，去除末尾换行后字节及Python
+AST一致。导出后其他变动仅发布文档，不将缓存可复用的源码新装称为另一台空白机器或安装包验收。
+本轮没有业务修复、依赖或工作流变更；既有TestClient弃用和Vite主chunk提示保留。
+发布截图只在Temp/research-trail-step15-publication-qa及clean-publication-qa，宽窄布局与失败状态已查看，
+无横向溢出、错误overlay或相关pageerror，0成功/4失败明确采集失败。
+
+真实分类提交（当前ydflow/noreply、正常提交时间）：
+
+- 17b89c267f8e0e746e37682b558a5ccfcec2a0fc：固定八种策略在Python中的必要适配、契约与来源清单，不称为原样上游导入或上游作者提交。
+- 407051b13b4179d682849d550657ccc2b9b32217：Python有界执行器、公共查询取消/预算适配、存储/API/迁移、生成契约与27项测试；旧迁移测试仅更新最新版本预期。
+- 9b46a4b765a2206cb6637565c109f705f2d03d75：固定Folio研究入口/选择/进度的必要桌面适配、白名单桥与5项实窗回归，不导入TS业务内核。
+- 发布文档记录开发/复验、来源、格式修正及未验证边界；自身SHA与PR/merge由实际Git及最终回执确认，不循环引用自身SHA。
+
+仅推送feat/step-15-research并创建对应PR；每次GitHub写入前再次核验账号、仓库和远程，最终head的
+全部远程检查通过且没有未解决阻塞才普通merge并同步main，保留提交及功能分支。远程CI与合并须由
+实际GitHub检查及发布回执确认，本机验收不能代替。原v0.1.0标签object仍
+3dd216557cdc81ac8fc35b14e0585dc43731be86、Release非draft/非prerelease且assets0；不新增标签、
+Release或定时付费评测。
+
+尚未验证真实Longbridge/Massive/CLI数据、账户权限与字段、真实超时取消/模型、完整技能分析、长期负载、
+其他OS、另一台干净机器、安装包及用户亲自操作/练习。缺11项技能、非协作线程槽位与采集不等于报告的
+边界沿验收清单保留。第16—24步未实施，完成本步发布后停止。

@@ -307,19 +307,33 @@ Windows系统存储不可用时拒绝保存，无明文后备。凭证命名空�
 6. 点击资料→skills:resource→POST /skills/{id}/resource→SkillCatalog.read；重新检查启用/依赖/资料声明，拒绝../、绝对路径、ADS、链接/联接；Windows还验证打开后的实际文件句柄路径。只读UTF-8、64KiB上限，不执行文本或访问其链接。迟到结果不能写入新视图。
 7. Agent沿同一个tools.skills查询。输入“技能 longbridge-technical 状态”“能力 options.chain 状态”或“读取技能 longbridge-technical references/technical.md”由Python直接响应；加入“真实状态”或“读取真实技能”则检查真实依赖。不可用资料拒绝且不发模型请求。普通模型调用收到当前声明状态，四个原只读工具由注册表筛选/校验。
 
-读链：services/backend/research_trail/capabilities.py → skills.py → app.py/agent.py → apps/desktop/src/renderer/skills/SkillsPanel.tsx。完整范围和边界见[第14步验收清单](docs/ACCEPTANCE-step14.md)。就绪表示声明依赖可调用，不表示真实服务、技术指标或研究策略已完成；第15步仍未开始。
+读链：services/backend/research_trail/capabilities.py → skills.py → app.py/agent.py → apps/desktop/src/renderer/skills/SkillsPanel.tsx。完整范围和边界见[第14步验收清单](docs/ACCEPTANCE-step14.md)。就绪表示声明依赖可调用，不表示真实服务、技术指标或研究策略已完成；第15步仅实现数据采集（见C10），不执行技能指标或报告。
 
 
 ## C10：研究策略怎样驱动有界数据采集？
 
-状态：大纲。关联步骤15。
+状态：已按第15步真实实现展开；本机自动验收通过，用户学习待填写。
 
-- 主链：选标的/策略 → planForStrategy → 构建能力输入 → ResearchRunner采集 → outcomes/部分失败。
-- 必读1：`packages/core/src/strategy.ts` / `STRATEGY_IDS`，`packages/shared/src/research/planner.ts` / `planForStrategy`、`buildCapabilityInput`：策略到能力计划。
-- 必读2：`packages/shared/src/research/runner.ts` / `ResearchRunner.run`：异步采集、取消、结果和缺口。
-- 必读3：`packages/core/src/research.ts` / `ResearchRunSummary`：界面消费的状态，追service中启动和存储绑定。
-- 验证选读：`packages/shared/src/research/planner.test.ts`、`runner.test.ts`。
-- 暂缓：报告和恢复由C11，筛选任务不是研究策略，由C13。
+场景：证券工作台选MSFT.US，点击“采集此股票研究数据”，由全面16项切为价值4项。
+ResearchPanel从Python读取8种策略；只读预览不创建任务、不查行情。开始后页面接收已保存任务，
+轮询元数据并显示RunProgressCard，结果按能力点击读取，不让LLM编报告。
+
+真实链：SecurityWorkspace入口 → ResearchPanel/StrategyPicker → preload.startResearch →
+main BackendClient.startResearch → POST /research/runs → ResearchService.start/plan →
+同一CapabilityRegistry.state与SkillCatalog.list → ResearchStore.begin原子保存计划 →
+execute/advance最多4项 → ProviderService.query及已有适配器 → ResearchStore.step/finish →
+SQLite研究记录 → researchRun/researchData → 页面显示已保存状态和来源。
+
+- 必读1：services/backend/research_trail/research_strategies.py、research_contracts.py、research.py：固定映射、默认4/20、技能目录引用、分发时状态/revision重查；前端没有另一份策略映射。
+- 必读2：provider_service.py的query：请求专属停止标记与服务停止共同检查，沿既有SDK/CLI/HTTP数据访问；禁用技能不会删掉其他页面的共享数据能力。
+- 必读3：research_store.py、models.py和0010_research.py：逐项状态/结果、原子终态、部分成功与零成功，以及关闭/重启中断后保留成功数据。
+- 界面：renderer/research/ResearchPanel.tsx、StrategyPicker.tsx、RunProgressCard.tsx：预览防迟到覆盖、取消、保存任务和按需数据读取；元数据不携带大结果。
+- 验证：tests/test_research.py及tests/desktop.test.cjs的Step15案例；固定源版本及SHA见[SOURCES-step15](docs/SOURCES-step15.json)，范围见[验收清单](docs/ACCEPTANCE-step15.md)。
+
+超时不是任意第三方线程已瞬间退出的证明；迟到调用继续占物理槽位，清理期结束时排队项明确失败，
+旧调用退出前拒绝新任务。只有协调器写研究记录，取消和终态保护阻止迟到数据复活任务。
+技能正文未执行、缺11项基线技能仍明确missing；这不阻止独立可用数据能力的只读采集。
+报告与显式续跑由后续步骤，本步未实施。
 
 ## C11：证据报告怎样生成、比较并恢复？
 

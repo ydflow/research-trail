@@ -209,6 +209,27 @@ export class BackendManager extends EventEmitter {
   }
   connections() { return this.business<import('../settings-types').ConnectionView[]>('/settings/connections'); }
   workspaceState() { return this.business<import('../workspace-types').WorkspaceState>('/workspace'); }
+  private researchInput(value: unknown): import('../research-types').ResearchInput {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('采集输入无效。');
+    const v = value as Record<string, unknown>;
+    if (Object.keys(v).some(k => !['symbol', 'strategy', 'mode', 'provider', 'concurrency'].includes(k))) throw new Error('采集字段无效。');
+    const input = { strategy: 'comprehensive', mode: 'simulated', provider: 'longbridge', concurrency: 4, ...v };
+    if (typeof v.symbol !== 'string' || !/^[A-Z0-9]{1,6}\.(US|HK|SG|SH|SZ|HAS)$/.test(v.symbol) ||
+        typeof input.strategy !== 'string' || input.strategy.length > 40 || !/^[a-z]+(?:-[a-z]+)*$/.test(input.strategy) ||
+        !['simulated', 'real'].includes(input.mode as string) || !['longbridge', 'massive'].includes(input.provider as string) ||
+        !Number.isInteger(input.concurrency) || (input.concurrency as number) < 1 || (input.concurrency as number) > 4) throw new Error('采集参数无效。');
+    return input as import('../research-types').ResearchInput;
+  }
+  researchStrategies() { return this.business<import('../research-types').ResearchStrategy[]>('/research/strategies'); }
+  researchPlan(input: unknown) { return this.business<import('../research-types').ResearchPlan>('/research/plan', 'POST', this.researchInput(input)); }
+  researchRuns() { return this.business<import('../research-types').ResearchSummary[]>('/research/runs'); }
+  startResearch(input: unknown) { return this.business<import('../research-types').ResearchRun>('/research/runs', 'POST', this.researchInput(input)); }
+  researchRun(id: unknown) { return this.business<import('../research-types').ResearchRun>(`/research/runs/${this.id(id)}`); }
+  cancelResearch(id: unknown) { return this.business<import('../research-types').ResearchRun>(`/research/runs/${this.id(id)}/cancel`, 'POST'); }
+  researchData(id: unknown, capability: unknown) {
+    if (typeof capability !== 'string' || capability.length > 80 || !/^[a-z]+\.[a-zA-Z]+$/.test(capability)) throw new Error('采集能力标识无效。');
+    return this.business<import('../research-types').ResearchData>(`/research/runs/${this.id(id)}/data/${capability}`);
+  }
   private skillContext(value: unknown): import('../skill-types').SkillContext {
     if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('技能上下文无效。');
     const v = value as Record<string, unknown>;

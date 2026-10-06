@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import json
 import threading
 import time
+from dataclasses import replace
 from .market import FixtureMarketProvider, UnknownSymbolError
 from .provider_contracts import (MARKET_CAPABILITIES, ACCOUNT_CAPABILITIES, MASSIVE_CAPABILITIES,
     ReadQuery, CapabilityView, Provenance, ProviderSuccess, ProviderFailure)
@@ -13,6 +14,22 @@ from .provider_cli import execute_cli
 from .provider_massive import MassiveProvider
 
 from .capabilities import CapabilityRegistry, SUPPORTED, CLI_CAPABILITIES
+
+class QueryStop:
+    """One request's cancellation never stops unrelated provider users."""
+    def __init__(self, service_stop, request_stop):
+        self.service_stop, self.request_stop = service_stop, request_stop
+
+    def is_set(self):
+        return self.service_stop.is_set() or self.request_stop.is_set()
+
+    def wait(self, timeout=None):
+        deadline = None if timeout is None else time.monotonic()+timeout
+        while not self.is_set():
+            remaining = 0.02 if deadline is None else min(0.02,deadline-time.monotonic())
+            if remaining <= 0: break
+            self.request_stop.wait(remaining)
+        return self.is_set()
 
 def authored_data(query):
     if query.symbol and not query.capability.startswith('account.'):
@@ -91,20 +108,26 @@ class ProviderService:
     def capabilities(self):
         return self.registry.provider_views()
 
-    def query(self,provider,query):
+    def query(self,provider,query,*,stop=None,timeout_seconds=None,expected_revision=None):
         query=ReadQuery.model_validate(query.model_dump())
+        control = self.stop if stop is None else QueryStop(self.stop,stop)
         cap=query.capability; revision=0
         with self.lock: generation=self.generations.get(provider,0)
         try:
             if provider not in SUPPORTED or cap not in SUPPORTED[provider]: raise ProviderFault('UNSUPPORTED_CAPABILITY','unsupported')
-            if self.stop.is_set(): raise ProviderFault('CANCELLED','cancelled')
+            if control.is_set(): raise ProviderFault('CANCELLED','cancelled')
             cached=False; transport='fixture'; config=None; secrets=()
             if query.mode=='simulated':
                 revision=self.settings.profile(provider).revision
+                if expected_revision is not None and revision != expected_revision: raise ProviderFault('CONFIG_CHANGED')
                 try: data=self.simulated_executor(query)
                 except UnknownSymbolError: raise ProviderFault('NO_DATA') from None
             else:
                 snapshot=self.settings.snapshot(provider); config=snapshot.configuration; revision=snapshot.revision
+                if expected_revision is not None and revision != expected_revision: raise ProviderFault('CONFIG_CHANGED')
+                if timeout_seconds is not None:
+                    config = config.model_copy(update={'timeout_seconds': min(config.timeout_seconds,max(1,int(timeout_seconds)))})
+                    snapshot = replace(snapshot,configuration=config)
                 secrets=tuple(snapshot.credentials.values())
                 cli = cap in CLI_CAPABILITIES or (cap=='research.events' and (query.symbol is not None or query.event_type=='financial')) or (cap=='company.financials' and query.report not in (None,'annual','interim','quarter'))
                 if not cli:
@@ -120,11 +143,13 @@ class ProviderService:
                             result.provenance.cached=True; result.provenance.served_at=datetime.now(timezone.utc)
                             return result
                 transport='cli' if cli else 'http' if provider=='massive' else 'sdk'
-                if cli: data=self.cli_executor(snapshot,query,self.stop)
-                elif provider=='massive' and self.massive: data=self.massive.execute(snapshot,query,self.stop)
-                else: data=self.sdk_executor(snapshot,query,self.stop)
-            if self.stop.is_set(): raise ProviderFault('CANCELLED','cancelled')
+                if control.is_set(): raise ProviderFault('CANCELLED','cancelled')
+                if cli: data=self.cli_executor(snapshot,query,control)
+                elif provider=='massive' and self.massive: data=self.massive.execute(snapshot,query,control)
+                else: data=self.sdk_executor(snapshot,query,control)
+            if control.is_set(): raise ProviderFault('CANCELLED','cancelled')
             data=public_json(data,secrets)
+            if control.is_set(): raise ProviderFault('CANCELLED','cancelled')
             if len(json.dumps(data,ensure_ascii=False,allow_nan=False).encode())>256*1024: raise ProviderFault('RESPONSE_LIMIT')
             now=datetime.now(timezone.utc)
             historical=cap=='market.kline'
@@ -150,10 +175,11 @@ class ProviderService:
                 with self.lock: generation=self.generations[provider]
             result=ProviderFailure(provider=provider,capability=cap,state=safe.state,code=safe.code,message=str(safe),retryable=safe.retryable)
             validation='restricted' if safe.state=='restricted' else 'unverified' if safe.state in ('unconfigured','disabled') else 'failed'
-            try: revision=self.settings.profile(provider).revision
-            except Exception: pass
+            if not control.is_set():
+                try: revision=self.settings.profile(provider).revision
+                except Exception: pass
         with self.lock:
-            if generation==self.generations.get(provider,0):
+            if not control.is_set() and generation==self.generations.get(provider,0) and (expected_revision is None or revision==expected_revision):
                 self.health[(provider,cap,revision)]={'validation':validation,'code':result.code if not result.ok else None,
                                                    'checked_at':datetime.now(timezone.utc)}
         return result

@@ -1,0 +1,201 @@
+{
+  "repository": "https://github.com/helsome/folio",
+  "commit": "ba5dcdfd31b162f5edb8b908f7f099a560389326",
+  "files": [
+    {
+      "upstream": "packages/shared/src/strategies/presets.ts",
+      "sha256": "b53c63074e2be39b544041e50e0eee7be63922a3ecff47fe91c68a30401c6fef",
+      "adapted_to": [
+        "services/backend/research_trail/research_strategies.py"
+      ]
+    },
+    {
+      "upstream": "packages/shared/src/strategies/planner.ts",
+      "sha256": "2cb5007173e1d074161d7ec15045a5cfda817481df2a7393b31c92940afc8a26",
+      "adapted_to": [
+        "services/backend/research_trail/research.py"
+      ]
+    },
+    {
+      "upstream": "packages/shared/src/research/planner.ts",
+      "sha256": "e53205e2c165b92cf9a43e12ed108cfd55d974cd5d7c2f6537e7e0f9cfa9c28f",
+      "adapted_to": [
+        "services/backend/research_trail/research.py"
+      ]
+    },
+    {
+      "upstream": "packages/shared/src/research/runner.ts",
+      "sha256": "cf5d92e5e51d8e9a260a6ac78dcef8b9bb4f4b041604e6d5855f887b3b804477",
+      "adapted_to": [
+        "services/backend/research_trail/research.py"
+      ]
+    },
+    {
+      "upstream": "packages/ui/src/components/research/ResearchPanel.tsx",
+      "sha256": "a746cb681e210e54dc709d8ce18ab2b578d7ed31b397299fb9ad2dea20a84e80",
+      "adapted_to": [
+        "apps/desktop/src/renderer/research/ResearchPanel.tsx",
+        "apps/desktop/src/renderer/research/RunProgressCard.tsx"
+      ]
+    },
+    {
+      "upstream": "packages/ui/src/components/research/StrategyPicker.tsx",
+      "sha256": "8a72d574c19b1109d775b1cd8934c94b6e6b8aa9aadb1a8be2349d4bd1e5aefe",
+      "adapted_to": [
+        "apps/desktop/src/renderer/research/StrategyPicker.tsx"
+      ]
+    },
+    {
+      "upstream": "packages/i18n/src/locales/zh-CN/research.ts",
+      "sha256": "b1587dbe895cf2f8db81af04f2987934dd6928c28c0df94640ea0163fc76ee7c",
+      "adapted_to": [
+        "services/backend/research_trail/research_strategies.py"
+      ]
+    }
+  ],
+  "mapping_check": "All eight skill ID lists and capability ID lists exactly match fixed presets, including ordering.",
+  "strategies": [
+    {
+      "id": "comprehensive",
+      "name": "全面",
+      "description": "覆盖市场、公司与研究数据。",
+      "skill_ids": [
+        "longbridge",
+        "longbridge-market-data",
+        "longbridge-technical",
+        "longbridge-fundamentals",
+        "longbridge-quant",
+        "longbridge-research",
+        "longbridge-derivatives",
+        "longbridge-earnings",
+        "longbridge-intel",
+        "longbridge-content",
+        "longbridge-portfolio",
+        "longbridge-value-investing",
+        "longbridge-watchlist"
+      ],
+      "capability_ids": [
+        "market.quote",
+        "market.kline",
+        "market.intraday",
+        "market.depth",
+        "market.trades",
+        "market.capitalFlow",
+        "market.sentiment",
+        "market.status",
+        "company.profile",
+        "company.valuation",
+        "company.financials",
+        "company.dividends",
+        "company.earnings",
+        "company.ratings",
+        "research.news",
+        "research.events"
+      ]
+    },
+    {
+      "id": "value",
+      "name": "价值投资",
+      "description": "采集公司资料、估值、财务与股息历史。",
+      "skill_ids": [
+        "longbridge-fundamentals",
+        "longbridge-value-investing"
+      ],
+      "capability_ids": [
+        "company.profile",
+        "company.valuation",
+        "company.financials",
+        "company.dividends"
+      ]
+    },
+    {
+      "id": "growth",
+      "name": "成长",
+      "description": "采集估值、财务与盈利数据。",
+      "skill_ids": [
+        "longbridge-earnings",
+        "longbridge-fundamentals"
+      ],
+      "capability_ids": [
+        "company.valuation",
+        "company.financials",
+        "company.earnings"
+      ]
+    },
+    {
+      "id": "technical",
+      "name": "技术面",
+      "description": "采集日K线、盘中、盘口、成交与市场温度。",
+      "skill_ids": [
+        "longbridge-technical"
+      ],
+      "capability_ids": [
+        "market.kline",
+        "market.intraday",
+        "market.depth",
+        "market.trades",
+        "market.sentiment"
+      ]
+    },
+    {
+      "id": "earnings",
+      "name": "财报",
+      "description": "采集盈利、新闻与财报事件。",
+      "skill_ids": [
+        "longbridge-earnings"
+      ],
+      "capability_ids": [
+        "company.earnings",
+        "research.news",
+        "research.events"
+      ]
+    },
+    {
+      "id": "event-driven",
+      "name": "事件驱动",
+      "description": "采集股息、评级、新闻与事件。",
+      "skill_ids": [
+        "longbridge-content",
+        "longbridge-research"
+      ],
+      "capability_ids": [
+        "company.dividends",
+        "company.ratings",
+        "research.news",
+        "research.events"
+      ]
+    },
+    {
+      "id": "risk-review",
+      "name": "风险复核",
+      "description": "采集价格趋势、财务、评级与新闻。",
+      "skill_ids": [
+        "longbridge-research",
+        "longbridge-fundamentals"
+      ],
+      "capability_ids": [
+        "market.kline",
+        "company.financials",
+        "company.ratings",
+        "research.news"
+      ]
+    },
+    {
+      "id": "income",
+      "name": "稳健收益",
+      "description": "采集公司资料、财务、股息与盈利。",
+      "skill_ids": [
+        "longbridge-fundamentals"
+      ],
+      "capability_ids": [
+        "company.profile",
+        "company.financials",
+        "company.dividends",
+        "company.earnings"
+      ]
+    }
+  ],
+  "scope": "Python collection orchestration newly implemented; strategy lists and necessary UI patterns adapted. No original TS business runtime, skill prompts, report synthesis or checkpoint execution imported.",
+  "authorization": "User original-author reuse authorization confirmation: EVIDENCE sections 9-11. Original authorization text not independently obtained. Only skills/LICENSE is confirmed MIT (Copyright 2026 Longbridge Inc.); no whole-repository MIT claim.",
+  "preserved_resources": "Step14 skills and LICENSE remain byte-identical; see SOURCES-step14.json."
+}

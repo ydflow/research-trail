@@ -17,6 +17,132 @@ delete env.RESEARCH_TRAIL_RENDERER_URL;
 delete env.RESEARCH_TRAIL_LAUNCHER_PID;
 delete env.RESEARCH_TRAIL_PYTHON;
 
+test('Step15 contextual entry, strategy plan, saved data and restart without reexecution', {timeout:60000}, async()=>{
+  let instance=await launch(); const path=instance.databasePath;
+  let saved,record;
+  try {
+    const page=instance.page; await waitForBackend(page);
+    await page.evaluate(()=>window.researchTrail.selectSecurity('MSFT.US'));
+    await page.getByRole('button',{name:'证券工作台',exact:true}).click();
+    await expect(page.getByTestId('security-symbol')).toHaveText('MSFT.US');
+    await page.getByRole('button',{name:'采集此股票研究数据',exact:true}).click();
+    const panel=page.getByRole('region',{name:'研究采集工作台'});
+    await expect(panel.getByLabel('研究股票')).toHaveValue('MSFT.US');
+    await expect(panel.getByRole('radio')).toHaveCount(8);
+    await expect(panel.getByTestId('research-plan').locator('summary')).toContainText('16 项');
+    await panel.getByRole('radio',{name:/价值投资/}).check();
+    await expect(panel.getByTestId('research-plan').locator('summary')).toContainText('4 项');
+    await panel.getByRole('button',{name:'开始采集',exact:true}).click();
+    await expect(panel.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    record=await page.evaluate(async()=>{const b=window.researchTrail;const rows=await b.researchRuns();return b.researchRun(rows[0].id);});
+    assert.equal(record.symbol,'MSFT.US'); assert.equal(record.succeeded,4); assert.equal(record.plan.input.concurrency,4);
+    saved=await page.evaluate(id=>window.researchTrail.researchData(id,'company.profile'),record.id);
+    assert.equal(saved.result.data.symbol,'MSFT.US'); assert.equal(saved.result.provenance.mode,'simulated');
+    await panel.getByRole('button',{name:'读取结果 company.profile',exact:true}).click();
+    await expect(panel.getByTestId('research-data')).toContainText(saved.result.provenance.fetched_at);
+    await panel.getByRole('heading',{name:/已保存任务/}).scrollIntoViewIfNeeded();
+    await screenshot(page,'step15-collected-wide.png');
+    await page.setViewportSize({width:600,height:680});
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await screenshot(page,'step15-collected-narrow.png');
+    const denied=await page.evaluate(async id=>{
+      try{await window.researchTrail.researchData(id,'../../private');return 'unexpected';}catch(e){return e.message;}
+    },record.id);
+    assert.match(denied,/采集能力标识无效/);
+    assert.equal(await page.locator('vite-error-overlay').count(),0);
+    await instance.app.close(); instance=await launch({RESEARCH_TRAIL_DB_PATH:path});
+    await waitForBackend(instance.page);
+    await instance.page.getByRole('button',{name:'研究采集',exact:true}).click();
+    const restored=instance.page.getByRole('region',{name:'研究采集工作台'});
+    await restored.getByRole('button',{name:'读取已保存任务',exact:true}).click();
+    await expect(restored.getByTestId('research-run')).toHaveAttribute('data-run-id',record.id);
+    assert.deepEqual(await instance.page.evaluate(id=>window.researchTrail.researchRun(id),record.id),record);
+    assert.deepEqual(await instance.page.evaluate(id=>window.researchTrail.researchData(id,'company.profile'),record.id),saved);
+    assert.equal((await instance.page.evaluate(()=>window.researchTrail.researchRuns())).length,1);
+    const dbCounts=execFileSync(resolve(root,'services/backend/.venv/Scripts/python.exe'),['-c',
+      'import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); print(c.execute("select count(*) from runs").fetchone()[0],c.execute("select count(*) from research_steps").fetchone()[0])',path],{env,windowsHide:true,encoding:'utf8'}).trim();
+    assert.equal(dbCounts,'0 4');
+  } finally {await instance.app.close();}
+});
+
+for(const scenario of ['research-partial','failure']) test(`Step15 ${scenario} keeps exact collection states through Python`,{timeout:45000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:scenario});
+  const errors=[]; instance.page.on('pageerror',e=>errors.push(e.message));
+  try {
+    const page=instance.page; await waitForBackend(page);
+    await page.getByRole('button',{name:'研究采集',exact:true}).click();
+    const panel=page.getByRole('region',{name:'研究采集工作台'});
+    await panel.getByRole('radio',{name:/价值投资/}).check();
+    await expect(panel.getByTestId('research-plan').locator('summary')).toContainText('4 项');
+    await panel.getByRole('button',{name:'开始采集',exact:true}).click();
+    await expect(panel.getByTestId('research-run')).toHaveAttribute('data-status',scenario==='failure'?'failed':'partial');
+    await expect(panel.getByTestId('research-status')).toContainText(scenario==='failure'?'已采集 0':'已采集 3');
+    await expect(panel.locator('[data-capability="company.financials"]')).toContainText('NETWORK_ERROR');
+    await expect(panel.getByRole('button',{name:/^读取结果/})).toHaveCount(scenario==='failure'?0:3);
+    await panel.getByRole('heading',{name:/已保存任务/}).scrollIntoViewIfNeeded();
+    await screenshot(page,`step15-${scenario}.png`);
+    assert.deepEqual(errors,[]);
+  } finally {await instance.app.close();}
+});
+
+test('Step15 whole cancellation retains three successes and discards real late fixture return',{timeout:45000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'research-delayed'});
+  try {
+    const page=instance.page; await waitForBackend(page);
+    await page.getByRole('button',{name:'研究采集',exact:true}).click();
+    const panel=page.getByRole('region',{name:'研究采集工作台'});
+    await panel.getByRole('radio',{name:/价值投资/}).check();
+    await expect(panel.getByTestId('research-plan').locator('summary')).toContainText('4 项');
+    await panel.getByRole('button',{name:'开始采集',exact:true}).click();
+    await expect(panel.getByTestId('research-run')).toHaveAttribute('data-status','fetching');
+    await expect(panel.getByTestId('research-status')).toContainText('已采集 3');
+    const id=await panel.getByTestId('research-run').getAttribute('data-run-id');
+    await panel.getByRole('button',{name:'取消整项采集',exact:true}).click();
+    await expect(panel.getByTestId('research-run')).toHaveAttribute('data-status','cancelled');
+    const cancelled=await page.evaluate(id=>window.researchTrail.researchRun(id),id);
+    assert.equal(cancelled.succeeded,3);assert.equal(cancelled.failed,1);
+    await expect(panel.getByRole('button',{name:/^读取结果/})).toHaveCount(3);
+    await screenshot(page,'step15-cancelled.png');
+    // Admission reopens only after the actual delayed Python call has exited.
+    await expect.poll(()=>page.evaluate(async()=>{
+      if(window.step15Followup)return 'started';
+      try{window.step15Followup=await window.researchTrail.startResearch({symbol:'AAPL.US',strategy:'growth'});return 'started';}
+      catch(e){return e.message;}
+    }),{timeout:8000}).toBe('started');
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.researchRun(id),id),cancelled);
+    await expect(panel.getByTestId('research-run')).toHaveAttribute('data-run-id',id);
+    assert.equal(await page.evaluate(async()=>{const rows=await window.researchTrail.researchRuns();return rows.length;}),2);
+  }finally{await instance.app.close();}
+});
+
+test('Step15 late plan cannot overwrite newer selected strategy',{timeout:45000},async()=>{
+  const instance=await launch();
+  try {
+    const page=instance.page;await waitForBackend(page);
+    const plans=await page.evaluate(async()=>{
+      const b=window.researchTrail; return Promise.all(['value','technical','comprehensive'].map(strategy=>b.researchPlan({symbol:'AAPL.US',strategy})));
+    });
+    await instance.app.evaluate(({ipcMain},plans)=>{
+      globalThis.planStarts=[];globalThis.planArrivals=[]; ipcMain.removeHandler('research:plan');
+      ipcMain.handle('research:plan',async(_event,input)=>{
+        globalThis.planStarts.push(input.strategy);const index=input.strategy==='value'?0:input.strategy==='technical'?1:2;
+        await new Promise(r=>setTimeout(r,index===0?700:10));globalThis.planArrivals.push(input.strategy);return plans[index];
+      });
+    },plans);
+    await page.getByRole('button',{name:'研究采集',exact:true}).click();
+    const panel=page.getByRole('region',{name:'研究采集工作台'});
+    await expect(panel.getByTestId('research-plan')).toHaveAttribute('data-strategy','comprehensive');
+    await panel.getByRole('radio',{name:/价值投资/}).check();
+    await expect.poll(()=>instance.app.evaluate(()=>globalThis.planStarts)).toContain('value');
+    await panel.getByRole('radio',{name:/技术面/}).check();
+    await expect(panel.getByTestId('research-plan')).toHaveAttribute('data-strategy','technical');
+    await expect.poll(()=>instance.app.evaluate(()=>globalThis.planArrivals)).toContain('value');
+    await expect(panel.getByTestId('research-plan')).toHaveAttribute('data-strategy','technical');
+    await expect(panel.getByTestId('research-plan').locator('summary')).toContainText('5 项');
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,0);
+  } finally {await instance.app.close();}
+});
+
 test('Step14 skill resources, disable, Agent refusal, persistence and shared availability', { timeout: 60000 }, async () => {
   let instance = await launch();
   const databasePath = instance.databasePath;
@@ -802,7 +928,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       'connections', 'saveConnection', 'deleteConnection', 'saveCredential', 'deleteCredential', 'testConnection', 'profile', 'saveProfile', 'deleteProfile', 'diagnostics', 'exportDiagnostics',
       'providerProfiles', 'saveProvider', 'deleteProvider', 'saveProviderCredential', 'deleteProviderCredential', 'providerCapabilities', 'queryProvider',
       'workspaceState', 'addWatch', 'removeWatch', 'selectSecurity', 'securityPage', 'openNewsSource',
-      'capabilities', 'skills', 'setSkillEnabled', 'readSkillResource', 'portfolioRisk', 'compareStocks', 'portfolioList', 'createPortfolio', 'portfolioView', 'previewPortfolio', 'confirmPortfolio', 'undoPortfolio', 'refreshPortfolio'].sort(), node: 'undefined', process: 'undefined' });
+      'capabilities', 'skills', 'setSkillEnabled', 'readSkillResource', 'researchStrategies', 'researchPlan', 'researchRuns', 'startResearch', 'researchRun', 'cancelResearch', 'researchData', 'portfolioRisk', 'compareStocks', 'portfolioList', 'createPortfolio', 'portfolioView', 'previewPortfolio', 'confirmPortfolio', 'undoPortfolio', 'refreshPortfolio'].sort(), node: 'undefined', process: 'undefined' });
     assert.deepEqual(await first.app.evaluate(({ BrowserWindow }) => {
       const pref = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();
       return { sandbox: pref.sandbox, nodeIntegration: pref.nodeIntegration, contextIsolation: pref.contextIsolation };
