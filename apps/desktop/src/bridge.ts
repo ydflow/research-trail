@@ -10,6 +10,12 @@ export interface BackendState {
   pythonVersion?: string;
 }
 export interface ResearchTrailBridge {
+  workspaceState(): Promise<import('./workspace-types').WorkspaceState>;
+  addWatch(symbol: string): Promise<import('./workspace-types').WorkspaceState>;
+  removeWatch(symbol: string): Promise<import('./workspace-types').WorkspaceState>;
+  selectSecurity(symbol: string): Promise<import('./workspace-types').WorkspaceState>;
+  securityPage(query: import('./workspace-types').SecurityQuery): Promise<import('./workspace-types').SecurityPage>;
+  openNewsSource(url: string): Promise<void>;
   providerProfiles(): Promise<import('./provider-types').ProviderProfile[]>;
   saveProvider(provider: import('./provider-types').ProviderId, input: import('./provider-types').ProviderConfiguration): Promise<import('./provider-types').ProviderProfile>;
   deleteProvider(provider: import('./provider-types').ProviderId): Promise<import('./provider-types').ProviderProfile>;

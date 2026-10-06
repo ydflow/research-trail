@@ -120,3 +120,50 @@ h2, h3 { margin: 0; font-size: 20px; }
 .event-details summary { cursor: pointer; color: var(--muted); }
 @media (max-width: 760px) { .session-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; } .session-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }
 @media (max-width: 660px) { header { margin: 0 16px; padding: 24px 12px 20px; } main { width: calc(100% - 56px); margin-top: 28px; } footer { padding: 20px 28px 28px; } .health-row { font-size: 16px; } .stock-list { grid-template-columns: repeat(2, 1fr); } .metrics { grid-template-columns: repeat(3, 1fr); row-gap: 18px; } .chart-canvas { height: 270px; } }
+.security-workspace { margin-top: 28px; min-width: 0; font-size: 13px; }
+.security-workspace h2 { font-size: 22px; margin: 0 0 12px; }
+.security-workspace h3 { font-size: 15px; margin: 0 0 14px; }
+.security-workspace small, .security-note { color: var(--muted); font-size: 12px; font-weight: 400; }
+.security-toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin: 16px 0; }
+.security-workspace label { display: grid; gap: 7px; max-width: 100%; }
+.security-workspace input, .security-workspace select { font: inherit; min-width: 0; max-width: 100%; padding: 8px; border: 1px solid #bccbc4; border-radius: 6px; background: #fff; color: var(--text); }
+.security-workspace button { font-size: 12px; padding: 9px 12px; }
+.security-workspace .secondary { background: #f3f8f5; color: var(--accent); }
+.security-layout { display: grid; grid-template-columns: 180px minmax(0,1fr); gap: 20px; margin-top: 22px; }
+.security-watchlist { min-width: 0; }
+.security-watchlist form { display: grid; gap: 8px; }
+.security-watchlist ul { list-style: none; padding: 0; }
+.security-watchlist li { display: flex; gap: 4px; margin-bottom: 8px; }
+.security-workspace .security-stock { text-align: left; flex: 1; min-width: 0; background: #fff; color: var(--text); border-color: var(--border); overflow-wrap: anywhere; }
+.security-stock strong, .security-stock span { display: block; }
+.security-stock span { font-size: 11px; font-weight: 400; margin-top: 6px; color: var(--muted); }
+.security-workspace .security-stock[aria-pressed="true"] { background: #e9f4ef; border-color: var(--accent); }
+.security-workspace .security-remove { flex: 0 0 44px; min-width: 44px; background: #fff; color: var(--muted); padding: 5px; border-color: var(--border); }
+.security-content { min-width: 0; }
+.security-content .security-header { display: block; margin: 0 0 15px; padding: 0 0 15px; font-size: 17px; border-bottom: 1px solid var(--border); }
+.security-header span { color: var(--muted); font-size: 12px; }
+.security-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+.security-tabs button { color: var(--accent); background: #fff; border-color: var(--border); padding: 7px 10px; }
+.security-tabs button[aria-pressed="true"] { color: #fff; background: var(--accent); }
+.security-view-state { background: #edf5f1; border-radius: 6px; padding: 11px; font-size: 12px; overflow-wrap: anywhere; }
+.security-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.security-block { min-width: 0; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; overflow-wrap: anywhere; }
+.security-block [role="alert"] { color: #963e2e; }
+.security-empty { color: var(--muted); }
+.security-price { font-size: 32px; font-variant-numeric: tabular-nums; margin: 12px 0; }
+.security-metrics { margin: 0; }
+.security-metrics > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid #eef1ef; }
+.security-metrics dt { color: var(--muted); flex-shrink: 0; }
+.security-metrics dd { text-align: right; margin: 0; min-width: 0; font-variant-numeric: tabular-nums; }
+.security-source { margin-top: 14px; color: var(--muted); font-size: 11px; line-height: 1.7; }
+.security-source p { margin: 4px 0; }
+.security-table-scroll { overflow-x: auto; }
+.security-workspace table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.security-workspace th, .security-workspace td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.security-workspace caption { text-align: left; color: var(--muted); margin-bottom: 12px; line-height: 1.6; }
+.security-news { list-style: none; margin: 0; padding: 0; }
+.security-news li { padding: 14px 0; border-bottom: 1px solid var(--border); }
+.security-news a { color: var(--accent); line-height: 1.6; }
+.security-news p { font-size: 12px; color: var(--muted); line-height: 1.7; }
+@media (max-width: 900px) { .security-grid { grid-template-columns: minmax(0,1fr); } }
+@media (max-width: 760px) { .security-layout { grid-template-columns: minmax(0,1fr); } .security-watchlist ul { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; } }

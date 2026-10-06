@@ -208,6 +208,11 @@ export class BackendManager extends EventEmitter {
     return value;
   }
   connections() { return this.business<import('../settings-types').ConnectionView[]>('/settings/connections'); }
+  workspaceState() { return this.business<import('../workspace-types').WorkspaceState>('/workspace'); }
+  addWatch(symbol: unknown) { return this.business<import('../workspace-types').WorkspaceState>('/workspace/watchlist', 'POST', { symbol }); }
+  removeWatch(symbol: unknown) { return this.business<import('../workspace-types').WorkspaceState>('/workspace/watchlist/remove', 'POST', { symbol }); }
+  selectSecurity(symbol: unknown) { return this.business<import('../workspace-types').WorkspaceState>('/workspace/selection', 'PUT', { symbol }); }
+  securityPage(query: unknown) { return this.business<import('../workspace-types').SecurityPage>('/workspace/page', 'POST', query, 65000); }
   private providerId(value: unknown) {
     if (typeof value !== 'string' || !['longbridge', 'longbridge-account', 'massive'].includes(value)) throw new Error('不支持的数据提供商。');
     return value;

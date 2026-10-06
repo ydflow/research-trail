@@ -1,8 +1,9 @@
-import { app, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent, type IpcMainEvent } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, shell, type IpcMainInvokeEvent, type IpcMainEvent } from 'electron';
 import { writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { BackendManager } from './backend';
+import { originalNewsUrl } from './news-url';
 
 const root = resolve(__dirname, '../../..');
 const backend = new BackendManager(root);
@@ -37,6 +38,12 @@ app.whenReady().then(async () => {
   ipcMain.handle('backend:status', (event) => { assertSender(event); return backend.snapshot(); });
   ipcMain.handle('backend:check', (event) => { assertSender(event); return backend.check(); });
   ipcMain.handle('backend:retry', (event) => { assertSender(event); return backend.retry(); });
+  ipcMain.handle('workspace:state', event => { assertSender(event); return backend.workspaceState(); });
+  ipcMain.handle('workspace:add', (event, symbol: unknown) => { assertSender(event); return backend.addWatch(symbol); });
+  ipcMain.handle('workspace:remove', (event, symbol: unknown) => { assertSender(event); return backend.removeWatch(symbol); });
+  ipcMain.handle('workspace:select', (event, symbol: unknown) => { assertSender(event); return backend.selectSecurity(symbol); });
+  ipcMain.handle('workspace:page', (event, query: unknown) => { assertSender(event); return backend.securityPage(query); });
+  ipcMain.handle('workspace:news-link', (event, url: unknown) => { assertSender(event); return shell.openExternal(originalNewsUrl(url)); });
   ipcMain.handle('providers:profiles', (event) => { assertSender(event); return backend.providerProfiles(); });
   ipcMain.handle('providers:save', (event, provider: unknown, body: unknown) => { assertSender(event); return backend.saveProvider(provider, body); });
   ipcMain.handle('providers:delete', (event, provider: unknown) => { assertSender(event); return backend.deleteProvider(provider); });

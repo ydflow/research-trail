@@ -25,6 +25,143 @@ function children(pid) {
 }
 const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
 
+for (const fixtureCase of ['success', 'missing', 'failure']) {
+  test(`Step11 seven security views: ${fixtureCase} through Python provider chain`, { timeout: 60000 }, async () => {
+    const instance = await launch({ RESEARCH_TRAIL_OFFLINE: '1', RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE: fixtureCase });
+    const errors = [];
+    instance.page.on('pageerror', e => errors.push(e.message));
+    instance.page.on('console', e => { if (['warning','error'].includes(e.type())) errors.push(e.text()); });
+    const labels = { watchlist: '自选列表', overview: '证券概览', quote: '行情', kline: 'K线', financials: '财务报表', news: '新闻', status: '市场状态' };
+    try {
+      await expect(instance.page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+      assert.equal(await instance.page.title(), '研迹 · ResearchTrail');
+      assert.match(instance.page.url(), /dist\/renderer\/index\.html$/);
+      await instance.page.getByRole('button', { name: '证券工作台', exact: true }).click();
+      const workspace = instance.page.getByRole('region', { name: '证券工作台', exact: true });
+      const stockLabel = workspace.getByRole('button', { name: '选择证券 AAPL.US', exact: true }).locator('strong');
+      await expect(stockLabel).toBeVisible();
+      const stockBox = await stockLabel.boundingBox();
+      assert.ok(stockBox.width >= 70 && stockBox.height < 30, '股票代码不能被移除按钮挤成竖排');
+      for (const [view,label] of Object.entries(labels)) {
+        await workspace.getByRole('button', { name: label, exact: true }).click();
+        const result = workspace.getByTestId('security-view');
+        await expect(result).toHaveAttribute('data-view',view);
+        await expect(result).toHaveAttribute('data-status',fixtureCase === 'success' ? 'ready' : fixtureCase === 'missing' ? 'missing' : 'failed');
+        await expect(workspace.getByTestId('security-symbol')).toHaveText('AAPL.US');
+        if (fixtureCase === 'success') {
+          await expect(result.getByTestId('security-source').first()).toContainText('模拟数据');
+          if (view === 'quote') await expect(result).toContainText('189.43');
+          if (view === 'overview') await expect(result).toContainText('—');
+          if (view === 'kline') {
+            const chart=result.getByTestId('chart-canvas');
+            await expect(chart).toHaveAttribute('data-loaded-symbol','AAPL.US');
+            await expect(chart).toHaveAttribute('data-loaded-close','189.43');
+            assert.ok(await chart.locator('canvas').count() > 0);
+          }
+          if (view === 'financials') await expect(result.getByRole('table')).toContainText('模拟经营现金流');
+          if (view === 'news') {
+            const url='https://example.com/research-trail-simulated-news?symbol=AAPL.US';
+            await expect(result.getByRole('link')).toHaveAttribute('href',url);
+            await instance.app.evaluate(({shell}) => { globalThis.newsOpened=[]; globalThis.originalNewsOpen=shell.openExternal; shell.openExternal=async url => { globalThis.newsOpened.push(url); }; });
+            await result.getByRole('link').click();
+            await expect.poll(() => instance.app.evaluate(() => globalThis.newsOpened)).toEqual([url]);
+            await assert.rejects(instance.page.evaluate(() => window.researchTrail.openNewsSource('javascript:alert(1)')), /新闻链接无效/);
+            await assert.rejects(instance.page.evaluate(() => window.researchTrail.openNewsSource('file:///private')), /新闻链接无效/);
+            await instance.app.evaluate(({shell}) => { shell.openExternal=globalThis.originalNewsOpen; });
+          }
+          if (view === 'status') await expect(result).toContainText('Closed');
+        } else if (fixtureCase === 'missing') {
+          await expect(result).toContainText('—');
+          await expect(result).toContainText('缺失数据');
+          assert.equal(await result.locator('canvas').count(),0);
+        } else {
+          await expect(result.getByRole('alert').first()).toContainText('NETWORK_ERROR');
+          assert.equal(await result.locator('canvas').count(),0);
+        }
+        assert.equal(await instance.page.locator('vite-error-overlay').count(),0);
+        await workspace.evaluate(el => el.scrollIntoView({block:'start'}));
+        await screenshot(instance.page,`step11-${fixtureCase}-${view}-wide.png`);
+      }
+      await instance.app.evaluate(({BrowserWindow}) => BrowserWindow.getAllWindows()[0].setSize(600,680));
+      await workspace.getByRole('button', {name:'新闻',exact:true}).click();
+      await expect(workspace.getByTestId('security-view')).toHaveAttribute('data-view','news');
+      await expect(workspace.getByTestId('security-view')).toHaveAttribute('data-status',fixtureCase === 'success' ? 'ready' : fixtureCase === 'missing' ? 'missing' : 'failed');
+      await workspace.evaluate(el => el.scrollIntoView({block:'start'}));
+      assert.equal(await instance.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),true);
+      await screenshot(instance.page,`step11-${fixtureCase}-news-compact.png`);
+      await workspace.getByTestId('security-view').evaluate(el => el.scrollIntoView({block:'start'}));
+      await screenshot(instance.page,`step11-${fixtureCase}-news-content-compact.png`);
+      assert.deepEqual(errors,[]);
+    } finally {
+      const owned=children(instance.pid); await instance.app.close();
+      await expect.poll(() => owned.every(pid => !alive(pid))).toBe(true);
+    }
+  });
+}
+
+test('Step11 context: late data, saved watchlist, navigation, source switch and restart', { timeout: 60000 }, async () => {
+  const databasePath=resolve(mkdtempSync(resolve(tmpdir(),'research-trail-workspace-qa-')),'test.sqlite3');
+  let instance=await launch({RESEARCH_TRAIL_DB_PATH:databasePath,RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'delayed'});
+  const errors=[];
+  const watch=page => { page.on('pageerror',e => errors.push(e.message)); page.on('console',e => { if (['warning','error'].includes(e.type())) errors.push(e.text()); }); };
+  watch(instance.page);
+  try {
+    await expect(instance.page.getByRole('heading',{name:'连接就绪'})).toBeVisible();
+    await instance.page.getByRole('button',{name:'证券工作台',exact:true}).click();
+    let workspace=instance.page.getByRole('region',{name:'证券工作台',exact:true});
+    await expect(workspace.getByRole('button',{name:'选择证券 NVDA.US',exact:true})).toBeEnabled();
+    await expect(workspace.getByTestId('security-view-state')).toContainText('读取中');
+    await workspace.getByRole('button',{name:'选择证券 NVDA.US',exact:true}).click();
+    await expect(workspace.getByTestId('security-symbol')).toHaveText('NVDA.US');
+    await expect(workspace.getByTestId('security-view')).toHaveAttribute('data-status','ready');
+    await new Promise(resolve => setTimeout(resolve,1100)); // Controlled old AAPL profile response arrives after NVDA.
+    await expect(workspace.getByTestId('security-block').first()).toContainText('NVDA.US');
+    for (const label of ['行情','新闻','财务报表','市场状态','K线']) {
+      await workspace.getByRole('button',{name:label,exact:true}).click();
+      await expect(workspace.getByTestId('security-view')).toHaveAttribute('data-status','ready');
+      await expect(workspace.getByTestId('security-symbol')).toHaveText('NVDA.US');
+    }
+    await expect(workspace.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-symbol','NVDA.US');
+    await workspace.getByLabel('证券K线周期',{exact:true}).selectOption('1w');
+    await expect.poll(async () => JSON.parse(await workspace.getByTestId('chart-canvas').getAttribute('data-loaded-period') || '{}').type).toBe('week');
+    await workspace.getByLabel('添加证券代码',{exact:true}).fill('700.HK');
+    await workspace.getByRole('button',{name:'加入自选',exact:true}).click();
+    await expect(workspace.getByRole('button',{name:'选择证券 700.HK',exact:true})).toBeVisible();
+    await workspace.getByRole('button',{name:'自选列表',exact:true}).click();
+    await expect(workspace.getByRole('button',{name:'下一组自选',exact:true})).toBeEnabled();
+    await workspace.getByRole('button',{name:'下一组自选',exact:true}).click();
+    await expect(workspace.getByTestId('security-view')).toContainText('NO_DATA');
+    await instance.page.getByRole('button',{name:'会话与事件',exact:true}).click();
+    await instance.page.getByRole('button',{name:'证券工作台',exact:true}).click();
+    await expect(workspace.getByTestId('security-symbol')).toHaveText('NVDA.US');
+    await workspace.getByLabel('证券提供商',{exact:true}).selectOption('massive');
+    await workspace.getByRole('button',{name:'新闻',exact:true}).click();
+    await expect(workspace.getByTestId('security-view')).toContainText('UNSUPPORTED_CAPABILITY');
+    await expect(workspace.getByTestId('security-symbol')).toHaveText('NVDA.US');
+    await workspace.getByLabel('证券数据模式',{exact:true}).selectOption('real');
+    await expect(workspace.getByTestId('security-view-state')).toContainText('等待显式查询');
+    assert.equal(await workspace.getByTestId('security-view').count(),0);
+    await workspace.getByRole('button',{name:'行情',exact:true}).click();
+    await workspace.getByRole('button',{name:'查询当前视图真实数据',exact:true}).click();
+    await expect(workspace.getByTestId('security-view')).toContainText('PROVIDER_UNCONFIGURED');
+    const saved=await instance.page.evaluate(() => window.researchTrail.workspaceState());
+    const owned=children(instance.pid); await instance.app.close();
+    await expect.poll(() => owned.every(pid => !alive(pid))).toBe(true);
+    instance=await launch({RESEARCH_TRAIL_DB_PATH:databasePath,RESEARCH_TRAIL_OFFLINE:'1'}); watch(instance.page);
+    await expect(instance.page.getByRole('heading',{name:'连接就绪'})).toBeVisible();
+    assert.deepEqual(await instance.page.evaluate(() => window.researchTrail.workspaceState()),saved);
+    await instance.page.getByRole('button',{name:'证券工作台',exact:true}).click();
+    workspace=instance.page.getByRole('region',{name:'证券工作台',exact:true});
+    await expect(workspace.getByTestId('security-symbol')).toHaveText('NVDA.US');
+    await expect(workspace.getByLabel('证券数据模式',{exact:true})).toHaveValue('simulated');
+    await workspace.getByRole('button',{name:'移除证券 NVDA.US',exact:true}).click();
+    await expect(workspace.getByTestId('security-symbol')).toHaveText('AAPL.US');
+    await expect(workspace.getByRole('button',{name:'选择证券 NVDA.US',exact:true})).toHaveCount(0);
+    await assert.rejects(instance.page.evaluate(() => window.researchTrail.securityPage({view:'portfolio'})),/不符合契约/);
+    assert.deepEqual(errors,[]);
+  } finally { await instance.app.close(); }
+});
+
 test('Step10 provider settings, simulated readonly data and isolated capability status', { timeout: 60000 }, async () => {
   const instance = await launch();
   const errors = [];
@@ -362,7 +499,8 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
     })), { bridge: ['checkHealth', 'marketSnapshot', 'marketSymbols', 'onStatus', 'retryBackend', 'status',
       'listSessions', 'createSession', 'getSession', 'deleteSession', 'sessionMessages', 'sessionRuns', 'sessionSnapshot', 'startRun', 'startAgentRun', 'cancelRun', 'getRun', 'runEvents', 'subscribeRun',
       'connections', 'saveConnection', 'deleteConnection', 'saveCredential', 'deleteCredential', 'testConnection', 'profile', 'saveProfile', 'deleteProfile', 'diagnostics', 'exportDiagnostics',
-      'providerProfiles', 'saveProvider', 'deleteProvider', 'saveProviderCredential', 'deleteProviderCredential', 'providerCapabilities', 'queryProvider'].sort(), node: 'undefined', process: 'undefined' });
+      'providerProfiles', 'saveProvider', 'deleteProvider', 'saveProviderCredential', 'deleteProviderCredential', 'providerCapabilities', 'queryProvider',
+      'workspaceState', 'addWatch', 'removeWatch', 'selectSecurity', 'securityPage', 'openNewsSource'].sort(), node: 'undefined', process: 'undefined' });
     assert.deepEqual(await first.app.evaluate(({ BrowserWindow }) => {
       const pref = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();
       return { sandbox: pref.sandbox, nodeIntegration: pref.nodeIntegration, contextIsolation: pref.contextIsolation };
