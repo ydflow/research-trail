@@ -13,8 +13,12 @@ def sdk_fields():
     # Whitelist actual installed SDK DTO annotations; never serialize Config, exceptions or __dict__.
     p = next(distribution('longbridge').locate_file(f) for f in files('longbridge') if str(f).endswith('openapi.pyi'))
     tree = ast.parse(Path(p).read_text(encoding='utf-8'))
-    return {c.name: [n.target.id for n in c.body if isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name)]
+    result = {c.name: [n.target.id for n in c.body if isinstance(n, ast.AnnAssign) and isinstance(n.target, ast.Name)]
             for c in tree.body if isinstance(c, ast.ClassDef) and c.name not in ('Config', 'OpenApiException')}
+    # 5.2.0 exposes NewsItem at runtime but omits its declaration from openapi.pyi.
+    # Runtime descriptors + official content NewsItem schema were checked in Step11.
+    result['NewsItem'] = ['id','title','description','url','published_at','comments_count','likes_count','shares_count']
+    return result
 
 def public_json(value, secrets=(), depth=0):
     if depth > 16: raise ProviderFault('INVALID_RESPONSE')
