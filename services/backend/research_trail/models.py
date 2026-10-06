@@ -6,6 +6,37 @@ class Base(DeclarativeBase):
     pass
 
 
+class ResearchRecord(Base):
+    __tablename__ = 'research_runs'
+    __table_args__ = (
+        CheckConstraint("status IN ('fetching','collected','partial','failed','cancelled','interrupted')"),
+        Index('ix_research_one_active', 'status', unique=True, sqlite_where=text("status = 'fetching'")),
+    )
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    status: Mapped[str] = mapped_column(String(20))
+    plan: Mapped[dict] = mapped_column(JSON)
+    started_at: Mapped[str] = mapped_column(String(40), index=True)
+    completed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
+class ResearchStepRecord(Base):
+    __tablename__ = 'research_steps'
+    __table_args__ = (
+        UniqueConstraint('run_id', 'ordinal'),
+        CheckConstraint('ordinal >= 1'),
+        CheckConstraint("status IN ('queued','running','success','failed','unavailable','timed_out','cancelled','interrupted')"),
+        CheckConstraint("(status = 'success' AND result IS NOT NULL) OR (status != 'success' AND result IS NULL)"),
+    )
+    run_id: Mapped[str] = mapped_column(ForeignKey('research_runs.id', ondelete='CASCADE'), primary_key=True)
+    capability: Mapped[str] = mapped_column(String(80), primary_key=True)
+    ordinal: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(20))
+    code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    started_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    completed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    result: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
+
+
 class SkillPreference(Base):
     __tablename__ = 'skill_preferences'
     id: Mapped[str] = mapped_column(String(80), primary_key=True)

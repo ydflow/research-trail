@@ -33,6 +33,10 @@ from .conversation import RiskToolData, CompareToolData
 from .capabilities import CapabilityState
 from .skills import SkillCatalog, SkillError
 from .skill_contracts import SkillView, SkillToggle, SkillRead, SkillResource
+from .research import ResearchService
+from .research_store import ResearchError
+from .research_strategies import strategies as research_strategies
+from .research_contracts import ResearchInput, ResearchPlan, ResearchStrategy, ResearchSummary, ResearchRun, ResearchData
 from .portfolio_contracts import (PortfolioInfo, PortfolioView, PortfolioCreate, PortfolioId,
     CsvPreviewInput, ImportPreview, ImportConfirm, ImportUndo)
 
@@ -45,7 +49,7 @@ class Health(BaseModel):
 
 def create_app(token: str, market_provider: MarketProvider | None = None, *,
                database_path: Path | str | None = None, model_provider: ModelProvider | None = None,
-               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None) -> FastAPI:
+               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None, research_options=None) -> FastAPI:
     if len(token) < 32:
         raise ValueError("启动令牌缺失或过短；请由 Electron 启动服务。")
     @asynccontextmanager
@@ -69,11 +73,14 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             app.state.security_workspace = SecurityWorkspace(app.state.watchlist,app.state.providers)
             app.state.portfolios = PortfolioService(database,app.state.providers)
             app.state.analytics = AnalyticsService(app.state.portfolios,app.state.providers)
+            app.state.research = ResearchService(database,app.state.capabilities,app.state.skills,app.state.providers,**(research_options or {}))
             app.state.store.recover_interrupted()
             manager = app.state.manager = RunManager(app.state.store, runner, run_timings)
             yield
         finally:
             try:
+                if hasattr(app.state,'research'):
+                    app.state.research.close()
                 if hasattr(app.state,'analytics'):
                     app.state.analytics.close()
                 if hasattr(app.state,'portfolios'):
@@ -113,7 +120,7 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
         try:
             return await call_next(request)
         except Exception:
-            if request.url.path.startswith(("/settings", "/providers", "/workspace", "/portfolios", "/analytics", "/skills", "/capabilities")):
+            if request.url.path.startswith(("/settings", "/providers", "/workspace", "/portfolios", "/analytics", "/skills", "/capabilities", "/research")):
                 # Do not let an injected/native/storage exception echo the request in logs.
                 return JSONResponse(status_code=503, content={"detail": "本机存储操作失败，请检查环境后重试。"})
             raise
@@ -137,6 +144,38 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     @app.exception_handler(SkillError)
     async def skill_error(_request, error):
         return JSONResponse(status_code=409, content={'detail': error.code})
+
+    @app.exception_handler(ResearchError)
+    async def research_error(_request,error):
+        return JSONResponse(status_code=404 if error.code=='RESEARCH_NOT_FOUND' else 409,content={'detail':error.code})
+
+    @app.get('/research/strategies',response_model=list[ResearchStrategy],dependencies=protected)
+    def strategies():
+        return research_strategies()
+
+    @app.post('/research/plan',response_model=ResearchPlan,dependencies=protected)
+    def research_plan(body: ResearchInput):
+        return app.state.research.plan(body)
+
+    @app.get('/research/runs',response_model=list[ResearchSummary],dependencies=protected)
+    def research_runs():
+        return app.state.research.store.list()
+
+    @app.post('/research/runs',response_model=ResearchRun,dependencies=protected)
+    def start_research(body: ResearchInput):
+        return app.state.research.start(body)
+
+    @app.get('/research/runs/{identity}',response_model=ResearchRun,dependencies=protected)
+    def get_research(identity: str):
+        return app.state.research.store.get(identity)
+
+    @app.post('/research/runs/{identity}/cancel',response_model=ResearchRun,dependencies=protected)
+    def cancel_research(identity: str):
+        return app.state.research.cancel(identity)
+
+    @app.get('/research/runs/{identity}/data/{capability}',response_model=ResearchData,dependencies=protected)
+    def research_data(identity: str,capability: str):
+        return app.state.research.store.data(identity,capability)
 
     @app.get('/capabilities', response_model=list[CapabilityState], dependencies=protected)
     def capabilities(mode: Literal['simulated', 'real'] = 'simulated', provider: ProviderId = 'longbridge'):
