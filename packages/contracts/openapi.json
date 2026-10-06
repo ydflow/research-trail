@@ -1,6 +1,113 @@
 {
   "components": {
     "schemas": {
+      "Allocation": {
+        "additionalProperties": false,
+        "properties": {
+          "market_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Value"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "weight": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight"
+          }
+        },
+        "required": [
+          "symbol",
+          "quantity",
+          "price",
+          "market_value",
+          "weight"
+        ],
+        "title": "Allocation",
+        "type": "object"
+      },
+      "AnalysisRead": {
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "title": "Capability",
+            "type": "string"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          }
+        },
+        "required": [
+          "symbol",
+          "capability",
+          "status"
+        ],
+        "title": "AnalysisRead",
+        "type": "object"
+      },
       "CancelledEvent": {
         "additionalProperties": false,
         "properties": {
@@ -193,6 +300,259 @@
           "currency"
         ],
         "title": "CashInput",
+        "type": "object"
+      },
+      "CompareCell": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "title": "CompareCell",
+        "type": "object"
+      },
+      "CompareQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "default": "USD",
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "mode": {
+            "default": "simulated",
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "provider": {
+            "default": "longbridge",
+            "enum": [
+              "longbridge",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "refresh": {
+            "default": false,
+            "title": "Refresh",
+            "type": "boolean"
+          },
+          "report_year": {
+            "default": 2023,
+            "maximum": 2100,
+            "minimum": 1900,
+            "title": "Report Year",
+            "type": "integer"
+          },
+          "symbols": {
+            "items": {
+              "pattern": "^[A-Z0-9]{1,6}\\.(US|HK|SG|SH|SZ|HAS)$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "minItems": 2,
+            "title": "Symbols",
+            "type": "array"
+          }
+        },
+        "required": [
+          "symbols"
+        ],
+        "title": "CompareQuery",
+        "type": "object"
+      },
+      "CompareRow": {
+        "additionalProperties": false,
+        "properties": {
+          "cells": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CompareCell"
+            },
+            "title": "Cells",
+            "type": "object"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "metric",
+          "label",
+          "unit",
+          "cells"
+        ],
+        "title": "CompareRow",
+        "type": "object"
+      },
+      "CompareToolData": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "compare",
+            "default": "compare",
+            "title": "Kind",
+            "type": "string"
+          },
+          "report": {
+            "$ref": "#/components/schemas/Comparison"
+          }
+        },
+        "required": [
+          "report"
+        ],
+        "title": "CompareToolData",
+        "type": "object"
+      },
+      "Comparison": {
+        "additionalProperties": false,
+        "properties": {
+          "calculated_at": {
+            "title": "Calculated At",
+            "type": "string"
+          },
+          "currency": {
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "mode": {
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "longbridge",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "reads": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisRead"
+            },
+            "title": "Reads",
+            "type": "array"
+          },
+          "report_period": {
+            "title": "Report Period",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/CompareRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "partial",
+              "missing"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Symbols",
+            "type": "array"
+          }
+        },
+        "required": [
+          "snapshot_id",
+          "calculated_at",
+          "symbols",
+          "provider",
+          "mode",
+          "currency",
+          "report_period",
+          "status",
+          "rows",
+          "reads",
+          "summary",
+          "limitations"
+        ],
+        "title": "Comparison",
         "type": "object"
       },
       "CompletedPayload": {
@@ -2589,7 +2949,7 @@
           },
           "count": {
             "default": 20,
-            "maximum": 100,
+            "maximum": 260,
             "minimum": 1,
             "title": "Count",
             "type": "integer"
@@ -2709,6 +3069,358 @@
           "capability"
         ],
         "title": "ReadQuery",
+        "type": "object"
+      },
+      "RiskGroup": {
+        "additionalProperties": false,
+        "properties": {
+          "allocation": {
+            "items": {
+              "$ref": "#/components/schemas/Allocation"
+            },
+            "title": "Allocation",
+            "type": "array"
+          },
+          "currency": {
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "herfindahl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Herfindahl"
+          },
+          "portfolio_volatility": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SeriesStats"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesStats"
+            },
+            "title": "Series",
+            "type": "array"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/RiskSignal"
+            },
+            "title": "Signals",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "empty",
+              "partial"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "top1_weight": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top1 Weight"
+          },
+          "top5_weight": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top5 Weight"
+          },
+          "total_market_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Market Value"
+          },
+          "unavailable": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unavailable",
+            "type": "array"
+          }
+        },
+        "required": [
+          "currency",
+          "status",
+          "total_market_value",
+          "allocation",
+          "series",
+          "signals",
+          "unavailable"
+        ],
+        "title": "RiskGroup",
+        "type": "object"
+      },
+      "RiskQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "default": "simulated",
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "portfolio_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "title": "Portfolio Id",
+            "type": "string"
+          },
+          "provider": {
+            "default": "longbridge",
+            "enum": [
+              "longbridge",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "refresh": {
+            "default": false,
+            "title": "Refresh",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "portfolio_id"
+        ],
+        "title": "RiskQuery",
+        "type": "object"
+      },
+      "RiskReport": {
+        "additionalProperties": false,
+        "properties": {
+          "account_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "title": "Account Id",
+            "type": "string"
+          },
+          "account_kind": {
+            "title": "Account Kind",
+            "type": "string"
+          },
+          "calculated_at": {
+            "title": "Calculated At",
+            "type": "string"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/RiskGroup"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "input_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Code"
+          },
+          "input_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Message"
+          },
+          "input_source": {
+            "title": "Input Source",
+            "type": "string"
+          },
+          "input_status": {
+            "title": "Input Status",
+            "type": "string"
+          },
+          "input_time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Time"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "mode": {
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "portfolio_id": {
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "title": "Portfolio Id",
+            "type": "string"
+          },
+          "portfolio_revision": {
+            "title": "Portfolio Revision",
+            "type": "integer"
+          },
+          "provider": {
+            "enum": [
+              "longbridge",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "reads": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisRead"
+            },
+            "title": "Reads",
+            "type": "array"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "empty",
+              "partial",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "snapshot_id",
+          "calculated_at",
+          "portfolio_id",
+          "account_id",
+          "portfolio_revision",
+          "account_kind",
+          "input_source",
+          "input_time",
+          "input_status",
+          "provider",
+          "mode",
+          "status",
+          "groups",
+          "reads",
+          "summary",
+          "limitations"
+        ],
+        "title": "RiskReport",
+        "type": "object"
+      },
+      "RiskSignal": {
+        "additionalProperties": false,
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          }
+        },
+        "required": [
+          "kind",
+          "severity",
+          "detail"
+        ],
+        "title": "RiskSignal",
+        "type": "object"
+      },
+      "RiskToolData": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "risk",
+            "default": "risk",
+            "title": "Kind",
+            "type": "string"
+          },
+          "report": {
+            "$ref": "#/components/schemas/RiskReport"
+          }
+        },
+        "required": [
+          "report"
+        ],
+        "title": "RiskToolData",
         "type": "object"
       },
       "RunCompletedEvent": {
@@ -3197,6 +3909,106 @@
         "title": "SecurityQuery",
         "type": "object"
       },
+      "SeriesStats": {
+        "additionalProperties": false,
+        "properties": {
+          "annualized_volatility": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annualized Volatility"
+          },
+          "bars": {
+            "default": 0,
+            "title": "Bars",
+            "type": "integer"
+          },
+          "daily_volatility": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Daily Volatility"
+          },
+          "drawdown": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Drawdown"
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "returns": {
+            "default": 0,
+            "title": "Returns",
+            "type": "integer"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "missing",
+              "invalid"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "status"
+        ],
+        "title": "SeriesStats",
+        "type": "object"
+      },
       "SessionDTO": {
         "additionalProperties": false,
         "properties": {
@@ -3612,7 +4424,9 @@
           "name": {
             "enum": [
               "market.quote",
-              "market.kline"
+              "market.kline",
+              "portfolio.risk",
+              "stocks.compare"
             ],
             "title": "Name",
             "type": "string"
@@ -3692,12 +4506,25 @@
             "type": "string"
           },
           "input": {
-            "$ref": "#/components/schemas/ToolArguments"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ToolArguments"
+              },
+              {
+                "$ref": "#/components/schemas/RiskQuery"
+              },
+              {
+                "$ref": "#/components/schemas/CompareQuery"
+              }
+            ],
+            "title": "Input"
           },
           "name": {
             "enum": [
               "market.quote",
-              "market.kline"
+              "market.kline",
+              "portfolio.risk",
+              "stocks.compare"
             ],
             "title": "Name",
             "type": "string"
@@ -3717,8 +4544,10 @@
           "data": {
             "discriminator": {
               "mapping": {
+                "compare": "#/components/schemas/CompareToolData",
                 "kline": "#/components/schemas/KlineToolData",
-                "quote": "#/components/schemas/QuoteToolData"
+                "quote": "#/components/schemas/QuoteToolData",
+                "risk": "#/components/schemas/RiskToolData"
               },
               "propertyName": "kind"
             },
@@ -3728,6 +4557,12 @@
               },
               {
                 "$ref": "#/components/schemas/KlineToolData"
+              },
+              {
+                "$ref": "#/components/schemas/RiskToolData"
+              },
+              {
+                "$ref": "#/components/schemas/CompareToolData"
               }
             ],
             "title": "Data"
@@ -3884,6 +4719,118 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/analytics/compare": {
+      "post": {
+        "operationId": "compare_stocks_analytics_compare_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompareQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comparison"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Compare Stocks"
+      }
+    },
+    "/analytics/risk": {
+      "post": {
+        "operationId": "portfolio_risk_analytics_risk_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiskQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskReport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Portfolio Risk"
+      }
+    },
     "/health": {
       "get": {
         "operationId": "health_health_get",

@@ -27,6 +27,9 @@ from .watchlist import WatchlistStore, WatchlistError
 from .security_workspace import SecurityWorkspace
 from .workspace_contracts import SymbolInput, WorkspaceState, SecurityQuery, SecurityPage
 from .portfolio import PortfolioService, PortfolioError
+from .analytics import AnalyticsService, AnalyticsError
+from .analytics_contracts import RiskQuery, CompareQuery, RiskReport, Comparison
+from .conversation import RiskToolData, CompareToolData
 from .portfolio_contracts import (PortfolioInfo, PortfolioView, PortfolioCreate, PortfolioId,
     CsvPreviewInput, ImportPreview, ImportConfirm, ImportUndo)
 
@@ -57,11 +60,14 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             app.state.watchlist = WatchlistStore(database)
             app.state.security_workspace = SecurityWorkspace(app.state.watchlist,app.state.providers)
             app.state.portfolios = PortfolioService(database,app.state.providers)
+            app.state.analytics = AnalyticsService(app.state.portfolios,app.state.providers)
             app.state.store.recover_interrupted()
             manager = app.state.manager = RunManager(app.state.store, runner, run_timings)
             yield
         finally:
             try:
+                if hasattr(app.state,'analytics'):
+                    app.state.analytics.close()
                 if hasattr(app.state,'portfolios'):
                     app.state.portfolios.close()
                 if hasattr(app.state,'providers'):
@@ -77,6 +83,8 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     provider = market_provider if market_provider is not None else FixtureMarketProvider()
     runner = AgentRunner(model_provider if model_provider is not None else FakeModelProvider(), market_tools(provider))
+    runner.tools.register('portfolio.risk',lambda args: RiskToolData(report=app.state.analytics.risk(args)))
+    runner.tools.register('stocks.compare',lambda args: CompareToolData(report=app.state.analytics.compare(args)))
 
     def authorize(x_researchtrail_token: Annotated[str | None, Header()] = None):
         if not secrets.compare_digest(x_researchtrail_token or "", token):
@@ -97,14 +105,14 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
         try:
             return await call_next(request)
         except Exception:
-            if request.url.path.startswith(("/settings", "/providers", "/workspace", "/portfolios")):
+            if request.url.path.startswith(("/settings", "/providers", "/workspace", "/portfolios", "/analytics")):
                 # Do not let an injected/native/storage exception echo the request in logs.
                 return JSONResponse(status_code=503, content={"detail": "本机存储操作失败，请检查环境后重试。"})
             raise
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request, error):
-        if request.url.path.startswith(("/settings", "/providers", "/workspace", "/portfolios")):
+        if request.url.path.startswith(("/settings", "/providers", "/workspace", "/portfolios", "/analytics")):
             # FastAPI's default errors include the raw rejected input, including secrets.
             return JSONResponse(status_code=422, content={"detail": "设置输入不符合契约，请检查字段、长度与地址格式。"})
         return JSONResponse(status_code=422, content={"detail": [{"loc": list(item["loc"]),
@@ -132,6 +140,16 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
 
     @app.get('/portfolios',response_model=list[PortfolioInfo],dependencies=protected)
     def portfolio_list(): return app.state.portfolios.list()
+
+    @app.exception_handler(AnalyticsError)
+    async def analytics_error(_request,error):
+        return JSONResponse(status_code=503,content={'detail':str(error)})
+
+    @app.post('/analytics/risk',response_model=RiskReport,dependencies=protected)
+    def portfolio_risk(body:RiskQuery): return app.state.analytics.risk(body)
+
+    @app.post('/analytics/compare',response_model=Comparison,dependencies=protected)
+    def compare_stocks(body:CompareQuery): return app.state.analytics.compare(body)
 
     @app.post('/portfolios',response_model=PortfolioView,dependencies=protected)
     def portfolio_create(body:PortfolioCreate): return app.state.portfolios.create(body)

@@ -5,6 +5,10 @@ from pydantic import TypeAdapter, ValidationError
 
 from .conversation import ErrorPayload, ToolArguments, ToolCall, ToolData, QuoteToolData, KlineToolData
 from .market import MarketProvider, MarketSnapshot, UnknownSymbolError
+from .analytics_contracts import RiskQuery, CompareQuery
+
+ARGUMENTS = {'market.quote': ToolArguments, 'market.kline': ToolArguments, 'portfolio.risk': RiskQuery, 'stocks.compare': CompareQuery}
+RESULT_KINDS = {'market.quote': 'quote', 'market.kline': 'kline', 'portfolio.risk': 'risk', 'stocks.compare': 'compare'}
 
 DATA_ADAPTER = TypeAdapter(ToolData)
 
@@ -20,25 +24,29 @@ class ToolRegistry:
         self._handlers: dict[str, Callable[[ToolArguments], ToolData]] = {}
 
     def register(self, name: str, handler: Callable[[ToolArguments], ToolData]):
-        if name not in ("market.quote", "market.kline") or name in self._handlers:
+        if name not in ARGUMENTS or name in self._handlers:
             raise ValueError("工具名称未允许或已注册")
         self._handlers[name] = handler
 
     def definitions(self):
         # Wire names cannot contain dots; map back only through this registered allowlist.
-        return [{"type": "function", "function": {"name": name.replace(".", "_"),
-                 "description": "Read-only " + name + "; fixture data, not real-time market data.",
-                 "parameters": ToolArguments.model_json_schema(), "strict": True}}
-                for name in self._handlers]
+        result=[]
+        for name in self._handlers:
+            schema=ARGUMENTS[name].model_json_schema()
+            schema['required']=list(schema['properties'])
+            result.append({"type":"function","function":{"name":name.replace('.', '_'),
+                "description":"Read-only "+name+"; Python computed facts; inspect source, currency and missing data. Default simulated mode. Portfolio ID must be supplied by user; never guess.",
+                "parameters":schema,"strict":True}})
+        return result
 
     def decode(self, name, arguments):
         allowed = {key.replace(".", "_"): key for key in self._handlers}
         if name not in allowed:
             raise ToolExecutionError("UNKNOWN_TOOL", "模型请求的工具未注册或不是允许的只读工具。")
         try:
-            return ToolCall(name=allowed[name], arguments=ToolArguments.model_validate(arguments))
+            return ToolCall(name=allowed[name], arguments=ARGUMENTS[allowed[name]].model_validate(arguments))
         except ValidationError:
-            raise ToolExecutionError("INVALID_ARGUMENT", "模型工具参数不符合US代码契约。") from None
+            raise ToolExecutionError("INVALID_ARGUMENT", "模型工具参数不符合注册工具契约。") from None
 
     def execute(self, call: ToolCall) -> ToolData:
         handler = self._handlers.get(call.name)
@@ -46,13 +54,18 @@ class ToolRegistry:
             raise ToolExecutionError("UNKNOWN_TOOL", f"工具未注册：{call.name}。")
         # Validate again at the execution boundary, not just in the rule model.
         try:
-            arguments = ToolArguments.model_validate(call.arguments.model_dump())
+            arguments = ARGUMENTS[call.name].model_validate(call.arguments.model_dump())
         except ValidationError:
-            raise ToolExecutionError("INVALID_ARGUMENT", "工具股票参数不符合US代码契约。") from None
+            raise ToolExecutionError("INVALID_ARGUMENT", "工具股票参数不符合US代码契约。" if call.name.startswith('market.') else "工具参数不符合注册契约。") from None
         try:
             data = DATA_ADAPTER.validate_python(handler(arguments).model_dump(mode="json"))
-            symbol = data.quote.symbol if data.kind == "quote" else data.symbol
-            if data.kind != call.name.split(".")[1] or symbol != arguments.symbol:
+            valid = data.kind == RESULT_KINDS[call.name]
+            if not valid: raise ToolExecutionError('INVALID_RESULT','工具返回的结果类型与请求不符。')
+            if data.kind in ('quote','kline'):
+                valid = valid and (data.quote.symbol if data.kind=='quote' else data.symbol)==arguments.symbol
+            elif data.kind=='risk': valid=valid and data.report.portfolio_id==arguments.portfolio_id and data.report.provider==arguments.provider and data.report.mode==arguments.mode
+            else: valid=valid and data.report.symbols==arguments.symbols and data.report.currency==arguments.currency and data.report.provider==arguments.provider and data.report.mode==arguments.mode and data.report.report_period==f'{arguments.report_year} Annual'
+            if not valid:
                 raise ToolExecutionError("INVALID_RESULT", "数据工具返回的类型或股票代码与请求不一致。")
             return data
         except ToolExecutionError:
