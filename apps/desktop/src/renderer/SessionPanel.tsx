@@ -130,10 +130,10 @@ export function SessionPanel({ available }: { available: boolean }) {
               <option value="fake_agent">规则演示／假模型（默认）</option>
               <option value="openai_agent">OpenAI兼容／真实模型（使用本机配置）</option>
             </select>
-            {modelKind === 'openai_agent' && <p className="market-note">运行会向设置中的模型服务发送本次输入与模拟工具结果，可能产生API费用。先在“模型设置”保存Base URL、模型ID、API Key与限制；不会发送历史会话或个人资料，不会自动重试。</p>}
+            {modelKind === 'openai_agent' && <p className="market-note">运行会向设置中的模型服务发送本次输入与工具结果（包括主动请求的组合风险数值），可能产生API费用。先在“模型设置”保存Base URL、模型ID、API Key与限制；不会发送历史会话或个人资料，不会自动重试。</p>}
             <label htmlFor="run-input">测试输入</label>
             <textarea id="run-input" maxLength={2000} rows={2} value={input} onChange={(e) => setInput(e.target.value)} disabled={disabled}
-              placeholder="查询AAPL.US行情 / 查看NVDA.US的K线" />
+              placeholder="查询AAPL.US行情 / 分析组合<完整ID>风险 / 对比AAPL.US MSFT.US" />
             <label htmlFor="tool-scenario">模拟工具时序</label>
             <select id="tool-scenario" value={modelKind === 'openai_agent' ? 'normal' : scenario} disabled={disabled || modelKind === 'openai_agent'} onChange={(e) => setScenario(e.target.value as typeof scenario)}>
               <option value="normal">正常 · 无额外延迟</option>

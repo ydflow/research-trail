@@ -11,6 +11,8 @@ export interface BackendState {
 }
 export interface ResearchTrailBridge {
   portfolioList(): Promise<import('./portfolio-types').PortfolioInfo[]>;
+  portfolioRisk(input: import('./analytics-types').RiskQuery): Promise<import('./analytics-types').RiskReport>;
+  compareStocks(input: import('./analytics-types').CompareQuery): Promise<import('./analytics-types').Comparison>;
   createPortfolio(input: import('./portfolio-types').PortfolioCreate): Promise<import('./portfolio-types').PortfolioView>;
   portfolioView(id: string): Promise<import('./portfolio-types').PortfolioView>;
   previewPortfolio(id: string, csv: string): Promise<import('./portfolio-types').ImportPreview>;

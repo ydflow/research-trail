@@ -28,6 +28,101 @@ const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { retu
 
 const portfolioCSV='record_type,symbol,currency,quantity,cost_price,market_price,amount\nholding,AAPL.US,USD,2,100,120,\ncash,,USD,,,,100';
 
+test('Step13 hand risk page and Agent share snapshot, four-stock comparison and narrow layout', { timeout:60000 }, async () => {
+  const instance=await launch(); const errors=[];
+  instance.page.on('pageerror',e=>errors.push(e.message));
+  instance.page.on('console',e=>{if(['error','warning'].includes(e.type()))errors.push(e.text());});
+  try {
+    const page=instance.page; await waitForBackend(page);
+    assert.equal(await page.title(),'研迹 · ResearchTrail'); assert.match(page.url(),/dist\/renderer\/index\.html$/);
+    const authored=await page.evaluate(async()=>{
+      const b=window.researchTrail; const p=(await b.portfolioList()).find(p=>p.kind==='manual');
+      const draft=await b.previewPortfolio(p.id,'record_type,symbol,currency,quantity,cost_price,market_price,amount\nholding,AAPL.US,USD,1,100,600,\nholding,MSFT.US,USD,1,100,400,\ncash,,USD,,,,100');
+      await b.confirmPortfolio(p.id,draft.draft_id); return p;
+    });
+    await page.getByRole('button',{name:'风险与对比',exact:true}).click();
+    const panel=page.getByRole('region',{name:'风险与对比工作台'});
+    await panel.getByLabel('风险组合').selectOption(authored.id);
+    await panel.getByRole('button',{name:'读取/分析',exact:true}).click();
+    await expect(panel.getByTestId('risk-Top1权重-USD')).toHaveText('0.6');
+    await expect(panel.getByTestId('risk-HHI集中度-USD')).toHaveText('0.52');
+    const report=await page.evaluate(id=>window.researchTrail.portfolioRisk({portfolio_id:id}),authored.id);
+    await expect(panel.getByTestId('risk-result')).toHaveAttribute('data-snapshot',report.snapshot_id);
+    await panel.getByRole('heading',{name:'组合风险摘要'}).scrollIntoViewIfNeeded();
+    await screenshot(page,'step13-risk-wide.png');
+    const started=await page.evaluate(async id=>{const b=window.researchTrail; const s=await b.createSession('Step13风险共享验收'); return {sid:s.id,run:await b.startAgentRun(s.id,'分析组合'+id+'风险')};},authored.id);
+    await expect.poll(()=>page.evaluate(async r=>(await window.researchTrail.getRun(r.sid,r.run.id)).status,started)).toBe('completed');
+    const events=await page.evaluate(r=>window.researchTrail.runEvents(r.sid,r.run.id),started);
+    assert.deepEqual(events.find(e=>e.type==='tool_result').payload.result.data.report,report);
+    await page.getByRole('button',{name:'会话与事件',exact:true}).click();
+    await expect(page.getByTestId('tool-result').filter({has:page.getByTestId('risk-result')})).toBeVisible();
+    await expect(page.getByTestId('risk-result')).toHaveAttribute('data-snapshot',report.snapshot_id);
+    await page.getByRole('button',{name:'风险与对比',exact:true}).click();
+    await panel.getByRole('button',{name:'股票对比',exact:true}).click();
+    await panel.getByLabel('对比股票（2—4只，空格分隔）').fill('AAPL.US MSFT.US NVDA.US TSLA.US');
+    await panel.getByRole('button',{name:'读取/分析',exact:true}).click();
+    await expect(panel.getByTestId('compare-result')).toHaveAttribute('data-status','partial');
+    await expect(panel.locator('td[data-metric="price"][data-symbol="AAPL.US"]')).toContainText('189.43');
+    await expect(panel.locator('td[data-metric="return_1y"][data-symbol="AAPL.US"]')).toContainText('—');
+    await expect(panel.getByRole('table',{name:'股票统一指标对比'}).locator('tbody tr')).toHaveCount(13);
+    await page.setViewportSize({width:600,height:680});
+    await panel.getByRole('heading',{name:'股票对比表'}).scrollIntoViewIfNeeded();
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await screenshot(page,'step13-compare-narrow.png');
+    await panel.getByLabel('对比股票（2—4只，空格分隔）').fill('AAPL.US AAPL.US');
+    await panel.getByRole('button',{name:'读取/分析',exact:true}).click();
+    await expect(panel.getByRole('alert')).toContainText('不符合契约');
+    await expect(panel.getByTestId('compare-result')).toHaveCount(0);
+    assert.equal(await page.locator('vite-error-overlay').count(),0); assert.deepEqual(errors,[]);
+  } finally {await instance.app.close();}
+});
+
+for(const fixtureCase of ['missing','failure']) test(`Step13 analytics explicit ${fixtureCase} inputs through Python`, {timeout:45000}, async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:fixtureCase});
+  try{
+    const page=instance.page; await waitForBackend(page);
+    await page.getByRole('button',{name:'风险与对比',exact:true}).click();
+    const panel=page.getByRole('region',{name:'风险与对比工作台'});
+    await panel.getByRole('button',{name:'读取/分析',exact:true}).click();
+    await expect(panel.getByTestId('risk-result')).toHaveAttribute('data-status','partial');
+    await expect(panel.getByTestId('risk-Top1权重-USD')).toHaveText('1');
+    await expect(panel.getByRole('table',{name:'USD波动'})).toContainText('—');
+    await panel.getByRole('button',{name:'股票对比',exact:true}).click();
+    await panel.getByRole('button',{name:'读取/分析',exact:true}).click();
+    await expect(panel.getByTestId('compare-result')).toHaveAttribute('data-status','missing');
+    await expect(panel.locator('td[data-metric="price"][data-symbol="AAPL.US"]')).toContainText('—');
+    await panel.getByText(/数据来源与读取状态/).click();
+    if(fixtureCase==='failure') await expect(panel.getByTestId('compare-result')).toContainText('NETWORK_ERROR');
+    await screenshot(page,`step13-${fixtureCase}.png`);
+  }finally{await instance.app.close();}
+});
+
+test('Step13 stale risk result cannot replace selected comparison', {timeout:45000}, async()=>{
+  const instance=await launch();
+  try{
+    const page=instance.page; await waitForBackend(page);
+    const reports=await page.evaluate(async()=>{
+      const b=window.researchTrail; const p=(await b.portfolioList()).find(p=>p.kind==='simulated');
+      return [await b.portfolioRisk({portfolio_id:p.id}),await b.compareStocks({symbols:['AAPL.US','MSFT.US']})];
+    });
+    await instance.app.evaluate(({ipcMain},reports)=>{
+      globalThis.analysisArrivals=[];
+      for(const [channel,delay,index] of [['analytics:risk',700,0],['analytics:compare',10,1]]){
+        ipcMain.removeHandler(channel); ipcMain.handle(channel,async()=>{await new Promise(r=>setTimeout(r,delay));globalThis.analysisArrivals.push(index);return reports[index];});
+      }
+    },reports);
+    await page.getByRole('button',{name:'风险与对比',exact:true}).click();
+    const panel=page.getByRole('region',{name:'风险与对比工作台'});
+    await expect(panel.getByLabel('风险组合')).not.toHaveValue('');
+    await panel.getByRole('button',{name:'读取/分析',exact:true}).click();
+    await panel.getByRole('button',{name:'股票对比',exact:true}).click();
+    await panel.getByRole('button',{name:'读取/分析',exact:true}).click();
+    await expect.poll(()=>instance.app.evaluate(()=>globalThis.analysisArrivals)).toEqual([1,0]);
+    await expect(panel.getByTestId('compare-result')).toHaveAttribute('data-snapshot',reports[1].snapshot_id);
+    await expect(panel.getByTestId('risk-result')).toHaveCount(0);
+  }finally{await instance.app.close();}
+});
+
 test('Step12 portfolio file preview, confirm, duplicate/invalid, multi-currency and undo in real window', { timeout: 60000 }, async () => {
   const instance=await launch(); const errors=[];
   instance.page.on('pageerror',e=>errors.push(e.message));
@@ -628,7 +723,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       'connections', 'saveConnection', 'deleteConnection', 'saveCredential', 'deleteCredential', 'testConnection', 'profile', 'saveProfile', 'deleteProfile', 'diagnostics', 'exportDiagnostics',
       'providerProfiles', 'saveProvider', 'deleteProvider', 'saveProviderCredential', 'deleteProviderCredential', 'providerCapabilities', 'queryProvider',
       'workspaceState', 'addWatch', 'removeWatch', 'selectSecurity', 'securityPage', 'openNewsSource',
-      'portfolioList', 'createPortfolio', 'portfolioView', 'previewPortfolio', 'confirmPortfolio', 'undoPortfolio', 'refreshPortfolio'].sort(), node: 'undefined', process: 'undefined' });
+      'portfolioRisk', 'compareStocks', 'portfolioList', 'createPortfolio', 'portfolioView', 'previewPortfolio', 'confirmPortfolio', 'undoPortfolio', 'refreshPortfolio'].sort(), node: 'undefined', process: 'undefined' });
     assert.deepEqual(await first.app.evaluate(({ BrowserWindow }) => {
       const pref = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();
       return { sandbox: pref.sandbox, nodeIntegration: pref.nodeIntegration, contextIsolation: pref.contextIsolation };

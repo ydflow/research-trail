@@ -210,6 +210,8 @@ export class BackendManager extends EventEmitter {
   connections() { return this.business<import('../settings-types').ConnectionView[]>('/settings/connections'); }
   workspaceState() { return this.business<import('../workspace-types').WorkspaceState>('/workspace'); }
   portfolioList() { return this.business<import('../portfolio-types').PortfolioInfo[]>('/portfolios'); }
+  portfolioRisk(body: unknown) { return this.business<import('../analytics-types').RiskReport>('/analytics/risk', 'POST', body, 35000); }
+  compareStocks(body: unknown) { return this.business<import('../analytics-types').Comparison>('/analytics/compare', 'POST', body, 35000); }
   createPortfolio(body: unknown) { return this.business<import('../portfolio-types').PortfolioView>('/portfolios', 'POST', body); }
   portfolioView(id: unknown) { return this.business<import('../portfolio-types').PortfolioView>('/portfolios/view', 'POST', { portfolio_id: this.id(id) }); }
   previewPortfolio(id: unknown, csv: unknown) {

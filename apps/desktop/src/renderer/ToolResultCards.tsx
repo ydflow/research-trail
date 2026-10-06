@@ -1,7 +1,9 @@
+import { lazy, Suspense } from 'react';
 import type { StreamEvent } from '../conversation-types';
 import { QuoteCard } from './market/QuoteCard';
 import { FinancialKLineChart } from './market/FinancialKLineChart';
 
+const Results = lazy(() => import('./analytics/Results'));
 const utc = (time: string) => new Date(time).toISOString().replace('T', ' ').replace('Z', ' UTC');
 
 export function ToolResultCards({ events, runId }: { events: StreamEvent[]; runId: string }) {
@@ -14,6 +16,10 @@ export function ToolResultCards({ events, runId }: { events: StreamEvent[]; runI
         <p className="market-error">{result.error.code}：{result.error.message}</p>
       </section>;
       const data = result.data;
+      if(data.kind === 'risk' || data.kind === 'compare') return <section key={event.payload.call_id} className="tool-result" data-testid="tool-result" data-tool={event.payload.name}>
+        <p>Python只读工具 {event.payload.name} · 保存的计算快照，重读历史不重新计算。</p>
+        <Suspense fallback={<p>正在显示计算结果…</p>}><Results report={data.report}/></Suspense>
+      </section>;
       return <section key={event.payload.call_id} className="tool-result" data-testid="tool-result" data-tool={event.payload.name}>
         <p className="market-note">结果来自Python工具 · {data.kind === 'quote' ? '行情查询' : 'K线查询'}</p>
         {data.kind === 'quote' ? <QuoteCard quote={data.quote} /> : <>

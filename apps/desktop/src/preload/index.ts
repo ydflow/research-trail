@@ -3,6 +3,8 @@ import type { BackendState, ResearchTrailBridge, RunStreamUpdate } from '../brid
 
 const bridge: ResearchTrailBridge = {
   portfolioList: () => ipcRenderer.invoke('portfolios:list'),
+  portfolioRisk: input => ipcRenderer.invoke('analytics:risk', input),
+  compareStocks: input => ipcRenderer.invoke('analytics:compare', input),
   createPortfolio: input => ipcRenderer.invoke('portfolios:create', input),
   portfolioView: id => ipcRenderer.invoke('portfolios:view', id),
   previewPortfolio: (id, csv) => ipcRenderer.invoke('portfolios:preview', id, csv),
