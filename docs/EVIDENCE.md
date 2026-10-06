@@ -860,3 +860,5 @@ Electron实窗标题“研迹 · ResearchTrail”、URL file:///.../apps/desktop
 后续仅推送feat/step-12-portfolios、创建对应PR，实时检查最终head/base、全部远程检查、review和未解决讨论；通过无阻塞才按匹配head普通merge保留提交并同步main。此处为推送前文档，不把尚未执行的远程CI、合并或同步写成通过。已有v0.1.0标签object 3dd216557cdc81ac8fc35b14e0585dc43731be86、解析至第7步716543305ba5d74f57336c589c4b2dffaf6e3592；本轮不打标签/创建Release或定时付费评测。
 
 未验证：真实Longbridge账户/权限/多通道和行情/模型、任意券商CSV、长期历史/负载与备份恢复、其他OS/安装包、用户亲自清单/练习。远程CI与最终PR/merge状态见实时GitHub及外部PROJECT_STATE发布回执。第13—24步未实施。
+
+已创建[第12步PR #11](https://github.com/ydflow/research-trail/pull/11)，base main b52936a4241ab7a96f58f36389afb063e248ad20、非draft，初始head db534b001efe80886f7d93df4079c526c34dcdc9。四个真实分类提交与29项差异已推送核对，创建后push/PR Windows检查已启动、当时尚未完成。本次仅补PR链接，不改运行源码；最终head检查见[PR检查](https://github.com/ydflow/research-trail/pull/11/checks)。最终提交/CI/merge及本地同步以实时Git/GitHub及外部PROJECT_STATE发布回执核验，不虚构当前文档提交自身SHA。
