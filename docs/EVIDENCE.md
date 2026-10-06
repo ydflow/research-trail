@@ -872,3 +872,66 @@ BackendManager允许Python就绪15秒，再轮询健康接口5秒，单次健康
 定向成功/缺失/失败三态3项通过。随后重新导出143份源码至Temp/research-trail-clean-00SmBR/clean source，按锁新装71前端/29Python并准备Electron；完整离线Python289、Node8、Electron22全部通过、无跳过，契约/类型/构建及0008重复upgrade/current/check通过。隔离迁移research-trail-verify-gLrUuQ；根CMD选股→会话→行情→取消→关闭/重启恢复通过，快照相同、无新运行、所属进程退出，证据research-trail-cmd-qa-jRrsKi。129份代码/配置/锁文件逐字节匹配本次干净源码，文档追加独立于运行源码；仅既有TestClient/Vite提示。
 
 本步骤最终差异增加为31项，源码143份UTF-8，49个本地Markdown链接与8项忽略探针、秘密签名/禁传产物、空index及差异空白审核通过。新截图仍只在Temp，账户/密钥/CSV/运行库等未进入提交。修复后重新推送，让新head接受push/PR检查，不能沿用旧head的push成功抵消其PR失败；最终远程检查、普通merge与本地main同步以实时GitHub及外部发布回执确认。
+
+## 32. 第13步风险与股票对比开发验收（2026-10-06）
+
+用户当前单独授权开发第13步，完成后停止。先读AGENTS/ROADMAP/EVIDENCE/第12步清单与实际实现；仓库根D:\folio\research-trail、main/HEAD/origin/main 3359c38bb23ae44ae7edd36f8b44d7d969a2a43c，进入时工作区及index为空。此为第12步PR #11已普通合并的本机基线，历史第31节发布状态保留；本轮没有GitHub写入、提交/推送或发布，也不执行第14步。
+
+### 来源、适配与Python新实现
+
+只读参考Folio ba5dcdfd31b162f5edb8b908f7f099a560389326的packages/shared/src/portfolio-risk/service.ts与compare/service.ts、packages/core同名DTO，核对实际Top1/Top5/HHI、六类风险信号及13项对比指标。必要UI仅参考packages/ui/src/components/portfolio/PortfolioRiskPanel.tsx与components/compare/CompareTable.tsx的摘要/输入/缺口和表格结构，Python/React文件保留出处；新写AnalyticsPanel/Results适配现有桥和生成契约，未导入全套原UI/TS业务内核或AI摘要依赖。保持既有来源及第三方声明、用户原作者授权确认与未独立持有授权原文的边界，不自行改全仓MIT。
+
+新增analytics_contracts/analytics_calculate/analytics.py：Decimal纯计算、分币种风险报告、严格日线样本/窗口、2—4证券固定13行对比、缺失/非法/权限/期间状态、25秒/4并行有界读取及30秒/32项内存快照。风险估值取组合输入，不用其他来源补价格；同币种缺任一估值不缩小分母，现金不进持仓权重。行业、事件、新闻和价格历史各有缺口；事件7天/新闻过去7天按模拟固定时点2024-01-16T21UTC或真实分析时点判断。组合波动明确当前权重每日再平衡/252日假设，不是账户历史业绩；20根峰值回撤不是最大回撤。不同币种无FX合计。
+
+对比固定价/市值/PE/PB/营收增长/毛利率/ROE/股息率/1M/3M/1Y/评级/动量；财务直指标需指定Annual年度和币种，TTM分列，重复期间与不齐序列拒算；不从缺字段猜值/补零/评分。当前模拟仅10根日线，默认四证券partial、12/52已知；完整13行由固定260根协议数据验证。为1Y仅扩大kline count至260，其他count仍100，原序列化列表上限1000已足够；官方历史K线文档支持count上限1000（链接见ACCEPTANCE-step13）。SDK仍5.2.0，未改依赖/工作流/迁移（仍0008），未发真实请求。
+
+HTTP /analytics/risk与/compare、portfolio.risk与stocks.compare共用app.state.analytics；ToolRegistry恰有四个注册只读工具，参数schema/返回kind/股票或组合身份均校验。FakeModel仅解析新意图并格式化Python摘要；OpenAI模拟响应沿同工具/事件链返回报告，系统提示明确模型不计算数值。页面与保存工具卡复用Results，30秒内相同输入/版本命中同snapshot_id和calculated_at；refresh/revision/提供商版本变化失效。工具事件保存当时完整报告，重放不调用模型/行情。主动真实模型分析会发送所请求组合工具事实，README与清单明确；不会上传真实组合至Git或诊断。
+
+新增两项命名IPC，桥共52项，renderer只能请求固定业务接口；分析结果/组件按需加载，前端不计算第二份数值。输入/视图变化递增generation，迟到结果不覆盖新选择；分析只由按钮启动，默认模拟，风险页不自动刷新真实账户。未查询只读账户failed/unverified与空仓可区分；模拟账户用真实行情/真实账户用模拟行情明确SOURCE_MISMATCH且不发查询。
+
+### 检查经过与最终结果
+
+新增Python37项首先通过，后补7项严格阈值/Top5边界与1项HTTP多币种/缺估值/现金，共45项。手算600/400市值：0.6/0.4、Top1=0.6、Top5=1、HHI=0.52；固定100→110→99与100→90→99，单股日样本σ=0.14142136、组合日σ=0.02828427。覆盖空/0/NaN/Inf/布尔/非法代码/坏或重复日线/缺口/不齐日期、报告币种/期间/重复匹配、提供商失败/权限/未配置/预算，以及HTTP/Fake/OpenAI模拟同报告与保存重放。
+
+初次统一检查7失败/319通过：5项旧假模型范围提示缺原NVDA K线示例、1项旧市场参数错误提示不含“股票参数”、1项OpenAI白名单预期仍只有两个工具。恢复旧示例/错误文案，白名单精确更新为四个已注册工具；保留非法/交易工具拒绝与原边界断言，61项Agent/模型定向回归通过。实窗新案例初次3项因测试调用不存在capture函数失败（迟到响应案例已通过），修正为项目已有screenshot函数；四项重新通过，没有降低业务断言。
+
+最终check.cmd退出0：Python334（基线289+45）、Node8、实际Electron26（基线22+4），无跳过；OpenAPI/生成TS契约一致性、类型、main/preload与renderer构建、隔离库重复upgrade/current/check全部通过，0008_portfolios(head)、No new upgrade operations。证据Temp/research-trail-verify-dtA3Sg。只有既有TestClient弃用和Vite主chunk501.54KiB提示，分析页面/结果已分块，未为提示升级依赖或调高阈值掩盖。
+
+最终差异复查发现公开列表上限本来为1000，开发时字典字段上限200→260的改动并不需要；恢复原200边界，provider_normalize最终无差异。其后analytics与providers定向140项通过，无跳过，包含260根列表、响应边界与原提供商回归；其余运行源码与完整检查时一致。文档同步纠正为仅扩大kline查询count，不把字典上限误写成数组上限。
+
+四项实际Electron测试：自造CSV保存→风险手算→API/假模型工具同快照→共享结果卡、四股票/600×680窄窗/重复输入清旧结果；Python注入缺失响应；提供商NETWORK_ERROR失败；旧风险700ms/新对比10ms到达[1,0]后不串页。Windows已有Playwright/Electron，无Browser技能/插件或新增依赖。实际1100×800/600×680截图已查看：非空/无错误overlay/相关console异常/页面横溢出；缺指标为—，失败读状态与缺失输入区分，来源/方法可展开。截图在Temp/research-trail-step13-qa，CSV/数据库/截图不入Git。统一回归还验证第1—12步健康/设置/提供商/组合/SSE/取消/重启，均离线业务数据与假响应。
+
+验收覆盖、公式/方法限制、来源和本机操作见[ACCEPTANCE-step13](ACCEPTANCE-step13.md)，真实源码调用链见tutorial C08；practice保留用户既有回答并补一个小改动与三题，亲自操作/学习记录待填。
+
+最终源码/隐私审核：152份UTF-8文本、54个本地Markdown链接、8项NUL忽略探针、秘密签名/禁传产物和git diff --check通过；32项本步差异（23修改/9新增），index为空，项目所属Python/Electron/Node等进程读查无残留。仅源码、契约、测试、文档，CSV原文件、账户/凭证、运行数据库/WAL、日志、缓存/依赖/构建与截图未入Git。HEAD仍3359c38bb23ae44ae7edd36f8b44d7d969a2a43c，本步没有提交SHA。
+
+未验证：真实Longbridge/Massive/CLI数据和权限、sector/财务直接字段/consensus/事件映射、真实模型风险/对比、本轮干净源码新装/远程CI、长期负载/其他OS/安装包。现有Agent单工具默认2秒可能先于分析25秒预算超时，保留TOOL_TIMEOUT；真实性能未验证。运行中的有界提供商线程沿已有超时退出，返回快照不纳入迟到数据。不把历史真实模型quote成绩当成本步真实验收。第13步仅本机开发交付，完成停止。
+
+## 33. 第13步发布复验与公开范围（2026-10-06）
+
+用户本轮独立授权仅发布已验收第13步，失败先修复，不实施第14步。读取第32节、ACCEPTANCE-step13、ROADMAP与实际32项差异；基线main 3359c38bb23ae44ae7edd36f8b44d7d969a2a43c。实时核验gh当前账号ydflow、既有公开非fork非归档ydflow/research-trail、默认main、origin fetch/push均https://github.com/ydflow/research-trail.git、远程main同基线且没有重复开放PR；仓库历史/文件与研迹一致。每次外部写入前再次核验，不切账号、删除、强推或绕过保护。
+
+152份源码/文档UTF-8、54个本地Markdown链接、8项NUL忽略探针、秘密签名/禁传产物与git diff --check通过。32项仅本步源码、契约、测试、文档；不含密钥、真实账户/持仓、CSV原文件、运行库/WAL、日志、缓存、依赖/构建、截图。保留固定Folio来源和第32节局部适配范围、原作者授权确认及第三方声明，未独立取得授权原文，不宣称全仓MIT。提交将按真实差异区分Python新实现、Folio必要UI适配、修复及验收文档；当前ydflow/noreply与正常开发时间，不伪造上游导入历史或作者/日期。
+
+### 发布审查发现阈值舍入问题并修复
+
+发布前审查复现：单仓权重0.150000000001显示0.15后遗漏中风险，0.250000000001显示0.25后错误为中风险；回撤略高于0.2/0.35时同样漏报/降级。新回归4项在修复前失败。沿相同路径核对动量，略低于5%的收益先舍入为5导致误判强，微小负收益先舍入为0导致符号判断错误；追加2项回归，修复前均失败。未把该问题留待下一步或降低断言。
+
+修复保留Decimal完整权重/回撤/价格收益用于分类，8位小数仅输出展示；抽出同一drawdown函数供数值与风险判断，动量使用对齐后原始收益，不从显示字符串反算。指标/阈值、业务范围与契约不变；新增6项回归后analytics51项全部通过。发布完整复验及新干净源码以修复后实际源码为准；修复前334/8/26检查只作为历史，不能代替新head验收。远程CI、PR/普通合并与同步状态将在对应操作实际完成后记录，当前不虚报。
+
+### 修复后最终本机与干净源码验收
+
+修复后check.cmd退出0，Python340（289基线+51本步）、Node8、实际Electron26全部通过，无跳过；OpenAPI/TS一致性、类型、main/preload/renderer构建、隔离0008重复upgrade/current/check通过，证据Temp/research-trail-verify-BfMwSd。干净源码Temp/research-trail-clean-9HMbWE/clean source导出152份源文件，按锁新装71前端/29Python（SDK5.2.0）并准备Electron；完整340/8/26再次通过，无跳过，迁移证据research-trail-verify-A2m1l7。根CMD股票→会话→行情→取消→关闭重启→历史恢复通过，同一保存快照、无新运行、所属进程退出，证据research-trail-cmd-qa-tHupNE。137份非Markdown运行源码/配置/锁文件逐字节匹配该干净源码；后续仅发布文档增补。下载可能复用本机缓存，不宣称无工具/空缓存机器验收。
+
+发布截图仅Temp/research-trail-step13-publication-final-qa与clean-publication-final-qa；1100×800/600×680真实截图已查看，手算风险、Agent同快照/共享结果卡、四股票/重复输入清旧结果、缺失/NETWORK_ERROR和迟到风险不覆盖对比通过。没有blank、错误overlay、相关console异常或页面横溢出；缺失指标仍—。未使用真实模型/行情/账户、未读取日常凭证；Browser不可用，沿用已有Playwright/Electron。仅既有TestClient/Vite提示，无依赖/工作流/迁移或后续能力变化。
+
+真实分类提交（当前ydflow/noreply、正常时间）：
+
+- 082e55016b509b692a2133a5bc1733ffbd23dcfa：Python新实现、生成契约、注册工具和模拟协议测试。
+- cf218184a19f3d069b84ca898f54b7d6ce30ef00：修复未舍入阈值/动量判断，6项先失败后通过的回归。
+- 1a8e09d9753c2c608e87f3291026b5dbcd092f24：固定Folio必要UI局部适配、Python桥、共享结果卡和实际Electron验收，不伪装为上游原始提交/作者。
+- 发布文档提交记录来源、方法限制、开发/修复/发布验证及未验证事项；自身SHA与最终PR/merge由实际Git与回执确认，不循环引用。
+
+仅推送feat/step-13-analytics，创建对应PR后核验最终head/base、全部远程检查与review/未解决讨论，全部通过无阻塞才按匹配head普通merge并同步main。既有v0.1.0标签object仍3dd216557cdc81ac8fc35b14e0585dc43731be86，Release非draft/非prerelease、assets0；不打标签、创建Release或定时付费评测。
+
+尚未验证真实Longbridge/Massive/CLI数据、权限及字段映射、真实模型风险/对比、长期负载、其他OS/安装包和用户亲自操作/练习。远程CI与合并由实际GitHub检查和外部PROJECT_STATE发布回执确认，不把本机检查当远程通过。第14—24步未实施。

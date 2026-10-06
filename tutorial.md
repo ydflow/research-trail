@@ -8,7 +8,7 @@
 - 参考来源：ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`；本地无Git，不能保证逐文件无本地变化。
 - 新项目根：`D:\folio\research-trail`，当前有第1—6步业务、第7步验收脚本/离线CI文件、第8步设置/凭证/假连接/诊断。v0.1.0源码发布只包含第1—7步，第8步已通过PR #7交付，第9步实现模型适配/受限工具循环；发布轮一次真实模型工具验证通过（2次请求、1次工具），真实行情未接入。
 - 本次覆盖：入口、界面/客户端、模型与数据、持久化/事件、组合、技能、研究、监控、评测与打包的阅读路线。
-- C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；C06已展开第8步设置/凭证/假健康，C05已补第9步模型协议/工具循环；一次真实模型工具验证通过（模拟行情），第10步数据与只读账户适配及第11步证券工作台已展开，真实行情查询未执行，第12步C07已展开组合CSV与账户计算；C08—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
+- C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；C06已展开第8步设置/凭证/假健康，C05已补第9步模型协议/工具循环；一次真实模型工具验证通过（模拟行情），第10步数据与只读账户适配及第11步证券工作台已展开，真实行情查询未执行，第12步C07已展开组合CSV与账户计算，第13步C08已展开风险/对比同源计算；C09—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
 - 前置知识：Python函数/类与异步、HTTP/JSON、TypeScript接口、React状态、进程与IPC、SQLite基本操作；按课程需要补，不要求先学完全部框架。
 
 主链先建立整体印象：
@@ -263,9 +263,9 @@ Windows系统存储不可用时拒绝保存，无明文后备。凭证命名空�
 
 ## C08：风险和股票对比的数字如何产生？
 
-前置：第12步组合输入与确定性计算已在C07实现；本课仍为第13步大纲，本轮不执行。
+前置：第12步组合输入与确定性计算已在C07实现。本课第13步已实现并通过模拟和本机自动验收，真实数据与用户练习未验证。
 
-状态：大纲。关联步骤13。
+状态：第13步已展开。关联步骤13。
 
 - 主链：组合或股票列表 → 获取规范数据 → 确定性计算 → 报告/对比表 → 页面或工具。
 - 必读1：`packages/shared/src/portfolio-risk/service.ts` / `PortfolioRiskService.analyze`：持仓、行情、缺口到风险结果。
@@ -273,6 +273,18 @@ Windows系统存储不可用时拒绝保存，无明文后备。凭证命名空�
 - 必读3：`packages/core/src/portfolio-risk.ts`、`compare.ts`：统一结果契约，核对币种/期间和证据。
 - 验证选读：`packages/shared/src/compare/compare.test.ts`，风险同目录测试。
 - 暂缓：文字综合是模型工作，不替代上述数值；后续研究由C10/C11。
+
+### 研迹第13步真实调用链
+
+1. `renderer/analytics/AnalyticsPanel.tsx`选择组合或2—4代码、提供商、模式、币种和年度，只有点击分析/刷新才请求。默认模拟；切换输入递增generation，迟到响应不能写入新视图。`App.tsx`按需加载页面。
+2. preload的`portfolioRisk`/`compareStocks`→main命名IPC与来源检查→`BackendManager.business`→带令牌的POST `/analytics/risk`或`/analytics/compare`。`analytics_contracts.py`拒绝额外字段、重复代码、非法数量/币种/年度；前端类型来自生成契约。
+3. `AnalyticsService.risk`读取`PortfolioService.view`的账户/组合/revision及估值输入，不自动刷新真实账户；`.compare`只接收股票查询。`_reads`复用`ProviderService.query`，最多4并行和25秒预算，逐项保留真实/模拟、缓存、时间和失败码，不用模拟替代真实失败。
+4. `analytics_calculate.py`用Decimal计算同币种持仓权重、Top1/Top5/HHI，现金不进入分母；缺一项估值则全部权重为null。日线必须有效且日期唯一，缺口超过7天拒算；`volatility`用样本标准差，组合采用当前市值权重与严格相同日期的收益。`AnalyticsService._risk`补行业、财报7天/新闻7天信号及明确缺口。
+5. `_compare`构建固定13行，金额需币种一致，财务直接指标需指定Annual年度，收益用21/63/252个交易日且已知序列同窗。缺失、不支持、期间重复或错位保留null/reason，没有零填充、排名或汇率猜测。
+6. `_cached`按查询、完整组合快照和提供商配置版本保存最多32份内存结果，复用最长30秒；主动refresh创建新snapshot_id。结果由`renderer/analytics/Results.tsx`展示数值、输入、时段、来源和限制，不做第二遍数值计算。
+7. Agent的`ToolRegistry`仅新增`portfolio.risk`与`stocks.compare`，参数按各自DTO校验，调用同一`app.state.analytics`。假模型识别“分析组合<UUID>风险”“对比AAPL.US MSFT.US”；OpenAI通过同一工具定义/事件链。工具结果完整保存为当时快照，`ToolResultCards`复用同一Results组件，重放不重新分析。真实模型仅文字综合，主动请求的组合事实会作为工具结果发给模型。
+
+读链：`analytics_contracts.py`→`analytics_calculate.py`→`analytics.py`→`tools.py`/`app.py`→`analytics/Results.tsx`。用[手算案例与覆盖表](docs/ACCEPTANCE-step13.md)核对0.6/0.4、HHI0.52及组合日波动0.02828427，再看`test_analytics.py`与实窗测试的同snapshot断言。现有10根模拟日线不足1M/3M/1Y，显示—是正确结果。
 
 ## C09：技能为何显示就绪、部分就绪或禁用？
 
