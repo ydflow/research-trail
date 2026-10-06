@@ -235,15 +235,17 @@ class AnalyticsService:
                 for r in reads:
                     if r.symbol==s and r.capability=='market.kline': r.status='failed'; r.code='INVALID_SERIES'
             prepared[s]=(cells,bars)
+        raw_returns={s:{} for s in body.symbols}
         for key, sessions in [('return_1m',21),('return_3m',63),('return_1y',252)]:
             valid=[r[-sessions-1:] for _,r in prepared.values() if len(r)>sessions]
             aligned=all([t for t,_,_ in r]==[t for t,_,_ in valid[0]] for r in valid) if valid else False
             for s,(cells,bars) in prepared.items():
                 value=period_return(bars,sessions) if aligned else None
+                raw_returns[s][key]=value
                 cells[key]=CompareCell(value=output(value),reason=None if value is not None else 'INSUFFICIENT_OR_UNALIGNED_HISTORY',
                     currency=body.currency,period=f'{time_text(bars[-sessions-1][0])} → {time_text(bars[-1][0])}' if value is not None else None)
-        for cells,_ in prepared.values():
-            one,three=number(cells['return_1m'].value),number(cells['return_3m'].value)
+        for symbol,(cells,_) in prepared.items():
+            one,three=raw_returns[symbol]['return_1m'],raw_returns[symbol]['return_3m']
             if one is not None and three is not None:
                 cells['momentum']=CompareCell(value='混合' if (one>=0)!=(three>=0) else '强' if abs(one)>=5 else '弱',period='1M/3M')
         for key,label,unit in metrics: rows.append(CompareRow(metric=key,label=label,unit=unit,cells={s:prepared[s][0][key] for s in body.symbols}))

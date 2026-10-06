@@ -93,6 +93,17 @@ def test_drawdown_strict_thresholds(latest,severity):
     g=risk_group('USD',positions(),{'AAPL.US':series(bars([100,100,latest]))})
     assert ([s.severity for s in g.signals if s.kind=='drawdown'] or [None])==[severity]
 
+@pytest.mark.parametrize('price,severity',[('150000000001','medium'),('250000000001','high')])
+def test_large_position_threshold_uses_unrounded_weight(price,severity):
+    g=risk_group('USD',positions((price,str(10**12-int(price)))),{})
+    signals=[s.severity for s in g.signals if s.kind=='large_position' and s.symbol=='AAPL.US']
+    assert signals==[severity]
+
+@pytest.mark.parametrize('latest,severity',[('79.9999999999','medium'),('64.9999999999','high')])
+def test_drawdown_threshold_uses_unrounded_ratio(latest,severity):
+    g=risk_group('USD',positions(),{'AAPL.US':series(bars([100,100,Decimal(latest)]))})
+    assert [s.severity for s in g.signals if s.kind=='drawdown']==[severity]
+
 @pytest.mark.parametrize('prices,quantities,reason',[(('0','0'),('1','1'),'ZERO_VALUE'),((None,'400'),('1','1'),'MISSING_PRICE'),(('600','400'),('0','0'),'EMPTY')])
 def test_zero_missing_and_empty_do_not_renormalize(prices,quantities,reason):
     g=risk_group('USD',positions(prices,quantities=quantities),{})
@@ -132,6 +143,19 @@ def test_full_table_fixed_windows_and_fields(tmp_path):
         assert cells(d,'momentum')['MSFT.US']['value']=='强'
         assert d==compare(c).json()
         assert d['snapshot_id']!=compare(c,refresh=True).json()['snapshot_id']
+
+@pytest.mark.parametrize('latest,expected',[(Decimal('105'),'弱'),(Decimal('100'),'混合')])
+def test_momentum_uses_unrounded_returns(tmp_path,latest,expected):
+    def executor(q):
+        if q.capability=='market.kline':
+            closes=[Decimal(i) for i in range(100,360)]
+            closes[-22]=Decimal('100.000000001')
+            closes[-64]=Decimal('99')
+            closes[-1]=latest
+            return bars(closes)[-q.count:]
+        return sample(q)
+    with client(tmp_path,executor) as c:
+        assert cells(compare(c).json(),'momentum')['AAPL.US']['value']==expected
 
 @pytest.mark.parametrize('case',['currency','year','duplicate','financial-currency','unaligned','failure','missing','invalid'])
 def test_peer_missing_failure_currency_report_and_time_are_explicit(tmp_path,case):

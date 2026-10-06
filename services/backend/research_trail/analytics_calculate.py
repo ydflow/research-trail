@@ -47,16 +47,19 @@ def volatility(values):
         mean = sum(values) / len(values)
         return (sum((v-mean)**2 for v in values) / (len(values)-1)).sqrt()
 
+def drawdown(rows):
+    peak = max((h for _, _, h in rows[-20:]), default=None)
+    return max(Decimal(0), (peak-rows[-1][1])/peak) if peak else None
+
 def stats(symbol, rows, window=30):
     rows = rows[-window:]
     r = [rows[i][1]/rows[i-1][1]-1 for i in range(1, len(rows))]
     vol = volatility(r)
-    peak = max((h for _, _, h in rows[-20:]), default=None)
-    drawdown = max(Decimal(0), (peak-rows[-1][1])/peak) if peak else None
+    loss = drawdown(rows)
     return SeriesStats(symbol=symbol, status='ready' if vol is not None else 'missing', bars=len(rows), returns=len(r),
         start=time_text(rows[0][0]) if rows else None, end=time_text(rows[-1][0]) if rows else None,
         daily_volatility=output(vol), annualized_volatility=output(vol*Decimal(252).sqrt()) if vol is not None else None,
-        drawdown=output(drawdown), reason=None if vol is not None else 'INSUFFICIENT_BARS: 至少3根日K线计算样本波动率。')
+        drawdown=output(loss), reason=None if vol is not None else 'INSUFFICIENT_BARS: 至少3根日K线计算样本波动率。')
 
 def risk_group(currency, holdings, histories):
     with localcontext() as ctx:
@@ -78,7 +81,7 @@ def risk_group(currency, holdings, histories):
         if weights:
             if weights[0] > Decimal('.2'): signals.append(RiskSignal(kind='concentration', severity='high' if weights[0] > Decimal('.3') else 'medium', detail=f'Top1持仓权重 {output(weights[0])}（比例）。'))
             for a in alloc:
-                w = number(a.weight)
+                w = number(a.market_value)/total
                 if w > Decimal('.15'): signals.append(RiskSignal(kind='large_position', severity='high' if w > Decimal('.25') else 'medium', symbol=a.symbol, detail=f'单仓权重 {a.weight}（比例）。'))
         summaries = []
         for a in alloc:
@@ -86,7 +89,7 @@ def risk_group(currency, holdings, histories):
                 summaries.append(SeriesStats(symbol=a.symbol, status='missing', reason='行情失败/受限/缺失，或超过20只行情分析上限。'))
                 continue
             s = stats(a.symbol, histories[a.symbol]); summaries.append(s)
-            d = number(s.drawdown)
+            d = drawdown(histories[a.symbol][-30:])
             if d is not None and d > Decimal('.2'): signals.append(RiskSignal(kind='drawdown', severity='high' if d > Decimal('.35') else 'medium', symbol=a.symbol, detail=f'最新收盘距至多20根日K线最高价回撤 {s.drawdown}（比例）。'))
         port = SeriesStats(symbol='组合', status='missing', reason='需要全部正持仓同币种、完整估值和严格相同的日K线时点；不填补缺失交易日。')
         aligned = [histories.get(a.symbol, [])[-30:] for a in alloc]
