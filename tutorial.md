@@ -288,7 +288,7 @@ Windows系统存储不可用时拒绝保存，无明文后备。凭证命名空�
 
 ## C09：技能为何显示就绪、部分就绪或禁用？
 
-状态：大纲。关联步骤14。
+状态：第14步已实现；模拟/本机验收结果见清单。关联步骤14。
 
 - 主链：扫描技能 → 解析元信息/依赖 → 能力注册状态 → readiness → UI或按需资料读取。
 - 必读1：`packages/shared/src/capabilities/registry.ts` / `createCapabilityRegistry` 与 `readiness.ts`：注册和依赖状态。
@@ -296,6 +296,19 @@ Windows系统存储不可用时拒绝保存，无明文后备。凭证命名空�
 - 必读3：`packages/skill-hub/src/capability-map.ts` 与 `packages/ui/src/components/settings/SkillsView.tsx`：状态映射到页面，追参考读取的路径检查。
 - 验证选读：`packages/skill-hub/src/index.v2.test.ts`、`packages/shared/src/capabilities/readiness.test.ts`。
 - 暂缓：研究策略使用技能但不复制技能提示，由C10。
+
+### 研迹第14步真实调用链
+
+1. 桌面“能力与技能”按需加载SkillsPanel；同时读取命名IPC capabilities:list、skills:list。主进程校验mode/provider/id/path，携启动令牌请求Python；TS类型来自OpenAPI。
+2. create_app启动时将同一个CapabilityRegistry交给ToolRegistry、ProviderService、SkillCatalog。TOOL_SPECS保存工具参数/返回类型；SUPPORTED引用既有数据能力目录。没有第二份健康存储。
+3. /capabilities按模式/提供商计算状态，/providers/capabilities仍读取ProviderService原health及配置revision。真实状态没有当前版本请求成功证据就不可用，配置/凭证变更会失效；Python计算能力不等于其真实数据已齐全。
+4. SkillCatalog.list只读取SKILL.md元信息/声明依赖并检查参考文件存在，调用同registry.state；未知能力NOT_IMPLEMENTED、必需缺失unavailable、可选缺失partial、禁用disabled、坏文件invalid。缺参考资料RESOURCE_MISSING。
+5. 首批上游文件按原字节保留；catalog.json来自固定capability-map.ts，仅为原SKILL.md补依赖，不缓存健康状态。自定义技能使用required-capabilities/optional-capabilities。启用偏好存于0009_skills表，不复制可用性。
+6. 点击资料→skills:resource→POST /skills/{id}/resource→SkillCatalog.read；重新检查启用/依赖/资料声明，拒绝../、绝对路径、ADS、链接/联接；Windows还验证打开后的实际文件句柄路径。只读UTF-8、64KiB上限，不执行文本或访问其链接。迟到结果不能写入新视图。
+7. Agent沿同一个tools.skills查询。输入“技能 longbridge-technical 状态”“能力 options.chain 状态”或“读取技能 longbridge-technical references/technical.md”由Python直接响应；加入“真实状态”或“读取真实技能”则检查真实依赖。不可用资料拒绝且不发模型请求。普通模型调用收到当前声明状态，四个原只读工具由注册表筛选/校验。
+
+读链：services/backend/research_trail/capabilities.py → skills.py → app.py/agent.py → apps/desktop/src/renderer/skills/SkillsPanel.tsx。完整范围和边界见[第14步验收清单](docs/ACCEPTANCE-step14.md)。就绪表示声明依赖可调用，不表示真实服务、技术指标或研究策略已完成；第15步仍未开始。
+
 
 ## C10：研究策略怎样驱动有界数据采集？
 

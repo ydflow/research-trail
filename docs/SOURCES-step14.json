@@ -1,0 +1,223 @@
+{
+  "commit": "ba5dcdfd31b162f5edb8b908f7f099a560389326",
+  "files": [
+    {
+      "path": "skills/longbridge-technical/references/candlestick.md",
+      "upstream": "skills/longbridge-technical/references/candlestick.md",
+      "sha256": "6f355b0019ed7e503aeb5b4db5386dbb7c88ef653a4009a7447247895918ea63"
+    },
+    {
+      "path": "skills/longbridge-technical/references/chanlun.md",
+      "upstream": "skills/longbridge-technical/references/chanlun.md",
+      "sha256": "1c5d4aea305d40858ccc9eb0b66ec8339eceba798d4975b0e00353cc912f8d29"
+    },
+    {
+      "path": "skills/longbridge-technical/references/elliott-wave.md",
+      "upstream": "skills/longbridge-technical/references/elliott-wave.md",
+      "sha256": "d4bb1403c82f293ac18a6aa695b477f1c16f50aa27c0e7b0a26c46ea32974b06"
+    },
+    {
+      "path": "skills/longbridge-technical/references/elliott.md",
+      "upstream": "skills/longbridge-technical/references/elliott.md",
+      "sha256": "f9fd8ec791641fc2b91de56d7f4d1e6ce97ae87d369eb312fbd8ad82b929669a"
+    },
+    {
+      "path": "skills/longbridge-technical/references/harmonic.md",
+      "upstream": "skills/longbridge-technical/references/harmonic.md",
+      "sha256": "46d48c0ca44139e3fd2994ab63cdb17ca713729745377654528d967c37b91dc3"
+    },
+    {
+      "path": "skills/longbridge-technical/references/ichimoku.md",
+      "upstream": "skills/longbridge-technical/references/ichimoku.md",
+      "sha256": "ef1b327ea3522d534a748310db2afbfd87153226bdceb6fc55657b5689eee94e"
+    },
+    {
+      "path": "skills/longbridge-technical/references/smc.md",
+      "upstream": "skills/longbridge-technical/references/smc.md",
+      "sha256": "385e8e66624435104d5de99b190cb3fe8a849425c76df3503623b0490015bd1e"
+    },
+    {
+      "path": "skills/longbridge-technical/references/technical.md",
+      "upstream": "skills/longbridge-technical/references/technical.md",
+      "sha256": "4c2c2a98edd918328cd0e3d9eee88d12605a45de82acbd586b7409695ef81e91"
+    },
+    {
+      "path": "skills/longbridge-technical/references/turtle-signal.md",
+      "upstream": "skills/longbridge-technical/references/turtle-signal.md",
+      "sha256": "225a834dbeaef18466bdfe8aa5ddf13508d24152abcda5b38afa3939d809c7f0"
+    },
+    {
+      "path": "skills/longbridge-technical/SKILL.md",
+      "upstream": "skills/longbridge-technical/SKILL.md",
+      "sha256": "fa6167e690b4a72110fee47a118dbd02f2e392c9c395ed8f6410060ce0ccfe4a"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/adr-premium.md",
+      "upstream": "skills/longbridge-market-data/references/adr-premium.md",
+      "sha256": "07161af4f2a0805a15c156e6337dd298c5434d95d12483b9cce3d31787fa1b26"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/ah-premium.md",
+      "upstream": "skills/longbridge-market-data/references/ah-premium.md",
+      "sha256": "f34c3491c39b6e1205ab7218dd4686469447dae337f60c878b91f28f7ab20dd9"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/capital.md",
+      "upstream": "skills/longbridge-market-data/references/capital.md",
+      "sha256": "12d8f3c6672725318ff70773b776da88128cf7cb34af9d4a57f75422c42640bf"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/depth.md",
+      "upstream": "skills/longbridge-market-data/references/depth.md",
+      "sha256": "b6869ab5db7cc3fd6d00a818494f5315068e1f83a10ae64e0c5f0ed7007eee96"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/exchange-rate.md",
+      "upstream": "skills/longbridge-market-data/references/exchange-rate.md",
+      "sha256": "156fbd10d4e26077ec97f6377808c10f55771adeff647e2ccdb18507159c5336"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/fx-carry.md",
+      "upstream": "skills/longbridge-market-data/references/fx-carry.md",
+      "sha256": "2755ce05582d6d9b6f16a31c0b381c1fc49c3e9284624cd404a865b6ca555426"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/intraday.md",
+      "upstream": "skills/longbridge-market-data/references/intraday.md",
+      "sha256": "220d05346ff5eaec3d549c161624c42386f9c916889f60b7000ab23151f384f8"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/ipo.md",
+      "upstream": "skills/longbridge-market-data/references/ipo.md",
+      "sha256": "5c840d3276bd144672900aaa1a3afce533a3d3ff0fc8e85d098129564c333076"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/kline.md",
+      "upstream": "skills/longbridge-market-data/references/kline.md",
+      "sha256": "9983a3986adacf378c4dd0c9d1c60f9e5d91543e8c072c0d1896d629074807eb"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/market-status.md",
+      "upstream": "skills/longbridge-market-data/references/market-status.md",
+      "sha256": "a435657f6381b15d97fe8af6b3e8194e68f8580657eae01519c18dee56d3fb47"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/market-temp.md",
+      "upstream": "skills/longbridge-market-data/references/market-temp.md",
+      "sha256": "ca1874b8c3b99f6660adf11b9c1b35e4d200a96c7b8af477f46be3c4350f4915"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/participants.md",
+      "upstream": "skills/longbridge-market-data/references/participants.md",
+      "sha256": "026de3f2930a299c2fd170350d93b62a52073c2b92c079d0690ed2c694ea1f07"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/quote.md",
+      "upstream": "skills/longbridge-market-data/references/quote.md",
+      "sha256": "cfc472331d9e16e9f0c7c15f46066180ccccd8ad9905334ada4be91fb46190c1"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/security-list.md",
+      "upstream": "skills/longbridge-market-data/references/security-list.md",
+      "sha256": "cb775406519d03dbed23b24985c6b1cd69eced182bac0469f697b6b8817c21fc"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/subscriptions.md",
+      "upstream": "skills/longbridge-market-data/references/subscriptions.md",
+      "sha256": "a7a7b9c19ceba2a6f13fde822c262dff2640d50984da72795f7962e495ecc576"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/trade-stats.md",
+      "upstream": "skills/longbridge-market-data/references/trade-stats.md",
+      "sha256": "971794f4a21da3cd129af5758ab479d0c27c35b7d9eaf9275ac5f1f711a4baa5"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/trades.md",
+      "upstream": "skills/longbridge-market-data/references/trades.md",
+      "sha256": "bbf7162f93c3e539452a185ec7866934887779224785a5d38a73b0843ccc8e6f"
+    },
+    {
+      "path": "skills/longbridge-market-data/references/trading.md",
+      "upstream": "skills/longbridge-market-data/references/trading.md",
+      "sha256": "ab4ba33b1792d6c6a58f184490ed4e34d70dcd7f2e9915044c4f0684b3d79a6f"
+    },
+    {
+      "path": "skills/longbridge-market-data/SKILL.md",
+      "upstream": "skills/longbridge-market-data/SKILL.md",
+      "sha256": "d1918bd20851d1d350a6058669d3708034860ce0d88e97dba8657457f97dffde"
+    },
+    {
+      "path": "skills/LICENSE",
+      "upstream": "skills/LICENSE",
+      "sha256": "430f1a5f4227ff8a940f717e4d8b241654533da7d78ad149bd07202ef283546f"
+    }
+  ],
+  "dependency_map": {
+    "path": "packages/skill-hub/src/capability-map.ts",
+    "sha256": "e6c383a15eff018500bd36047355b2fb16cf1bb61ad34ba8502e5e7c7c917ede"
+  },
+  "inherited_missing_links": [
+    {
+      "file": "skills/longbridge-technical/references/elliott-wave.md",
+      "target": "references/fibonacci.md",
+      "catalog_resource": "references/references/fibonacci.md"
+    },
+    {
+      "file": "skills/longbridge-technical/references/elliott-wave.md",
+      "target": "references/wave-structure.md",
+      "catalog_resource": "references/references/wave-structure.md"
+    },
+    {
+      "file": "skills/longbridge-technical/references/elliott-wave.md",
+      "target": "references/market-environment.md",
+      "catalog_resource": "references/references/market-environment.md"
+    },
+    {
+      "file": "skills/longbridge-market-data/references/quote.md",
+      "target": "references/calc-index-fields.md",
+      "catalog_resource": "references/references/calc-index-fields.md"
+    }
+  ],
+  "inherited_trailing_whitespace": [
+    {
+      "path": "skills/longbridge-market-data/references/exchange-rate.md",
+      "line": 13
+    },
+    {
+      "path": "skills/longbridge-market-data/references/intraday.md",
+      "line": 17
+    },
+    {
+      "path": "skills/longbridge-market-data/references/intraday.md",
+      "line": 25
+    },
+    {
+      "path": "skills/longbridge-market-data/references/ipo.md",
+      "line": 26
+    },
+    {
+      "path": "skills/longbridge-market-data/references/market-status.md",
+      "line": 13
+    },
+    {
+      "path": "skills/longbridge-market-data/references/participants.md",
+      "line": 13
+    },
+    {
+      "path": "skills/longbridge-market-data/references/trade-stats.md",
+      "line": 17
+    },
+    {
+      "path": "skills/longbridge-market-data/references/trades.md",
+      "line": 17
+    },
+    {
+      "path": "skills/longbridge-market-data/references/trades.md",
+      "line": 22
+    },
+    {
+      "path": "skills/longbridge-market-data/references/trading.md",
+      "line": 18
+    }
+  ]
+}

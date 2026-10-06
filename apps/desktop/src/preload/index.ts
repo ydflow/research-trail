@@ -2,6 +2,10 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendState, ResearchTrailBridge, RunStreamUpdate } from '../bridge';
 
 const bridge: ResearchTrailBridge = {
+  capabilities: context => ipcRenderer.invoke('capabilities:list', context),
+  skills: context => ipcRenderer.invoke('skills:list', context),
+  setSkillEnabled: (id, enabled, context) => ipcRenderer.invoke('skills:enabled', id, enabled, context),
+  readSkillResource: (id, path, context) => ipcRenderer.invoke('skills:resource', id, path, context),
   portfolioList: () => ipcRenderer.invoke('portfolios:list'),
   portfolioRisk: input => ipcRenderer.invoke('analytics:risk', input),
   compareStocks: input => ipcRenderer.invoke('analytics:compare', input),

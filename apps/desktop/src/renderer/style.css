@@ -79,7 +79,7 @@ h2, h3 { margin: 0; font-size: 20px; }
 .chart-heading h3 { font-size: 16px; } .chart-heading span { color: var(--muted); font-size: 12px; }
 .chart-canvas { height: 310px; width: 100%; }
 .chart-summary { margin-top: 4px; }
-.view-tabs { display: flex; gap: 10px; margin-top: 24px; }
+.view-tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 .view-tabs button, .session-panel button { min-width: 0; min-height: 36px; font-size: 13px; padding: 8px 14px; }
 .view-tabs button { background: #fff; color: var(--accent); }
 .view-tabs button[aria-pressed="true"] { background: var(--accent); color: #fff; }

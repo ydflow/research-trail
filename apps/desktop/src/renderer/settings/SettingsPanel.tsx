@@ -38,6 +38,7 @@ function ConnectionCard({ connection, available, onChange }: { connection: Conne
     form.request_timeout_seconds !== connection.request_timeout_seconds;
   return <section className="settings-card" aria-label={`${titles[connection.kind]}连接`} data-testid={`connection-${connection.kind}`}>
     <div className="settings-card-heading"><h3>{titles[connection.kind]}</h3><span className={`settings-status ${connection.status}`} data-testid="connection-status">{statuses[connection.status]}</span></div>
+    {connection.kind === 'skills' && <p>此处保留历史配置的假连接测试，不表示技能就绪。实际目录、开关和依赖状态请在“能力与技能”查看。</p>}
     <p className="detail">{connection.detail}</p>
     <p className="timestamp">测试模式：假连接 · 上次测试：{connection.checked_at ? new Date(connection.checked_at).toLocaleString('zh-CN') : '尚未测试'}</p>
     <fieldset disabled={!available || busy}>

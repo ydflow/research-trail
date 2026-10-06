@@ -34,6 +34,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/capabilities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Capabilities */
+        get: operations["capabilities_capabilities_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -537,6 +554,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/skills": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Skills */
+        get: operations["skills_skills_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/skills/{identity}/enabled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Skill Enable */
+        put: operations["skill_enable_skills__identity__enabled_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/skills/{identity}/resource": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Skill Resource */
+        post: operations["skill_resource_skills__identity__resource_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspace": {
         parameters: {
             query?: never;
@@ -687,6 +755,29 @@ export interface components {
              * @constant
              */
             reason: "user";
+        };
+        /** CapabilityState */
+        CapabilityState: {
+            /** Available */
+            available: boolean;
+            /** Code */
+            code: string;
+            /** Id */
+            id: string;
+            /** Implemented */
+            implemented: boolean;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /** Provider */
+            provider: string;
+            /**
+             * Tool Exposed
+             * @default false
+             */
+            tool_exposed: boolean;
         };
         /** CapabilityView */
         CapabilityView: {
@@ -2268,6 +2359,94 @@ export interface components {
             runs: components["schemas"]["RunDTO"][];
             session: components["schemas"]["SessionDTO"];
         };
+        /** SkillRead */
+        SkillRead: {
+            /**
+             * Mode
+             * @default simulated
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /** Path */
+            path: string;
+            /**
+             * Provider
+             * @default longbridge
+             * @enum {string}
+             */
+            provider: "longbridge" | "longbridge-account" | "massive";
+        };
+        /** SkillResource */
+        SkillResource: {
+            /** Content */
+            content: string;
+            /**
+             * Label
+             * @default 参考文本；不是可执行指令或能力验收证明
+             */
+            label: string;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /** Path */
+            path: string;
+            /** Skill Id */
+            skill_id: string;
+        };
+        /** SkillToggle */
+        SkillToggle: {
+            /** Enabled */
+            enabled: boolean;
+            /**
+             * Mode
+             * @default simulated
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /**
+             * Provider
+             * @default longbridge
+             * @enum {string}
+             */
+            provider: "longbridge" | "longbridge-account" | "massive";
+        };
+        /** SkillView */
+        SkillView: {
+            /** Code */
+            code: string;
+            /** Description */
+            description: string;
+            /** Enabled */
+            enabled: boolean;
+            /** Id */
+            id: string;
+            /** Missing Resources */
+            missing_resources: string[];
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /** Name */
+            name: string;
+            /** Optional */
+            optional: components["schemas"]["CapabilityState"][];
+            /** Provider */
+            provider: string;
+            /** Required */
+            required: components["schemas"]["CapabilityState"][];
+            /** Resources */
+            resources: string[];
+            /** Source */
+            source: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "partial" | "unavailable" | "disabled" | "invalid";
+        };
         /** StartRun */
         StartRun: {
             /** Input */
@@ -2575,6 +2754,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RiskReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    capabilities_capabilities_get: {
+        parameters: {
+            query?: {
+                mode?: "simulated" | "real";
+                provider?: "longbridge" | "longbridge-account" | "massive";
+            };
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CapabilityState"][];
                 };
             };
             /** @description Validation Error */
@@ -3900,6 +4113,114 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProviderProfile"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    skills_skills_get: {
+        parameters: {
+            query?: {
+                mode?: "simulated" | "real";
+                provider?: "longbridge" | "longbridge-account" | "massive";
+            };
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SkillView"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    skill_enable_skills__identity__enabled_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SkillToggle"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SkillView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    skill_resource_skills__identity__resource_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SkillRead"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SkillResource"];
                 };
             };
             /** @description Validation Error */

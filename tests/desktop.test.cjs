@@ -17,6 +17,85 @@ delete env.RESEARCH_TRAIL_RENDERER_URL;
 delete env.RESEARCH_TRAIL_LAUNCHER_PID;
 delete env.RESEARCH_TRAIL_PYTHON;
 
+test('Step14 skill resources, disable, Agent refusal, persistence and shared availability', { timeout: 60000 }, async () => {
+  let instance = await launch();
+  const databasePath = instance.databasePath;
+  const errors=[];
+  const watch=page=>page.on('pageerror',e=>errors.push(e.message));
+  try {
+    watch(instance.page); await waitForBackend(instance.page);
+    await instance.page.getByRole('button',{name:'能力与技能',exact:true}).click();
+    let panel=instance.page.getByTestId('skills-panel');
+    let technical=panel.getByTestId('skill-longbridge-technical');
+    await expect(technical.getByTestId('skill-status')).toContainText('部分就绪');
+    await expect(panel.getByTestId('skill-longbridge-market-data').getByTestId('skill-status')).toContainText('部分就绪');
+    await technical.getByText('参考资料与来源',{exact:true}).click();
+    await technical.getByRole('button',{name:'读取 references/technical.md',exact:true}).click();
+    await expect(panel.getByTestId('skill-resource')).toContainText('longbridge-technical/references/technical.md');
+    await screenshot(instance.page,'step14-resource-wide.png');
+    await technical.getByRole('button',{name:'禁用技能',exact:true}).click();
+    await expect(technical.getByTestId('skill-status')).toContainText('已禁用');
+    await expect(panel.getByTestId('skill-resource')).toHaveCount(0);
+    await assert.rejects(instance.page.evaluate(()=>window.researchTrail.readSkillResource('longbridge-technical','references/technical.md',{mode:'simulated',provider:'longbridge'})),/SKILL_DISABLED/);
+    await assert.rejects(instance.page.evaluate(()=>window.researchTrail.readSkillResource('longbridge-technical','../private.md',{mode:'simulated',provider:'longbridge'})),/资料路径无效/);
+    const r=await instance.page.evaluate(async()=>{const b=window.researchTrail;const s=await b.createSession('技能状态验收');return {sid:s.id,run:await b.startAgentRun(s.id,'技能 longbridge-technical 状态')};});
+    await expect.poll(async()=> (await instance.page.evaluate(r=>window.researchTrail.getRun(r.sid,r.run.id),r)).status).toBe('completed');
+    const messages=await instance.page.evaluate(r=>window.researchTrail.sessionMessages(r.sid),r);
+    assert.ok(messages.some(m=>String(m.content).includes('SKILL_DISABLED')));
+    const tools=await instance.page.evaluate(()=>window.researchTrail.capabilities({mode:'simulated',provider:'longbridge'}));
+    assert.deepEqual(tools.filter(c=>c.tool_exposed).map(c=>c.id).sort(),['market.kline','market.quote','portfolio.risk','stocks.compare']);
+    await instance.app.close(); instance=await launch({RESEARCH_TRAIL_DB_PATH:databasePath}); watch(instance.page); await waitForBackend(instance.page);
+    await instance.page.getByRole('button',{name:'能力与技能',exact:true}).click();
+    panel=instance.page.getByTestId('skills-panel'); technical=panel.getByTestId('skill-longbridge-technical');
+    await expect(technical.getByTestId('skill-status')).toContainText('已禁用');
+    await technical.getByRole('button',{name:'启用技能',exact:true}).click();
+    await expect(technical.getByTestId('skill-status')).toContainText('部分就绪');
+    await panel.getByLabel('技能数据模式').selectOption('real');
+    await expect(technical.getByTestId('skill-status')).toContainText('不可用');
+    await expect(technical).toContainText('UNCONFIGURED');
+    await panel.getByLabel('技能数据模式').selectOption('simulated');
+    await panel.getByLabel('技能数据提供商').selectOption('massive');
+    await expect(panel.getByTestId('skill-longbridge-market-data').getByTestId('skill-status')).toContainText('不可用');
+    await expect(panel.getByTestId('skill-longbridge-market-data')).toContainText('PROVIDER_UNSUPPORTED');
+    await instance.page.setViewportSize({width:600,height:680});
+    await screenshot(instance.page,'step14-unavailable-narrow.png');
+    assert.equal(await instance.page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    assert.deepEqual(errors,[]);
+  } finally { await instance.app.close(); }
+});
+
+test('Step14 missing reference displayed and stale resource cannot reappear after navigation', { timeout: 45000 }, async()=>{
+  const instance=await launch();
+  try {
+    await waitForBackend(instance.page);
+    // UI branch injection only; actual missing-file rejection is covered through Python in test_skills.
+    const entries=await instance.page.evaluate(()=>window.researchTrail.skills({mode:'simulated',provider:'longbridge'}));
+    await instance.app.evaluate(({ipcMain},entries)=>{
+      entries[0].status='unavailable'; entries[0].code='RESOURCE_MISSING'; entries[0].missing_resources=['references/missing.md'];
+      ipcMain.removeHandler('skills:list'); ipcMain.handle('skills:list',()=>entries);
+    },entries);
+    await instance.page.getByRole('button',{name:'能力与技能',exact:true}).click();
+    const panel=instance.page.getByTestId('skills-panel');
+    await expect(panel).toContainText('缺少资料：references/missing.md');
+    const missing=panel.getByTestId('skill-longbridge-market-data');
+    await missing.getByText('参考资料与来源',{exact:true}).click();
+    await expect(missing.getByRole('button',{name:'读取 SKILL.md',exact:true})).toBeDisabled();
+    await screenshot(instance.page,'step14-missing-reference.png');
+    const technical=panel.getByTestId('skill-longbridge-technical');
+    await technical.getByText('参考资料与来源',{exact:true}).click();
+    const resource=await instance.page.evaluate(()=>window.researchTrail.readSkillResource('longbridge-technical','references/technical.md',{mode:'simulated',provider:'longbridge'}));
+    await instance.app.evaluate(({ipcMain},resource)=>{
+      globalThis.skillArrived=false;
+      ipcMain.removeHandler('skills:resource'); ipcMain.handle('skills:resource',async()=>{await new Promise(r=>setTimeout(r,500));globalThis.skillArrived=true;return resource;});
+    },resource);
+    await technical.getByRole('button',{name:'读取 references/technical.md',exact:true}).click();
+    await instance.page.getByRole('button',{name:'模拟行情',exact:true}).click();
+    await instance.page.getByRole('button',{name:'能力与技能',exact:true}).click();
+    await expect.poll(()=>instance.app.evaluate(()=>globalThis.skillArrived)).toBe(true);
+    await expect(instance.page.getByTestId('skills-panel').getByTestId('skill-resource')).toHaveCount(0);
+  } finally { await instance.app.close(); }
+});
+
 function children(pid) {
   const result = execFileSync('powershell.exe', ['-NoProfile', '-Command',
     `@(Get-CimInstance Win32_Process -Filter "ParentProcessId = ${Number(pid)}" | Where-Object { $_.Name -eq 'python.exe' } | Select-Object -ExpandProperty ProcessId) | ConvertTo-Json -Compress`,
@@ -723,7 +802,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       'connections', 'saveConnection', 'deleteConnection', 'saveCredential', 'deleteCredential', 'testConnection', 'profile', 'saveProfile', 'deleteProfile', 'diagnostics', 'exportDiagnostics',
       'providerProfiles', 'saveProvider', 'deleteProvider', 'saveProviderCredential', 'deleteProviderCredential', 'providerCapabilities', 'queryProvider',
       'workspaceState', 'addWatch', 'removeWatch', 'selectSecurity', 'securityPage', 'openNewsSource',
-      'portfolioRisk', 'compareStocks', 'portfolioList', 'createPortfolio', 'portfolioView', 'previewPortfolio', 'confirmPortfolio', 'undoPortfolio', 'refreshPortfolio'].sort(), node: 'undefined', process: 'undefined' });
+      'capabilities', 'skills', 'setSkillEnabled', 'readSkillResource', 'portfolioRisk', 'compareStocks', 'portfolioList', 'createPortfolio', 'portfolioView', 'previewPortfolio', 'confirmPortfolio', 'undoPortfolio', 'refreshPortfolio'].sort(), node: 'undefined', process: 'undefined' });
     assert.deepEqual(await first.app.evaluate(({ BrowserWindow }) => {
       const pref = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();
       return { sandbox: pref.sandbox, nodeIntegration: pref.nodeIntegration, contextIsolation: pref.contextIsolation };

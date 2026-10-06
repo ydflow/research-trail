@@ -179,6 +179,54 @@
         "title": "CancelledPayload",
         "type": "object"
       },
+      "CapabilityState": {
+        "additionalProperties": false,
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "implemented": {
+            "title": "Implemented",
+            "type": "boolean"
+          },
+          "mode": {
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "tool_exposed": {
+            "default": false,
+            "title": "Tool Exposed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "implemented",
+          "available",
+          "mode",
+          "provider",
+          "code"
+        ],
+        "title": "CapabilityState",
+        "type": "object"
+      },
       "CapabilityView": {
         "additionalProperties": false,
         "properties": {
@@ -4129,6 +4177,209 @@
         "title": "SessionSnapshot",
         "type": "object"
       },
+      "SkillRead": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "default": "simulated",
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "path": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Path",
+            "type": "string"
+          },
+          "provider": {
+            "default": "longbridge",
+            "enum": [
+              "longbridge",
+              "longbridge-account",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "title": "SkillRead",
+        "type": "object"
+      },
+      "SkillResource": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "label": {
+            "default": "参考文本；不是可执行指令或能力验收证明",
+            "title": "Label",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "skill_id": {
+            "title": "Skill Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "skill_id",
+          "path",
+          "content",
+          "mode"
+        ],
+        "title": "SkillResource",
+        "type": "object"
+      },
+      "SkillToggle": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "mode": {
+            "default": "simulated",
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "provider": {
+            "default": "longbridge",
+            "enum": [
+              "longbridge",
+              "longbridge-account",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "title": "SkillToggle",
+        "type": "object"
+      },
+      "SkillView": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "missing_resources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Resources",
+            "type": "array"
+          },
+          "mode": {
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "optional": {
+            "items": {
+              "$ref": "#/components/schemas/CapabilityState"
+            },
+            "title": "Optional",
+            "type": "array"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "required": {
+            "items": {
+              "$ref": "#/components/schemas/CapabilityState"
+            },
+            "title": "Required",
+            "type": "array"
+          },
+          "resources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Resources",
+            "type": "array"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "partial",
+              "unavailable",
+              "disabled",
+              "invalid"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "enabled",
+          "status",
+          "code",
+          "mode",
+          "provider",
+          "required",
+          "optional",
+          "resources",
+          "missing_resources",
+          "source"
+        ],
+        "title": "SkillView",
+        "type": "object"
+      },
       "StartRun": {
         "additionalProperties": false,
         "properties": {
@@ -4829,6 +5080,85 @@
           }
         },
         "summary": "Portfolio Risk"
+      }
+    },
+    "/capabilities": {
+      "get": {
+        "operationId": "capabilities_capabilities_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "mode",
+            "required": false,
+            "schema": {
+              "default": "simulated",
+              "enum": [
+                "simulated",
+                "real"
+              ],
+              "title": "Mode",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "provider",
+            "required": false,
+            "schema": {
+              "default": "longbridge",
+              "enum": [
+                "longbridge",
+                "longbridge-account",
+                "massive"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CapabilityState"
+                  },
+                  "title": "Response Capabilities Capabilities Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Capabilities"
       }
     },
     "/health": {
@@ -7131,6 +7461,215 @@
           }
         },
         "summary": "Provider Credential"
+      }
+    },
+    "/skills": {
+      "get": {
+        "operationId": "skills_skills_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "mode",
+            "required": false,
+            "schema": {
+              "default": "simulated",
+              "enum": [
+                "simulated",
+                "real"
+              ],
+              "title": "Mode",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "provider",
+            "required": false,
+            "schema": {
+              "default": "longbridge",
+              "enum": [
+                "longbridge",
+                "longbridge-account",
+                "massive"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SkillView"
+                  },
+                  "title": "Response Skills Skills Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Skills"
+      }
+    },
+    "/skills/{identity}/enabled": {
+      "put": {
+        "operationId": "skill_enable_skills__identity__enabled_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SkillToggle"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Skill Enable"
+      }
+    },
+    "/skills/{identity}/resource": {
+      "post": {
+        "operationId": "skill_resource_skills__identity__resource_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SkillRead"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillResource"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Skill Resource"
       }
     },
     "/workspace": {

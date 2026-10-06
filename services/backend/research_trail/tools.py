@@ -5,10 +5,10 @@ from pydantic import TypeAdapter, ValidationError
 
 from .conversation import ErrorPayload, ToolArguments, ToolCall, ToolData, QuoteToolData, KlineToolData
 from .market import MarketProvider, MarketSnapshot, UnknownSymbolError
-from .analytics_contracts import RiskQuery, CompareQuery
+from .capabilities import CapabilityRegistry, TOOL_SPECS
 
-ARGUMENTS = {'market.quote': ToolArguments, 'market.kline': ToolArguments, 'portfolio.risk': RiskQuery, 'stocks.compare': CompareQuery}
-RESULT_KINDS = {'market.quote': 'quote', 'market.kline': 'kline', 'portfolio.risk': 'risk', 'stocks.compare': 'compare'}
+ARGUMENTS = {name: spec.arguments for name, spec in TOOL_SPECS.items()}
+RESULT_KINDS = {name: spec.result_kind for name, spec in TOOL_SPECS.items()}
 
 DATA_ADAPTER = TypeAdapter(ToolData)
 
@@ -20,18 +20,21 @@ class ToolExecutionError(Exception):
 
 
 class ToolRegistry:
-    def __init__(self):
-        self._handlers: dict[str, Callable[[ToolArguments], ToolData]] = {}
+    def __init__(self, capabilities=None):
+        self.capabilities = capabilities or CapabilityRegistry()
+
+    @property
+    def _handlers(self):
+        return self.capabilities.handlers
 
     def register(self, name: str, handler: Callable[[ToolArguments], ToolData]):
-        if name not in ARGUMENTS or name in self._handlers:
-            raise ValueError("工具名称未允许或已注册")
-        self._handlers[name] = handler
+        self.capabilities.register_tool(name, handler)
 
     def definitions(self):
         # Wire names cannot contain dots; map back only through this registered allowlist.
         result=[]
         for name in self._handlers:
+            if not self.capabilities.tool_available(name): continue
             schema=ARGUMENTS[name].model_json_schema()
             schema['required']=list(schema['properties'])
             result.append({"type":"function","function":{"name":name.replace('.', '_'),
@@ -40,7 +43,7 @@ class ToolRegistry:
         return result
 
     def decode(self, name, arguments):
-        allowed = {key.replace(".", "_"): key for key in self._handlers}
+        allowed = {key.replace(".", "_"): key for key in self._handlers if self.capabilities.tool_available(key)}
         if name not in allowed:
             raise ToolExecutionError("UNKNOWN_TOOL", "模型请求的工具未注册或不是允许的只读工具。")
         try:
@@ -50,7 +53,7 @@ class ToolRegistry:
 
     def execute(self, call: ToolCall) -> ToolData:
         handler = self._handlers.get(call.name)
-        if handler is None:
+        if handler is None or not self.capabilities.tool_available(call.name):
             raise ToolExecutionError("UNKNOWN_TOOL", f"工具未注册：{call.name}。")
         # Validate again at the execution boundary, not just in the rule model.
         try:

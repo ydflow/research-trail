@@ -6,16 +6,18 @@
 
 ## 当前状态
 
-第13步风险与2—4股票对比已实现，模拟和本机自动验收通过，见[第13步清单](docs/ACCEPTANCE-step13.md)与EVIDENCE第32节。Python统一计算权重、Top1/Top5、HHI、波动、回撤与基线风险信号；13项对比指标标明币种、期间和缺失原因。页面和Agent共用同一服务与快照，LLM不计算确定性数值。真实数据未验证；本步按用户独立授权通过[PR #12](https://github.com/ydflow/research-trail/pull/12)交付，发布复验见第33节，最终提交/合并以Git与回执为准；第14—24步未开始。第12步组合导入及持久化保留，已通过[PR #11](https://github.com/ydflow/research-trail/pull/11)交付，历史证据见第30—31节。
+第14步统一能力注册与技能目录已实现，完整验收记录见[第14步清单](docs/ACCEPTANCE-step14.md)及EVIDENCE第34节，独立发布复验见第35节。Python同一注册表驱动工具、能力页和技能依赖状态；支持持久启用禁用、受限SKILL.md解析与按需安全读取。首批两个固定Folio技能目录保留原字节及许可。模拟就绪不证明真实数据/权限、指标或研究策略已实现；真实服务仍未验证，发布状态以对应PR、Git及发布回执为准，第15—24步未开始。
 
-截至 2026-10-06：**第0/2/3/4/5/6/7/8/9/10/11/12/13步自动验收通过（第11—13步为模拟与本机实窗，第9步历史含一次真实模型工具验证）；第1步原用户手动记录仍待填写**。v0.1.0源码版已发布，仅假模型＋模拟数据。第8步新增设置/连接/个人资料/脱敏诊断，五类配置和健康由Python独立管理、凭证存于Windows系统凭证管理器；第8步连接探针仍是假测试；第9步真实模型运行需显式选择，第10步SDK/只读CLI/Massive适配已实现并通过模拟验收，真实行情/账户因未配置仍未验证。用户逐项亲自操作和学习记录仍待填写，第8步按独立授权通过 [PR #7](https://github.com/ydflow/research-trail/pull/7)交付，开发与发布复验见EVIDENCE第22—23节；最终合并状态以GitHub与发布回执为准。
+第13步风险与2—4股票对比已实现，模拟和本机自动验收通过，见[第13步清单](docs/ACCEPTANCE-step13.md)与EVIDENCE第32节。Python统一计算权重、Top1/Top5、HHI、波动、回撤与基线风险信号；13项对比指标标明币种、期间和缺失原因。页面和Agent共用同一服务与快照，LLM不计算确定性数值。真实数据未验证；本步按用户独立授权通过[PR #12](https://github.com/ydflow/research-trail/pull/12)交付，发布复验见第33节，最终提交/合并以Git与回执为准；第15—24步未开始。第12步组合导入及持久化保留，已通过[PR #11](https://github.com/ydflow/research-trail/pull/11)交付，历史证据见第30—31节。
+
+截至 2026-10-06：**第0/2/3/4/5/6/7/8/9/10/11/12/13/14步自动验收通过（第11—14步为模拟与本机实窗，第9步历史含一次真实模型工具验证）；第1步原用户手动记录仍待填写**。v0.1.0源码版已发布，仅假模型＋模拟数据。第8步新增设置/连接/个人资料/脱敏诊断，五类配置和健康由Python独立管理、凭证存于Windows系统凭证管理器；第8步连接探针仍是假测试；第9步真实模型运行需显式选择，第10步SDK/只读CLI/Massive适配已实现并通过模拟验收，真实行情/账户因未配置仍未验证。用户逐项亲自操作和学习记录仍待填写，第8步按独立授权通过 [PR #7](https://github.com/ydflow/research-trail/pull/7)交付，开发与发布复验见EVIDENCE第22—23节；最终合并状态以GitHub与发布回执为准。
 
 - 默认分支 `main`；初始公开提交为 `55b1a3d`，第2步按功能分支/PR保留导入、Python新实现、修复与桌面适配提交。
 - 第2步公开复用依据为用户本轮确认的原作者授权，保留适配来源与依赖声明；交付见 [PR #1](https://github.com/ydflow/research-trail/pull/1)，发布检查和授权记录见EVIDENCE第9—11节，最终提交/合并状态以Git与发布回执为准。
 - 公开仓库：[ydflow/research-trail](https://github.com/ydflow/research-trail)。仅上传源码、测试、文档、依赖清单与锁文件；不包含运行数据或截图。
 - 第2步已普通合并，main基线为 `0e1dfd5ccf7e99c66d58188dcac9497ddd6e2bd8`；第3步以 [PR #2](https://github.com/ydflow/research-trail/pull/2) 交付，开发与发布验证见EVIDENCE第12—13节，最终提交和合并状态以Git与发布回执为准。
 - 第3步合并基线为 `7f925dee768ff33c076582dd9d41055aca9a5932`；第4步以 [PR #3](https://github.com/ydflow/research-trail/pull/3) 交付，开发及发布复验见EVIDENCE第14—15节，按功能分支/PR保留提交，最终远程状态以GitHub和发布回执为准。
-- 第5步开发基线为 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`；以 [PR #4](https://github.com/ydflow/research-trail/pull/4) 普通合并，第6步发布基线为`a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677`。第6步 [PR #5](https://github.com/ydflow/research-trail/pull/5)已普通合并，第7步发布基线为`f51b802d61896f9da30cd1f6df331c90e75e24b9`。第7步以 [PR #6](https://github.com/ydflow/research-trail/pull/6)交付，开发与发布证据见EVIDENCE第20—21节；第11步本机开发交付见下方；第12步已发布，第13步本机自动验收通过，独立发布复验见EVIDENCE第33节；第14—24步未开始。
+- 第5步开发基线为 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`；以 [PR #4](https://github.com/ydflow/research-trail/pull/4) 普通合并，第6步发布基线为`a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677`。第6步 [PR #5](https://github.com/ydflow/research-trail/pull/5)已普通合并，第7步发布基线为`f51b802d61896f9da30cd1f6df331c90e75e24b9`。第7步以 [PR #6](https://github.com/ydflow/research-trail/pull/6)交付，开发与发布证据见EVIDENCE第20—21节；第11步本机开发交付见下方；第12步已发布，第13步本机自动验收通过，独立发布复验见EVIDENCE第33节；第15—24步未开始。
 - [v0.1.0源码Release](https://github.com/ydflow/research-trail/releases/tag/v0.1.0)对应main `716543305ba5d74f57336c589c4b2dffaf6e3592`，没有安装包。第8—13步改动不在此标签内；[首版清单](docs/ACCEPTANCE-v0.1.0.md)保留标签创建前的验收快照，完整版本 `v1.0.0`仍为计划。
 - Folio 功能和测试属于参考项目，不代表研迹已实现或用户已完成的贡献。
 
@@ -83,7 +85,8 @@ Pydantic 是业务契约来源。离线导出 OpenAPI 后，`openapi-typescript`
 | 11 | 持久自选、概览、行情、K线、财报、新闻、市场状态 | 验收通过（模拟/本机实窗）；独立授权交付[PR #10](https://github.com/ydflow/research-trail/pull/10)，发布复验见EVIDENCE第29节 |
 | 12 | 组合导入、现金/持仓/资产和撤销 | 验收通过（模拟/本机实窗）；已交付PR #11 |
 | 13 | Python风险与2—4股票对比 | 验收通过（模拟/本机自动）；真实未验证；独立发布复验见第33节，最终PR/合并以回执为准 |
-| 14—20 | 能力技能、研究策略/报告/恢复、论点、筛选与事件 | 未开始 |
+| 14 | 统一能力注册、技能目录/开关/依赖与安全按需资料读取 | 验收通过（模拟/本机自动）；真实未验证；见第14步清单 |
+| 15—20 | 研究策略/报告/恢复、论点、筛选与事件 | 未开始 |
 | 21—24 | 提醒与 Today、评测、研究结果校准、Windows 交付 | 未开始 |
 
 每次只执行用户发送的一步，运行验证后再决定上传或下一步。界面逐步复用，Python 核心按功能实现；不导入整套 TypeScript 后端同时管理业务。
@@ -92,7 +95,7 @@ Pydantic 是业务契约来源。离线导出 OpenAPI 后，`openapi-typescript`
 
 Python OpenAIModelProvider使用Chat Completions协议，Base URL拼接`/chat/completions`。先在设置保存Base URL（例如服务提供的`https://example.com/v1`）、模型ID与系统凭证；API Key不通过聊天或环境变量导入。默认工具轮数与累计执行次数均最多8，整体120秒、单次请求30秒；可分别设置1—32次、1—600秒、1—120秒。连接探针仍是假测试，不能证明真实模型可用。
 
-会话的“运行模型”默认是假模型，显式选择“OpenAI兼容／真实模型”才请求本机配置的服务。模型选择注册工具→Python校验整批参数→执行→tool_call_id回传→继续模型→最终回复，最多限制值+1次模型请求（最后一次允许回复）；非法/超额工具不执行，不自动重试、不回退假模型。仅注册只读工具开放（第13步后恰为market.quote、market.kline、portfolio.risk、stocks.compare）；模拟行情标签与时间保留。只发送本次输入和主动请求的工具结果（可含组合事实），不发送其他历史或个人资料。取消关闭HTTP流并阻止后续模型/工具；运行错误码见会话记录。
+会话的“运行模型”默认是假模型，显式选择“OpenAI兼容／真实模型”才请求本机配置的服务。模型选择注册工具→Python校验整批参数→执行→tool_call_id回传→继续模型→最终回复，最多限制值+1次模型请求（最后一次允许回复）；非法/超额工具不执行，不自动重试、不回退假模型。仅注册只读工具开放（第13步后恰为market.quote、market.kline、portfolio.risk、stocks.compare）；模拟行情标签与时间保留。只发送本次输入和主动请求的工具结果（可含组合事实），上下文附当前技能声明状态与资料缺口摘要；不发送其他历史或个人资料。取消关闭HTTP流并阻止后续模型/工具；运行错误码见会话记录。
 
 远程服务必须HTTPS，本机模型可HTTP；不跟随重定向、不使用环境代理。上下文1MiB、响应256KiB、最终回复4000字符上限，输出最多1024 tokens；不支持所有厂商扩展、Responses或模型增量流。认证/限流/超时/网络/异常响应分别保存固定错误码，错误原文、Key与provider元数据不入事件。已知Key若被模型在回复中反射则替换为脱敏标记。
 
@@ -221,7 +224,7 @@ uv run --directory services\backend --frozen python -m alembic -c alembic.ini cu
 uv run --directory services\backend --frozen python -m alembic -c alembic.ini check
 ```
 
-`current`应显示 `0008_portfolios (head)`，`check`确认模型与迁移一致。0003允许运行完成时间为空，并增加每会话唯一活动运行/每运行每角色唯一消息索引；保留旧历史及外键、序号约束。SQLite表重建只在迁移连接临时关闭外键，提交前检查完整性，再开启；业务连接仍开启外键。重复upgrade不清空历史。0003不提供自动降级；离线SQL与备份恢复未验证。
+`current`应显示 `0009_skills (head)`，`check`确认模型与迁移一致。0003允许运行完成时间为空，并增加每会话唯一活动运行/每运行每角色唯一消息索引；保留旧历史及外键、序号约束。SQLite表重建只在迁移连接临时关闭外键，提交前检查完整性，再开启；业务连接仍开启外键。重复upgrade不清空历史。0003不提供自动降级；离线SQL与备份恢复未验证。
 
 ## 来源与公开边界
 

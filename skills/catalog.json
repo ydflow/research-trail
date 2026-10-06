@@ -1,0 +1,42 @@
+{
+  "longbridge-technical": {
+    "required": [
+      "market.kline",
+      "market.quote"
+    ],
+    "optional": [],
+    "source": "helsome/folio ba5dcdfd31b162f5edb8b908f7f099a560389326 / skills/longbridge-technical; dependencies: packages/skill-hub/src/capability-map.ts",
+    "optional-resources": [
+      "references/references/fibonacci.md",
+      "references/references/market-environment.md",
+      "references/references/wave-structure.md"
+    ]
+  },
+  "longbridge-market-data": {
+    "required": [
+      "market.quote",
+      "market.kline",
+      "market.intraday",
+      "market.depth",
+      "market.trades",
+      "market.capitalFlow",
+      "market.sentiment",
+      "market.status"
+    ],
+    "optional": [
+      "company.profile",
+      "company.valuation",
+      "market.securityList",
+      "market.participants",
+      "market.subscriptions",
+      "market.ahPremium",
+      "market.tradeStats",
+      "market.exchangeRate",
+      "market.ipo"
+    ],
+    "source": "helsome/folio ba5dcdfd31b162f5edb8b908f7f099a560389326 / skills/longbridge-market-data; dependencies: packages/skill-hub/src/capability-map.ts",
+    "optional-resources": [
+      "references/references/calc-index-fields.md"
+    ]
+  }
+}

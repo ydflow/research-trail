@@ -12,8 +12,7 @@ from .provider_process import sdk_process
 from .provider_cli import execute_cli
 from .provider_massive import MassiveProvider
 
-SUPPORTED = {'longbridge':MARKET_CAPABILITIES,'longbridge-account':ACCOUNT_CAPABILITIES,'massive':MASSIVE_CAPABILITIES}
-CLI_CAPABILITIES = ('account.accounts','account.portfolio')
+from .capabilities import CapabilityRegistry, SUPPORTED, CLI_CAPABILITIES
 
 def authored_data(query):
     if query.symbol and not query.capability.startswith('account.'):
@@ -68,7 +67,7 @@ def market_time(data):
     except Exception: raise ProviderFault('INVALID_RESPONSE') from None
 
 class ProviderService:
-    def __init__(self,settings,*,sdk_executor=None,massive_transport=None,cli_executor=None,clock=time.monotonic,simulated_executor=None):
+    def __init__(self,settings,*,sdk_executor=None,massive_transport=None,cli_executor=None,clock=time.monotonic,simulated_executor=None,registry=None):
         self.settings=settings
         self.sdk_executor=sdk_executor or sdk_process
         self.cli_executor=cli_executor or execute_cli
@@ -76,6 +75,8 @@ class ProviderService:
         self.simulated_executor=simulated_executor or authored_data
         self.clock=clock; self.stop=threading.Event(); self.lock=threading.RLock()
         self.cache={}; self.health={}; self.generations={p:0 for p in SUPPORTED}
+        self.registry = registry or CapabilityRegistry()
+        self.registry.providers = self
 
     def invalidate(self, provider):
         with self.lock:
@@ -88,10 +89,7 @@ class ProviderService:
         with self.lock: self.cache.clear()
 
     def capabilities(self):
-        profiles={p.provider:p.revision for p in self.settings.profiles()}
-        with self.lock:
-            return [CapabilityView(provider=p,capability=c,transport='http' if p=='massive' else 'cli' if c in CLI_CAPABILITIES else 'sdk',
-                    **self.health.get((p,c,profiles[p]),{})) for p,capabilities in SUPPORTED.items() for c in capabilities]
+        return self.registry.provider_views()
 
     def query(self,provider,query):
         query=ReadQuery.model_validate(query.model_dump())

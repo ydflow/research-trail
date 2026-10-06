@@ -227,7 +227,7 @@ def test_migrate_old_conversation_and_repeat(tmp_path):
     database.migrate(); database.migrate()
     assert store.snapshot(session.id).model_dump() == before
     with database.engine.connect() as connection:
-        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0008_portfolios"
+        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0009_skills"
     database.close()
 
 

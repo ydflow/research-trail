@@ -6,6 +6,12 @@ class Base(DeclarativeBase):
     pass
 
 
+class SkillPreference(Base):
+    __tablename__ = 'skill_preferences'
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    enabled: Mapped[bool]
+
+
 class SessionRecord(Base):
     __tablename__ = "sessions"
     id: Mapped[str] = mapped_column(String(36), primary_key=True)

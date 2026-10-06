@@ -3,7 +3,7 @@ import platform
 import secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -30,6 +30,9 @@ from .portfolio import PortfolioService, PortfolioError
 from .analytics import AnalyticsService, AnalyticsError
 from .analytics_contracts import RiskQuery, CompareQuery, RiskReport, Comparison
 from .conversation import RiskToolData, CompareToolData
+from .capabilities import CapabilityState
+from .skills import SkillCatalog, SkillError
+from .skill_contracts import SkillView, SkillToggle, SkillRead, SkillResource
 from .portfolio_contracts import (PortfolioInfo, PortfolioView, PortfolioCreate, PortfolioId,
     CsvPreviewInput, ImportPreview, ImportConfirm, ImportUndo)
 
@@ -42,7 +45,7 @@ class Health(BaseModel):
 
 def create_app(token: str, market_provider: MarketProvider | None = None, *,
                database_path: Path | str | None = None, model_provider: ModelProvider | None = None,
-               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None) -> FastAPI:
+               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None) -> FastAPI:
     if len(token) < 32:
         raise ValueError("启动令牌缺失或过短；请由 Electron 启动服务。")
     @asynccontextmanager
@@ -56,7 +59,12 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             app.state.store = Store(database)
             app.state.settings = SettingsService(database, credential_vault)
             app.state.provider_settings = ProviderSettings(app.state.settings)
-            app.state.providers = ProviderService(app.state.provider_settings, **(provider_options or {}))
+            app.state.providers = ProviderService(app.state.provider_settings, registry=runner.tools.capabilities, **(provider_options or {}))
+            app.state.capabilities = runner.tools.capabilities
+            app.state.capabilities.providers = app.state.providers
+            app.state.providers.registry = app.state.capabilities
+            app.state.skills = SkillCatalog(database, app.state.capabilities, skills_root)
+            runner.tools.skills = app.state.skills
             app.state.watchlist = WatchlistStore(database)
             app.state.security_workspace = SecurityWorkspace(app.state.watchlist,app.state.providers)
             app.state.portfolios = PortfolioService(database,app.state.providers)
@@ -105,7 +113,7 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
         try:
             return await call_next(request)
         except Exception:
-            if request.url.path.startswith(("/settings", "/providers", "/workspace", "/portfolios", "/analytics")):
+            if request.url.path.startswith(("/settings", "/providers", "/workspace", "/portfolios", "/analytics", "/skills", "/capabilities")):
                 # Do not let an injected/native/storage exception echo the request in logs.
                 return JSONResponse(status_code=503, content={"detail": "本机存储操作失败，请检查环境后重试。"})
             raise
@@ -125,6 +133,26 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     @app.exception_handler(SettingsError)
     async def settings_error(_request, error):
         return JSONResponse(status_code=409, content={"detail": str(error)})
+
+    @app.exception_handler(SkillError)
+    async def skill_error(_request, error):
+        return JSONResponse(status_code=409, content={'detail': error.code})
+
+    @app.get('/capabilities', response_model=list[CapabilityState], dependencies=protected)
+    def capabilities(mode: Literal['simulated', 'real'] = 'simulated', provider: ProviderId = 'longbridge'):
+        return app.state.capabilities.list(mode, provider)
+
+    @app.get('/skills', response_model=list[SkillView], dependencies=protected)
+    def skills(mode: Literal['simulated', 'real'] = 'simulated', provider: ProviderId = 'longbridge'):
+        return app.state.skills.list(mode, provider)
+
+    @app.put('/skills/{identity}/enabled', response_model=SkillView, dependencies=protected)
+    def skill_enable(identity: str, body: SkillToggle):
+        return app.state.skills.set_enabled(identity, body.enabled, body.mode, body.provider)
+
+    @app.post('/skills/{identity}/resource', response_model=SkillResource, dependencies=protected)
+    def skill_resource(identity: str, body: SkillRead):
+        return app.state.skills.read(identity, body.path, body.mode, body.provider)
 
     @app.exception_handler(WatchlistError)
     async def watchlist_error(_request,error):

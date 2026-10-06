@@ -209,6 +209,32 @@ export class BackendManager extends EventEmitter {
   }
   connections() { return this.business<import('../settings-types').ConnectionView[]>('/settings/connections'); }
   workspaceState() { return this.business<import('../workspace-types').WorkspaceState>('/workspace'); }
+  private skillContext(value: unknown): import('../skill-types').SkillContext {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('技能上下文无效。');
+    const v = value as Record<string, unknown>;
+    if (Object.keys(v).some(k => !['mode', 'provider'].includes(k)) || !['simulated', 'real'].includes(String(v.mode)) || !['longbridge', 'longbridge-account', 'massive'].includes(String(v.provider))) throw new Error('技能上下文无效。');
+    return v as import('../skill-types').SkillContext;
+  }
+  private skillId(value: unknown): string {
+    if (typeof value !== 'string' || !/^[a-z][a-z0-9-]{0,79}$/.test(value)) throw new Error('技能标识无效。');
+    return value;
+  }
+  capabilities(context: unknown) {
+    const c = this.skillContext(context);
+    return this.business<import('../skill-types').CapabilityState[]>(`/capabilities?mode=${c.mode}&provider=${c.provider}`);
+  }
+  skills(context: unknown) {
+    const c = this.skillContext(context);
+    return this.business<import('../skill-types').SkillView[]>(`/skills?mode=${c.mode}&provider=${c.provider}`);
+  }
+  setSkillEnabled(id: unknown, enabled: unknown, context: unknown) {
+    if (typeof enabled !== 'boolean') throw new Error('启用状态无效。');
+    return this.business<import('../skill-types').SkillView>(`/skills/${this.skillId(id)}/enabled`, 'PUT', { ...this.skillContext(context), enabled });
+  }
+  readSkillResource(id: unknown, path: unknown, context: unknown) {
+    if (typeof path !== 'string' || path.length > 160 || !path.length || /[:\\\x00-\x1f]/.test(path) || path.split('/').some(p => !p || p === '.' || p === '..')) throw new Error('资料路径无效。');
+    return this.business<import('../skill-types').SkillResource>(`/skills/${this.skillId(id)}/resource`, 'POST', { ...this.skillContext(context), path });
+  }
   portfolioList() { return this.business<import('../portfolio-types').PortfolioInfo[]>('/portfolios'); }
   portfolioRisk(body: unknown) { return this.business<import('../analytics-types').RiskReport>('/analytics/risk', 'POST', body, 35000); }
   compareStocks(body: unknown) { return this.business<import('../analytics-types').Comparison>('/analytics/compare', 'POST', body, 35000); }
