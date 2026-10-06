@@ -10,6 +10,10 @@ export interface BackendState {
   pythonVersion?: string;
 }
 export interface ResearchTrailBridge {
+  capabilities(context: import('./skill-types').SkillContext): Promise<import('./skill-types').CapabilityState[]>;
+  skills(context: import('./skill-types').SkillContext): Promise<import('./skill-types').SkillView[]>;
+  setSkillEnabled(id: string, enabled: boolean, context: import('./skill-types').SkillContext): Promise<import('./skill-types').SkillView>;
+  readSkillResource(id: string, path: string, context: import('./skill-types').SkillContext): Promise<import('./skill-types').SkillResource>;
   portfolioList(): Promise<import('./portfolio-types').PortfolioInfo[]>;
   portfolioRisk(input: import('./analytics-types').RiskQuery): Promise<import('./analytics-types').RiskReport>;
   compareStocks(input: import('./analytics-types').CompareQuery): Promise<import('./analytics-types').Comparison>;
