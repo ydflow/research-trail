@@ -25,6 +25,132 @@ function children(pid) {
 }
 const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
 
+const portfolioCSV='record_type,symbol,currency,quantity,cost_price,market_price,amount\nholding,AAPL.US,USD,2,100,120,\ncash,,USD,,,,100';
+
+test('Step12 portfolio file preview, confirm, duplicate/invalid, multi-currency and undo in real window', { timeout: 60000 }, async () => {
+  const instance=await launch(); const errors=[];
+  instance.page.on('pageerror',e=>errors.push(e.message));
+  instance.page.on('console',e=>{ if (['error','warning'].includes(e.type())) errors.push(e.text()); });
+  try {
+    const page=instance.page;
+    await expect(page.getByRole('heading',{name:'连接就绪'})).toBeVisible();
+    assert.equal(await page.title(),'研迹 · ResearchTrail'); assert.match(page.url(),/dist\/renderer\/index\.html$/);
+    await page.getByRole('button',{name:'组合工作台',exact:true}).click();
+    const panel=page.getByRole('region',{name:'组合工作台',exact:true});
+    await expect(panel.getByTestId('portfolio-values')).toHaveAttribute('data-status','empty');
+    await screenshot(page,'portfolio-entry-wide.png');
+    const original=await page.evaluate(async ()=>{
+      const p=(await window.researchTrail.portfolioList()).find(p=>p.kind==='manual');
+      return window.researchTrail.portfolioView(p.id);
+    });
+    await panel.locator('input[type=file]').setInputFiles({name:'authored-standard.csv',mimeType:'text/csv',buffer:Buffer.from(portfolioCSV)});
+    await expect(panel.getByLabel('CSV内容')).toHaveValue(portfolioCSV);
+    await panel.getByRole('button',{name:'预览导入',exact:true}).click();
+    await expect(panel.getByTestId('portfolio-preview-values').getByTestId('assets-USD')).toHaveText('340');
+    await expect(panel.getByTestId('portfolio-values')).toHaveAttribute('data-status','empty');
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.portfolioView(id),original.id),original);
+    await panel.getByRole('region',{name:'导入预览',exact:true}).scrollIntoViewIfNeeded();
+    await screenshot(page,'portfolio-preview-wide.png');
+    await panel.getByRole('button',{name:'确认替换并保存',exact:true}).click();
+    await expect(panel.getByTestId('portfolio-values').getByTestId('assets-USD')).toHaveText('340');
+    await expect(panel.getByRole('table',{name:'组合持仓'})).toContainText('200');
+    await expect(panel.getByRole('table',{name:'组合持仓'})).toContainText('240');
+    await expect(panel.getByRole('table',{name:'组合持仓'})).toContainText('40');
+    await panel.getByTestId('portfolio-values').evaluate(el=>el.scrollIntoView({block:'start'})); await screenshot(page,'portfolio-saved-wide.png');
+    await panel.getByLabel('CSV内容').fill(portfolioCSV); await panel.getByRole('button',{name:'预览导入',exact:true}).click();
+    await expect(panel.getByRole('region',{name:'导入预览'})).toContainText('DUPLICATE_IMPORT');
+    await expect(panel.getByRole('button',{name:'确认替换并保存',exact:true})).toBeDisabled();
+    await panel.getByRole('button',{name:'取消预览',exact:true}).click();
+    await panel.getByLabel('CSV内容').fill(portfolioCSV.replace(',2,100,',',NaN,100,'));
+    await panel.getByRole('button',{name:'预览导入',exact:true}).click();
+    await expect(panel.getByRole('region',{name:'导入预览'})).toContainText('INVALID_ROW');
+    await expect(panel.getByRole('button',{name:'确认替换并保存',exact:true})).toBeDisabled();
+    await panel.getByRole('button',{name:'取消预览',exact:true}).click();
+    await panel.locator('input[type=file]').setInputFiles({name:'invalid.csv',mimeType:'text/csv',buffer:Buffer.from([0xff,0xfe,0x80])});
+    await expect(panel.getByRole('alert')).toContainText('UTF-8');
+    const multi=portfolioCSV+'\nholding,700.HK,HKD,2,10,,\ncash,,HKD,,,,100';
+    await panel.getByLabel('CSV内容').fill(multi); await panel.getByRole('button',{name:'预览导入',exact:true}).click();
+    await expect(panel.getByTestId('portfolio-preview-values').getByTestId('assets-HKD')).toHaveText('—');
+    await panel.getByRole('button',{name:'确认替换并保存',exact:true}).click();
+    await expect(panel.getByTestId('portfolio-values')).toHaveAttribute('data-status','partial');
+    await expect(panel.getByTestId('assets-USD')).toHaveText('340'); await expect(panel.getByTestId('assets-HKD')).toHaveText('—');
+    await instance.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(600,680));
+    await panel.getByTestId('portfolio-values').evaluate(el=>el.scrollIntoView({block:'start'}));
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await screenshot(page,'portfolio-multicurrency-narrow.png');
+    await panel.getByRole('button',{name:'撤销最近导入',exact:true}).click();
+    await expect(panel.getByTestId('assets-HKD')).toHaveCount(0); await expect(panel.getByTestId('assets-USD')).toHaveText('340');
+    assert.equal(await page.locator('vite-error-overlay').count(),0); assert.deepEqual(errors,[]);
+  } finally { await instance.app.close(); }
+});
+
+test('Step12 portfolio survives application restart, account isolation and unconfigured real query', { timeout: 60000 }, async () => {
+  const first=await launch(); let second; let firstClosed=false;
+  try {
+    await expect(first.page.getByRole('heading',{name:'连接就绪'})).toBeVisible();
+    const saved=await first.page.evaluate(async csv=>{
+      const b=window.researchTrail; const p=(await b.portfolioList()).find(p=>p.kind==='manual');
+      const d=await b.previewPortfolio(p.id,csv); return b.confirmPortfolio(p.id,d.draft_id);
+    },portfolioCSV);
+    const owned=children(first.pid); await first.app.close(); firstClosed=true;
+    for (const pid of owned) await expect.poll(()=>alive(pid)).toBe(false);
+    second=await launch({RESEARCH_TRAIL_DB_PATH:first.databasePath});
+    await expect(second.page.getByRole('heading',{name:'连接就绪'})).toBeVisible();
+    assert.deepEqual(await second.page.evaluate(id=>window.researchTrail.portfolioView(id),saved.id),saved);
+    await second.page.getByRole('button',{name:'组合工作台',exact:true}).click();
+    const panel=second.page.getByRole('region',{name:'组合工作台',exact:true});
+    await expect(panel.getByTestId('assets-USD')).toHaveText('340');
+    await panel.getByRole('button',{name:/手算模拟组合/}).click();
+    await expect(panel.getByTestId('portfolio-name')).toHaveText('手算模拟组合');
+    await expect(panel.getByTestId('portfolio-values')).toHaveAttribute('data-status','ready');
+    await expect(panel.getByRole('button',{name:'撤销最近导入',exact:true})).toBeDisabled();
+    await panel.getByRole('button',{name:/Longbridge只读组合/}).click();
+    await expect(panel.getByTestId('portfolio-values')).toHaveAttribute('data-status','unverified');
+    await expect(panel.getByRole('button',{name:'预览导入',exact:true})).toHaveCount(0);
+    await panel.getByRole('button',{name:'查询真实只读账户',exact:true}).click();
+    await expect(panel.getByTestId('portfolio-values')).toHaveAttribute('data-status','unconfigured');
+    await expect(panel.getByRole('table',{name:'组合持仓'}).locator('tbody tr')).toHaveCount(0);
+    await panel.getByTestId('portfolio-name').scrollIntoViewIfNeeded(); await screenshot(second.page,'portfolio-readonly-unconfigured.png');
+    await panel.getByRole('button',{name:/^CSV组合/}).click();
+    await expect(panel.getByTestId('assets-USD')).toHaveText('340');
+    await panel.getByRole('button',{name:'撤销最近导入',exact:true}).click();
+    await expect(panel.getByTestId('portfolio-values')).toHaveAttribute('data-status','empty');
+    await panel.getByLabel('新组合名称').fill('独立组合验收');
+    await panel.getByRole('button',{name:'创建独立组合',exact:true}).click();
+    await expect(panel.getByTestId('portfolio-name')).toHaveText('独立组合验收');
+    await expect(panel.getByTestId('portfolio-values')).toHaveAttribute('data-status','empty');
+    const all=await second.page.evaluate(()=>window.researchTrail.portfolioList());
+    assert.equal(new Set(all.map(p=>p.account_id)).size,4); assert.equal(all.length,4);
+    await assert.rejects(second.page.evaluate(()=>window.researchTrail.portfolioView('../private')),/ID格式无效/);
+  } finally { if (!firstClosed) await first.app.close(); if (second) await second.app.close(); }
+});
+
+test('Step12 late portfolio snapshot cannot overwrite selected account', { timeout: 45000 }, async () => {
+  const instance=await launch();
+  try {
+    await expect(instance.page.getByRole('heading',{name:'连接就绪'})).toBeVisible();
+    const snapshots=await instance.page.evaluate(async()=>{
+      const b=window.researchTrail; const infos=await b.portfolioList();
+      return Promise.all(['manual','simulated'].map(kind=>b.portfolioView(infos.find(p=>p.kind===kind).id)));
+    });
+    await instance.app.evaluate(({ipcMain},snapshots)=>{
+      globalThis.portfolioArrivals=[]; ipcMain.removeHandler('portfolios:view');
+      ipcMain.handle('portfolios:view',async(_e,id)=>{
+        await new Promise(resolve=>setTimeout(resolve,id===snapshots[0].id?600:10));
+        globalThis.portfolioArrivals.push(id); return snapshots.find(p=>p.id===id);
+      });
+    },snapshots);
+    await instance.page.getByRole('button',{name:'组合工作台',exact:true}).click();
+    const panel=instance.page.getByRole('region',{name:'组合工作台',exact:true});
+    await panel.getByRole('button',{name:/手算模拟组合/}).click();
+    await expect(panel.getByTestId('portfolio-name')).toHaveText('手算模拟组合');
+    await expect(panel.getByTestId('assets-USD')).toHaveText('340');
+    await expect.poll(()=>instance.app.evaluate(()=>globalThis.portfolioArrivals)).toEqual([snapshots[1].id,snapshots[0].id]);
+    await expect(panel.getByTestId('portfolio-values')).toHaveAttribute('data-status','ready');
+    await expect(panel.getByTestId('assets-USD')).toHaveText('340');
+  } finally { await instance.app.close(); }
+});
+
 for (const fixtureCase of ['success', 'missing', 'failure']) {
   test(`Step11 seven security views: ${fixtureCase} through Python provider chain`, { timeout: 60000 }, async () => {
     const instance = await launch({ RESEARCH_TRAIL_OFFLINE: '1', RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE: fixtureCase });
@@ -500,7 +626,8 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       'listSessions', 'createSession', 'getSession', 'deleteSession', 'sessionMessages', 'sessionRuns', 'sessionSnapshot', 'startRun', 'startAgentRun', 'cancelRun', 'getRun', 'runEvents', 'subscribeRun',
       'connections', 'saveConnection', 'deleteConnection', 'saveCredential', 'deleteCredential', 'testConnection', 'profile', 'saveProfile', 'deleteProfile', 'diagnostics', 'exportDiagnostics',
       'providerProfiles', 'saveProvider', 'deleteProvider', 'saveProviderCredential', 'deleteProviderCredential', 'providerCapabilities', 'queryProvider',
-      'workspaceState', 'addWatch', 'removeWatch', 'selectSecurity', 'securityPage', 'openNewsSource'].sort(), node: 'undefined', process: 'undefined' });
+      'workspaceState', 'addWatch', 'removeWatch', 'selectSecurity', 'securityPage', 'openNewsSource',
+      'portfolioList', 'createPortfolio', 'portfolioView', 'previewPortfolio', 'confirmPortfolio', 'undoPortfolio', 'refreshPortfolio'].sort(), node: 'undefined', process: 'undefined' });
     assert.deepEqual(await first.app.evaluate(({ BrowserWindow }) => {
       const pref = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();
       return { sandbox: pref.sandbox, nodeIntegration: pref.nodeIntegration, contextIsolation: pref.contextIsolation };

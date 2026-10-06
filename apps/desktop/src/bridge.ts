@@ -10,6 +10,13 @@ export interface BackendState {
   pythonVersion?: string;
 }
 export interface ResearchTrailBridge {
+  portfolioList(): Promise<import('./portfolio-types').PortfolioInfo[]>;
+  createPortfolio(input: import('./portfolio-types').PortfolioCreate): Promise<import('./portfolio-types').PortfolioView>;
+  portfolioView(id: string): Promise<import('./portfolio-types').PortfolioView>;
+  previewPortfolio(id: string, csv: string): Promise<import('./portfolio-types').ImportPreview>;
+  confirmPortfolio(id: string, draft: string): Promise<import('./portfolio-types').PortfolioView>;
+  undoPortfolio(id: string, batch: string): Promise<import('./portfolio-types').PortfolioView>;
+  refreshPortfolio(id: string): Promise<import('./portfolio-types').PortfolioView>;
   workspaceState(): Promise<import('./workspace-types').WorkspaceState>;
   addWatch(symbol: string): Promise<import('./workspace-types').WorkspaceState>;
   removeWatch(symbol: string): Promise<import('./workspace-types').WorkspaceState>;
