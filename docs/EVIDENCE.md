@@ -937,3 +937,56 @@ HTTP /analytics/risk与/compare、portfolio.risk与stocks.compare共用app.state
 尚未验证真实Longbridge/Massive/CLI数据、权限及字段映射、真实模型风险/对比、长期负载、其他OS/安装包和用户亲自操作/练习。远程CI与合并由实际GitHub检查和外部PROJECT_STATE发布回执确认，不把本机检查当远程通过。第14—24步未实施。
 
 已创建[第13步PR #12](https://github.com/ydflow/research-trail/pull/12)，base main 3359c38bb23ae44ae7edd36f8b44d7d969a2a43c，初始head 2a3e727ebd4baedd43064f9cfe450dc605a5ca1b，四个真实分类提交已推送。创建后远程检查当时尚未完成；本次仅补PR链接，不改运行源码，最终head全部检查与普通merge结果见[PR检查](https://github.com/ydflow/research-trail/pull/12/checks)及外部PROJECT_STATE发布回执。文档补充提交自身SHA由实际Git核对，不循环写自身SHA。
+
+
+## 34. 第14步能力注册与技能目录本机验收（2026-10-06）
+
+用户只授权执行第14步，交付后停止。起点D:\folio\research-trail、main/HEAD/origin/main 3198f106edaf81c19a93084e805e3c9888dabd85，工作区/index为空。先读取AGENTS、ROADMAP、第32—33节及已有工具/数据/模型/桥/设置/迁移。没有下一步、GitHub写入、提交/推送/发布；HEAD保持该基线。
+
+Python新写CapabilityRegistry、SkillCatalog及安全frontmatter/资料读取，参考固定Folio ba5dcdfd31b162f5edb8b908f7f099a560389326的registry.ts、readiness.ts、SkillHub index.ts与capability-map.ts设计，不运行原TS业务内核。工具规范移入单一TOOL_SPECS，ToolRegistry仅作协议/执行适配；现有21数据ID/24提供商条目沿同SUPPORTED。应用启动只有同一个registry由tools、providers、skills引用，ProviderService原health/revision是唯一健康存储；资料启用偏好只新增0009_skills，不另存ready。
+
+首批原字节导入skills/longbridge-technical和longbridge-market-data的29份Markdown，以及skills/LICENSE（MIT，Copyright 2026 Longbridge Inc.）。声明/原文保留，30份SHA256核对，依赖映射按固定capability-map.ts提取，记录其SHA256；来源见[SOURCES-step14](SOURCES-step14.json)及[技能说明](../skills/README.md)。不把局部许可说成全仓MIT，原作者授权确认与未独立取得授权原文的边界沿用第9—11节。
+
+导入后的本地链接审查发现4个上游原始断链：quote.md的references/calc-index-fields.md，以及elliott-wave.md的references/fibonacci.md、wave-structure.md、market-environment.md。固定参考skills全目录未找到对应文件，未修改原文或补假文件。catalog按原相对路径记录optional-resources，来源清单列明4条；两技能显示partial，缺失按钮禁用，直接读取返回RESOURCE_MISSING。行情技能另有7项未实现可选能力，显示NOT_IMPLEMENTED；必要依赖缺失仍unavailable，不因partial伪装全方法可用。
+
+SkillCatalog.list只解析SKILL.md并检查声明文件存在，参考正文按需读取；禁用/缺必需/文件消失在读取边界重查。路径拒绝../、绝对/UNC、反斜杠、ADS、尾点空格、符号链接/目录联接，Windows核对打开后的文件句柄实际路径；只读UTF-8、64KiB、最多64技能/40必要及40可选依赖/80资源，不执行脚本、CLI、交易或网络链接。四项新命名桥，总56项；前端类型从OpenAPI生成，SkillsPanel按需加载，generation防止迟到结果跨视图覆盖。
+
+Agent显式技能/能力状态和资料读取由Python响应，不调用模型；禁用/缺依赖读取失败。可识别的不可用技能或声明能力ID请求直接返回不可用；普通模型系统消息带当前模式、必要/可选依赖和资料缺口。真实技能未配置或没有当前revision真实请求证据不就绪；旧market工具仍仅模拟，risk/compare的Python计算可调用不证明真实输入已齐全。原第8步技能假连接卡明确标为历史配置探针，不参与目录就绪。
+
+测试覆盖注册表对象同一性、动态工具暴露/decode拒绝、开关重启保留、必要/可选缺能力、文件不存在/非法UTF-8/过大/未声明、Windows越界与真实目录联接、frontmatter重复/危险标签/未声明依赖、模式与提供商、配置revision/凭证/权限状态同源、Agent拒绝且零模型请求、模型上下文及移除工具后的规则提示。真实状态测试使用自造Vault/健康记录，未发真实服务请求。
+
+初次完整检查366通过/4失败：四处旧升级测试仍预期0008，实际为新0009；只更新最新版本预期，保留历史/外键/模型一致性断言。修复后完整370/8/28通过。初次新桌面缺文件案例的响应注入误用了fetch，而业务使用node:http，因此未命中；改为项目既有命名IPC注入，未改业务断言，两项定向实窗通过。缺文件实际服务端由Python临时目录验证，页面注入不称为真实业务请求证据。
+
+最终源码check.cmd退出0：Python370（基线340+新增30）、Node8、真实Electron28（基线26+新增2），无跳过；OpenAPI/TS契约一致、类型、main/preload/renderer构建、隔离0009重复upgrade/current/check及No new upgrade operations通过。最终日志C:\Users\38905\AppData\Local\Temp\research-trail-step14-acceptance.log；迁移隔离目录research-trail-verify-YMwwLw。仅既有TestClient弃用及Vite主chunk提示，未安装/更新依赖或工作流。真实窗口截图仅Temp/research-trail-step14-qa，1100×800/600×680；已查看资料宽窗与缺依赖窄窗，修复新增导航窄窗文字挤压（自然换行）及资料按钮间距。来源断链就绪修正后再次跑同一统一离线验收，不新增依赖或降低断言。
+
+范围和CMD操作见[ACCEPTANCE-step14](ACCEPTANCE-step14.md)，实际调用链见tutorial C09，可撤销练习和三题见practice C09，用户答案保留。真实模型/行情/账户/权限与指标策略执行、长期负载/其他OS/源码新装/远程CI/安装包和用户亲自操作未验证；本轮完成后停止，不实施第15步。
+
+最终文件审查：194份UTF-8、75个可访问本地Markdown链接、4个已登记且原样保留的上游断链、30份上游原字节SHA256、8个现有受保护路径忽略探针以及秘密签名/禁传产物通过。开发时git diff --check只覆盖已跟踪差异；发布阶段将新增资料纳入后发现10处上游原有行尾空格，保留原字节并登记于SOURCES-step14.json，第35节补全检查范围。截图3份最终已查看，窄窗导航自然换行、资料按钮有间距，无页面横溢出/错误overlay或pageerror。工作改动仅本步源码/契约/测试/资料/文档，index为空；HEAD仍3198f106edaf81c19a93084e805e3c9888dabd85，没有提交/发布或第15步。
+
+## 35. 第14步发布复验与公开范围（2026-10-06）
+
+用户独立授权发布已验收第14步，检查失败先修复，不实施第15步。读取第34节、验收清单、项目规则与实际差异；起点main 3198f106edaf81c19a93084e805e3c9888dabd85。实时核验gh账号ydflow、既有公开非fork非归档ydflow/research-trail、默认main、origin fetch/push均https://github.com/ydflow/research-trail.git，远程main同起点，无重复开放PR。每次外部写入前再次核验身份和目标，不切账号、删除、强推或绕过保护。
+
+本轮仅本步骤源码、契约、测试、技能资料及文档。公开范围沿第9—11节用户原作者复用授权确认及本轮上传授权；没有独立取得授权原文，不声称整个Folio或研迹全仓MIT。首批资料29份Markdown及skills/LICENSE按固定上游原字节保留，MIT Copyright 2026 Longbridge Inc.原声明与30份SHA256保留；catalog依赖映射记录原路径/版本。4个上游断链保留并以partial/OPTIONAL_RESOURCE_MISSING呈现；未伪造指标或缺失资料。只使用当前ydflow/noreply作者及正常提交时间，不伪造上游作者、导入历史或开发时间。
+
+### 发布审查修复
+
+依赖列表的四空格缩进、两空格后夹四空格、空列表块可能漏读必要能力，列表中空行也使后面的options.chain被漏读；4个API/状态回归在修复前失败。现按安全frontmatter子集消费完整列表块，允许空行，不支持的缩进与空块返回invalid/INVALID_SKILL，空依赖须明确[]；正确列表中的未实现必要能力为unavailable，Agent无法读资料或称就绪。另以80项最长合法依赖复现直接状态回复7222字符，超过既有4000回复约束；第5个回归先失败，修复保留状态及真实性限制，截断明细并指向技能页完整列表。35项技能测试全部通过（开发30+发布修复5），无模型或真实业务请求。首次定向命令缺PYTHONPATH导致收集失败，补项目路径后再执行，未计作业务测试结果。
+
+### 完整验收与隐私审查
+
+修复后check.cmd退出0：Python375（原基线340+本步35）、Node8、真实Electron28，无跳过；OpenAPI/生成契约一致性、类型、main/preload/renderer构建、隔离库0009_skills重复upgrade/current/check及No new upgrade operations通过。日志Temp/research-trail-step14-publication-check.log，迁移目录research-trail-verify-Rg6LSp。仍有既有TestClient弃用和Vite主chunk提示，未改依赖、工作流或下一步。桌面两项Step14覆盖资料/禁用/Agent拒绝/重启偏好和缺文件/迟到资料；缺文件真实后端拒绝由Python临时目录验证，桌面该分支是命名IPC注入。
+
+194份UTF-8源码/文档、75个可访问本地Markdown链接、4个已登记上游断链、30份工作文件及Git blob原字节SHA256、8项现有受保护路径忽略探针通过；秘密签名/禁传产物无发现。运行库/WAL、真实账户/CSV、密钥、日志、缓存、依赖/构建及截图未入Git。10处上游行尾空格在SOURCES-step14.json逐行登记保留；自写/适配文件diff检查及全部文件未登记空格审查通过，不能表述全量git diff --check无输出。
+
+隔离源码新装bun run verify:clean退出0：导出194份可审文件至Temp/research-trail-clean-7jLQoa/clean source，无Git/依赖/构建/运行资料；按锁文件新建安装71项前端/29项Python依赖及Electron准备。安装准备可联网，业务验收仍由离线护栏限制loopback。同一完整375/8/28和契约/类型/构建/0009检查全部通过、无跳过，迁移目录research-trail-verify-CFrNP9；随后实际根CMD开窗、股票→会话→quote→取消→关闭重启/历史恢复通过，快照一致、无新增运行、自有进程全部退出。证据Temp/research-trail-step14-publication-clean.log及research-trail-cmd-qa-ykjoEE；截图只在Temp。141份运行源码/契约/测试/配置与该导出逐字节一致，导出后仅补文档。不将源码新装视作另一台干净机器或安装包验收。
+
+### 真实分类提交
+
+- dea2f02834d2e526671f32d5d7bccb63806aaa4a：原样导入固定Folio技能文本与许可。
+- 8ac7df2aac2cb6fd6ca339c647f8d465da92cf41：Python能力注册/目录/API/迁移与生成契约、30项原开发测试；4处旧迁移测试只更新最新版本预期。
+- 51a5c0951ce2d17128831c286d5c5e42a22c01db：Electron命名桥、技能页面与两项桌面回归。
+- 896bd72baec5fd3abc5c0023ee564ae57faa6e69：本轮发布审查发现的依赖解析/状态回复修复与5项回归。
+- 发布文档提交记录来源、验收和边界；自身SHA与最终PR/普通merge由实际Git和外部PROJECT_STATE回执确认，不循环写自身SHA。
+
+尚未验证真实Longbridge/Massive/CLI数据、账户权限/字段映射、真实模型技能/风险/对比、实际指标和研究策略执行、任意自定义技能质量、长期负载、其他OS/安装包、用户亲自操作/练习。远程CI和合并必须按最终head的实际GitHub检查确认，不能由本机验收代替。第15—24步未实施；不新增标签、Release或定时付费评测。

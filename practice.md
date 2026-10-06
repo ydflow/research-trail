@@ -235,11 +235,19 @@ CMD打开应用，进入“设置与诊断”，按 [第8步清单](docs/ACCEPTA
 
 用户操作、小改动/撤销观察与三题回答：待填写。本轮不代填用户答案。
 
-## C09：能力与技能（大纲）
+## C09：能力与技能（第14步）
 
-阅读引导：技能元信息、启用状态和依赖就绪分别在哪里产生？按需资料访问是否限制在技能目录内？
+本机小练习：在模拟/Longbridge下读取technical参考文本，禁用longbridge-technical后再次读取并向假模型询问其状态；关闭重启确认禁用保留。再启用并切换真实模式，确认未配置不是就绪。不要填写凭证或发真实业务请求。
 
-用户笔记：待填写。
+可撤销的小改动：在skills/catalog.json中给longbridge-technical的required临时加入options.chain。刷新后应为unavailable/NOT_IMPLEMENTED；删除这一项恢复partial（上游可选资料缺口仍保留）。只改本机，不提交；不要改已保留原字节的上游SKILL.md。
+
+三道理解题：
+
+1. ToolRegistry、页面与SkillCatalog如何共享同一个注册表？为什么不用三个缓存来存ready？
+2. required和optional缺失为什么分别产生unavailable和partial？模拟就绪为什么不证明真实权限？
+3. 为什么资料路径既要检查../与ADS，又要拒绝目录联接并核对打开后的文件句柄？禁用后为何必须在读取边界再检查？
+
+用户操作、小改动/撤销观察与三题回答：待填写。本轮不代填用户答案。
 
 ## C10：研究采集（大纲）
 
