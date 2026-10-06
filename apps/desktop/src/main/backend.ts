@@ -209,6 +209,16 @@ export class BackendManager extends EventEmitter {
   }
   connections() { return this.business<import('../settings-types').ConnectionView[]>('/settings/connections'); }
   workspaceState() { return this.business<import('../workspace-types').WorkspaceState>('/workspace'); }
+  portfolioList() { return this.business<import('../portfolio-types').PortfolioInfo[]>('/portfolios'); }
+  createPortfolio(body: unknown) { return this.business<import('../portfolio-types').PortfolioView>('/portfolios', 'POST', body); }
+  portfolioView(id: unknown) { return this.business<import('../portfolio-types').PortfolioView>('/portfolios/view', 'POST', { portfolio_id: this.id(id) }); }
+  previewPortfolio(id: unknown, csv: unknown) {
+    if (typeof csv !== 'string' || Buffer.byteLength(csv,'utf8') > 131072 || csv.includes('\0')) throw new Error('CSV须为不超过128KiB的文本。');
+    return this.business<import('../portfolio-types').ImportPreview>('/portfolios/preview', 'POST', { portfolio_id: this.id(id), csv_text: csv });
+  }
+  confirmPortfolio(id: unknown, draft: unknown) { return this.business<import('../portfolio-types').PortfolioView>('/portfolios/confirm', 'POST', { portfolio_id: this.id(id), draft_id: this.id(draft) }); }
+  undoPortfolio(id: unknown, batch: unknown) { return this.business<import('../portfolio-types').PortfolioView>('/portfolios/undo', 'POST', { portfolio_id: this.id(id), batch_id: this.id(batch) }); }
+  refreshPortfolio(id: unknown) { return this.business<import('../portfolio-types').PortfolioView>('/portfolios/refresh', 'POST', { portfolio_id: this.id(id) }, 65000); }
   addWatch(symbol: unknown) { return this.business<import('../workspace-types').WorkspaceState>('/workspace/watchlist', 'POST', { symbol }); }
   removeWatch(symbol: unknown) { return this.business<import('../workspace-types').WorkspaceState>('/workspace/watchlist/remove', 'POST', { symbol }); }
   selectSecurity(symbol: unknown) { return this.business<import('../workspace-types').WorkspaceState>('/workspace/selection', 'PUT', { symbol }); }

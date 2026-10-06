@@ -46,6 +46,8 @@ private/
 private-data/
 account-data/
 imports/
+# User portfolio import files stay local; authored fixtures are inline test strings.
+*.csv
 logs/
 *.log
 *.sqlite

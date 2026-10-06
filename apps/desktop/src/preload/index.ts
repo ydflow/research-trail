@@ -2,6 +2,13 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendState, ResearchTrailBridge, RunStreamUpdate } from '../bridge';
 
 const bridge: ResearchTrailBridge = {
+  portfolioList: () => ipcRenderer.invoke('portfolios:list'),
+  createPortfolio: input => ipcRenderer.invoke('portfolios:create', input),
+  portfolioView: id => ipcRenderer.invoke('portfolios:view', id),
+  previewPortfolio: (id, csv) => ipcRenderer.invoke('portfolios:preview', id, csv),
+  confirmPortfolio: (id, draft) => ipcRenderer.invoke('portfolios:confirm', id, draft),
+  undoPortfolio: (id, batch) => ipcRenderer.invoke('portfolios:undo', id, batch),
+  refreshPortfolio: id => ipcRenderer.invoke('portfolios:refresh', id),
   workspaceState: () => ipcRenderer.invoke('workspace:state'),
   addWatch: symbol => ipcRenderer.invoke('workspace:add', symbol),
   removeWatch: symbol => ipcRenderer.invoke('workspace:remove', symbol),

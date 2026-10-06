@@ -116,3 +116,33 @@ class WorkspaceRecord(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     active_symbol: Mapped[str | None] = mapped_column(String(20), nullable=True)
     revision: Mapped[int] = mapped_column(Integer)
+
+
+class PortfolioAccountRecord(Base):
+    __tablename__ = 'portfolio_accounts'
+    __table_args__ = (CheckConstraint("kind IN ('manual','simulated','read_only')"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    name: Mapped[str] = mapped_column(String(80))
+    kind: Mapped[str] = mapped_column(String(20))
+
+
+class PortfolioRecord(Base):
+    __tablename__ = 'portfolios'
+    __table_args__ = (CheckConstraint('revision >= 0'),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    account_id: Mapped[str] = mapped_column(ForeignKey('portfolio_accounts.id'))
+    name: Mapped[str] = mapped_column(String(40))
+    snapshot: Mapped[dict] = mapped_column(JSON)
+    revision: Mapped[int] = mapped_column(Integer)
+    updated_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    current_batch: Mapped[str | None] = mapped_column(String(36), nullable=True)
+
+
+class PortfolioImportRecord(Base):
+    __tablename__ = 'portfolio_imports'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    portfolio_id: Mapped[str] = mapped_column(ForeignKey('portfolios.id'), index=True)
+    fingerprint: Mapped[str] = mapped_column(String(64))
+    before_snapshot: Mapped[dict] = mapped_column(JSON)
+    previous_batch: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    active: Mapped[bool]

@@ -1,5 +1,6 @@
 // Standalone clean-source harness: invoked by verify-clean, not node --test.
 const assert = require('node:assert/strict');
+const { waitForBackend } = require('./backend-ready.cjs');
 const { chromium, expect } = require('@playwright/test');
 const { spawn, execFileSync } = require('node:child_process');
 const { mkdtempSync, writeFileSync, mkdirSync } = require('node:fs');
@@ -39,7 +40,7 @@ async function launch() {
     const page = browser.contexts()[0].pages()[0];
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message)); page.on('console', (message) => { if (['error', 'warning'].includes(message.type())) errors.push(message.text()); });
-    await expect(page.getByRole('heading', { name: '连接就绪' })).toBeVisible();
+    await waitForBackend(page);
     assert.equal(await page.title(), '研迹 · ResearchTrail');
     assert.match(page.url(), /^http:\/\/127\.0\.0\.1:\d+\//);
     assert.equal(await page.locator('vite-error-overlay').count(), 0);

@@ -26,6 +26,9 @@ from .provider_service import ProviderService
 from .watchlist import WatchlistStore, WatchlistError
 from .security_workspace import SecurityWorkspace
 from .workspace_contracts import SymbolInput, WorkspaceState, SecurityQuery, SecurityPage
+from .portfolio import PortfolioService, PortfolioError
+from .portfolio_contracts import (PortfolioInfo, PortfolioView, PortfolioCreate, PortfolioId,
+    CsvPreviewInput, ImportPreview, ImportConfirm, ImportUndo)
 
 
 class Health(BaseModel):
@@ -53,11 +56,14 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             app.state.providers = ProviderService(app.state.provider_settings, **(provider_options or {}))
             app.state.watchlist = WatchlistStore(database)
             app.state.security_workspace = SecurityWorkspace(app.state.watchlist,app.state.providers)
+            app.state.portfolios = PortfolioService(database,app.state.providers)
             app.state.store.recover_interrupted()
             manager = app.state.manager = RunManager(app.state.store, runner, run_timings)
             yield
         finally:
             try:
+                if hasattr(app.state,'portfolios'):
+                    app.state.portfolios.close()
                 if hasattr(app.state,'providers'):
                     app.state.providers.close()
                 if manager:
@@ -91,14 +97,14 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
         try:
             return await call_next(request)
         except Exception:
-            if request.url.path.startswith(("/settings", "/providers", "/workspace")):
+            if request.url.path.startswith(("/settings", "/providers", "/workspace", "/portfolios")):
                 # Do not let an injected/native/storage exception echo the request in logs.
-                return JSONResponse(status_code=503, content={"detail": "证券工作区操作失败，请检查本机环境后重试。" if request.url.path.startswith('/workspace') else "设置存储操作失败，请检查本机环境后重试。"})
+                return JSONResponse(status_code=503, content={"detail": "本机存储操作失败，请检查环境后重试。"})
             raise
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request, error):
-        if request.url.path.startswith(("/settings", "/providers", "/workspace")):
+        if request.url.path.startswith(("/settings", "/providers", "/workspace", "/portfolios")):
             # FastAPI's default errors include the raw rejected input, including secrets.
             return JSONResponse(status_code=422, content={"detail": "设置输入不符合契约，请检查字段、长度与地址格式。"})
         return JSONResponse(status_code=422, content={"detail": [{"loc": list(item["loc"]),
@@ -119,6 +125,31 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     @app.get('/workspace',response_model=WorkspaceState,dependencies=protected)
     def workspace_state():
         return app.state.watchlist.state()
+
+    @app.exception_handler(PortfolioError)
+    async def portfolio_error(_request,error):
+        return JSONResponse(status_code=409,content={'detail':str(error)})
+
+    @app.get('/portfolios',response_model=list[PortfolioInfo],dependencies=protected)
+    def portfolio_list(): return app.state.portfolios.list()
+
+    @app.post('/portfolios',response_model=PortfolioView,dependencies=protected)
+    def portfolio_create(body:PortfolioCreate): return app.state.portfolios.create(body)
+
+    @app.post('/portfolios/view',response_model=PortfolioView,dependencies=protected)
+    def portfolio_view(body:PortfolioId): return app.state.portfolios.view(body.portfolio_id)
+
+    @app.post('/portfolios/preview',response_model=ImportPreview,dependencies=protected)
+    def portfolio_preview(body:CsvPreviewInput): return app.state.portfolios.preview(body)
+
+    @app.post('/portfolios/confirm',response_model=PortfolioView,dependencies=protected)
+    def portfolio_confirm(body:ImportConfirm): return app.state.portfolios.confirm(body)
+
+    @app.post('/portfolios/undo',response_model=PortfolioView,dependencies=protected)
+    def portfolio_undo(body:ImportUndo): return app.state.portfolios.undo(body)
+
+    @app.post('/portfolios/refresh',response_model=PortfolioView,dependencies=protected)
+    def portfolio_refresh(body:PortfolioId): return app.state.portfolios.refresh(body.portfolio_id)
 
     @app.post('/workspace/watchlist',response_model=WorkspaceState,dependencies=protected)
     def add_watch(body:SymbolInput):

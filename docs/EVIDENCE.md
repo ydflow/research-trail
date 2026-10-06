@@ -800,3 +800,75 @@ Electron实窗标题“研迹 · ResearchTrail”、URL file:///.../apps/desktop
 
 
 已创建[第11步PR #10](https://github.com/ydflow/research-trail/pull/10)，base main ae1759229f477bb59103c6fd818cba1dd9c074be、非draft，初始head f77dc799c562eb8f62af9a8f6303c634bd65133c。四个分类提交及34项差异已与远程核对；文档提交f77dc799c562eb8f62af9a8f6303c634bd65133c。创建后Windows push/PR Actions已启动，尚在运行，不能先记通过；本次仅补PR链接文档，不改运行源码。最终检查见[PR检查](https://github.com/ydflow/research-trail/pull/10/checks)，最终提交/检查/合并与本地同步以实时Git/GitHub和发布回执为准。
+
+## 30. 第12步：Python组合、CSV与只读账户（2026-10-06）
+
+用户本轮明确“继续做第12步”，接续的是原第12步范围；不是此前发布模板或第13步的实施授权。读取AGENTS、ROADMAP、EVIDENCE、当前源码及外部PROJECT_STATE，实查main/HEAD b52936a4241ab7a96f58f36389afb063e248ad20、工作区干净、已发布基线仅第11步；此前第12步只有读取/准备，不能当已实现或已验收。本轮交付未提交源码、index为空，无GitHub写入/标签/Release/定时评测，不实施风险或股票对比/研究/交易功能。
+
+### 来源、适配与Python新实现
+
+固定Folio ZIP来源ba5dcdfd31b162f5edb8b908f7f099a560389326，https://github.com/helsome/folio；只读参考D:\folio\主分支和简历skill\folio-main。延续EVIDENCE第9—11节的用户原作者复用授权确认；没有独立获得原始授权文件，未宣称全仓MIT，未删除已有版权/第三方声明。
+
+| 参考源码 | 本步落点与修改 | 责任边界 |
+| --- | --- | --- |
+| packages/ui/src/components/portfolio/PortfolioCard.tsx、HoldingRow.tsx、ImportDraftReview.tsx | PortfolioPanel.tsx局部保留摘要→持仓→显式预览/确认结构，文件头保留URL/路径/版本；React/CSS按现有项目适配，不引入Jotai/i18n/lucide/Tailwind或原client | UI适配；没有移植研究按钮、饼图的跨币种合计、风险/截图导入或TS业务内核 |
+| packages/shared/src/portfolio-import/parsers.ts；packages/core/src/account.ts、portfolio-import.ts | 只读参考领域/草稿边界；portfolio_contracts、portfolio_csv、portfolio_calculate、PortfolioService及0008三表为Python新实现 | 严格统一七列CSV，不宣称覆盖原全部格式/模糊代码清洗；数值不交给JS/LLM |
+| 研迹Step10 ProviderService/account.positions/account.assets | 复用已有只读Python适配；显式并发两个真实模式查询、无缓存，无凭证/受限/失败不回退 | 假SDK契约验证，不证明真实账户权限与数据 |
+
+无依赖或锁文件更改；必要组合组件按需加载。App/preload/main增加七个命名操作，总桥50项。CSV文件在页面按UTF-8读取文本，main仅接收受限文本/UUID和固定操作；renderer仍无Node/文件路径或任意后端URL权限。
+
+### 确定性计算、状态与存储
+
+- Decimal使用64位上下文，每持仓成本=数量×成本单价、市值=数量×估值单价、未实现盈亏=市值−成本；非零成本时计算百分比到6位小数，零成本百分比为None。输入数量/单价非负、现金可负；不支持空头、税费/已实现收益/时序收益率。输出十进制字符串，React只显示。
+- 按币种独立计算现金/成本/市值/盈亏/资产，不提供FX或全币种总值。缺现金行不是0；缺任一持仓价格则完整市值/资产为None/—，保留已知市值小计与已估值数量。没有用账户net_assets倒推价格；提供商报告净资产单独展示。
+- 初次创建CSV空组合、手算模拟和OpenAPI只读别名，各有独立账户ID与组合ID；最多20个组合。模拟手算初始2股×100成本、120估值、现金100，固定样例时钟2024-01-16T21:00Z。模拟组合导入CSV仍为模拟账户，但来源变CSV、市场时间为None；撤销至内置样例才恢复固定来源/时钟。CSV真实性未核验，保存时间与市场时间区分。
+- UTF-8/BOM标准CSV、七列顺序可调但不能未知/重复列、≤128KiB/100条，符号/币种/普通十进制严格验证；非法/行内重复阻止整批确认。原文不进日志/诊断/数据库，解析后仅存规范化草稿到Python有界内存，≤8份/10分钟，同组合新草稿替代旧草稿。
+- 指纹基于规范化、排序后的完整快照，识别行序/BOM/2.0与2的重复；确认核对归属、revision、有效期与已应用指纹。BEGIN IMMEDIATE内原子保存替换快照、前态/批次，並发仅一次成功；可撤销最新导入并沿批次链接逐次恢复，revision递增，旧预览不能确认。重启CSV/模拟持仓及撤销链保留，草稿不保留。
+- 0008_portfolios增加portfolio_accounts/portfolios/portfolio_imports三表，保留旧会话/profile/提供商配置；运行库、导入文件均本机私有，.gitignore增加*.csv。真实只读持仓/余额仅内存，不落库；仅别名元数据入库。配置revision变化或重启后须重新主动查询。
+- 只读账户在Python和UI均拒绝导入/确认/撤销；不自动刷新或猜测多账户身份。真实缺必需字段、负持仓、重复通道/现金币种或超限返回INVALID_RESPONSE，不混模拟。真实失败/未配置/受限明确显示。页面key+generation防旧组合回包覆盖；无新增Agent工具。
+
+### 本轮实际验证与修正
+
+新增Python35项，新增实窗Electron3项：手算/小数/0/缺失/现金/不同币种，14种非法行与CSV上限/表头/重复行、规范化重复导入、独立账户/只读拒绝、最新批次撤销/重启/有效期/revision、并发仅一次确认、模拟CSV来源与撤销时钟、假SDK真实账户链/受限/失败/配置失效/内存不落库、鉴权/输入不回显/诊断无持仓、旧0007迁移保留与模型一致性。实窗用内存自造CSV上传→预览不持久→确认→重复/非法禁止→多币种/缺价格→撤销，完整应用关闭/重启保持、只读未配置、独立组合与迟到响应。
+
+第一次定向pytest调用未用python -m导致导入错误，改为仓库约定命令后34通过；类型检查发现生成契约的默认provenance可省略，按可选数组处理后通过。首轮完整pytest只有旧证券迁移测试仍期待0007，更新预期为0008，保留其旧会话/profile/config不变断言。第一完整统一轮288/8/22通过（临时migration research-trail-verify-iUXoUi）；随后审查模拟组合CSV来源与预览保存时间，修正为CSV来源/无市场时间，撤销回内置再恢复，预览不显示旧保存时间，新增第35项回归。
+
+最终check.cmd退出0：Python289、Node8、真实Electron22全部通过、无跳过；OpenAPI/TS一致、前端类型/构建、0008两次upgrade/current/check通过。最终隔离迁移目录research-trail-verify-tQCrlF，位于Temp；测试不操作日常运行库或用户实际凭证。只有既有TestClient/httpx弃用提示及Vite主chunk略超500KiB构建提示，不隐藏警告或为此升级依赖，性能/负载未验证。
+
+实窗1100×800与600×680，标题“研迹 · ResearchTrail”、file:///.../dist/renderer/index.html身份、非空、无框架overlay/相关console error/warn或横向溢出；实际截图已查看（入口、预览、确认摘要、窄窗多币种及只读未配置）。发现组合侧栏全部同色，修正当前选中样式后最终整轮复验。新闻/证券与旧事件链完整回归保持。Browser plugin not available，按frontend-testing-debugging技能使用已有Playwright/Electron，无新浏览器依赖。截图只在Temp/research-trail-step12-qa，不入源码。
+
+文件/隐私审核：源码清单只含源码、测试、文档与已有锁文件；未复制CSV原文件、账户/凭证、运行库/WAL、日志、缓存/截图。忽略探针使用NUL输入避免Windows CRLF被Git当作文件名尾字符；最初换行探针失败是审核脚本输入问题，改NUL重核，不改忽略规则来掩盖问题。最终142份UTF-8文本、49个本地Markdown链接、8项NUL忽略探针、秘密签名/禁传产物及git diff --check全部通过；index保持空，项目所属服务无残留。
+
+未验证：真实Longbridge账户/数据/权限/多通道实机兼容、行情/模型请求、任意券商CSV、长期大量导入/备份恢复、其他OS、安装包、干净源码新装与远程CI，用户亲自清单和练习仍待填写。未配置不等于权限受限。交付操作/边界见ACCEPTANCE-step12.md；C07及practice按真实代码展开，不代填答案。第13—24步未实施。
+
+## 31. 第12步发布复验与公开范围（2026-10-06）
+
+按用户本轮独立授权仅发布已验收第12步，不实施第13步。本轮读取ROADMAP/ACCEPTANCE-step12/EVIDENCE第30节与实际差异；基线main b52936a4241ab7a96f58f36389afb063e248ad20。实查GitHub账号ydflow、既有公开非fork非归档仓库ydflow/research-trail、默认main、origin fetch/push均https://github.com/ydflow/research-trail.git，远程main与本地基线一致，尚无重复开放PR。每次GitHub写入前再次实时核验，不切账号、删除、强推或绕过保护。
+
+29项本步差异（19修改、10新增）审核通过，142份UTF-8源码、49个本地Markdown链接、8项NUL忽略探针、秘密签名/禁传产物和git diff --check通过。仅本步骤源码、契约、测试及文档；锁文件、既有Agent/Provider实现、第三方许可证和工作流无变化。未上传密钥、账户/持仓、CSV原文件、运行库/WAL、日志、缓存、依赖/构建或截图。固定Folio ba5dcdfd来源与第30节局部适配范围、用户原作者授权确认保持；没有独立取得授权原文，不将全仓改成MIT。
+
+提交按真实改动区分，使用当前ydflow/noreply及正常时间，无作者/日期覆盖：
+- 10a71f18d5cc0df89a40ccccdce854ba79e66776：隐私修复，忽略本机CSV文件。
+- 9ea49694d3e95a35f1d11a349eb66d38a34f6088：Python新实现，组合Decimal计算、CSV/草稿/事务确认/撤销、0008与严格账户隔离。
+- 02d219c5c95089cf8d2d4c9630d13dd948490b53：Folio必要UI局部适配及Python桌面桥/实窗验收，不伪装为上游原始作者或导入Git历史。
+- 发布文档提交记录本轮验证；自身SHA及最终PR/merge由Git与发布回执核对，不在提交中循环引用。
+
+发布check.cmd完整Python289、Node8、真实Electron22无跳过，契约/TS/构建、0008重复upgrade/current/check通过；隔离迁移证据research-trail-verify-Gkv3kb。干净源码research-trail-clean-MtGNY0/clean source导出142份源码、按锁新装71前端/29Python（Longbridge5.2.0）并准备Electron；完整289/8/22再次通过，迁移证据research-trail-verify-kGMkUG。根CMD选股→会话→行情→取消→关闭/重启历史通过，同一保存快照、无新运行、所属进程退出，证据research-trail-cmd-qa-adEElC。下载可复用本机缓存，不声称无工具/空缓存机器安装。只有既有TestClient弃用与Vite约500KiB主chunk构建提示，无检查失败，不擅自升级依赖或降低断言。
+
+发布截图仅Temp/research-trail-step12-publication-qa和clean-publication-qa；已读1100×800/600×680实际图，页面身份/非空/无overlay/相关console错误或横溢出、预览/保存/撤销/重启/多币种/缺价格/独立账户链通过。原第11步三态与模型/事件/取消链完整回归，未调用真实模型/行情/账户，也未读取日常凭证。Browser未安装，沿用已有Playwright/Electron。
+
+后续仅推送feat/step-12-portfolios、创建对应PR，实时检查最终head/base、全部远程检查、review和未解决讨论；通过无阻塞才按匹配head普通merge保留提交并同步main。此处为推送前文档，不把尚未执行的远程CI、合并或同步写成通过。已有v0.1.0标签object 3dd216557cdc81ac8fc35b14e0585dc43731be86、解析至第7步716543305ba5d74f57336c589c4b2dffaf6e3592；本轮不打标签/创建Release或定时付费评测。
+
+未验证：真实Longbridge账户/权限/多通道和行情/模型、任意券商CSV、长期历史/负载与备份恢复、其他OS/安装包、用户亲自清单/练习。远程CI与最终PR/merge状态见实时GitHub及外部PROJECT_STATE发布回执。第13—24步未实施。
+
+已创建[第12步PR #11](https://github.com/ydflow/research-trail/pull/11)，base main b52936a4241ab7a96f58f36389afb063e248ad20、非draft，初始head db534b001efe80886f7d93df4079c526c34dcdc9。四个真实分类提交与29项差异已推送核对，创建后push/PR Windows检查已启动、当时尚未完成。本次仅补PR链接，不改运行源码；最终head检查见[PR检查](https://github.com/ydflow/research-trail/pull/11/checks)。最终提交/CI/merge及本地同步以实时Git/GitHub及外部PROJECT_STATE发布回执核验，不虚构当前文档提交自身SHA。
+
+### PR启动等待失败、修复与重新验证
+
+head 48d442abf05cf000cb0cf6f106e64aaeb7de4029的[push检查](https://github.com/ydflow/research-trail/actions/runs/37451485093)通过，但[PR检查](https://github.com/ydflow/research-trail/actions/runs/37451490242)失败，未合并。失败日志确认Python289/Node8/契约/类型/构建/0008通过，Electron21通过、1失败：旧Step11提供商失败案例在等待“连接就绪”时用尽Playwright默认5秒，截图DOM仍为“正在连接/启动中”。第12步三项均通过；这不是业务失败被模拟替代。
+
+BackendManager允许Python就绪15秒，再轮询健康接口5秒，单次健康请求上限2秒。测试修复5656c7a0cc0875105535db0535bef7db063a5bc1新增共享waitForBackend，仅启动/重试就绪断言限时25秒，保留健康标题的严格要求及失败DOM诊断；业务断言保留默认5秒，缺Python/迁移失败断言保持原样。没有改应用启动期限、自动重跑整套用例、跳过断言或新增下一步能力。
+
+定向成功/缺失/失败三态3项通过。随后重新导出143份源码至Temp/research-trail-clean-00SmBR/clean source，按锁新装71前端/29Python并准备Electron；完整离线Python289、Node8、Electron22全部通过、无跳过，契约/类型/构建及0008重复upgrade/current/check通过。隔离迁移research-trail-verify-gLrUuQ；根CMD选股→会话→行情→取消→关闭/重启恢复通过，快照相同、无新运行、所属进程退出，证据research-trail-cmd-qa-jRrsKi。129份代码/配置/锁文件逐字节匹配本次干净源码，文档追加独立于运行源码；仅既有TestClient/Vite提示。
+
+本步骤最终差异增加为31项，源码143份UTF-8，49个本地Markdown链接与8项忽略探针、秘密签名/禁传产物、空index及差异空白审核通过。新截图仍只在Temp，账户/密钥/CSV/运行库等未进入提交。修复后重新推送，让新head接受push/PR检查，不能沿用旧head的push成功抵消其PR失败；最终远程检查、普通merge与本地main同步以实时GitHub及外部发布回执确认。
