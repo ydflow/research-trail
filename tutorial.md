@@ -8,7 +8,7 @@
 - 参考来源：ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`；本地无Git，不能保证逐文件无本地变化。
 - 新项目根：`D:\folio\research-trail`，当前有第1—6步业务、第7步验收脚本/离线CI文件、第8步设置/凭证/假连接/诊断。v0.1.0源码发布只包含第1—7步，第8步已通过PR #7交付，第9步实现模型适配/受限工具循环；发布轮一次真实模型工具验证通过（2次请求、1次工具），真实行情未接入。
 - 本次覆盖：入口、界面/客户端、模型与数据、持久化/事件、组合、技能、研究、监控、评测与打包的阅读路线。
-- C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；C06已展开第8步设置/凭证/假健康，C05已补第9步模型协议/工具循环；一次真实模型工具验证通过（模拟行情），第10步数据与只读账户适配已展开，真实查询未执行，C07—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
+- C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；C06已展开第8步设置/凭证/假健康，C05已补第9步模型协议/工具循环；一次真实模型工具验证通过（模拟行情），第10步数据与只读账户适配及第11步证券工作台已展开，真实行情查询未执行，C07—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
 - 前置知识：Python函数/类与异步、HTTP/JSON、TypeScript接口、React状态、进程与IPC、SQLite基本操作；按课程需要补，不要求先学完全部框架。
 
 主链先建立整体印象：
@@ -197,7 +197,7 @@ DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-
 
 ## C06：真实行情、账户和连接怎样路由？
 
-状态：第8步设置/凭证/假连接已展开；第9步模型选路见C05，第10步提供商适配已实现并通过模拟验收，完整市场页仍待第11步，用户练习待完成。
+状态：第8步设置/凭证/假连接已展开；第9步模型选路见C05，第10步提供商适配已实现并通过模拟验收，第11步七个证券视图与持久自选已实现并通过模拟/实窗验收，用户练习待完成。
 
 - 主链：配置/健康 → 能力请求 → 路由选择Provider → 规范化数据与来源 → UI/Agent。
 - 必读1：`packages/core/src/provider.ts`：LLM、financial-data、broker-account不同契约和状态。
@@ -221,6 +221,21 @@ DTO来自 `conversation.py` → 离线OpenAPI → generated.ts → conversation-
 Windows系统存储不可用时拒绝保存，无明文后备。凭证命名空间按数据库绝对路径隔离；复制数据库不复制系统凭证，迁移路径需重新配置。极端崩溃/系统清理失败可能留孤立系统条目，普通Python字符串不承诺彻底擦除内存。上述真实系统存储读写与状态流程验证，并不证明真实LLM/行情连接健康。
 
 理解题和亲自操作见practice第8步及 [第8步验收](docs/ACCEPTANCE-step8.md)。
+
+### 研迹第11步：切换页面时，股票和来源如何保持正确？
+
+场景：选NVDA.US，依次切概览→财报→新闻；AAPL早发的迟到响应不能覆盖NVDA，关窗再打开仍选NVDA。缺报表不是0，模拟成功不是实时权限。
+
+1. `renderer/securities/SecurityWorkspace.tsx`只维护页面、表单与结果显示缓存。进入时调用`workspaceState`读Python，`mutate`队列串行add/remove/select；不把自选或当前证券存在localStorage。显示仅接受不落后revision的持久状态。
+2. 页面组合view/provider/mode/symbol/period/kind/report/offset及revision为请求key。`load`捕获key和generation；回包必须同时匹配当前key、序号、股票、提供商、模式和视图。切页/切来源/卸载先使旧回包失效，真实模式等待显式查询。
+3. preload命名`securityPage`→主进程IPC来源校验→`BackendManager.securityPage`→带令牌POST `/workspace/page`→Python `SecurityQuery`拒绝非法代码、额外字段、组合等未开放视图。React不能指定本机端点或执行CLI。
+4. `WatchlistStore`经`Database.write`事务保存有序自选和活动代码；迁移`0007_security_workspace`只增加两表。只首次种四股票，清空不复种；重复加入不重复，最多20只，删除当前选择回退第一只或空。并发写用数据库事务串行保护。
+5. `SecurityWorkspace.page/_block`调用同一个`ProviderService.query`：自选四个独立quote、概览profile/valuation、其他一项只读能力。最多4并发，不请求账户或模型；NO_DATA映射missing，认证/受限/不支持/网络等保留固定码，部分失败不丢成功块，无模拟回退。
+6. `workspace_normalize`仅投影明确字段。数字null/占位符→None，0保留；时间缺失不补现在；报表币种/报告期保留，未知整数交易状态显示代码与含义未知。新闻不补标题/时间/URL，合法原链接保持全文；SDK NewsItem由显式属性白名单公开，不用__dict__兜底。
+7. `SecurityViews.tsx`用生成DTO显示指标卡、图表、报表、新闻和市场状态；每块统一`Source`显示来源/缓存/时效/时间。`FinancialKLineChart`消费实际bars及period；新闻点击→`openNewsSource`→main HTTP(S)校验→shell.openExternal，渲染端不开Node或任意协议。
+8. `tests/test_workspace.py`和`tests/desktop.test.cjs`分别覆盖七视图三态、旧库升级、串行持久化与迟到上下文。假响应也经过ProviderService和相同能力健康记录路径，不能把DOM通过当真实数据验证。具体[第11步清单](docs/ACCEPTANCE-step11.md)与练习见practice。
+
+用户笔记：待填写。
 
 ## C07：导入持仓怎样校验而不污染账户？
 
