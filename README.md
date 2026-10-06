@@ -78,7 +78,7 @@ Pydantic 是业务契约来源。离线导出 OpenAPI 后，`openapi-typescript`
 | 8 | 设置、凭证、个人资料与脱敏诊断 | 自动验收通过，PR #7已合并；连接探针仍是假测试，用户操作待填 |
 | 9 | OpenAI兼容模型与受限只读工具循环 | 自动验收通过；一次真实模型工具验证通过（2次请求、1次工具，行情仍为模拟）；交付 [PR #8](https://github.com/ydflow/research-trail/pull/8) |
 | 10 | Longbridge/只读CLI/Massive数据与只读账户 | 验收通过（模拟）；真实数据未验证 |
-| 11 | 持久自选、概览、行情、K线、财报、新闻、市场状态 | 验收通过（模拟/本机实窗）；独立发布复验见EVIDENCE第29节 |
+| 11 | 持久自选、概览、行情、K线、财报、新闻、市场状态 | 验收通过（模拟/本机实窗）；独立授权交付[PR #10](https://github.com/ydflow/research-trail/pull/10)，发布复验见EVIDENCE第29节 |
 | 12—13 | 组合导入、风险及股票对比 | 未开始 |
 | 14—20 | 能力技能、研究策略/报告/恢复、论点、筛选与事件 | 未开始 |
 | 21—24 | 提醒与 Today、评测、研究结果校准、Windows 交付 | 未开始 |
@@ -243,4 +243,4 @@ uv run --directory services\backend --frozen python -m alembic -c alembic.ini ch
 
 2026-10-06本机完整check.cmd通过：Python254、Node8、真实Electron19；七视图各成功/缺失/失败21例均在API和窗口验证，另有重启持久化、股票切换/迟到响应、来源切换与真实未配置检查。本轮无真实数据或模型请求、未提交/发布；第12—24步未开始。入口、操作和缺口见[第11步验收](docs/ACCEPTANCE-step11.md)，来源/轮次见EVIDENCE第28节，课程/练习保留待用户填写。
 
-第11步发布轮完整检查及干净源码锁定安装/根CMD启动、重启历史复验通过，见EVIDENCE第29节。按本轮独立授权准备功能分支PR，最终CI/合并状态以GitHub和发布回执为准；开发轮未提交记录保留为历史。
+第11步发布轮完整检查及干净源码锁定安装/根CMD启动、重启历史复验通过，见EVIDENCE第29节。按本轮独立授权通过[PR #10](https://github.com/ydflow/research-trail/pull/10)交付，最终CI/合并状态以GitHub和发布回执为准；开发轮未提交记录保留为历史。

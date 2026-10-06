@@ -797,3 +797,6 @@ Electron实窗标题“研迹 · ResearchTrail”、URL file:///.../apps/desktop
 - 验证边界：均模拟响应或本机协议，未发送真实行情/账户/模型请求，未读取已配置模型Key；Windows原生凭证测试仅独立临时占位值并清理。真实供应商数据/权限/时效/外部错误/财报周期/新闻内容、CLI实际兼容、完整分页/长期负载、用户亲自操作/练习、其他OS/安装包仍未验证。未配置不称受限，真实失败不回退模拟，单项成功不扩散。
 
 最终PR head/base、Actions、review与未解决讨论须合并前实时核对；只有最终head通过、没有阻塞才普通merge并fast-forward同步本地main。PR及最终合并结果由实时Git/GitHub与发布回执确认，不预写自身文档提交的合并SHA。
+
+
+已创建[第11步PR #10](https://github.com/ydflow/research-trail/pull/10)，base main ae1759229f477bb59103c6fd818cba1dd9c074be、非draft，初始head f77dc799c562eb8f62af9a8f6303c634bd65133c。四个分类提交及34项差异已与远程核对；文档提交f77dc799c562eb8f62af9a8f6303c634bd65133c。创建后Windows push/PR Actions已启动，尚在运行，不能先记通过；本次仅补PR链接文档，不改运行源码。最终检查见[PR检查](https://github.com/ydflow/research-trail/pull/10/checks)，最终提交/检查/合并与本地同步以实时Git/GitHub和发布回执为准。
