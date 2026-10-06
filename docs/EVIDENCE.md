@@ -862,3 +862,13 @@ Electron实窗标题“研迹 · ResearchTrail”、URL file:///.../apps/desktop
 未验证：真实Longbridge账户/权限/多通道和行情/模型、任意券商CSV、长期历史/负载与备份恢复、其他OS/安装包、用户亲自清单/练习。远程CI与最终PR/merge状态见实时GitHub及外部PROJECT_STATE发布回执。第13—24步未实施。
 
 已创建[第12步PR #11](https://github.com/ydflow/research-trail/pull/11)，base main b52936a4241ab7a96f58f36389afb063e248ad20、非draft，初始head db534b001efe80886f7d93df4079c526c34dcdc9。四个真实分类提交与29项差异已推送核对，创建后push/PR Windows检查已启动、当时尚未完成。本次仅补PR链接，不改运行源码；最终head检查见[PR检查](https://github.com/ydflow/research-trail/pull/11/checks)。最终提交/CI/merge及本地同步以实时Git/GitHub及外部PROJECT_STATE发布回执核验，不虚构当前文档提交自身SHA。
+
+### PR启动等待失败、修复与重新验证
+
+head 48d442abf05cf000cb0cf6f106e64aaeb7de4029的[push检查](https://github.com/ydflow/research-trail/actions/runs/37451485093)通过，但[PR检查](https://github.com/ydflow/research-trail/actions/runs/37451490242)失败，未合并。失败日志确认Python289/Node8/契约/类型/构建/0008通过，Electron21通过、1失败：旧Step11提供商失败案例在等待“连接就绪”时用尽Playwright默认5秒，截图DOM仍为“正在连接/启动中”。第12步三项均通过；这不是业务失败被模拟替代。
+
+BackendManager允许Python就绪15秒，再轮询健康接口5秒，单次健康请求上限2秒。测试修复5656c7a0cc0875105535db0535bef7db063a5bc1新增共享waitForBackend，仅启动/重试就绪断言限时25秒，保留健康标题的严格要求及失败DOM诊断；业务断言保留默认5秒，缺Python/迁移失败断言保持原样。没有改应用启动期限、自动重跑整套用例、跳过断言或新增下一步能力。
+
+定向成功/缺失/失败三态3项通过。随后重新导出143份源码至Temp/research-trail-clean-00SmBR/clean source，按锁新装71前端/29Python并准备Electron；完整离线Python289、Node8、Electron22全部通过、无跳过，契约/类型/构建及0008重复upgrade/current/check通过。隔离迁移research-trail-verify-gLrUuQ；根CMD选股→会话→行情→取消→关闭/重启恢复通过，快照相同、无新运行、所属进程退出，证据research-trail-cmd-qa-jRrsKi。129份代码/配置/锁文件逐字节匹配本次干净源码，文档追加独立于运行源码；仅既有TestClient/Vite提示。
+
+本步骤最终差异增加为31项，源码143份UTF-8，49个本地Markdown链接与8项忽略探针、秘密签名/禁传产物、空index及差异空白审核通过。新截图仍只在Temp，账户/密钥/CSV/运行库等未进入提交。修复后重新推送，让新head接受push/PR检查，不能沿用旧head的push成功抵消其PR失败；最终远程检查、普通merge与本地main同步以实时GitHub及外部发布回执确认。
