@@ -30,12 +30,13 @@ def instant(value, zone=None):
 def rows(data):
     entries=data if isinstance(data,list) else data.get('list') if isinstance(data,dict) else None
     if not isinstance(entries,list): raise ValueError('CALENDAR_RESPONSE_INVALID')
-    for i,item in enumerate(entries[:200]):
+    # Yield one sentinel row so the service records overflow instead of hiding it.
+    for i,item in enumerate(entries[:201]):
         path=f'/{i}' if isinstance(data,list) else f'/list/{i}'
         if isinstance(item,dict) and 'infos' in item:
             if not isinstance(item['infos'],list): yield path,None
             else:
-                for j,row in enumerate(item['infos'][:200]): yield path+f'/infos/{j}',row
+                for j,row in enumerate(item['infos'][:201]): yield path+f'/infos/{j}',row
         else: yield path,item
 
 def normalize(row,query,provider,mode,read_id,pointer):

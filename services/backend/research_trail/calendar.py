@@ -77,7 +77,7 @@ class CalendarService:
                     start=query.start-timedelta(days=2),end=query.end+timedelta(days=2),use_cache=False)
                 try:
                     result=RESULT.validate_python(self.providers.query(query.provider,read_query,
-                        expected_revision=revision,expected_identity=identity))
+                        timeout_seconds=20,expected_revision=revision,expected_identity=identity))
                     if result.provider!=query.provider or result.capability!='research.events': raise ValueError()
                     if result.ok:
                         provenance=result.provenance

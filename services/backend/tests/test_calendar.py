@@ -206,3 +206,33 @@ def test_startup_token_and_typed_evidence_ids(api):
     with api() as (c,_):
         assert c.post('/calendar/sources',json={},headers={'X-ResearchTrail-Token':'bad'}).status_code==401
         assert c.get('/calendar/snapshots/not-a-uuid/reads/not-a-uuid').status_code==422
+
+@pytest.mark.parametrize('grouped',[False,True])
+def test_event_limit_keeps_bounded_results_and_reports_truncation(api,grouped):
+    records=[{'id':str(i),'kind':'macro','title':'bounded source event','scheduled_at':'2024-01-16T13:00:00Z'} for i in range(201)]
+    source={'list':[{'infos':records}]} if grouped else {'list':records}
+    with api(lambda q:source) as (c,_):
+        page,_=refresh(c,kinds=['macro'])
+        assert page['status']=='partial' and len(page['events'])==200
+        assert page['issues'][0]['code']=='CALENDAR_ROW_LIMIT'
+        assert page['issues'][0]['pointer']==('/list/0/infos/200' if grouped else '/list/200')
+        original=c.get(f"/calendar/snapshots/{page['id']}/reads/{page['reads'][0]['id']}").json()
+        assert original['result']['data']==source
+
+def test_real_adapter_query_limit_fits_two_reads_inside_desktop_timeout(api):
+    from test_providers import save,authorize
+    from research_trail.provider_contracts import ReadQuery
+    observed=[]
+    def adapter(snapshot,query,stop):
+        observed.append(snapshot.configuration.timeout_seconds)
+        return authored_data(query)
+    with api() as (c,app):
+        save(c,timeout_seconds=60); authorize(c)
+        app.state.providers.sdk_executor=adapter; app.state.providers.cli_executor=adapter
+        verified=app.state.providers.query('longbridge',ReadQuery(capability='research.events',mode='real'))
+        assert verified.ok and observed==[60]
+        observed.clear()
+        page,_=refresh(c,mode='real',kinds=['earnings','macro'])
+        assert len(page['reads'])==2 and all(r['status']=='success' for r in page['reads'])
+        assert observed==[20,20]
+        assert app.state.provider_settings.profile('longbridge').timeout_seconds==60
