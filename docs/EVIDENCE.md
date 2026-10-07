@@ -1683,5 +1683,11 @@ Git diff检查通过；246份UTF-8源码、102个本地链接、5份固定参考
 
 正常本机作者ydflow/noreply及真实时间。按来源概念记录、Python新实现、桌面接入、实际修复分开提交；
 没有本轮上游原样资源导入，不能把Python实现提交伪装为上游作者历史。功能分支feat/step-19-screening。
-本机完整check.cmd及独立干净源码安装/验收正在执行，最终结果另填；PR、CI和合并尚未执行。
+最终本机check.cmd及独立干净源码verify:clean均退出0，504 Python/8 Node/43实际Electron，
+零失败/取消/跳过；契约/类型/构建、0014重复迁移/current/check及No new upgrade operations通过。
+干净导出246份源码后锁定新装依赖与Electron，根CMD实际启动、关闭/重开与相同历史、无新运行、所属进程退出通过。
+178份运行/测试/配置与干净导出逐字节一致，按Git clean-filter规范化后与HEAD blob一致（Windows换行不冒称原字节一致）。
+日志仅Temp/research-trail-step19-publication-{check,clean}.log；独立源码research-trail-clean-lViLFl/clean source，
+隔离迁移库research-trail-verify-yRin3A、research-trail-verify-Wij7qc，根CMD证据research-trail-cmd-qa-4fgjX4均在Temp。
+PR、CI和合并尚未执行，最终状态按实际GitHub结果与根发布回执填写。
 真实行情/账户、模型解释、安装包、用户逐项亲自操作仍未执行；既有TestClient/Vite提示保留。
