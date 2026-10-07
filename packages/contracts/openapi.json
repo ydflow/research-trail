@@ -5098,6 +5098,587 @@
         "title": "RunStartedEvent",
         "type": "object"
       },
+      "ScreeningContext": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "default": "simulated",
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "provider": {
+            "default": "longbridge",
+            "enum": [
+              "longbridge",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "title": "ScreeningContext",
+        "type": "object"
+      },
+      "ScreeningDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/ScreeningMetric"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "status": {
+            "enum": [
+              "included",
+              "excluded",
+              "missing",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol",
+          "name",
+          "status"
+        ],
+        "title": "ScreeningDecision",
+        "type": "object"
+      },
+      "ScreeningEvidence": {
+        "additionalProperties": false,
+        "properties": {
+          "read": {
+            "$ref": "#/components/schemas/ScreeningRead"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProviderSuccess"
+              },
+              {
+                "$ref": "#/components/schemas/ProviderFailure"
+              }
+            ],
+            "title": "Result"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "read",
+          "result"
+        ],
+        "title": "ScreeningEvidence",
+        "type": "object"
+      },
+      "ScreeningInput": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "default": 20,
+            "maximum": 40,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "mode": {
+            "default": "simulated",
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "provider": {
+            "default": "longbridge",
+            "enum": [
+              "longbridge",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "strategy": {
+            "default": "top-gainers",
+            "enum": [
+              "top-gainers",
+              "top-losers",
+              "high-volume",
+              "unusual-movement",
+              "low-valuation",
+              "high-roe",
+              "revenue-growth",
+              "high-dividend",
+              "quality-growth",
+              "strong-momentum",
+              "breakout",
+              "oversold",
+              "trend-reversal",
+              "upcoming-earnings",
+              "rating-changes",
+              "news-surge",
+              "dividend-events"
+            ],
+            "title": "Strategy",
+            "type": "string"
+          },
+          "universe": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 40,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Universe"
+          }
+        },
+        "required": [
+          "request_id"
+        ],
+        "title": "ScreeningInput",
+        "type": "object"
+      },
+      "ScreeningMetric": {
+        "additionalProperties": false,
+        "properties": {
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "inputs": {
+            "items": {
+              "$ref": "#/components/schemas/ScreeningReference"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "value",
+          "unit",
+          "formula",
+          "inputs"
+        ],
+        "title": "ScreeningMetric",
+        "type": "object"
+      },
+      "ScreeningRead": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "query": {
+            "$ref": "#/components/schemas/ReadQuery"
+          },
+          "result_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Hash"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "default": "pending",
+            "enum": [
+              "pending",
+              "running",
+              "completed",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "symbol",
+          "query"
+        ],
+        "title": "ScreeningRead",
+        "type": "object"
+      },
+      "ScreeningReference": {
+        "additionalProperties": false,
+        "properties": {
+          "pointer": {
+            "title": "Pointer",
+            "type": "string"
+          },
+          "read_id": {
+            "title": "Read Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "read_id",
+          "pointer"
+        ],
+        "title": "ScreeningReference",
+        "type": "object"
+      },
+      "ScreeningRun": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_count": {
+            "default": 0,
+            "title": "Candidate Count",
+            "type": "integer"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/ScreeningDecision"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "concurrency": {
+            "default": 4,
+            "title": "Concurrency",
+            "type": "integer"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/ScreeningDecision"
+            },
+            "title": "Decisions",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "input": {
+            "$ref": "#/components/schemas/ScreeningInput"
+          },
+          "label": {
+            "default": "仅筛选这个有界股票池；分数是固定规则分数，不是收益概率。模拟、历史和缺失数据见原始执行记录。未调用LLM。",
+            "title": "Label",
+            "type": "string"
+          },
+          "reads": {
+            "items": {
+              "$ref": "#/components/schemas/ScreeningRead"
+            },
+            "title": "Reads",
+            "type": "array"
+          },
+          "reference_time": {
+            "title": "Reference Time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "fetching",
+              "completed",
+              "partial",
+              "failed",
+              "cancelled",
+              "interrupted"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "strategy": {
+            "enum": [
+              "top-gainers",
+              "top-losers",
+              "high-volume",
+              "unusual-movement",
+              "low-valuation",
+              "high-roe",
+              "revenue-growth",
+              "high-dividend",
+              "quality-growth",
+              "strong-momentum",
+              "breakout",
+              "oversold",
+              "trend-reversal",
+              "upcoming-earnings",
+              "rating-changes",
+              "news-surge",
+              "dividend-events"
+            ],
+            "title": "Strategy",
+            "type": "string"
+          },
+          "task": {
+            "$ref": "#/components/schemas/ScreeningTask"
+          },
+          "timeout_seconds": {
+            "default": 15,
+            "title": "Timeout Seconds",
+            "type": "number"
+          },
+          "universe": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Universe",
+            "type": "array"
+          },
+          "universe_source": {
+            "enum": [
+              "explicit",
+              "watchlist",
+              "fixture-catalog"
+            ],
+            "title": "Universe Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "strategy",
+          "status",
+          "created_at",
+          "input",
+          "task",
+          "universe",
+          "universe_source",
+          "reference_time",
+          "reads"
+        ],
+        "title": "ScreeningRun",
+        "type": "object"
+      },
+      "ScreeningSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_count": {
+            "default": 0,
+            "title": "Candidate Count",
+            "type": "integer"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "fetching",
+              "completed",
+              "partial",
+              "failed",
+              "cancelled",
+              "interrupted"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "strategy": {
+            "enum": [
+              "top-gainers",
+              "top-losers",
+              "high-volume",
+              "unusual-movement",
+              "low-valuation",
+              "high-roe",
+              "revenue-growth",
+              "high-dividend",
+              "quality-growth",
+              "strong-momentum",
+              "breakout",
+              "oversold",
+              "trend-reversal",
+              "upcoming-earnings",
+              "rating-changes",
+              "news-surge",
+              "dividend-events"
+            ],
+            "title": "Strategy",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "strategy",
+          "status",
+          "created_at"
+        ],
+        "title": "ScreeningSummary",
+        "type": "object"
+      },
+      "ScreeningTask": {
+        "additionalProperties": false,
+        "properties": {
+          "capabilities": {
+            "items": {
+              "$ref": "#/components/schemas/CapabilityState"
+            },
+            "title": "Capabilities",
+            "type": "array"
+          },
+          "id": {
+            "enum": [
+              "top-gainers",
+              "top-losers",
+              "high-volume",
+              "unusual-movement",
+              "low-valuation",
+              "high-roe",
+              "revenue-growth",
+              "high-dividend",
+              "quality-growth",
+              "strong-momentum",
+              "breakout",
+              "oversold",
+              "trend-reversal",
+              "upcoming-earnings",
+              "rating-changes",
+              "news-surge",
+              "dividend-events"
+            ],
+            "title": "Id",
+            "type": "string"
+          },
+          "rule": {
+            "title": "Rule",
+            "type": "string"
+          },
+          "score_rule": {
+            "title": "Score Rule",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "rule",
+          "score_rule",
+          "capabilities"
+        ],
+        "title": "ScreeningTask",
+        "type": "object"
+      },
       "SecurityBlock": {
         "additionalProperties": false,
         "properties": {
@@ -9018,6 +9599,348 @@
           }
         },
         "summary": "Strategies"
+      }
+    },
+    "/screening/runs": {
+      "get": {
+        "operationId": "screening_list_screening_runs_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScreeningSummary"
+                  },
+                  "title": "Response Screening List Screening Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Screening List"
+      },
+      "post": {
+        "operationId": "screening_start_screening_runs_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScreeningInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreeningRun"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Screening Start"
+      }
+    },
+    "/screening/runs/{identity}": {
+      "get": {
+        "operationId": "screening_get_screening_runs__identity__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreeningRun"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Screening Get"
+      }
+    },
+    "/screening/runs/{identity}/cancel": {
+      "post": {
+        "operationId": "screening_cancel_screening_runs__identity__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreeningRun"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Screening Cancel"
+      }
+    },
+    "/screening/runs/{identity}/evidence/{read_id}": {
+      "get": {
+        "operationId": "screening_evidence_screening_runs__identity__evidence__read_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "read_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Read Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScreeningEvidence"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Screening Evidence"
+      }
+    },
+    "/screening/tasks": {
+      "post": {
+        "operationId": "screening_tasks_screening_tasks_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScreeningContext"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScreeningTask"
+                  },
+                  "title": "Response Screening Tasks Screening Tasks Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Screening Tasks"
       }
     },
     "/sessions": {

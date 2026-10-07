@@ -44,6 +44,9 @@ from .research_contracts import RecoveryAction, RecoveryView
 from .report_contracts import ReportGenerate, ReportSummary, ReportJob, ReportOriginal, ReportMarkdown, ReportDiff, ReportDiffInput
 from .report_output import markdown as report_markdown, diff as report_diff
 from .theses import ThesisService
+from .screening import ScreeningService, ScreeningError
+from .screening_contracts import ScreeningContext, ScreeningInput, ScreeningTask, ScreeningRun, ScreeningSummary, ScreeningEvidence
+from uuid import UUID
 from .thesis_contracts import (ThesisCreate, ThesisEdit, ThesisEvaluate, ThesisJudge,
     ThesisSummary, ThesisView, ThesisVersion, ThesisReview)
 from .portfolio_contracts import (PortfolioInfo, PortfolioView, PortfolioCreate, PortfolioId,
@@ -58,7 +61,7 @@ class Health(BaseModel):
 
 def create_app(token: str, market_provider: MarketProvider | None = None, *,
                database_path: Path | str | None = None, model_provider: ModelProvider | None = None,
-               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None, research_options=None, report_options=None) -> FastAPI:
+               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None, research_options=None, report_options=None, screening_options=None) -> FastAPI:
     if len(token) < 32:
         raise ValueError("启动令牌缺失或过短；请由 Electron 启动服务。")
     @asynccontextmanager
@@ -79,6 +82,7 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             app.state.skills = SkillCatalog(database, app.state.capabilities, skills_root)
             runner.tools.skills = app.state.skills
             app.state.watchlist = WatchlistStore(database)
+            app.state.screening = ScreeningService(database,app.state.capabilities,app.state.providers,app.state.watchlist,**(screening_options or {}))
             app.state.security_workspace = SecurityWorkspace(app.state.watchlist,app.state.providers)
             app.state.portfolios = PortfolioService(database,app.state.providers)
             app.state.analytics = AnalyticsService(app.state.portfolios,app.state.providers)
@@ -97,6 +101,8 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             yield
         finally:
             try:
+                if hasattr(app.state,'screening'):
+                    app.state.screening.close()
                 if hasattr(app.state,'reports'):
                     app.state.reports.close()
                 if hasattr(app.state,'research'):
@@ -134,6 +140,28 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
         return JSONResponse(status_code=409, content={"detail": str(error)})
 
     protected = [Depends(authorize)]
+
+    @app.exception_handler(ScreeningError)
+    async def screening_error(_request,error):
+        return JSONResponse(status_code=404 if str(error)=='SCREENING_NOT_FOUND' else 409,content={'detail':str(error)})
+
+    @app.post('/screening/tasks',response_model=list[ScreeningTask],dependencies=protected)
+    def screening_tasks(query: ScreeningContext): return app.state.screening.tasks(query)
+
+    @app.post('/screening/runs',response_model=ScreeningRun,dependencies=protected)
+    def screening_start(query: ScreeningInput): return app.state.screening.start(query)
+
+    @app.get('/screening/runs',response_model=list[ScreeningSummary],dependencies=protected)
+    def screening_list(): return app.state.screening.list()
+
+    @app.get('/screening/runs/{identity}',response_model=ScreeningRun,dependencies=protected)
+    def screening_get(identity: UUID): return app.state.screening.get(identity)
+
+    @app.post('/screening/runs/{identity}/cancel',response_model=ScreeningRun,dependencies=protected)
+    def screening_cancel(identity: UUID): return app.state.screening.cancel(identity)
+
+    @app.get('/screening/runs/{identity}/evidence/{read_id}',response_model=ScreeningEvidence,dependencies=protected)
+    def screening_evidence(identity: UUID,read_id: UUID): return app.state.screening.evidence(identity,read_id)
 
     @app.middleware("http")
     async def protect_settings_errors(request, call_next):
