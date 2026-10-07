@@ -1689,5 +1689,6 @@ Git diff检查通过；246份UTF-8源码、102个本地链接、5份固定参考
 178份运行/测试/配置与干净导出逐字节一致，按Git clean-filter规范化后与HEAD blob一致（Windows换行不冒称原字节一致）。
 日志仅Temp/research-trail-step19-publication-{check,clean}.log；独立源码research-trail-clean-lViLFl/clean source，
 隔离迁移库research-trail-verify-yRin3A、research-trail-verify-Wij7qc，根CMD证据research-trail-cmd-qa-4fgjX4均在Temp。
-PR、CI和合并尚未执行，最终状态按实际GitHub结果与根发布回执填写。
+已正常推送feat/step-19-screening并创建[PR #18](https://github.com/ydflow/research-trail/pull/18)，CI正在执行，尚未合并。
+最终head、远程检查和合并回执由根PROJECT_STATE与PR记录，不能将本机通过冒称远程通过。
 真实行情/账户、模型解释、安装包、用户逐项亲自操作仍未执行；既有TestClient/Vite提示保留。

@@ -118,5 +118,5 @@ start-dev.cmd
 完整本机check.cmd和独立干净源码verify:clean均退出0：504 Python / 8 Node / 43实际Electron，
 零失败/取消/跳过，契约/类型/构建及0014重复迁移/current/check通过。
 干净源码锁定安装依赖和Electron后验证根CMD实际启动/关闭/重开，历史完全相同、无新运行、所属进程退出。
-178份运行/测试/配置与导出字节一致、按Git规范化后与提交内容一致。PR/CI/合并待真实结果，
+178份运行/测试/配置与导出字节一致、按Git规范化后与提交内容一致。已创建[PR #18](https://github.com/ydflow/research-trail/pull/18)，远程CI/合并待真实结果，
 证据见EVIDENCE第45节和根发布回执。
