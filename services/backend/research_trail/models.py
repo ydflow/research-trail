@@ -183,3 +183,23 @@ class PortfolioImportRecord(Base):
     before_snapshot: Mapped[dict] = mapped_column(JSON)
     previous_batch: Mapped[str | None] = mapped_column(String(36), nullable=True)
     active: Mapped[bool]
+
+
+class ReportRecord(Base):
+    __tablename__ = 'research_reports'
+    __table_args__ = (UniqueConstraint('run_id', 'version'), CheckConstraint('version >= 1'),
+        Index('ix_report_one_active','status',unique=True,sqlite_where=text("status = 'generating'")),
+        CheckConstraint("mode IN ('fixed','real')"),
+        CheckConstraint("status IN ('generating','completed','failed','cancelled','interrupted')"),
+        CheckConstraint("(status = 'completed' AND document IS NOT NULL) OR (status != 'completed' AND document IS NULL)"))
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    run_id: Mapped[str] = mapped_column(ForeignKey('research_runs.id'), index=True)
+    version: Mapped[int] = mapped_column(Integer)
+    symbol: Mapped[str] = mapped_column(String(20))
+    mode: Mapped[str] = mapped_column(String(10))
+    status: Mapped[str] = mapped_column(String(20))
+    code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    started_at: Mapped[str] = mapped_column(String(40))
+    completed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    requests_started: Mapped[int] = mapped_column(Integer, default=0)
+    document: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)

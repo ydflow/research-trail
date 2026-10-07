@@ -5,6 +5,7 @@ import type { ResearchData, ResearchInput, ResearchPlan, ResearchRun, ResearchSt
 import { StrategyPicker } from './StrategyPicker';
 import { researchLabels, RunProgressCard } from './RunProgressCard';
 import './research.css';
+import { ReportPanel } from './ReportPanel';
 
 export function ResearchPanel({ available, initialSymbol }: { available: boolean; initialSymbol?: string }) {
   const [symbol, setSymbol] = useState(initialSymbol || 'AAPL.US');
@@ -113,7 +114,7 @@ export function ResearchPanel({ available, initialSymbol }: { available: boolean
     finally { if (ticket === dataGeneration.current) setBusy(false); }
   }
   return <section className="research-panel" aria-label="研究采集工作台" aria-busy={busy}>
-    <h2>研究采集</h2><p>选择策略，采集已有能力的结构化数据。默认最多并发四项，每项二十秒。此处不调用模型，不生成研究报告。</p>
+    <h2>研究采集</h2><p>选择策略，采集已有能力的结构化数据。默认最多并发四项，每项二十秒。采集结束后可显式生成报告。</p>
     <div className="research-toolbar">
       <label>研究股票<input aria-label="研究股票" value={symbol} disabled={disabled} maxLength={10} onChange={e => { clearDisplay(); setSymbol(e.target.value.toUpperCase()); }} /></label>
       <label>采集模式<select aria-label="采集模式" value={mode} disabled={disabled} onChange={e => { clearDisplay(); setMode(e.target.value as typeof mode); }}><option value="simulated">模拟</option><option value="real">真实（需已有验证）</option></select></label>
@@ -135,5 +136,6 @@ export function ResearchPanel({ available, initialSymbol }: { available: boolean
       <p>市场时间 {data.result.provenance.market_time ?? '未提供'}；此数据未经报告合成，不保证字段或窗口完整。</p>
       <pre>{JSON.stringify(data.result.data, null, 2)}</pre>
     </section>}
+    {run && run.status !== 'fetching' && <ReportPanel key={run.id} runId={run.id} symbol={run.symbol} succeeded={run.succeeded} available={available} />}
   </section>;
 }

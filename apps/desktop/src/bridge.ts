@@ -10,6 +10,13 @@ export interface BackendState {
   pythonVersion?: string;
 }
 export interface ResearchTrailBridge {
+  reportList(runId?: string): Promise<import('./report-types').ReportSummary[]>;
+  generateReport(runId: string, mode: 'fixed' | 'real'): Promise<import('./report-types').ReportJob>;
+  report(id: string): Promise<import('./report-types').ReportJob>;
+  cancelReport(id: string): Promise<import('./report-types').ReportJob>;
+  reportEvidence(id: string, evidenceId: string): Promise<import('./report-types').ReportOriginal>;
+  exportReport(id: string): Promise<boolean>;
+  reportDiff(beforeId: string, afterId: string): Promise<import('./report-types').ReportDiff>;
   researchStrategies(): Promise<import('./research-types').ResearchStrategy[]>;
   researchPlan(input: import('./research-types').ResearchInput): Promise<import('./research-types').ResearchPlan>;
   researchRuns(): Promise<import('./research-types').ResearchSummary[]>;

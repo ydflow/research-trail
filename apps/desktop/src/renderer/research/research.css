@@ -14,3 +14,10 @@
 .research-steps li { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; justify-content: space-between; border-bottom: 1px solid #dedbd6; padding: 8px 0; }
 .research-panel pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 420px; overflow: auto; padding: 12px; background: #f2f0eb; border-radius: 8px; }
 @media (max-width: 550px) { .strategy-options { grid-template-columns: minmax(0,1fr); } }
+.report-panel { display: flex; flex-direction: column; gap: 12px; border-top: 2px solid #466658; padding-top: 18px; min-width: 0; }
+.report-panel article, .report-section { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.report-panel h4 { margin: 12px 0 6px; }
+.report-panel li { margin-bottom: 10px; }
+.report-references { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.report-panel button { overflow-wrap: anywhere; max-width: 100%; }
+.report-panel select { width: 340px; }

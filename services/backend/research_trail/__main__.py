@@ -16,7 +16,7 @@ def main() -> None:
         raise RuntimeError("研迹后端需要 Python 3.12。请通过 start-dev.cmd 同步环境。")
     provider_options=None
     case=os.environ.get('RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE')
-    if case in ('missing','failure','delayed','research-partial','research-delayed') and os.environ.get('RESEARCH_TRAIL_OFFLINE')=='1':
+    if case in ('missing','failure','delayed','research-partial','research-delayed','report-updated') and os.environ.get('RESEARCH_TRAIL_OFFLINE')=='1':
         from .workspace_fixtures import fixture_executor
         provider_options={'simulated_executor':fixture_executor(case)}
     app = create_app(os.environ.pop("RESEARCH_TRAIL_TOKEN", ""),provider_options=provider_options)

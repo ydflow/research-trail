@@ -1,0 +1,52 @@
+{
+  "repository": "https://github.com/helsome/folio",
+  "commit": "ba5dcdfd31b162f5edb8b908f7f099a560389326",
+  "files": [
+    {
+      "adapted_to": [
+        "services/backend/research_trail/report_contracts.py",
+        "services/backend/research_trail/report_facts.py"
+      ],
+      "sha256": "bc91ff0b3d9e43eeeaf68771682875d1e3ee76fd14d5643aa1134e803bc21992",
+      "upstream": "packages/core/src/research.ts"
+    },
+    {
+      "adapted_to": [
+        "services/backend/research_trail/report_synthesis.py"
+      ],
+      "sha256": "cbba1f5f8a1e2807323359b0bc207c90f6e73f79cbad260ae400595f0bee7c4f",
+      "upstream": "packages/shared/src/research/agent-synth.ts"
+    },
+    {
+      "adapted_to": [
+        "services/backend/research_trail/report_output.py"
+      ],
+      "sha256": "84bc81c244afd583f374942a496690b7b549aa01acfe2132717038d38d087a5a",
+      "upstream": "packages/shared/src/research-diff/diff-service.ts"
+    },
+    {
+      "adapted_to": [
+        "apps/desktop/src/renderer/research/ReportPanel.tsx"
+      ],
+      "sha256": "f74790d2987e2fb63ae485053911560eb9d23d0c8c1a41eff4c68c7edf3d4354",
+      "upstream": "packages/ui/src/components/research/ResearchReportView.tsx"
+    },
+    {
+      "adapted_to": [
+        "apps/desktop/src/renderer/research/ReportPanel.tsx"
+      ],
+      "sha256": "c476b0115fb462c29c9228cc02e602f23fb00aff1afca267c55004077ecd97ab",
+      "upstream": "packages/ui/src/components/research/EvidenceList.tsx"
+    },
+    {
+      "adapted_to": [
+        "apps/desktop/src/renderer/research/ReportPanel.tsx"
+      ],
+      "sha256": "f164766c11aea65987aab6651934efdc56ebe4f9de2fcc8deb036858896ef3fa",
+      "upstream": "packages/ui/src/components/research/WhatChangedSection.tsx"
+    }
+  ],
+  "scope": "Conceptual report/evidence and necessary UI patterns adapted from fixed baseline. Python packet projection, immutable versions, strict numeric/reference validation, raw fact verification, Markdown and deterministic actual-report diff are newly implemented. No TS business runtime, fallback synthesis, regex metric extraction or checkpoint recovery imported.",
+  "authorization": "Original-author reuse authorization confirmation recorded in EVIDENCE sections 9-11; original authorization text not independently obtained. Only skills/LICENSE is confirmed MIT (Copyright 2026 Longbridge Inc.). No whole-repository MIT claim.",
+  "preserved_resources": "Existing source notices, attribution, step14 30 original resource bytes and LICENSE retained; see SOURCES-step14.json."
+}

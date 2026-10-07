@@ -3173,6 +3173,698 @@
         "title": "ReadQuery",
         "type": "object"
       },
+      "ReportChange": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After"
+          },
+          "after_evidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After Evidence"
+          },
+          "before": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before"
+          },
+          "before_evidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before Evidence"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "fact",
+              "gap",
+              "analysis"
+            ],
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "key",
+          "before",
+          "after"
+        ],
+        "title": "ReportChange",
+        "type": "object"
+      },
+      "ReportClaim": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "fact",
+              "analysis",
+              "prediction"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "text": {
+            "default": "",
+            "maxLength": 480,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "evidence_ids"
+        ],
+        "title": "ReportClaim",
+        "type": "object"
+      },
+      "ReportDiff": {
+        "additionalProperties": false,
+        "properties": {
+          "after_id": {
+            "title": "After Id",
+            "type": "string"
+          },
+          "before_id": {
+            "title": "Before Id",
+            "type": "string"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/ReportChange"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "label": {
+            "default": "比较两份已保存报告；字段或文字变化不代表论断已证明，也不自动推断投资结果。",
+            "title": "Label",
+            "type": "string"
+          },
+          "source_changed": {
+            "title": "Source Changed",
+            "type": "boolean"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "before_id",
+          "after_id",
+          "symbol",
+          "source_changed",
+          "changes"
+        ],
+        "title": "ReportDiff",
+        "type": "object"
+      },
+      "ReportDiffInput": {
+        "additionalProperties": false,
+        "properties": {
+          "after_id": {
+            "title": "After Id",
+            "type": "string"
+          },
+          "before_id": {
+            "title": "Before Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "before_id",
+          "after_id"
+        ],
+        "title": "ReportDiffInput",
+        "type": "object"
+      },
+      "ReportDocument": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_status": {
+            "title": "Collection Status",
+            "type": "string"
+          },
+          "disclaimer": {
+            "default": "事实值来自能力执行记录；分析与预测来自合成器。引用可追溯不等于论断正确。",
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/ReportEvidence"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/ReportGap"
+            },
+            "title": "Gaps",
+            "type": "array"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "source_mode": {
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Source Mode",
+            "type": "string"
+          },
+          "source_run_id": {
+            "title": "Source Run Id",
+            "type": "string"
+          },
+          "strategy": {
+            "title": "Strategy",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "synthesis": {
+            "$ref": "#/components/schemas/ReportSynthesis"
+          }
+        },
+        "required": [
+          "symbol",
+          "strategy",
+          "source_mode",
+          "provider",
+          "collection_status",
+          "source_run_id",
+          "evidence",
+          "gaps",
+          "synthesis"
+        ],
+        "title": "ReportDocument",
+        "type": "object"
+      },
+      "ReportEvidence": {
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "title": "Capability",
+            "type": "string"
+          },
+          "fetched_at": {
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "ordinal": {
+            "title": "Ordinal",
+            "type": "integer"
+          },
+          "pointer": {
+            "title": "Pointer",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "result_hash": {
+            "title": "Result Hash",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "source_mode": {
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Source Mode",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "id",
+          "run_id",
+          "capability",
+          "ordinal",
+          "pointer",
+          "value",
+          "result_hash",
+          "provider",
+          "source_mode",
+          "fetched_at"
+        ],
+        "title": "ReportEvidence",
+        "type": "object"
+      },
+      "ReportGap": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "capability",
+              "field",
+              "skill",
+              "projection"
+            ],
+            "title": "Scope",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scope",
+          "key",
+          "code"
+        ],
+        "title": "ReportGap",
+        "type": "object"
+      },
+      "ReportGenerate": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "default": "fixed",
+            "enum": [
+              "fixed",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "title": "ReportGenerate",
+        "type": "object"
+      },
+      "ReportJob": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "document": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportDocument"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "fixed",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "requests_started": {
+            "title": "Requests Started",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "started_at": {
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "generating",
+              "completed",
+              "failed",
+              "cancelled",
+              "interrupted"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "run_id",
+          "version",
+          "symbol",
+          "mode",
+          "status",
+          "code",
+          "started_at",
+          "completed_at",
+          "requests_started",
+          "document"
+        ],
+        "title": "ReportJob",
+        "type": "object"
+      },
+      "ReportMarkdown": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          }
+        },
+        "required": [
+          "filename",
+          "content"
+        ],
+        "title": "ReportMarkdown",
+        "type": "object"
+      },
+      "ReportOriginal": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence": {
+            "$ref": "#/components/schemas/ReportEvidence"
+          },
+          "result": {
+            "$ref": "#/components/schemas/ProviderSuccess"
+          },
+          "step_completed_at": {
+            "title": "Step Completed At",
+            "type": "string"
+          },
+          "step_started_at": {
+            "title": "Step Started At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evidence",
+          "step_started_at",
+          "step_completed_at",
+          "result"
+        ],
+        "title": "ReportOriginal",
+        "type": "object"
+      },
+      "ReportSection": {
+        "additionalProperties": false,
+        "properties": {
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Claims",
+            "type": "array"
+          },
+          "key": {
+            "pattern": "^[a-z][a-z-]{0,39}$",
+            "title": "Key",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "claims"
+        ],
+        "title": "ReportSection",
+        "type": "object"
+      },
+      "ReportSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "fixed",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "requests_started": {
+            "title": "Requests Started",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "started_at": {
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "generating",
+              "completed",
+              "failed",
+              "cancelled",
+              "interrupted"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "run_id",
+          "version",
+          "symbol",
+          "mode",
+          "status",
+          "code",
+          "started_at",
+          "completed_at",
+          "requests_started"
+        ],
+        "title": "ReportSummary",
+        "type": "object"
+      },
+      "ReportSynthesis": {
+        "additionalProperties": false,
+        "properties": {
+          "bear_case": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Bear Case",
+            "type": "array"
+          },
+          "bull_case": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Bull Case",
+            "type": "array"
+          },
+          "catalysts": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Catalysts",
+            "type": "array"
+          },
+          "risks": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Risks",
+            "type": "array"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/ReportSection"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Sections",
+            "type": "array"
+          },
+          "stance": {
+            "enum": [
+              "bullish",
+              "bearish",
+              "neutral"
+            ],
+            "title": "Stance",
+            "type": "string"
+          },
+          "summary": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Summary",
+            "type": "array"
+          }
+        },
+        "required": [
+          "stance",
+          "summary",
+          "sections",
+          "risks",
+          "catalysts",
+          "bull_case",
+          "bear_case"
+        ],
+        "title": "ReportSynthesis",
+        "type": "object"
+      },
       "ResearchData": {
         "additionalProperties": false,
         "properties": {
@@ -6418,6 +7110,357 @@
         "summary": "Research Plan"
       }
     },
+    "/research/report-diff": {
+      "post": {
+        "operationId": "compare_reports_research_report_diff_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportDiffInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportDiff"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Compare Reports"
+      }
+    },
+    "/research/reports": {
+      "get": {
+        "operationId": "reports_research_reports_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "run_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Run Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReportSummary"
+                  },
+                  "title": "Response Reports Research Reports Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reports"
+      }
+    },
+    "/research/reports/{identity}": {
+      "get": {
+        "operationId": "get_report_research_reports__identity__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportJob"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Report"
+      }
+    },
+    "/research/reports/{identity}/cancel": {
+      "post": {
+        "operationId": "cancel_report_research_reports__identity__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportJob"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Report"
+      }
+    },
+    "/research/reports/{identity}/evidence/{reference}": {
+      "get": {
+        "operationId": "report_evidence_research_reports__identity__evidence__reference__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "reference",
+            "required": true,
+            "schema": {
+              "title": "Reference",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOriginal"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Report Evidence"
+      }
+    },
+    "/research/reports/{identity}/markdown": {
+      "get": {
+        "operationId": "export_report_research_reports__identity__markdown_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportMarkdown"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Report"
+      }
+    },
     "/research/runs": {
       "get": {
         "operationId": "research_runs_research_runs_get",
@@ -6694,6 +7737,71 @@
           }
         },
         "summary": "Research Data"
+      }
+    },
+    "/research/runs/{identity}/reports": {
+      "post": {
+        "operationId": "generate_report_research_runs__identity__reports_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportGenerate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportJob"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Generate Report"
       }
     },
     "/research/strategies": {

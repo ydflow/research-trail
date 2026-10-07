@@ -1119,3 +1119,170 @@ Release或定时付费评测。
 尚未验证真实Longbridge/Massive/CLI数据、账户权限与字段、真实超时取消/模型、完整技能分析、长期负载、
 其他OS、另一台干净机器、安装包及用户亲自操作/练习。缺11项技能、非协作线程槽位与采集不等于报告的
 边界沿验收清单保留。第16—24步未实施，完成本步发布后停止。
+
+## 38. 第16步结构化报告、执行证据与实际报告差异（2026-10-07）
+
+用户当前仅授权第16步开发、固定合成器测试后单独验证真实LLM；完成交付后停止。
+起点D:\folio\research-trail，main/HEAD/origin/main
+`b4ef6312245850ad984af2156686a76779eef6c0`，工作区/index为空，origin为
+https://github.com/ydflow/research-trail.git，第15步PR #14已在main。
+已读项目规则、路线、第36—37节、现有研究/能力/技能/提供商/模型/存储/页面实现及固定参考。
+本轮没有Git暂存、提交、推送、标签、Release或GitHub写入；不实施第17步。
+
+### 真实实现与来源边界
+
+新增Python ReportService/ReportStore/report_facts/report_synthesis/report_output/report_contracts及
+0011_reports迁移；生成独立报告版本，不改写研究采集状态。
+数据包来自同一ResearchStore的已保存成功结果，报告/evidence/export/diff零新数据查询；
+复用现有SettingsService/OpenAIModelProvider，不新增模型或行情HTTP适配器。
+事实绑定具体执行任务、能力、序号、JSON Pointer、原值、全结果hash、模式、提供商和获取时间；
+回读核对原结果，异常拒收。失败、缺字段、未规划、缺技能和投影限制由Python产生可见缺口。
+fact文字为空，数值只由实际绑定事实展示；分析与预测为定性且未核实的判断，
+引用可追溯不证明论断正确。当前语言限制是保守格式校验，不是跨语言或投资语义证明。
+
+ReportPanel复用研究入口和采集进度，通过7项白名单桥读取/生成/取消/回读/导出/比较，
+桥总计70项，类型只引用Python生成OpenAPI。报告有摘要、章节、风险、条件式催化因素、
+多空论点、旧版本、原始事实及缺口。Markdown由Python转义生成，main校验来源后只写
+系统保存对话框所选路径；取消与写失败明确反馈。Research Diff比较两份已保存报告的
+事实字段、缺口和分析内容，不调用模型、不从正文解析数值、不推断投资效果。
+实际同数据版本可以无差异，原始数据变化可以由旧新执行记录分别回读。
+
+6份固定参考文件及SHA256见[SOURCES-step16.json](SOURCES-step16.json)，覆盖core/research、
+agent-synth、diff-service和ResearchReportView/EvidenceList/WhatChangedSection的必要模式。
+Python字段/hash绑定、不可覆盖版本、严格验证、导出和差异算法为新实现；没有复制TS业务状态、
+原合成失败回退、正文正则指标提取或检查点恢复。已有来源和声明、30份技能/许可原字节保持。
+授权沿第9—11节用户确认，原授权文本未独立获取；仅skills/LICENSE已核实MIT、Copyright
+2026 Longbridge Inc.，不扩展成全项目MIT授权或把上游成果记为个人原作。
+
+报告运输仅增加有界输出预算和JSON对象模式，Agent默认1024 token及既有调用行为保留。
+JSON模式不代替本机结构/来源/内容验证；不支持的兼容服务明确失败，不自动换协议重试。
+协议依据[OpenAI Structured Outputs官方文档](https://developers.openai.com/api/docs/guides/structured-outputs)。
+产品每报告最多一次模型请求、响应256KiB、输出8192 token、整体120秒，沿已保存单请求超时。
+协调器独占写入；取消/超时迟到结果不写回，非协作旧调用退出前拒绝再开任务。
+
+### 固定合成器、模拟协议与本机检查
+
+先执行新增固定/模拟报告28项，全部通过，之后才发真实请求。
+首轮check.cmd：430 Python / 8 Node / 36 Electron、契约、类型、构建和0011迁移重复/模型一致性通过。
+普通非数量中文词归一化、中文“两”数量拒收、催化类型以及实际适配器取消/超时补充后，
+报告测试33项通过；随后完整check.cmd为435 / 8 / 36。
+报告专用JSON模式和运输改动后，报告33项＋既有OpenAI40项共73项重验通过，
+最终第16步实窗3项重验通过。最终交付全套复验结果在本节末尾登记。
+
+覆盖：引用回读和外部篡改检测、空字段/投影上限、实际数字与未知ID拒收、全部失败/无可用
+事实拒绝生成、部分失败保留成功、不可覆盖版本/重启历史、迟到调用、固定错误码与凭证反射
+脱敏、JSON重复字段/围栏/工具调用/结构拒收、真实协议取消和超时不固定回退。
+桌面覆盖：两个实际新采集任务PE从20变25，仅一个事实差异，旧新原始记录可分别回读；
+同数据两版本内容Diff为空；旧版本重启保留；Markdown实际文件可读，保存取消/错误各正确；
+财报NETWORK_ERROR和bps空值可见；全部失败不生成，真实未配置不回退成功。
+全套离线验收由既有网络护栏约束，不调用真实LLM/行情；无CI或安装包推断。
+现有FastAPI TestClient弃用及Vite chunk大小警告仍存在，不改变为失败或声称已修复。
+
+### 单独真实LLM验证：未通过，不计作就绪
+
+使用既有verify_live.read_configuration以sqlite mode=ro读取日常模型连接及指定系统凭证，
+不枚举凭证或读取私人研究/账户。verify_report每次在新的临时数据库采集AAPL.US价值策略
+的4项模拟公开样例能力，报告mode为real但source_mode仍为simulated；没有真实行情/账户请求。
+每次仅一个真实模型请求，无自动重试。以下为本轮不同改动后显式运行的五次独立验证，
+不是同一任务的隐式重试。没有完成报告，也没有把拒收正文或模型回复当行情来源。
+
+| 尝试 | 报告ID | 保存状态/错误码 | 请求数 | completed报告 |
+| --- | --- | --- | --- | --- |
+| 1 | a7408c0e-954f-4d30-b90e-2bbc227bbf53 | failed / UNSUPPORTED_NUMERIC_CLAIM | 1 | 0 |
+| 2 | 42a25cba-4e9e-4b16-8d64-b5001695aa9a | failed / MODEL_RESPONSE_INVALID | 1 | 0 |
+| 3 | 22a8c792-aea4-4651-b71c-70c217d747fe | failed / UNSUPPORTED_NUMERIC_CLAIM | 1 | 0 |
+| 4 | a717155b-5dcf-4236-be76-c19f9faf9857 | failed / REPORT_SCHEMA_INVALID | 1 | 0 |
+| 5 | c849a96a-2761-49a6-85ca-620a4ed59ec6 | failed / MODEL_TIMEOUT | 1 | 0 |
+
+第3次协议finish_reason=stop且有正文，拒收定位risks[0].text；未保留早期完整回复，
+不能据此断言具体词句或数值，也不能将第2次协议失败断言为截断。
+为减少普通词误伤新增固定非数量词替换；保留真实数量拒收，补充相关回归。
+后续启用原生JSON对象模式并扩大有界输出预算，最终一次仍超时。没有为验证修改日常
+模型配置或关闭数字/来源/结构保护。停止继续付费尝试，不声称真实生成已经通过。
+五份临时库只读核查均为4条成功模拟采集、1条failed报告、requests_started=1、document=NULL。
+
+证据位于用户Temp的research-trail-report-live-qa-
+m758xlmi、xy68wb3_、3verm07_、t1wl2m6c、okcnkquf目录，各有proof.json及独立validation.sqlite3。
+临时库/私有拒收草稿/日志/截图不是公开源码，不纳入Git；不打印地址、模型ID或密钥。
+真实LLM成功生成及其原始事实/Markdown展示仍未通过，不能以模拟协议代替。
+
+### 交付状态与停止边界
+
+第16步**代码完成/待验收**：固定合成器/模拟协议与本机功能验收通过，真实LLM生成未通过。
+尚未验证真实行情/账户、任意语言语义真实性、投资效果、长期负载、其他OS、源码新装、
+远程CI、安装包、用户亲自操作和学习回答。实际调用链见tutorial C11，可撤销练习及三题见
+practice C11，用户答案保留。操作及来源见[验收清单](ACCEPTANCE-step16.md)。
+完成交付后停止；不执行第17步或发布。
+
+最终交付代码复验：check.cmd退出0，435 Python / 8 Node / 36实际Electron通过，无失败/取消/跳过；
+OpenAPI/TypeScript一致、类型、构建、0011_reports两次upgrade/current/check与模型一致性通过。
+最终日志为用户Temp/research-trail-step16-delivery-check.log，隔离迁移目录
+research-trail-verify-weZIxB，不纳入源码。四份第16步截图仅位于Temp/research-trail-step16-qa，
+均已查看，展示事实/引用、窄窗、部分失败缺口和实际20→25差异；页面无横向溢出或pageerror。
+最终文件审查220份UTF-8、92个可访问本地Markdown链接、6份参考SHA256及30份既有资料
+工作文件/Git blob hash一致；4个已登记上游断链、10处原行尾空格保留；8项保护忽略探针通过。
+秘密签名/禁传产物发现0、新增13份文件EOF正确、git diff --check通过；工作差异36份仅本步相关，
+index为空，main/HEAD未变，没有提交/发布。根PROJECT_STATE.md同步本步状态和真实验证缺口。
+
+## 39. 第16步发布复验（2026-10-07）
+
+用户另行授权仅发布当前第16步：按真实改动提交、推送功能分支、创建PR；检查通过且没有
+未解决阻塞时普通合并并同步本地main。不实施第17步，不打标签/Release或定时付费评测。
+读取AGENTS、进度、前节验收和实际差异，起点仍为main
+`b4ef6312245850ad984af2156686a76779eef6c0`，36份本步差异、index为空。
+GitHub读取实时确认ydflow、公开非fork非归档ydflow/research-trail，origin fetch/push均为
+https://github.com/ydflow/research-trail.git，远程main同起点，无已有打开PR。
+
+### 单独真实LLM结构、引用与保存验证通过
+
+本轮在未修改运行代码或日常模型配置的情况下，显式运行verify_report --run一次。
+请求数1、finish_reason=stop/content_present=true，报告
+`84e714c6-1e2d-4bcb-a708-eae4902330cc`为completed，reason=null。
+采集任务`963922dd-4272-4a7d-8e30-26a11068fec4`独立执行4项模拟能力；37条事实全部按
+原执行结果、字段和hash回读验证，模型引用均来自这份实际采集。类型包含fact/analysis/prediction，
+Markdown导出SHA256为`23d334fa2e08499e954f925c3964037e06229d322f8c8543516fa323c7002c11`。
+临时目录research-trail-report-live-qa-vkyj0u3s保留proof.json、validation.sqlite3及Markdown，
+均不上传；只读日常模型配置和指定系统凭证，无私人持仓或真实行情读取。
+
+验证器沿旧只读助手上限，当前保存单请求30秒不被缩短，验证整体60秒（产品120秒）。
+未通过加长用户请求时限或关闭结构/来源/数字保护取得通过，也没有自动重试或固定回退。
+第38节五次失败作为开发历史原样保留；此处是另一次独立验证，不宣称失败已变成功。
+
+**明确限制：**这份真实输出把原始模拟现金流值0描述为“经营现金流为负”。文字保存为analysis，
+绑定实际证据而非市场字段，未改写事实0。检查和导出均明确“引用可追溯不等于论断正确”。
+此例直接说明定性语义正确性尚未得到证明；本次通过仅限结构、证据绑定、状态、保存和导出，
+不称模型分析可信、行情真实或投资正确。数字格式保护不是语义核验器。
+后续仍需用户逐项亲自操作；学习回答不代填。
+
+### 发布检查与公开范围
+
+本机check.cmd退出0：435 Python / 8 Node / 36实际Electron，无失败/取消/跳过；
+契约、类型、构建、0011_reports重复迁移及模型一致性通过。日志仅在用户Temp的
+research-trail-step16-publication-check.log，迁移证据research-trail-verify-BvW8YN。
+隔离源码verify:clean退出0：导出220份文本，没有Git、现成依赖、运行库或构建；
+锁定新装71项前端/29项Python并准备Electron后，同样435/8/36通过，无跳过。
+根CMD股票→会话→quote→取消→关闭重启/历史快照一致，无新运行，自有进程退出。
+干净目录research-trail-clean-oAq8Cg/clean source，日志research-trail-step16-publication-clean.log，
+CMD证据research-trail-cmd-qa-NEkggt，仅在Temp。163份运行源码与工作树/干净目录逐字节一致；
+后续只修改验收和发布文档，不复写模型输出或改变运行代码。
+
+发布清单仅36份本步文件。220份UTF-8、92个可访问本地Markdown链接、6份固定参考SHA256、
+30份既有技能/许可工作文件及Git blob hash、8项保护忽略探针通过；秘密签名/禁传产物发现0。
+额外对候选全文件检查当前指定模型凭证原文，出现0，不输出凭证值。
+4处登记上游断链和10处原行尾空格继续保留，新增/适配文件及完整本步diff检查通过。
+已有SDK/依赖/工作流不改，TestClient弃用和Vite体积提示仍存在，不冒充已修复。
+
+提交区分：必要来源/契约适配8366eeba7cf381631e685a3527a2cdb972e7c82d，
+Python新实现606d0dcf646a350132e4f966ee4df9f3945ff33c，
+桌面接入a81aa126a49e760635f1f3ca2be78a9436b4609a，验收/发布文档另建真实提交。
+本步无新增原样上游文件导入；概念适配不伪装为原文件导入或原作者提交。
+作者使用当前ydflow/noreply，日期由当前Git正常记录，不伪造开发时间。
+本轮没有运行代码修复；开发期间的数量保护/JSON运输改动包含于Python新实现，不虚构发布故障或修复提交。
+
+推送、PR和普通合并依本轮独立授权，写入前再次核验ydflow、仓库及origin地址。
+远程最终head检查尚待提交后执行；最终PR/CI/合并SHA和本地main同步状态以Git及根
+PROJECT_STATE发布回执为准。检查未通过则修复并复验，不强推、不绕过未解决阻塞。
+原v0.1.0标签object 3dd216557cdc81ac8fc35b14e0585dc43731be86及Release assets0保留；
+不新增标签、Release、定时付费评测或第17步。
+未验证真实Longbridge/Massive/CLI行情、账户权限/字段、真实数据报告和差异、模型定性语义正确性、
+投资效果、长期负载、其他OS、另一台机器、安装包、用户亲自操作和学习回答。

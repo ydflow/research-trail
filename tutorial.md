@@ -337,7 +337,28 @@ SQLite研究记录 → researchRun/researchData → 页面显示已保存状态�
 
 ## C11：证据报告怎样生成、比较并恢复？
 
-状态：大纲。关联步骤16/17。
+状态：第16步已按实际代码展开，固定/模拟与本机验收通过，发布复验一次真实LLM结构、引用和保存通过；原五次失败保留。真实报告的数据仍为模拟，定性分析可能与事实不符，引用不证明正确，见EVIDENCE第39节；第17步检查点/显式恢复仍为大纲，未执行。
+
+研迹真实调用链：
+
+1. 研究页面选择策略并经 ResearchService 采集；终态后 ReportPanel 显式选择 fixed/real，
+   preload命名桥 → main来源/UUID校验 → BackendManager → `/research/runs/{id}/reports`。
+2. `reports.ReportService.start` → `report_facts.packet` → 既有 ResearchStore.get/data。
+   每个事实绑定能力执行序号、原始JSON Pointer、值及完整结果hash；缺失数据形成gap。
+   模型只收到有界已采集投影，不接收凭证、不直接查行情。
+3. 固定合成器用于离线验收。`LiveReportSynthesizer`经既有OpenAIModelProvider发送单次请求，
+   严格JSON → `report_synthesis.validate`校验证据ID/类型/禁编数字 → ReportDocument。
+   fact文字为空，事实值由Python引用；分析/预测的来源关联不证明判断正确。
+4. ReportStore在0011_reports保存版本。协调器独占写入，终态不覆盖；失败不固定回退，
+   取消/超时后的迟到结果不能保存。关闭或重启仅记录interrupted，不续跑。
+5. ReportPanel读取报告并分类型展示；原始事实桥 → ReportService.evidence →
+   `report_facts.original`校验执行记录、hash和字段值，按需返回完整原结果。
+6. `report_output.markdown`转义正文并附事实索引 → main系统保存对话框写用户选择路径。
+   `report_output.diff`读取两份真实保存的ReportJob，比较字段值/缺口/分析内容，零模型请求。
+
+读链：report_contracts → report_facts → report_synthesis → reports/report_store →
+report_output → app → report-types/bridge → ReportPanel；[验收清单](docs/ACCEPTANCE-step16.md)。
+恢复的身份配置核对和检查点续跑留到第17步，不能把历史读取称为恢复执行。
 
 - 主链：已采集数据包 → synthesizer → 带EvidenceRef报告 → 存储/显示/差异；中断经checkpoint显式恢复。
 - 必读1：`packages/core/src/research.ts` / `ResearchReport`、`EvidenceRef`；`packages/shared/src/research/agent-synth.ts`：输入事实到结构输出，追注入合成器。

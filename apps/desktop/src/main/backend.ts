@@ -221,6 +221,21 @@ export class BackendManager extends EventEmitter {
     return input as import('../research-types').ResearchInput;
   }
   researchStrategies() { return this.business<import('../research-types').ResearchStrategy[]>('/research/strategies'); }
+  reportList(runId: unknown) { return this.business<import('../report-types').ReportSummary[]>(`/research/reports${runId === undefined ? '' : `?run_id=${this.id(runId)}`}`); }
+  generateReport(runId: unknown, mode: unknown) {
+    if (mode !== 'fixed' && mode !== 'real') throw new Error('报告合成器无效。');
+    return this.business<import('../report-types').ReportJob>(`/research/runs/${this.id(runId)}/reports`, 'POST', { mode });
+  }
+  report(id: unknown) { return this.business<import('../report-types').ReportJob>(`/research/reports/${this.id(id)}`); }
+  cancelReport(id: unknown) { return this.business<import('../report-types').ReportJob>(`/research/reports/${this.id(id)}/cancel`, 'POST'); }
+  reportEvidence(id: unknown, evidenceId: unknown) {
+    if (typeof evidenceId !== 'string' || !/^ev-[a-f0-9]{24}$/.test(evidenceId)) throw new Error('证据引用无效。');
+    return this.business<import('../report-types').ReportOriginal>(`/research/reports/${this.id(id)}/evidence/${evidenceId}`);
+  }
+  reportMarkdown(id: unknown) { return this.business<import('../report-types').ReportMarkdown>(`/research/reports/${this.id(id)}/markdown`); }
+  reportDiff(beforeId: unknown, afterId: unknown) {
+    return this.business<import('../report-types').ReportDiff>('/research/report-diff', 'POST', { before_id: this.id(beforeId), after_id: this.id(afterId) });
+  }
   researchPlan(input: unknown) { return this.business<import('../research-types').ResearchPlan>('/research/plan', 'POST', this.researchInput(input)); }
   researchRuns() { return this.business<import('../research-types').ResearchSummary[]>('/research/runs'); }
   startResearch(input: unknown) { return this.business<import('../research-types').ResearchRun>('/research/runs', 'POST', this.researchInput(input)); }
