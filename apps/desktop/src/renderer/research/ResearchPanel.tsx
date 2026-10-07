@@ -7,10 +7,13 @@ import { researchLabels, RunProgressCard } from './RunProgressCard';
 import './research.css';
 import { ReportPanel } from './ReportPanel';
 import { RecoveryPanel } from './RecoveryPanel';
+import type { EventResearchRef } from '../../calendar-types';
+import { EventContextCard } from '../calendar/EventContextCard';
 
-export function ResearchPanel({ available, initialSymbol, initialMode, initialProvider }: { available: boolean; initialSymbol?: string; initialMode?: 'simulated'|'real'; initialProvider?: 'longbridge'|'massive' }) {
+export function ResearchPanel({ available, initialSymbol, initialMode, initialProvider, initialEventRef }: { available: boolean; initialSymbol?: string; initialMode?: 'simulated'|'real'; initialProvider?: 'longbridge'|'massive'; initialEventRef?:EventResearchRef }) {
   const [symbol, setSymbol] = useState(initialSymbol || 'AAPL.US');
-  const [strategy, setStrategy] = useState<StrategyId>('comprehensive');
+  const [strategy, setStrategy] = useState<StrategyId>(initialEventRef?'event-driven':'comprehensive');
+  const [eventRef,setEventRef]=useState<EventResearchRef|undefined>(initialEventRef);
   const [mode, setMode] = useState<'simulated' | 'real'>(initialMode??'simulated');
   const [provider, setProvider] = useState<'longbridge' | 'massive'>(initialProvider??'longbridge');
   const [presets, setPresets] = useState<ResearchStrategy[]>([]), [history, setHistory] = useState<ResearchSummary[]>([]);
@@ -21,7 +24,7 @@ export function ResearchPanel({ available, initialSymbol, initialMode, initialPr
   const [recoveryRefresh, setRecoveryRefresh] = useState(0);
   const [recoveryBusy, setRecoveryBusy] = useState(false);
   const refreshRecovery = useCallback(() => setRecoveryRefresh(n => n + 1), []);
-  const input: ResearchInput = { symbol, strategy, mode, provider, concurrency: 4 };
+  const input: ResearchInput = { symbol, strategy, mode, provider, concurrency: 4,event_ref:eventRef };
   const running = run?.status === 'fetching';
   const disabled = !available || !ready || busy || recoveryBusy || running;
   const showError = (e: unknown) => e instanceof Error ? e.message : '采集操作失败，请重试。';
@@ -39,6 +42,7 @@ export function ResearchPanel({ available, initialSymbol, initialMode, initialPr
           const saved = await window.researchTrail!.researchRun(activeRun.id);
           if (!active) return;
           setRun(saved); setHistoryId(saved.id); setSymbol(saved.symbol); setStrategy(saved.strategy); setMode(saved.mode); setProvider(saved.provider);
+          setEventRef(saved.plan.input.event_ref??undefined);
         }
         if (active) setReady(true);
       }).catch(e => { if (active) setError(showError(e)); });
@@ -50,13 +54,13 @@ export function ResearchPanel({ available, initialSymbol, initialMode, initialPr
     setPlan(undefined); setPlanning(available && ready);
     const timer = setTimeout(() => {
       if (!available || !ready) return;
-      void window.researchTrail!.researchPlan({ symbol, strategy, mode, provider, concurrency: 4 })
+      void window.researchTrail!.researchPlan({ symbol, strategy, mode, provider, concurrency: 4,event_ref:eventRef })
         .then(p => { if (active) { setPlan(p); setError(''); } })
         .catch(e => { if (active) setError(showError(e)); })
         .finally(() => { if (active) setPlanning(false); });
     }, 180);
     return () => { active = false; clearTimeout(timer); };
-  }, [available, ready, symbol, strategy, mode, provider]);
+  }, [available, ready, symbol, strategy, mode, provider,eventRef]);
 
   const runId = run?.id, status = run?.status;
   useEffect(() => {
@@ -104,7 +108,7 @@ export function ResearchPanel({ available, initialSymbol, initialMode, initialPr
     try {
       const saved = await window.researchTrail!.researchRun(historyId);
       if (ticket !== runGeneration.current) return;
-      setRun(saved); setSymbol(saved.symbol); setStrategy(saved.strategy); setMode(saved.mode); setProvider(saved.provider);
+      setRun(saved); setSymbol(saved.symbol); setStrategy(saved.strategy); setMode(saved.mode); setProvider(saved.provider); setEventRef(saved.plan.input.event_ref??undefined);
     } catch (e) { if (ticket === runGeneration.current) setError(showError(e)); }
     finally { if (ticket === runGeneration.current) setBusy(false); }
   }
@@ -121,14 +125,17 @@ export function ResearchPanel({ available, initialSymbol, initialMode, initialPr
   function recovered(next: ResearchRun) {
     ++runGeneration.current; ++dataGeneration.current; setData(undefined); setError('');
     setRun(next); setHistoryId(next.id); setSymbol(next.symbol); setStrategy(next.strategy); setMode(next.mode); setProvider(next.provider);
+    setEventRef(next.plan.input.event_ref??undefined);
     setHistory(h => [next, ...h.filter(r => r.id !== next.id)].slice(0, 100));
   }
   return <section className="research-panel" aria-label="研究采集工作台" aria-busy={busy}>
     <h2>研究采集</h2><p>选择策略，采集已有能力的结构化数据。默认最多并发四项，每项二十秒。采集结束后可显式生成报告。</p>
+    {(run?.plan.event_context??plan?.event_context)&&<EventContextCard context={(run?.plan.event_context??plan?.event_context)!} available={available}/>}
+    {eventRef&&<button disabled={disabled} onClick={()=>{clearDisplay();setEventRef(undefined);}}>移除事件研究上下文</button>}
     <div className="research-toolbar">
-      <label>研究股票<input aria-label="研究股票" value={symbol} disabled={disabled} maxLength={10} onChange={e => { clearDisplay(); setSymbol(e.target.value.toUpperCase()); }} /></label>
-      <label>采集模式<select aria-label="采集模式" value={mode} disabled={disabled} onChange={e => { clearDisplay(); setMode(e.target.value as typeof mode); }}><option value="simulated">模拟</option><option value="real">真实（需已有验证）</option></select></label>
-      <label>采集提供商<select aria-label="采集提供商" value={provider} disabled={disabled} onChange={e => { clearDisplay(); setProvider(e.target.value as typeof provider); }}><option value="longbridge">Longbridge</option><option value="massive">Massive</option></select></label>
+      <label>研究股票<input aria-label="研究股票" value={symbol} disabled={disabled} maxLength={10} onChange={e => { clearDisplay(); setEventRef(undefined); setSymbol(e.target.value.toUpperCase()); }} /></label>
+      <label>采集模式<select aria-label="采集模式" value={mode} disabled={disabled} onChange={e => { clearDisplay(); setEventRef(undefined); setMode(e.target.value as typeof mode); }}><option value="simulated">模拟</option><option value="real">真实（需已有验证）</option></select></label>
+      <label>采集提供商<select aria-label="采集提供商" value={provider} disabled={disabled} onChange={e => { clearDisplay(); setEventRef(undefined); setProvider(e.target.value as typeof provider); }}><option value="longbridge">Longbridge</option><option value="massive">Massive</option></select></label>
     </div>
     <StrategyPicker strategies={presets} value={strategy} disabled={disabled} onChange={v => { clearDisplay(); setStrategy(v); }} />
     {plan && <details data-testid="research-plan" data-strategy={plan.input.strategy}><summary>采集计划 · {plan.reads.length} 项 · 可用 {plan.reads.filter(r => r.availability.available).length} 项</summary>

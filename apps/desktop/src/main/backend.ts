@@ -203,6 +203,14 @@ export class BackendManager extends EventEmitter {
   }
 
   listSessions() { return this.business<SessionDTO[]>('/sessions'); }
+  calendarSources(body: unknown) { return this.business<import('../calendar-types').CalendarSource[]>('/calendar/sources','POST',this.thesisBody(body,['mode','provider'])); }
+  refreshCalendar(body: unknown) { return this.business<import('../calendar-types').CalendarPage>('/calendar/snapshots','POST',this.thesisBody(body,['mode','provider','timezone','start','end','kinds','request_id']),45000); }
+  calendarHistory() { return this.business<import('../calendar-types').CalendarSummary[]>('/calendar/snapshots'); }
+  calendarView(id: unknown,timezone: unknown) {
+    if(typeof timezone!=='string'||timezone.length>100||!/^[-+A-Za-z0-9_]+(?:\/[-+A-Za-z0-9_]+)*$/.test(timezone)) throw new Error('时区格式无效。');
+    return this.business<import('../calendar-types').CalendarPage>(`/calendar/snapshots/${this.id(id)}/view`,'POST',{timezone});
+  }
+  calendarOriginal(id: unknown,readId: unknown) { return this.business<import('../calendar-types').CalendarOriginal>(`/calendar/snapshots/${this.id(id)}/reads/${this.id(readId)}`); }
   screeningTasks(body: unknown) { return this.business<import('../screening-types').ScreeningTask[]>('/screening/tasks','POST',this.thesisBody(body,['mode','provider'])); }
   startScreening(body: unknown) { return this.business<import('../screening-types').ScreeningRun>('/screening/runs','POST',this.thesisBody(body,['strategy','mode','provider','universe','limit','request_id'])); }
   screeningRuns() { return this.business<import('../screening-types').ScreeningSummary[]>('/screening/runs'); }
@@ -218,7 +226,13 @@ export class BackendManager extends EventEmitter {
   private researchInput(value: unknown): import('../research-types').ResearchInput {
     if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('采集输入无效。');
     const v = value as Record<string, unknown>;
-    if (Object.keys(v).some(k => !['symbol', 'strategy', 'mode', 'provider', 'concurrency'].includes(k))) throw new Error('采集字段无效。');
+    if (Object.keys(v).some(k => !['symbol', 'strategy', 'mode', 'provider', 'concurrency','event_ref'].includes(k))) throw new Error('采集字段无效。');
+    if(v.event_ref!=null){
+      const reference=this.thesisBody(v.event_ref,['snapshot_id','event_id','timezone']) as Record<string,unknown>;
+      this.id(reference.snapshot_id);
+      if(typeof reference.event_id!=='string'||! /^[a-f0-9]{64}$/.test(reference.event_id)) throw new Error('事件ID格式无效。');
+      if(reference.timezone!=null&&(typeof reference.timezone!=='string'||reference.timezone.length>100||!/^[-+A-Za-z0-9_]+(?:\/[-+A-Za-z0-9_]+)*$/.test(reference.timezone))) throw new Error('事件时区格式无效。');
+    }
     const input = { strategy: 'comprehensive', mode: 'simulated', provider: 'longbridge', concurrency: 4, ...v };
     if (typeof v.symbol !== 'string' || !/^[A-Z0-9]{1,6}\.(US|HK|SG|SH|SZ|HAS)$/.test(v.symbol) ||
         typeof input.strategy !== 'string' || input.strategy.length > 40 || !/^[a-z]+(?:-[a-z]+)*$/.test(input.strategy) ||

@@ -2,6 +2,7 @@
 // fixed ba5dcdfd. Python owns reports, sources, versions, export and differences.
 import { useEffect, useRef, useState } from 'react';
 import type { ReportClaim, ReportDocument, ReportJob, ReportOriginal, ReportDiff, ReportSummary } from '../../report-types';
+import { EventContextCard } from '../calendar/EventContextCard';
 
 const statusLabel = { generating: '正在生成', completed: '已保存', failed: '生成失败', cancelled: '已取消', interrupted: '已中断' };
 const kindLabel = { fact: '事实', analysis: '分析', prediction: '预测' };
@@ -121,6 +122,7 @@ export function ReportPanel({ runId, symbol, succeeded, available, generateAllow
     {job && <p data-testid="report-status" data-status={job.status} data-report-id={job.id}>{statusLabel[job.status]} · 版本 {job.version} · {job.mode} {job.code && `· ${job.code}`}</p>}
     {job?.request_uncertain && <p role="status">模型请求可能已发出，未取得可确认的报告结果。恢复不会自动再次调用。</p>}
     {doc && <article data-testid="research-report">
+      {doc.event_context&&<EventContextCard context={doc.event_context} available={available}/>}
       <h3>{doc.symbol} · {doc.synthesis.stance === 'bullish' ? '偏多' : doc.synthesis.stance === 'bearish' ? '偏空' : '中性'}（分析判断）</h3>
       <p>{doc.disclaimer}</p><p>{doc.source_mode === 'simulated' ? '模拟数据，不代表真实行情' : '真实提供商数据'} · {doc.provider} · 采集 {doc.collection_status} · 任务 {doc.source_run_id}</p>
       <button disabled={blocked} onClick={() => void exportMarkdown()}>导出 Markdown</button>
