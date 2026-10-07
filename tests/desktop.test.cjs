@@ -29,9 +29,14 @@ test('Step18 report converts to thesis, immutable edits and traceable new-data r
     initial=await page.evaluate(id=>window.researchTrail.thesisVersion(id,1),id);
     assert.deepEqual(initial.data_report,before);
     await page.getByLabel('论点摘要',{exact:true}).fill('用户版本二：补充估值风险');
+    await page.getByLabel('论点风险',{exact:true}).fill(' \n\n');
+    await page.getByLabel('论点催化因素',{exact:true}).fill(' \n 用户补充催化因素 \n\n');
     await page.getByLabel('论点变化理由',{exact:true}).fill('手动补充风险解释，没有新数据');
     await page.getByRole('button',{name:'保存论点新版本',exact:true}).dblclick();
     await expect(page.getByTestId('thesis-current')).toHaveAttribute('data-version','2');
+    const edited=await page.evaluate(id=>window.researchTrail.thesisVersion(id,2),id);
+    assert.deepEqual(edited.content.risks,[]);
+    assert.deepEqual(edited.content.catalysts,['用户补充催化因素']);
     assert.deepEqual(await page.evaluate(id=>window.researchTrail.thesisVersion(id,1),id),initial);
     await page.getByRole('button',{name:'读取论点版本 1',exact:true}).click();
     await expect(page.getByTestId('thesis-snapshot')).toContainText('已保存版本 1');

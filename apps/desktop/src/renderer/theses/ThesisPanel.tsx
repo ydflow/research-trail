@@ -74,7 +74,12 @@ export function ThesisPanel({ available }: { available: boolean }) {
   const current = view?.current;
   const displayed = historical ?? current;
   const canJudge = view && evaluation?.kind === 'evaluation' && evaluation.status === 'ready' && evaluation.base_version === view.current_version && !view.reviews.some(r => r.kind === 'judgment' && r.base_version === evaluation.base_version && r.report_id === evaluation.report_id);
-  const mutation = () => ({ request_id: crypto.randomUUID(), expected_version: view!.current_version, content: draft!, reason });
+  const mutation = () => {
+    const content = { ...draft! };
+    // Keep draft line breaks while typing; submit only non-empty list entries.
+    for (const [key] of fields) content[key] = content[key].map(line => line.trim()).filter(Boolean);
+    return { request_id: crypto.randomUUID(), expected_version: view!.current_version, content, reason };
+  };
 
   return <section className="thesis-panel" aria-label="投资论点工作台">
     <h2>投资论点</h2><p>报告转换和编辑保留历史；重新评估只比较实际取得的新旧数据。投资影响由用户显式判断，引用不证明判断正确。</p>
