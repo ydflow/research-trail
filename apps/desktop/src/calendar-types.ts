@@ -1,0 +1,11 @@
+import type { components } from '../../../packages/contracts/generated';
+export type CalendarSelection = components['schemas']['CalendarSelection'];
+export type CalendarRefresh = components['schemas']['CalendarRefresh'];
+export type CalendarPage = components['schemas']['CalendarPage'];
+export type CalendarSource = components['schemas']['CalendarSource'];
+export type CalendarSummary = components['schemas']['CalendarSummary'];
+export type CalendarOriginal = components['schemas']['CalendarOriginal'];
+export type EventResearchRef = components['schemas']['EventResearchRef'];
+export type EventResearchContext = components['schemas']['EventResearchContext'];
+export type CalendarEventView = components['schemas']['CalendarEventView'];
+export type EventResearchTarget = {symbol:string;mode:'simulated'|'real';provider:'longbridge'|'massive';event_ref:EventResearchRef};

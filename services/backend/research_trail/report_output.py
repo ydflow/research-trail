@@ -16,6 +16,13 @@ def markdown(job):
         f'采集任务：{doc.source_run_id} · 采集状态：{doc.collection_status} · 策略：{escape(doc.strategy)}',
         '',escape(doc.disclaimer), '',f'分析立场：{syn.stance}（未核实判断）']
     facts={f.id:f for f in doc.evidence}
+    if doc.event_context:
+        ctx=doc.event_context; event=ctx.event
+        lines.extend(['','## 事件研究上下文','',escape(event.title),escape(event.display_time),
+            f'来源发生状态：{event.occurrence_status} · 时间关系：{event.time_relation}',
+            f'事件快照：{ctx.snapshot_id} · 事件ID：{event.id} · 读取：{event.read_id}',
+            f'原始结果SHA256：{ctx.result_hash} · JSON Pointer：{escape(event.pointer)}',
+            '研究股票关联：'+('来源关联' if ctx.association=='source' else '用户自主选择，来源未声明该股票关联'),escape(ctx.label)])
     def claims(title,items):
         lines.extend(['',f'## {escape(title)}',''])
         for item in items:

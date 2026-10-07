@@ -1,6 +1,6 @@
 # 研迹：路线、功能对照与当前进度
 
-更新时间：2026-10-07（Asia/Shanghai）。本文件记录计划与阶段状态，不代表未来步骤已经获得执行或发布授权。
+更新时间：2026-10-08（Asia/Shanghai）。本文件记录计划与阶段状态，不代表未来步骤已经获得执行或发布授权。
 
 ## 当前执行边界
 
@@ -25,7 +25,8 @@
 - 第17步：验收通过（模拟/协议/本机自动）；Python事务检查点、显式恢复/重新发起/放弃已实现，发布复验修复延迟放弃回执竞态，最终隔离完整451 Python / 8 Node / 39实际Electron及0012迁移通过。报告恢复零自动模型请求；来源及验收见ACCEPTANCE-step17.md、SOURCES-step17.json与EVIDENCE第40—41节。[PR #16](https://github.com/ydflow/research-trail/pull/16)已普通合并；main CI首次SSE超时及第二次通过均保留，最终回执见根PROJECT_STATE。
 - 第18步：验收通过（模拟/本机自动）；论点转换、追加版本编辑、显式数据评估与用户复审已实现，18项Python及2项Electron定向通过，完整469 Python/8 Node/41实际Electron及0013迁移通过。来源见SOURCES-step18.json，范围见ACCEPTANCE-step18.md；发布轮修复空列表提交，复验及公开范围见EVIDENCE第43节，[PR #17](https://github.com/ydflow/research-trail/pull/17)已普通合并至c4e1679b，最终main CI回执见根PROJECT_STATE。
 - 第19步：验收通过（模拟/本机自动）；17个固定筛选任务、有界股票池和机会发现页已实现，定向33项Python及2项实际Electron通过，完整502 Python/8 Node/43实际Electron、契约/类型/构建和0014重复迁移检查通过。来源SOURCES-step19.json，范围ACCEPTANCE-step19.md及EVIDENCE第44节。开发轮未提交/发布；本次独立发布复核新增两项回归并修复，筛选35项通过，最终本机/独立干净源码504/8/43及根CMD重启历史通过，已创建[PR #18](https://github.com/ydflow/research-trail/pull/18)；CI/合并按EVIDENCE第45节、PR与根发布回执实际记录。
-- 第20—24步：未开始；没有用户具体指令不继续。
+- 第20步：验收通过（固定模拟/本机自动）；Python财报/宏观/央行固定日历、来源时间/时区/精度、稳定去重、不可变快照及事件研究上下文已实现。开发28 Python/3实际Electron及完整532/8/46见EVIDENCE第46节；独立发布复核修复溢出及超时边界，日历31项、发布首轮本机/干净源码535 Python/8 Node/46实际Electron、0015重复迁移及根CMD重启通过，来源SOURCES-step20.json，范围ACCEPTANCE-step20.md；已创建[PR #19](https://github.com/ydflow/research-trail/pull/19)，远程CI的采集等待阻塞已有真实修复、定向5项通过；新535/8/47全套与合并按EVIDENCE第47节、PR/根回执。真实来源/LLM与用户亲自记录未验证。
+- 第21—24步：未开始；没有用户具体指令不继续。
 - 默认分支 `main`；第0/1步首次上传检查见EVIDENCE第7节，第2步发布检查见第9—10节，提交历史和远程状态以Git为准。
 - 状态取值：未开始 / 进行中 / 代码完成/待验收 / 验收通过 / 受阻。
 - 来源：固定 ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`，本地只读路径 `D:\folio\主分支和简历skill\folio-main`。
@@ -54,7 +55,7 @@
 | 17 | 研究检查点、显式恢复/重启/放弃 | 16 | 已采集复用；配置变化/缺证据有反馈；不自动消费模型或重复报告 | 验收通过（模拟/本机自动） |
 | 18 | 投资论点、版本、复审和重评 | 17 | 报告转论点，历史不覆盖，缺新数据不编判断 | 验收通过（模拟/本机自动） |
 | 19 | 17 个筛选任务与机会发现 | 18 | 有界池、确定性筛选、来源记录；候选可入自选/对比/研究 | 验收通过（模拟/本机自动） |
-| 20 | 财报/宏观/央行事件日历 | 19 | 固定事件先验，时区跨日正确，去重与事件上下文研究 | 未开始 |
+| 20 | 财报/宏观/央行事件日历 | 19 | 固定事件先验，时区跨日正确，去重与事件上下文研究 | 验收通过（固定模拟/本机自动） |
 | 21 | 提醒/自动化/简报/Today 聚合 | 20 | 固定时钟触发/冷却/重启/去重；仅应用运行时调度 | 未开始 |
 | 22 | Agent 评测、本地 trace、反馈、外部追踪 | 21 | 离线 CI；未执行/取消/错误/差质量分开；追踪默认关闭与脱敏 | 未开始 |
 | 23 | 研究结果、表现、置信度校准和权重 | 22 | 无未来数据；不足样本与窗口未到不假评分；版本可回滚 | 未开始 |
@@ -64,7 +65,7 @@
 
 ## 功能对照与来源索引
 
-以下相对路径都相对于 **只读参考 Folio**。研迹第1—6步健康、固定行情、持久化、规则Agent、运行生命周期及会话快照/事件恢复、第8步设置/凭证/假连接/诊断、第9步模型适配/受限工具循环及第10步数据/只读账户适配、第11步七个证券视图、第12步组合导入/计算及第13步风险/股票对比、第14步能力/技能目录与第15步研究采集已实现；第16步报告本机功能和一次真实LLM结构验证通过，第17步检查点和显式恢复、第18步论点版本与显式复审已实现，其余业务未开始；参考源码存在仅能证明有可阅读的实现，不能证明本机运行或生产正确。
+以下相对路径都相对于 **只读参考 Folio**。研迹第1—6步健康、固定行情、持久化、规则Agent、运行生命周期及会话快照/事件恢复、第8步设置/凭证/假连接/诊断、第9步模型适配/受限工具循环及第10步数据/只读账户适配、第11步七个证券视图、第12步组合导入/计算及第13步风险/股票对比、第14步能力/技能目录与第15步研究采集已实现；第16步报告本机功能和一次真实LLM结构验证通过，第17步检查点和显式恢复、第18步论点版本与显式复审、第19步有界筛选、第20步固定事件日历已实现，第21—24步未开始；参考源码存在仅能证明有可阅读的实现，不能证明本机运行或生产正确。
 
 | 功能组 | 参考源码位置 | 研迹计划承担方 / 步骤 | 研迹实现 / 验证 |
 | --- | --- | --- | --- |
@@ -83,7 +84,7 @@
 | 研究恢复 | `packages/shared/src/research/service.ts`、`checkpoint.ts`、`repository.ts` | Python 检查点/显式恢复，步骤17 | 已实现 / 同一SQLite事务、成功证据复用、显式新任务/放弃、报告零隐式模型；模拟/协议/本机自动验收通过 |
 | 投资论点 | `packages/shared/src/thesis/service.ts`、`repository.ts` | Python 版本/复审，步骤18 | 已实现 / 报告转换、追加版本、可追溯新数据比较与显式用户复审；模拟/本机自动验收通过，真实数据和用户亲自操作未验证 |
 | 发现与筛选 | `packages/core/src/screening.ts`；`packages/shared/src/screening/service.ts`、`strategies.ts` | Python 17任务，步骤19 | 已实现 / 模拟小池边界、实窗操作及完整回归通过；真实数据未验证 |
-| 事件与催化日历 | `packages/ui/src/components/events/EventsView.tsx`；`packages/core/src/market-data.ts` | Python 事件源 + 页面，步骤20 | 未实现 / 未执行 |
+| 事件与催化日历 | `packages/ui/src/components/events/EventsView.tsx`；`packages/core/src/market-data.ts` | Python 事件源 + 页面，步骤20 | 固定三类事件、来源时区/精度/发生状态、去重/原始事实/快照、带事件研究/报告已实现；定向及完整本机通过；真实央行未实现，其他真实覆盖未验证 |
 | 提醒/自动化/简报/Today | `packages/shared/src/alerts/engine.ts`；`automation/scheduler.ts`、`brief.ts`；`packages/ui/src/components/today` | Python 调度 + Electron 通知，步骤21 | 未实现 / 未执行 |
 | Agent 评测与追踪 | `packages/shared/src/evaluation/experiment-service.ts`、`evaluators`、`langfuse`；`docs/EVALUATION.md` | Python 本地评测/追踪适配，步骤22 | 未实现 / 未执行 |
 | 研究结果与校准 | `packages/shared/src/outcome/service.ts`；`performance/service.ts`；`calibration/compute.ts` | Python 结果窗口/统计，步骤23 | 未实现 / 未执行 |

@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { waitForBackend } = require('./backend-ready.cjs');
+const { waitForBackend, waitForResearchCollection } = require('./backend-ready.cjs');
 const { _electron: electron, expect } = require('@playwright/test');
 const { execFileSync } = require('node:child_process');
 const { resolve } = require('node:path');
@@ -8,6 +8,125 @@ const { mkdirSync, mkdtempSync, readFileSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 const { createRequire } = require('node:module');
 const { pathToFileURL } = require('node:url');
+
+test('Step20 publication collection readiness follows the plan without calling a model', {timeout:60000}, async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'research-checkpoint'});
+  try {
+    const page=instance.page;await waitForBackend(page);
+    await page.getByRole('button',{name:'研究采集',exact:true}).click();
+    await page.getByRole('radio',{name:/价值投资/}).check();
+    await expect(page.getByTestId('research-plan').locator('summary')).toContainText('4 项');
+    await page.getByRole('button',{name:'开始采集',exact:true}).click();
+    const run=await waitForResearchCollection(page);
+    const profile=run.steps.find(step=>step.capability==='company.profile');
+    assert.ok(Date.parse(profile.completed_at)-Date.parse(profile.started_at)>=14000);
+    assert.equal(run.succeeded,4);assert.equal(run.failed,0);assert.equal(run.plan.timeout_seconds,20);
+    assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,0);
+  }finally{await instance.app.close();}
+});
+
+test('Step20 fixed calendar timezone bounds evidence research context and persisted history', {timeout:120000},async()=>{
+  let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});const path=instance.databasePath;let saved,run,report;
+  try{
+    let page=instance.page;const errors=[];page.on('pageerror',e=>errors.push(e.message));await waitForBackend(page);
+    await page.getByRole('button',{name:'事件日历',exact:true}).click();
+    await expect(page.getByTestId('calendar-sources')).toContainText('央行 · 可读取');
+    await page.getByRole('button',{name:'刷新事件并保存快照',exact:true}).dblclick();
+    await expect(page.getByTestId('calendar-page')).toHaveAttribute('data-status','completed');
+    await expect(page.getByTestId('calendar-event')).toHaveCount(6);
+    assert.equal((await page.evaluate(()=>window.researchTrail.calendarHistory())).length,1);
+    const row=page.locator('[data-source-id="authored-aapl-earnings"]');
+    await expect(row.getByTestId('calendar-event-time')).toHaveText('2024-01-17T06:00:00+08:00 [Asia/Shanghai]');
+    await expect(page.locator('[data-source-id="authored-tsla-earnings"]')).toContainText('已过预告时间，尚未确认发生');
+    await expect(page.locator('[data-source-id="authored-hk-earnings"]')).toContainText('仅日期，准确时刻未知');
+    await page.getByLabel('事件显示时区',{exact:true}).selectOption('America/New_York');
+    await expect(row.getByTestId('calendar-event-time')).toHaveText('2024-01-16T17:00:00-05:00 [America/New_York]');
+    saved=await page.evaluate(async()=>{const rows=await window.researchTrail.calendarHistory();return window.researchTrail.calendarView(rows[0].id,'America/New_York');});
+    assert.equal(saved.events.length,6);assert.equal((await page.evaluate(()=>window.researchTrail.calendarHistory())).length,1);
+    await row.getByText('事件身份与来源',{exact:true}).click();
+    await row.getByRole('button',{name:'查看事件原始事实 authored-aapl-earnings',exact:true}).click();
+    await expect(page.getByTestId('calendar-original')).toContainText('2024-01-16T17:00:00-05:00');
+    await expect(page.getByTestId('calendar-original')).toContainText('模拟数据');
+    await screenshot(page,'step20-calendar-wide.png');
+    await row.getByRole('button',{name:'带事件研究 authored-aapl-earnings',exact:true}).click();
+    await expect(page.getByLabel('研究股票',{exact:true})).toHaveValue('AAPL.US');
+    await expect(page.getByRole('radio',{name:/事件驱动/})).toBeChecked();
+    await expect(page.getByTestId('event-research-context')).toContainText('模拟 Apple 财报预告');
+    await expect(page.getByTestId('event-research-context')).toContainText('2024-01-16T17:00:00-05:00 [America/New_York]');
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,0);
+    await page.getByRole('button',{name:'开始采集',exact:true}).click();
+    await waitForResearchCollection(page);
+    run=await page.evaluate(async()=>{const rows=await window.researchTrail.researchRuns();return window.researchTrail.researchRun(rows[0].id);});
+    assert.equal(run.plan.event_context.event.source_event_id,'authored-aapl-earnings');assert.equal(run.plan.event_context.target_symbol,'AAPL.US');
+    await page.getByRole('button',{name:'生成新报告',exact:true}).click();await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','completed');
+    report=await page.evaluate(async()=>{const rows=await window.researchTrail.reportList();return window.researchTrail.report(rows[0].id);});
+    assert.deepEqual(report.document.event_context,run.plan.event_context);
+    await page.getByRole('button',{name:'事件日历',exact:true}).click();
+    await page.getByText('已保存事件快照（最多50份，不重新查询）',{exact:true}).click();
+    await page.getByRole('button',{name:'读取事件快照 '+saved.id,exact:true}).click();
+    await page.getByLabel('事件研究股票 authored-fomc',{exact:true}).fill('TSLA.US');
+    await page.getByRole('button',{name:'带事件研究 authored-fomc',exact:true}).click();
+    await expect(page.getByLabel('研究股票',{exact:true})).toHaveValue('TSLA.US');
+    await expect(page.getByTestId('event-research-context')).toContainText('模拟 FOMC 决议预告');
+    await expect(page.getByTestId('event-research-context')).toContainText('用户自主选择，来源未声明股票关联');
+    await expect(page.getByTestId('research-run')).toHaveCount(0);
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,1);
+    await page.getByLabel('研究股票',{exact:true}).fill('NVDA.US');await expect(page.getByTestId('event-research-context')).toHaveCount(0);
+    await instance.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(600,700));
+    await page.getByRole('button',{name:'事件日历',exact:true}).click();await page.getByText('已保存事件快照（最多50份，不重新查询）',{exact:true}).click();
+    await page.getByRole('button',{name:'读取事件快照 '+saved.id,exact:true}).click();
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await screenshot(page,'step20-calendar-compact.png');
+    await instance.app.close();instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_DB_PATH:path});page=instance.page;await waitForBackend(page);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.calendarView(id,'America/New_York'),saved.id),saved);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.researchRun(id),run.id),run);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.report(id),report.id),report);
+    assert.equal((await page.evaluate(()=>window.researchTrail.calendarHistory())).length,1);assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,1);
+    assert.deepEqual(errors,[]);
+  }finally{await instance.app.close();}
+});
+
+test('Step20 real unsupported calendar never falls back and bridge validates context', {timeout:90000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  try{
+    const page=instance.page;await waitForBackend(page);await page.getByRole('button',{name:'事件日历',exact:true}).click();
+    await page.getByLabel('事件数据模式',{exact:true}).selectOption('real');
+    await expect(page.getByTestId('calendar-sources')).toContainText('央行 · 不可用 · NOT_IMPLEMENTED');
+    await expect(page.getByRole('button',{name:'刷新事件并保存快照',exact:true})).toBeDisabled();await expect(page.getByTestId('calendar-event')).toHaveCount(0);
+    await page.getByLabel('事件提供商',{exact:true}).selectOption('massive');await expect(page.getByTestId('calendar-sources')).toContainText('PROVIDER_UNSUPPORTED');
+    assert.equal((await page.evaluate(()=>window.researchTrail.calendarHistory())).length,0);
+    const result=await page.evaluate(()=>window.researchTrail.refreshCalendar({mode:'real',provider:'massive',request_id:crypto.randomUUID()}));assert.equal(result.status,'unavailable');assert.equal(result.events.length,0);
+    await assert.rejects(page.evaluate(()=>window.researchTrail.calendarSources({unexpected:true})),/字段无效/);
+    await assert.rejects(page.evaluate(()=>window.researchTrail.calendarView('../secret','UTC')),/ID格式无效/);
+    await assert.rejects(page.evaluate(()=>window.researchTrail.calendarView(crypto.randomUUID(),'../../private')),/时区格式无效/);
+    await assert.rejects(page.evaluate(()=>window.researchTrail.researchPlan({symbol:'AAPL.US',event_ref:{snapshot_id:crypto.randomUUID(),event_id:'bad'}})),/事件ID格式无效/);
+    await screenshot(page,'step20-real-unavailable.png');
+  }finally{await instance.app.close();}
+});
+
+test('Step20 stale calendar source and original responses cannot overwrite newer selection', {timeout:90000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  try{
+    const page=instance.page;await waitForBackend(page);
+    await instance.app.evaluate(({ipcMain})=>{
+      const handler=ipcMain._invokeHandlers.get('calendar:sources');globalThis.calendarSourceStarted=false;
+      ipcMain.removeHandler('calendar:sources');ipcMain.handle('calendar:sources',async(event,input)=>{const result=await handler(event,input);if(input.provider==='longbridge'){globalThis.calendarSourceStarted=true;await new Promise(resolve=>setTimeout(resolve,600));}return result;});
+    });
+    await page.getByRole('button',{name:'事件日历',exact:true}).click();await expect.poll(()=>instance.app.evaluate(()=>globalThis.calendarSourceStarted)).toBe(true);
+    await page.getByLabel('事件提供商',{exact:true}).selectOption('massive');await expect(page.getByTestId('calendar-sources')).toContainText('PROVIDER_UNSUPPORTED');
+    await page.waitForTimeout(800);await expect(page.getByRole('button',{name:'刷新事件并保存快照',exact:true})).toBeDisabled();
+    await page.getByLabel('事件提供商',{exact:true}).selectOption('longbridge');await expect(page.getByRole('button',{name:'刷新事件并保存快照',exact:true})).toBeEnabled();
+    await page.getByRole('button',{name:'刷新事件并保存快照',exact:true}).click();await expect(page.getByTestId('calendar-event')).toHaveCount(6);
+    const later=await page.evaluate(()=>window.researchTrail.refreshCalendar({request_id:crypto.randomUUID(),kinds:['central-bank']}));
+    await page.getByRole('button',{name:'机会发现',exact:true}).click();await expect(page.getByRole('heading',{name:'机会发现',exact:true})).toBeVisible();await page.getByRole('button',{name:'事件日历',exact:true}).click();
+    await page.getByText('已保存事件快照（最多50份，不重新查询）',{exact:true}).click();
+    const history=await page.evaluate(()=>window.researchTrail.calendarHistory());const first=history.find(r=>r.id!==later.id);
+    await page.getByRole('button',{name:'读取事件快照 '+first.id,exact:true}).click();
+    await instance.app.evaluate(({ipcMain})=>{const handler=ipcMain._invokeHandlers.get('calendar:original');ipcMain.removeHandler('calendar:original');ipcMain.handle('calendar:original',async(...args)=>{const result=await handler(...args);await new Promise(resolve=>setTimeout(resolve,1000));return result;});});
+    const row=page.locator('[data-source-id="authored-aapl-earnings"]');await row.getByText('事件身份与来源',{exact:true}).click();await row.getByRole('button',{name:'查看事件原始事实 authored-aapl-earnings',exact:true}).click();
+    await page.getByRole('button',{name:'读取事件快照 '+later.id,exact:true}).click();await expect(page.getByTestId('calendar-event')).toHaveCount(1);
+    await page.waitForTimeout(1200);await expect(page.getByTestId('calendar-original')).toHaveCount(0);await expect(page.getByTestId('calendar-page')).toHaveAttribute('data-snapshot-id',later.id);
+  }finally{await instance.app.close();}
+});
 
 test('Step19 17 tasks, evidence, watch/compare/research symbols and persisted history', {timeout:120000}, async()=>{
   let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'}); const path=instance.databasePath; let saved;
@@ -87,7 +206,7 @@ test('Step18 report converts to thesis, immutable edits and traceable new-data r
     await waitForBackend(page); await page.getByRole('button',{name:'研究采集',exact:true}).click();
     await page.getByRole('radio',{name:/价值投资/}).check();
     await page.getByRole('button',{name:'开始采集',exact:true}).click();
-    await expect(page.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    await waitForResearchCollection(page);
     await page.getByRole('button',{name:'生成新报告',exact:true}).click();
     await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','completed');
     before=await page.evaluate(async()=>{const r=await window.researchTrail.reportList();return window.researchTrail.report(r[0].id);});
@@ -211,7 +330,8 @@ test('Step17 actual collection process interruption preserves evidence resumes a
     assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,0);
     await page.getByTestId('research-checkpoint').scrollIntoViewIfNeeded(); await screenshot(page,'step17-collection-interrupted.png');
     await page.getByRole('button',{name:'恢复原任务（不调用模型）',exact:true}).click();
-    await expect(page.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    await expect(page.getByTestId('research-run')).not.toHaveAttribute('data-status','interrupted');
+    await waitForResearchCollection(page);
     const resumed=await page.evaluate(id=>window.researchTrail.researchRun(id),original.id);
     assert.equal(resumed.generation,1); assert.equal(resumed.id,original.id);
     assert.deepEqual(resumed.steps.filter(s=>s.status==='success'&&s.capability!=='company.profile'),original.steps.filter(s=>s.status==='success'));
@@ -224,7 +344,7 @@ test('Step17 actual collection process interruption preserves evidence resumes a
     assert.deepEqual(await page.evaluate(id=>window.researchTrail.researchData(id,'company.valuation'),original.id),raw);
     await page.getByRole('button',{name:'重新发起新任务',exact:true}).click();
     await expect(page.getByTestId('research-run')).not.toHaveAttribute('data-run-id',original.id);
-    await expect(page.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    await waitForResearchCollection(page);
     const fresh=await page.evaluate(async()=>{const rows=await window.researchTrail.researchRuns();return window.researchTrail.researchRun(rows[0].id);});
     assert.notEqual(fresh.id,original.id); assert.equal(fresh.parent_run_id,original.id); assert.equal(fresh.generation,0);
     assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,2);
@@ -242,7 +362,7 @@ test('Step17 actual report process interruption never resumes synthesis or dupli
     let page=instance.page; const errors=[]; page.on('pageerror',e=>errors.push(e.message)); await waitForBackend(page);
     await page.getByRole('button',{name:'研究采集',exact:true}).click(); await page.getByRole('radio',{name:/价值投资/}).check();
     await expect(page.getByTestId('research-plan').locator('summary')).toContainText('4 项');
-    await page.getByRole('button',{name:'开始采集',exact:true}).click(); await expect(page.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    await page.getByRole('button',{name:'开始采集',exact:true}).click(); await waitForResearchCollection(page);
     runId=await page.getByTestId('research-run').getAttribute('data-run-id');
     await page.getByRole('button',{name:'生成新报告',exact:true}).click(); await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','completed');
     original=await page.evaluate(async()=>{const rows=await window.researchTrail.reportList();return window.researchTrail.report(rows[0].id);});
@@ -282,7 +402,7 @@ test('Step17 delayed abandon response survives report status refresh', {timeout:
     const page=instance.page; await waitForBackend(page);
     await page.getByRole('button',{name:'研究采集',exact:true}).click(); await page.getByRole('radio',{name:/价值投资/}).check();
     await expect(page.getByTestId('research-plan').locator('summary')).toContainText('4 项');
-    await page.getByRole('button',{name:'开始采集',exact:true}).click(); await expect(page.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    await page.getByRole('button',{name:'开始采集',exact:true}).click(); await waitForResearchCollection(page);
     await page.getByRole('button',{name:'生成新报告',exact:true}).click(); await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','generating');
     await instance.app.evaluate(({ipcMain})=>{
       const original=ipcMain._invokeHandlers.get('research:abandon');
@@ -317,7 +437,7 @@ test('Step16 saved reports, actual collected diff, original facts, Markdown dial
     await panel.getByRole('radio',{name:/价值投资/}).check();
     await expect(panel.getByTestId('research-plan').locator('summary')).toContainText('4 项');
     await panel.getByRole('button',{name:'开始采集',exact:true}).click();
-    await expect(panel.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    await waitForResearchCollection(page, { panel });
     await panel.getByRole('button',{name:'生成新报告',exact:true}).click();
     await expect(panel.getByTestId('report-status')).toHaveAttribute('data-status','completed');
     first=await page.evaluate(async()=>{const rows=await window.researchTrail.reportList();return window.researchTrail.report(rows[0].id);});
@@ -344,7 +464,7 @@ test('Step16 saved reports, actual collected diff, original facts, Markdown dial
     await panel.getByRole('button',{name:'读取报告版本',exact:true}).click();
     await expect(panel.getByTestId('report-status')).toHaveAttribute('data-report-id',first.id);
     await panel.getByRole('button',{name:'开始采集',exact:true}).click();
-    await expect(panel.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    await waitForResearchCollection(page, { panel });
     await panel.getByRole('button',{name:'生成新报告',exact:true}).click();
     await expect(panel.getByTestId('report-status')).toHaveAttribute('data-status','completed');
     second=await page.evaluate(async()=>{const rows=await window.researchTrail.reportList();return window.researchTrail.report(rows[0].id);});
@@ -424,7 +544,7 @@ test('Step15 contextual entry, strategy plan, saved data and restart without ree
     await panel.getByRole('radio',{name:/价值投资/}).check();
     await expect(panel.getByTestId('research-plan').locator('summary')).toContainText('4 项');
     await panel.getByRole('button',{name:'开始采集',exact:true}).click();
-    await expect(panel.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    await waitForResearchCollection(page, { panel });
     record=await page.evaluate(async()=>{const b=window.researchTrail;const rows=await b.researchRuns();return b.researchRun(rows[0].id);});
     assert.equal(record.symbol,'MSFT.US'); assert.equal(record.succeeded,4); assert.equal(record.plan.input.concurrency,4);
     saved=await page.evaluate(id=>window.researchTrail.researchData(id,'company.profile'),record.id);
@@ -466,10 +586,11 @@ for(const scenario of ['research-partial','failure']) test(`Step15 ${scenario} k
     await panel.getByRole('radio',{name:/价值投资/}).check();
     await expect(panel.getByTestId('research-plan').locator('summary')).toContainText('4 项');
     await panel.getByRole('button',{name:'开始采集',exact:true}).click();
-    await expect(panel.getByTestId('research-run')).toHaveAttribute('data-status',scenario==='failure'?'failed':'partial');
+    await waitForResearchCollection(page, { panel, status: scenario==='failure'?'failed':'partial' });
     await expect(panel.getByTestId('research-status')).toContainText(scenario==='failure'?'已采集 0':'已采集 3');
     await expect(panel.locator('[data-capability="company.financials"]')).toContainText('NETWORK_ERROR');
     await expect(panel.getByRole('button',{name:/^读取结果/})).toHaveCount(scenario==='failure'?0:3);
+    await assert.rejects(waitForResearchCollection(page, { panel, status: 'collected' }), /Expected values to be strictly equal/);
     await panel.getByRole('heading',{name:/已保存任务/}).scrollIntoViewIfNeeded();
     await screenshot(page,`step15-${scenario}.png`);
     assert.deepEqual(errors,[]);
@@ -1320,6 +1441,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       'providerProfiles', 'saveProvider', 'deleteProvider', 'saveProviderCredential', 'deleteProviderCredential', 'providerCapabilities', 'queryProvider',
       'workspaceState', 'addWatch', 'removeWatch', 'selectSecurity', 'securityPage', 'openNewsSource',
       'screeningTasks', 'startScreening', 'screeningRuns', 'screeningRun', 'cancelScreening', 'screeningEvidence',
+      'calendarSources','refreshCalendar','calendarHistory','calendarView','calendarOriginal',
       'thesisList', 'createThesis', 'thesis', 'thesisVersion', 'editThesis', 'evaluateThesis', 'judgeThesis', 'thesisReview',
       'reportList', 'generateReport', 'report', 'cancelReport', 'reportEvidence', 'exportReport', 'reportDiff',
       'researchCheckpoint', 'resumeResearch', 'restartResearch', 'abandonResearch',

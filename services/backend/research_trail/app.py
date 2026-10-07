@@ -46,6 +46,8 @@ from .report_output import markdown as report_markdown, diff as report_diff
 from .theses import ThesisService
 from .screening import ScreeningService, ScreeningError
 from .screening_contracts import ScreeningContext, ScreeningInput, ScreeningTask, ScreeningRun, ScreeningSummary, ScreeningEvidence
+from .calendar import CalendarService, CalendarError
+from .calendar_contracts import CalendarSelection, CalendarRefresh, CalendarViewInput, CalendarSource, CalendarPage, CalendarSummary, CalendarOriginal
 from uuid import UUID
 from .thesis_contracts import (ThesisCreate, ThesisEdit, ThesisEvaluate, ThesisJudge,
     ThesisSummary, ThesisView, ThesisVersion, ThesisReview)
@@ -61,7 +63,7 @@ class Health(BaseModel):
 
 def create_app(token: str, market_provider: MarketProvider | None = None, *,
                database_path: Path | str | None = None, model_provider: ModelProvider | None = None,
-               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None, research_options=None, report_options=None, screening_options=None) -> FastAPI:
+               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None, research_options=None, report_options=None, screening_options=None, calendar_options=None) -> FastAPI:
     if len(token) < 32:
         raise ValueError("启动令牌缺失或过短；请由 Electron 启动服务。")
     @asynccontextmanager
@@ -83,10 +85,11 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             runner.tools.skills = app.state.skills
             app.state.watchlist = WatchlistStore(database)
             app.state.screening = ScreeningService(database,app.state.capabilities,app.state.providers,app.state.watchlist,**(screening_options or {}))
+            app.state.calendar = CalendarService(database,app.state.capabilities,app.state.providers,**(calendar_options or {}))
             app.state.security_workspace = SecurityWorkspace(app.state.watchlist,app.state.providers)
             app.state.portfolios = PortfolioService(database,app.state.providers)
             app.state.analytics = AnalyticsService(app.state.portfolios,app.state.providers)
-            app.state.research = ResearchService(database,app.state.capabilities,app.state.skills,app.state.providers,**(research_options or {}))
+            app.state.research = ResearchService(database,app.state.capabilities,app.state.skills,app.state.providers,calendar=app.state.calendar,**(research_options or {}))
             def report_model():
                 with app.state.settings.lock:
                     config=app.state.settings.model_configuration()
@@ -140,6 +143,25 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
         return JSONResponse(status_code=409, content={"detail": str(error)})
 
     protected = [Depends(authorize)]
+
+    @app.exception_handler(CalendarError)
+    async def calendar_error(_request,error):
+        return JSONResponse(status_code=404 if str(error).endswith('NOT_FOUND') else 409,content={'detail':str(error)})
+
+    @app.post('/calendar/sources',response_model=list[CalendarSource],dependencies=protected)
+    def calendar_sources(query: CalendarSelection): return app.state.calendar.sources(query)
+
+    @app.post('/calendar/snapshots',response_model=CalendarPage,dependencies=protected)
+    def calendar_refresh(query: CalendarRefresh): return app.state.calendar.refresh(query)
+
+    @app.get('/calendar/snapshots',response_model=list[CalendarSummary],dependencies=protected)
+    def calendar_list(): return app.state.calendar.list()
+
+    @app.post('/calendar/snapshots/{identity}/view',response_model=CalendarPage,dependencies=protected)
+    def calendar_view(identity: UUID,query: CalendarViewInput): return app.state.calendar.view(identity,query.timezone)
+
+    @app.get('/calendar/snapshots/{identity}/reads/{read_id}',response_model=CalendarOriginal,dependencies=protected)
+    def calendar_original(identity: UUID,read_id: UUID): return app.state.calendar.original(identity,read_id)
 
     @app.exception_handler(ScreeningError)
     async def screening_error(_request,error):

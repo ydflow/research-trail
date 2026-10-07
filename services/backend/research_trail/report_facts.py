@@ -65,7 +65,8 @@ def packet(store, identity):
     gaps.extend(ReportGap(scope='skill',key=s.id,code=s.code) for s in run.plan.skills if s.status!='ready')
     if not facts: raise ResearchError('NO_USABLE_FACT')
     return dict(symbol=run.symbol,strategy=run.strategy,source_mode=run.mode,provider=run.provider,
-        collection_status=run.status,source_run_id=run.id,evidence=facts,gaps=gaps)
+        collection_status=run.status,source_run_id=run.id,evidence=facts,gaps=gaps,
+        event_context=run.plan.event_context.model_dump(mode='json') if run.plan.event_context else None)
 
 def original(store, fact):
     run=store.get(fact.run_id)

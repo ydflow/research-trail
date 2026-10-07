@@ -1692,3 +1692,115 @@ Git diff检查通过；246份UTF-8源码、102个本地链接、5份固定参考
 已正常推送feat/step-19-screening并创建[PR #18](https://github.com/ydflow/research-trail/pull/18)，CI正在执行，尚未合并。
 最终head、远程检查和合并回执由根PROJECT_STATE与PR记录，不能将本机通过冒称远程通过。
 真实行情/账户、模型解释、安装包、用户逐项亲自操作仍未执行；既有TestClient/Vite提示保留。
+
+## 46. 第20步：Python事件日历与事件研究上下文（2026-10-07—10-08）
+
+当前用户只授权第20步实现并交付后停止；第19步已按此前独立授权通过PR #18普通合并。
+开工核对项目AGENTS/ROADMAP/EVIDENCE、根PROJECT_STATE及相关实现，开发根D:\folio\research-trail，
+main/HEAD基线a8bb67938e9cb962d5f532a5920b8f99d765ea44，工作区起初干净。
+本轮未暂存、提交、推送、创建PR、标签、Release或定时付费评测，未实施第21步。
+
+固定helsome/folio ba5dcdfd概念/字段参考为EventsView、todayAtoms、demoData、market-data、
+longbridge-tools calendar及finance-calendar-events fixture，6份SHA256和实际适配范围见SOURCES-step20.json。
+上游页面缺来源/空/失败的demo回退、动态Date.now日期和只传symbol的跳转没有照搬。
+本轮没有原样上游代码/资料导入；新Python实现复用已有注册表、ProviderService和研究/报告链。
+六条事件为自造固定例子，非真实Apple/Tesla/港股/PCE/FOMC安排。
+原模拟research.events不再返回无时刻占位记录，沿同一ProviderService改为这些固定事件；其他能力的固定数据未改。
+原30份技能/许可资源保留工作字节与Git blob，参考目录只读未改。
+公开授权沿第9—11节用户原作者确认事实，不扩大全仓MIT；原授权文本未独立取得，skills/LICENSE声明仍保留。
+
+CalendarService统一来源、精度、时区、股票关联、预告/发生/更新/获取时刻和失败状态；
+三个calendar能力从同一research.events健康状态派生，真实央行明确NOT_IMPLEMENTED，Massive事件不支持。
+均非新增Agent工具，不用第二套状态声称真实能力已就绪；不可用不查询、不回退。
+Python zoneinfo加锁定tzdata==2026.5，uv仅增这一依赖，其余版本保持。
+工程依据：[Python zoneinfo文档](https://docs.python.org/3.12/library/zoneinfo.html)、[tzdata包](https://pypi.org/project/tzdata/)。
+财报日期/盘后只保留当地日期；日锚点、外层date、fetched_at均不当事件准确时刻。
+已过预告不确认发生，未来发生声明标冲突；DST歧义/不存在/缺时区/偏移冲突显式，最大90天含界窗口。
+同来源ID稳定合并，明确更新取较新记录；同名无ID不同发生日不合并，不能排序的冲突不允许研究。
+
+0015_calendar只追加calendar_snapshots，保存请求、能力执行、完整安全结果、哈希、Pointer、事件与缺口。
+刷新UUID幂等，冲突内容拒绝；历史/切时区/重启不查询。校验损坏、异常/错误模式或来源返回明确失败。
+五个命名IPC有来源/启动令牌/字段验证，Python契约生成OpenAPI及TS；没有任意后端URL/文件读取能力。
+CalendarPanel独立懒加载，作用域generation拒绝迟到来源/原始事实；重复刷新一个快照。
+EventResearchRef传快照ID/事件ID/显示时区，Python验证关联、模式、来源、冲突和证据后冻结context。
+财报只用来源股票；宏观/央行明确用户研究股票选择，不能伪造关联。
+既有event-driven策略/技能/进度/采集入口沿用；financial指定股票、macrodata不带股票。
+上下文保存进研究计划、报告、Markdown与原始事实入口，不伪造当前执行证据ID，也不自动采集/请求模型。
+手工改研究股票/模式/提供商清除旧草稿；旧计划/报告默认无context继续可读，历史不覆盖。
+
+定向日历首次24项1失败为UTC Z与+00:00断言编码差异，改比较实际时间后24项通过；补四项边界后最终28项通过。
+另一次从仓库根误运行pytest导致导入收集失败，按后端目录重跑通过，未修改包路径掩盖错误。
+原CLI协议测试补自造ext/local_date/date_zone/market_time/status保留断言及秘密剔除。
+实际Electron新增3项，首次2通过1失败为测试返回懒加载页面未等待挂载；补等待真实机会发现标题再返回，3项通过，
+没有扩大原超时或放宽迟到响应断言。现在显示时区随跳转冻结；600px无横向溢出，截图已查看。
+覆盖固定6事件/2去重/时区/原始事实、AAPL与FOMC/TSLA研究、显式固定报告、重启同快照/研究/报告，
+真实不可用不回退、桥拒绝越界、来源/原始事实迟到竞争。截图和日志仅Temp。
+
+完整本机check.cmd退出0：532 Python/8 Node/46实际Electron，零失败/取消/跳过；
+契约/类型/构建、0015重复迁移/current/check及No new upgrade operations detected通过。
+日志Temp/research-trail-step20-check.log，隔离迁移库research-trail-verify-QoF5yK，均不进入业务Git。
+独立干净源码verify:clean也退出0：258份源码导出到research-trail-clean-kdKIVH/clean source含空格目录，
+未复制Git、依赖、构建或运行数据，锁定新装71前端/30 Python依赖及Electron。同一完整离线532/8/46通过，
+零失败/取消/跳过及0015重复迁移/current/check通过。根CMD实际启动/关闭/重开会话/运行快照相同、无新运行、所属进程退出；
+日历/研究/报告重启由新增Electron独立断言，未用旧会话烟测代替。日志Temp/research-trail-step20-clean.log，
+第二隔离迁移库research-trail-verify-ylpgf2、根CMD证据research-trail-cmd-qa-kFtwnI均在Temp。
+当前审计258份UTF-8源码/105个本地链接、6参考hash、30技能/许可Git与工作字节、8忽略探针通过，
+常见秘密/禁传文件0；既有4资料断链与10尾空白保留。188运行/测试/配置与干净导出逐字节一致。
+契约语义核对仅新增4路径/5操作/12模型，3旧模型只增可选context/ref，旧路径及旧字段/必填约束不变；实际93桥操作。
+临时审计脚本初次因Windows默认GBK读取UTF-8、未计入两种方法简写而失败；显式UTF-8与真实preload方法语法核对后通过，
+没有改产品编码或减少预期桥数量。diff检查通过，HEAD不变/index空。
+最终文档在检查结束后更新；188份运行/测试/配置再次与已验收干净导出逐字节核对，源码与测试未在通过后改动。
+
+真实Longbridge/CLI日历覆盖、Massive/央行真实来源、真实LLM事件生成、实际安排准确性/投资解释、
+安装包/独立设备和用户亲自操作未验证。本轮零真实数据/账户/模型业务调用，只有固定数据/假模型/固定合成器；
+TestClient弃用与Vite主chunk提示保留。验收清单ACCEPTANCE-step20.md，教程/练习C13新增但用户答案不代填。
+
+## 47. 第20步独立发布复验（2026-10-08）
+
+用户另行授权发布已验收第20步，功能分支/真实提交/PR，检查通过且无未解决阻塞时普通合并并同步main。
+保留第46节开发记录，不将发布修复记为开发时已经实现；不实施第21步，不打标签/Release/定时付费评测。
+现场gh api user为ydflow，origin fetch/push均https://github.com/ydflow/research-trail.git，
+目标PUBLIC非fork非归档本项目，默认main，远程与本地开发基线a8bb67938e9cb962d5f532a5920b8f99d765ea44。
+没有同名功能分支或打开的PR，不覆盖无关仓库；实际检查后创建feat/step-20-calendar。
+当前47份改动全部属于第20步：1来源记录、28 Python/契约/依赖、12桌面/实际Electron测试、6进度/验收/课程文档。
+按真实来源概念、Python新实现、桌面接入和文档分四提交，正常本机ydflow/noreply与真实时间；没有本轮原样上游导入，
+不伪造上游作者或把资源授权扩成全仓MIT。第9—11节实际授权确认和原声明保留，原授权文本未独立取得。
+
+发布前审计258份UTF-8源码/105个本地链接、6固定参考SHA256、30技能/许可工作字节及Git blob、8忽略探针通过。
+常见秘密/禁传文件0，只读核对本项目配置引用1项系统凭证，秘密原文源码出现0且未输出。
+既有4处资料断链与10处尾空白保留；数据库/账户/日志/缓存/构建/截图不在待提交文件中。
+
+新增3项边界回归在原代码3失败/28未选，修复后完整31项日历测试通过。
+平铺及分组事件超过200条原逻辑静默截断且标completed，现在保留前200条/完整原始结果并记CALENDAR_ROW_LIMIT、partial。
+原日历沿用户最大60秒配置采集两项，可能超过桌面45秒等待；现在用同一ProviderService把本次各项上限设20秒，
+保留用户配置与桌面原超时，不复制适配器。用本机假SDK/CLI传递实际配置验证，不把其标作真实日历通过。
+两处修复与三个回归单独提交，未放宽断言或修改数据制造通过。
+回归日志仅Temp/research-trail-step20-publication-regression-{before,after}.log。
+发布首轮完整本机check.cmd与独立干净源码verify:clean均退出0：535 Python/8 Node/46实际Electron，零失败/取消/跳过，
+契约/类型/构建、0015重复迁移/current/check及No new upgrade operations detected通过。
+258份干净源码锁定新装71前端/30 Python依赖及Electron，根CMD真实启动/关闭/重开会话/运行快照相同、无新运行，所属进程剩余0。
+188份运行/测试/配置与干净导出逐字节相同，按Git clean-filter规范化后与已提交blob一致，Windows换行不冒称原字节一致。
+日志Temp/research-trail-step20-publication-{check,clean}.log；干净源码research-trail-clean-A1GlIA/clean source，
+隔离迁移库research-trail-verify-X1GIno、research-trail-verify-tw7Ih3，根CMD证据research-trail-cmd-qa-w5vdsV，均不进入Git。
+已正常推送feat/step-20-calendar并创建[PR #19](https://github.com/ydflow/research-trail/pull/19)，远程CI正在执行，尚未合并。
+最终head、远程检查和合并回执见PR与根PROJECT_STATE，本机通过不冒称远程CI通过。
+真实来源/账户/LLM事件报告、安装包、投资解释正确性及用户亲自记录仍未验证，固定数据/假协议不代替真实覆盖。
+
+### 远程CI采集等待阻塞及实际修复
+
+同一30487d0 head的PR CI 37654213109通过535/8/46；push CI 37654206140 attempt1在旧Step17采集终态5秒断言失败，
+attempt2在旧Step15部分失败采集的同类断言失败，均535 Python/8 Node通过、45/46桌面通过；第20步三项原桌面用例两轮均通过。
+两次重跑API HTTP500后具体job重跑成功，失败原始日志均保留，不用另一组绿色检查绕过失败合并。
+单独复测及三次重复Step17通过不能证明CI阻塞消失，因此定位并修复等待前置条件，而非继续碰运气重跑。
+
+采集计划单能力20秒、并发最多4；旧业务终态断言隐含整项采集必须5秒结束，既非计划契约亦非性能承诺。
+验收helper从实际Python计划推导批数和单项时限，加6秒用于既有清理/IPC；轮询同一任务到第一个非fetching终态，
+随后严格检查预期collected/partial/failed、完成总数、成功/失败计数、步骤无queued/running，再用原默认5秒检查页面同一ID/状态。
+不重启任务、不重试能力或模型、不把失败等成成功，不改变生产20秒超时及报告等待。恢复动作先在5秒内离开旧interrupted显示。
+所有原证据、部分成功数、失败原因、报告/恢复断言保留；部分/全部失败还反向断言helper不得接受collected。
+
+新增实际Electron回归使用既有research-checkpoint的15秒采集夹具：原5秒断言1失败，修复后该用例及恢复、放弃、部分/全部失败共5项通过。
+断言实际profile执行至少14秒、4项成功、计划仍20秒、报告数0。新全套为535 Python/8 Node/47实际Electron，待重新执行后记录结果。
+变更新增tests/backend-ready.cjs相对基线的实际修复，发布差异现48份（1来源/28 Python与契约/13桌面与验收/6文档），258源码与来源范围不变。
+本节、PR与根PROJECT_STATE保留首轮535/8/46含义；新head完整本机、干净源码与两项CI全部通过且无阻塞前不合并。
+日志仅Temp/research-trail-step20-ci-push-attempt1-failed.log、ci-push-attempt2.log、ci-readiness-{before,after}.log，均不上传。

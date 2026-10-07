@@ -272,11 +272,11 @@ def test_additive_upgrade_from_0013_preserves_existing_workspace(api,tmp_path):
     with api(path=path) as (c,app):
         old=c.get('/workspace').json()
         with app.state.screening.database.write() as db:
-            db.execute(text('DROP TABLE screening_runs'));db.execute(text("UPDATE alembic_version SET version_num='0013_theses'"))
+            db.execute(text('DROP TABLE calendar_snapshots'));db.execute(text('DROP TABLE screening_runs'));db.execute(text("UPDATE alembic_version SET version_num='0013_theses'"))
     with api(path=path) as (c,app):
         assert c.get('/workspace').json()==old and c.get('/screening/runs').json()==[]
         with app.state.screening.database.sessions() as db:
-            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0014_screening'
+            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0015_calendar'
             assert not db.execute(text('PRAGMA foreign_key_check')).all()
 
 def test_explicit_nonbuy_and_empty_lists_are_excluded_not_capability_failures(api):

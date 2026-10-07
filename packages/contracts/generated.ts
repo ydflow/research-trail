@@ -34,6 +34,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/calendar/snapshots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calendar List */
+        get: operations["calendar_list_calendar_snapshots_get"];
+        put?: never;
+        /** Calendar Refresh */
+        post: operations["calendar_refresh_calendar_snapshots_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/calendar/snapshots/{identity}/reads/{read_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calendar Original */
+        get: operations["calendar_original_calendar_snapshots__identity__reads__read_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/calendar/snapshots/{identity}/view": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Calendar View */
+        post: operations["calendar_view_calendar_snapshots__identity__view_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/calendar/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Calendar Sources */
+        post: operations["calendar_sources_calendar_sources_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/capabilities": {
         parameters: {
             query?: never;
@@ -1215,6 +1284,234 @@ export interface components {
             /** Symbol */
             symbol: string | null;
         };
+        /** CalendarEventView */
+        CalendarEventView: {
+            /**
+             * Conflict
+             * @default false
+             */
+            conflict: boolean;
+            /** Description */
+            description: string;
+            /** Display Date */
+            display_date: string | null;
+            /** Display Time */
+            display_time: string;
+            /** Display Timezone */
+            display_timezone: string;
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "earnings" | "macro" | "central-bank";
+            /** Occurred At */
+            occurred_at: string | null;
+            /**
+             * Occurrence Status
+             * @enum {string}
+             */
+            occurrence_status: "announced" | "occurred" | "cancelled" | "postponed" | "unknown";
+            /** Pointer */
+            pointer: string;
+            /**
+             * Precision
+             * @enum {string}
+             */
+            precision: "instant" | "date" | "unknown";
+            /** Read Id */
+            read_id: string;
+            /** Related Symbols */
+            related_symbols: string[];
+            /** Schedule Label */
+            schedule_label: string | null;
+            /** Scheduled At */
+            scheduled_at: string | null;
+            /** Source Date */
+            source_date: string | null;
+            /** Source Event Id */
+            source_event_id: string | null;
+            /** Source Timezone */
+            source_timezone: string | null;
+            /** Time Code */
+            time_code: string | null;
+            /**
+             * Time Relation
+             * @enum {string}
+             */
+            time_relation: "upcoming" | "elapsed_unconfirmed" | "occurred" | "cancelled" | "postponed" | "date_only" | "unknown";
+            /** Title */
+            title: string;
+            /** Updated At */
+            updated_at: string | null;
+        };
+        /** CalendarIssue */
+        CalendarIssue: {
+            /** Code */
+            code: string;
+            /** Pointer */
+            pointer: string;
+            /** Read Id */
+            read_id: string;
+        };
+        /** CalendarOriginal */
+        CalendarOriginal: {
+            read: components["schemas"]["CalendarRead"];
+            /** Result */
+            result: components["schemas"]["ProviderSuccess"] | components["schemas"]["ProviderFailure"];
+            /** Snapshot Id */
+            snapshot_id: string;
+        };
+        /** CalendarPage */
+        CalendarPage: {
+            /** Duplicate Count */
+            duplicate_count: number;
+            /** Events */
+            events: components["schemas"]["CalendarEventView"][];
+            /** Id */
+            id: string;
+            /** Issues */
+            issues: components["schemas"]["CalendarIssue"][];
+            /**
+             * Label
+             * @default 历史事件快照；仅显式刷新更新。预告时间经过不等于已发生，获取时间不是事件时间。
+             */
+            label: string;
+            query: components["schemas"]["CalendarRefresh"];
+            /** Reads */
+            reads: components["schemas"]["CalendarRead"][];
+            /**
+             * Reference Time
+             * Format: date-time
+             */
+            reference_time: string;
+            /**
+             * Saved At
+             * Format: date-time
+             */
+            saved_at: string;
+            /** Sources */
+            sources: components["schemas"]["CalendarSource"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "completed" | "partial" | "failed" | "unavailable";
+        };
+        /** CalendarRead */
+        CalendarRead: {
+            /** Code */
+            code?: string | null;
+            /** Fetched At */
+            fetched_at?: string | null;
+            /** Id */
+            id: string;
+            query: components["schemas"]["ReadQuery"];
+            /** Result Hash */
+            result_hash: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "success" | "failed";
+        };
+        /** CalendarRefresh */
+        CalendarRefresh: {
+            /**
+             * End
+             * Format: date
+             * @default 2024-01-25
+             */
+            end: string;
+            /** Kinds */
+            kinds?: ("earnings" | "macro" | "central-bank")[];
+            /**
+             * Mode
+             * @default simulated
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /**
+             * Provider
+             * @default longbridge
+             * @enum {string}
+             */
+            provider: "longbridge" | "massive";
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            /**
+             * Start
+             * Format: date
+             * @default 2024-01-15
+             */
+            start: string;
+            /**
+             * Timezone
+             * @default Asia/Shanghai
+             */
+            timezone: string;
+        };
+        /** CalendarSelection */
+        CalendarSelection: {
+            /**
+             * Mode
+             * @default simulated
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /**
+             * Provider
+             * @default longbridge
+             * @enum {string}
+             */
+            provider: "longbridge" | "massive";
+        };
+        /** CalendarSource */
+        CalendarSource: {
+            availability: components["schemas"]["CapabilityState"];
+            /** Coverage */
+            coverage: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "earnings" | "macro" | "central-bank";
+            /** Name */
+            name: string;
+        };
+        /** CalendarSummary */
+        CalendarSummary: {
+            /** Event Count */
+            event_count: number;
+            /** Id */
+            id: string;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /** Provider */
+            provider: string;
+            /**
+             * Saved At
+             * Format: date-time
+             */
+            saved_at: string;
+            /** Status */
+            status: string;
+        };
+        /** CalendarViewInput */
+        CalendarViewInput: {
+            /**
+             * Timezone
+             * @default Asia/Shanghai
+             */
+            timezone: string;
+        };
         /** CancelledEvent */
         CancelledEvent: {
             /** Message Id */
@@ -1688,6 +1985,50 @@ export interface components {
             events: (components["schemas"]["RunStartedEvent"] | components["schemas"]["MessageStartedEvent"] | components["schemas"]["StatusEvent"] | components["schemas"]["TextDeltaEvent"] | components["schemas"]["MessageCompletedEvent"] | components["schemas"]["RunCompletedEvent"] | components["schemas"]["ToolStartedEvent"] | components["schemas"]["ToolResultEvent"] | components["schemas"]["ErrorEvent"] | components["schemas"]["CancelledEvent"])[];
             /** Last Sequence */
             last_sequence: number;
+        };
+        /** EventResearchContext */
+        EventResearchContext: {
+            /**
+             * Association
+             * @enum {string}
+             */
+            association: "source" | "user-selected";
+            event: components["schemas"]["CalendarEventView"];
+            /**
+             * Label
+             * @default 事件来源快照仅为研究上下文，不证明投资影响；预告不等于已经发生。
+             */
+            label: string;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /** Provider */
+            provider: string;
+            /**
+             * Reference Time
+             * Format: date-time
+             */
+            reference_time: string;
+            /** Result Hash */
+            result_hash: string;
+            /** Snapshot Id */
+            snapshot_id: string;
+            /** Target Symbol */
+            target_symbol: string;
+        };
+        /** EventResearchRef */
+        EventResearchRef: {
+            /** Event Id */
+            event_id: string;
+            /**
+             * Snapshot Id
+             * Format: uuid
+             */
+            snapshot_id: string;
+            /** Timezone */
+            timezone?: string | null;
         };
         /** FinancialRow */
         FinancialRow: {
@@ -2605,6 +2946,7 @@ export interface components {
              * @default 事实值来自能力执行记录；分析与预测来自合成器。引用可追溯不等于论断正确。
              */
             disclaimer: string;
+            event_context?: components["schemas"]["EventResearchContext"] | null;
             /** Evidence */
             evidence: components["schemas"]["ReportEvidence"][];
             /** Gaps */
@@ -2796,6 +3138,7 @@ export interface components {
              * @default 4
              */
             concurrency: number;
+            event_ref?: components["schemas"]["EventResearchRef"] | null;
             /**
              * Mode
              * @default simulated
@@ -2819,6 +3162,7 @@ export interface components {
         };
         /** ResearchPlan */
         ResearchPlan: {
+            event_context?: components["schemas"]["EventResearchContext"] | null;
             input: components["schemas"]["ResearchInput"];
             /**
              * Label
@@ -4171,6 +4515,178 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RiskReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calendar_list_calendar_snapshots_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calendar_refresh_calendar_snapshots_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalendarRefresh"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calendar_original_calendar_snapshots__identity__reads__read_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+                read_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarOriginal"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calendar_view_calendar_snapshots__identity__view_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalendarViewInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calendar_sources_calendar_sources_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CalendarSelection"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarSource"][];
                 };
             };
             /** @description Validation Error */

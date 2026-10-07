@@ -157,7 +157,7 @@ def test_upgrade_0006_keeps_old_sessions_profiles_and_provider_config(tmp_path):
     db.migrate(); db.migrate(); store=WatchlistStore(db)
     assert Store(db).snapshot(session.id).model_dump()==before.model_dump()
     with db.engine.connect() as con:
-        assert con.scalar(text('SELECT version_num FROM alembic_version'))=='0014_screening'
+        assert con.scalar(text('SELECT version_num FROM alembic_version'))=='0015_calendar'
         assert con.scalar(text('SELECT display_name FROM profile'))=='keep-user'
         assert con.scalar(text('SELECT provider FROM data_providers'))=='massive'
         assert not con.exec_driver_sql('PRAGMA foreign_key_check').all()

@@ -50,6 +50,12 @@ class CapabilityRegistry:
                 **service.health.get((p, c, profiles[p]), {})) for p, cs in SUPPORTED.items() for c in cs]
 
     def state(self, name, mode='simulated', provider='longbridge'):
+        if name in ('calendar.earnings','calendar.macro','calendar.central-bank'):
+            # Calendar coverage derives from the same provider health, never another health table.
+            base=self.state('research.events',mode,provider).model_copy(update={'id':name,'tool_exposed':False})
+            if name=='calendar.central-bank' and mode=='real':
+                return base.model_copy(update={'implemented':False,'available':False,'code':'NOT_IMPLEMENTED'})
+            return base
         is_tool = name in self.handlers
         data = name in set(c for cs in SUPPORTED.values() for c in cs)
         implemented = is_tool or data
@@ -80,7 +86,7 @@ class CapabilityRegistry:
                                provider=provider, code=code, tool_exposed=exposed and available)
 
     def list(self, mode='simulated', provider='longbridge'):
-        names = sorted(set(TOOL_SPECS) | {c for cs in SUPPORTED.values() for c in cs})
+        names = sorted(set(TOOL_SPECS) | {c for cs in SUPPORTED.values() for c in cs} | {'calendar.earnings','calendar.macro','calendar.central-bank'})
         return [self.state(n, mode, provider) for n in names]
 
     def tool_available(self, name):

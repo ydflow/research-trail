@@ -2,6 +2,11 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendState, ResearchTrailBridge, RunStreamUpdate } from '../bridge';
 
 const bridge: ResearchTrailBridge = {
+  calendarSources: input => ipcRenderer.invoke('calendar:sources',input),
+  refreshCalendar: input => ipcRenderer.invoke('calendar:refresh',input),
+  calendarHistory: () => ipcRenderer.invoke('calendar:history'),
+  calendarView: (id,timezone) => ipcRenderer.invoke('calendar:view',id,timezone),
+  calendarOriginal: (id,readId) => ipcRenderer.invoke('calendar:original',id,readId),
   screeningTasks: context => ipcRenderer.invoke('screening:tasks',context),
   startScreening: input => ipcRenderer.invoke('screening:start',input),
   screeningRuns: () => ipcRenderer.invoke('screening:list'),

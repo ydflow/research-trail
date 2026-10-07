@@ -10,6 +10,11 @@ export interface BackendState {
   pythonVersion?: string;
 }
 export interface ResearchTrailBridge {
+  calendarSources(input: import('./calendar-types').CalendarSelection): Promise<import('./calendar-types').CalendarSource[]>;
+  refreshCalendar(input: import('./calendar-types').CalendarRefresh): Promise<import('./calendar-types').CalendarPage>;
+  calendarHistory(): Promise<import('./calendar-types').CalendarSummary[]>;
+  calendarView(id: string,timezone: string): Promise<import('./calendar-types').CalendarPage>;
+  calendarOriginal(id: string,readId: string): Promise<import('./calendar-types').CalendarOriginal>;
   screeningTasks(context: import('./screening-types').ScreeningContext): Promise<import('./screening-types').ScreeningTask[]>;
   startScreening(input: import('./screening-types').ScreeningInput): Promise<import('./screening-types').ScreeningRun>;
   screeningRuns(): Promise<import('./screening-types').ScreeningSummary[]>;

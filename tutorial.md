@@ -417,7 +417,7 @@ app/bridge/RecoveryPanel；实际中断用例见test_recovery.py、tests/desktop
 
 ## C13：发现候选与事件如何进入研究？
 
-状态：第19步筛选主链已展开；第20步事件日历仍是大纲，未实现。
+状态：第19步筛选与第20步事件日历真实主链已展开。自动提醒仍由未实现的第21步承担。
 
 - 主链：用户筛选任务/事件 → 有界筛选或事件列表 → 带依据候选 → 自选/对比/研究上下文。
 - 必读1：`packages/core/src/screening.ts`，`packages/shared/src/screening/service.ts` / `ScreeningService.runScreening`：任务/有界池到候选。
@@ -436,7 +436,23 @@ app/bridge/RecoveryPanel；实际中断用例见test_recovery.py、tests/desktop
 6. SQLite `screening_runs`保存计划、结果和SHA256。`screeningEvidence`只凭run/read UUID回读实际ProviderResult；每个指标输入是read_id和JSON Pointer，不是任意磁盘路径。
 7. 候选自选走原WatchlistStore；对比填实际代码并需补第二只；研究填代码及该次数据模式/提供商。跳转不自动执行查询或生成报告。重开应用只读已存历史。
 
-本步未调用LLM。理由来自指标公式，不把当前评级当作变化历史，不把支付日当除息日，不统计未来新闻。默认样例缺财务比率等时页面应展示缺口，这与筛选结果为空的正常情况不同。日历页、宏观/央行事件和提醒仍未实现。来源及17项阈值见`docs/ACCEPTANCE-step19.md`，学习记录保留在practice C13。
+第19步未调用LLM。理由来自指标公式，不把当前评级当作变化历史，不把支付日当除息日，不统计未来新闻。默认样例缺财务比率等时页面应展示缺口，这与筛选结果为空的正常情况不同。来源及17项阈值见`docs/ACCEPTANCE-step19.md`，学习记录保留在practice C13。
+
+### 研迹第20步真实调用链
+
+1. `apps/desktop/src/renderer/calendar/CalendarPanel.tsx`选择日期/时区/类别，显式点击刷新；五个命名桥经preload、main来源/字段校验及启动令牌进入Python。跳转研究只是填草稿，不自动查询或生成报告。
+2. `services/backend/research_trail/calendar.py` / `CalendarService.refresh`读取同一`CapabilityRegistry.state`，财报与宏观沿已有`ProviderService.query('research.events')`，不创建另一个健康状态或适配器。真实央行未实现；不可用不回退。
+3. `calendar_fixtures.py`固定六条自造示例与参考时刻，读取时间由ProviderService独立记录。`calendar_normalize.py` / `normalize`只解析实际行字段，`instant`拒绝缺时区、DST歧义/缺失，`project`在Python转换显示时区。纽约16日17时是上海17日06时；日期/盘后不能编小时。
+4. `merge_events`按模式/提供商/类别/来源ID去重，没ID时用实际内容及时刻；有更新时刻的修订取较新版本，无序冲突显式显示。过去预告仍是未确认发生，来源声称未来已经发生标冲突。
+5. 迁移`0015_calendar`追加`calendar_snapshots`保存查询、读取、结果SHA256、原始数据与事件Pointer。`view`切时区、`original`读事实、`list`读历史均不重调能力；刷新UUID幂等。快照与结果校验不符拒绝研究。
+6. `EventResearchRef`只传快照ID、事件ID和显示时区。`CalendarService.context`在Python核对模式、提供商、股票关联、冲突和证据。Apple只能选来源股票；FOMC选TSLA记为用户自主选择，不伪造来源关联。
+7. `ResearchService.plan`冻结`event_context`，沿既有八策略/技能/能力链执行；选事件驱动时，财报查询股票/financial，宏观或央行查询macrodata/无股票。原计划和上下文保存在研究历史；恢复不自动消费模型。
+8. `report_facts.packet`向合成器传同一上下文；`ReportDocument.event_context`、`EventContextCard`与`report_output.markdown`保存/显示事件时区、来源读取/hash/Pointer和股票关联。日历来源是上下文，不成为捏造的当前研究证据ID。旧报告可读不覆盖。
+
+本步固定数据、假模型和固定合成器检查；没有真实提供商/LLM业务调用，不证明真实日历覆盖、未来催化影响或分析正确性。`tzdata`锁定提供Windows IANA数据，工程参考链接见`docs/SOURCES-step20.json`。操作与验证边界见[第20步验收](docs/ACCEPTANCE-step20.md)。
+
+小练习：只改事件页默认显示时区为UTC，验证同一Apple ID的显示日期变为16日，不改原始`scheduled_at`。
+理解题：为什么不能用获取时间补事件时间？宏观选择股票与来源股票关联有什么差别？读历史时哪个Python对象与记录阻止重复查询？
 
 ## C14：提醒与简报何时触发？
 
