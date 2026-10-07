@@ -32,6 +32,9 @@ class QueryStop:
         return self.is_set()
 
 def authored_data(query):
+    if query.capability=='research.events':
+        from .calendar_fixtures import authored_calendar_data
+        return authored_calendar_data(query)
     if query.symbol and not query.capability.startswith('account.'):
         FixtureMarketProvider().snapshot(query.symbol)  # Unknown securities have no invented examples.
     if query.capability in ('market.quote','market.kline'):
@@ -57,7 +60,6 @@ def authored_data(query):
         'research.news':[{'id':'authored-news-1','title':f'{symbol} 自主编写的模拟新闻','description':'示例正文，并非真实报道。',
             'url':'https://example.com/research-trail-simulated-news?symbol='+symbol,
             'source':'模拟来源（示例链接）','published_at':'2024-01-16T21:00:00+00:00'}],
-        'research.events':{'date':'2024-01-16','list':[{'title':'模拟事件'}]},
         'account.accounts':[{'id':'authored-test-account','name':'模拟账户','region':'global'}],
         'account.portfolio':{'base_currency':'USD','total_assets':None,'accounts':[],'holdings':[]},
         'account.positions':[{'symbol':symbol,'name':'模拟持仓','currency':'USD','quantity':2,'available_quantity':2,

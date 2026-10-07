@@ -39,9 +39,10 @@ class Work:
     draining_since: float | None = None
 
 class ResearchService:
-    def __init__(self, database, registry, skills, providers, *, timeout_seconds=20, drain_seconds=1):
+    def __init__(self, database, registry, skills, providers, *, timeout_seconds=20, drain_seconds=1, calendar=None):
         if not 0 < timeout_seconds <= 20 or not 0 <= drain_seconds <= 2: raise ValueError('研究执行时限无效')
         self.registry, self.skills, self.providers = registry, skills, providers
+        self.calendar=calendar
         self.store = ResearchStore(database)
         self.timeout_seconds, self.drain_seconds = timeout_seconds, drain_seconds
         self.lock = threading.RLock()
@@ -52,6 +53,10 @@ class ResearchService:
 
     def plan(self, body):
         body = ResearchInput.model_validate(body.model_dump())
+        context=None
+        if body.event_ref:
+            if self.calendar is None: raise ResearchError('CALENDAR_UNAVAILABLE')
+            context=self.calendar.context(body.event_ref,body)
         strategy = next(s for s in strategies() if s.id==body.strategy)
         selected = {s.id:s for s in self.skills.list(body.mode,body.provider)}
         skill_states = [PlannedSkill(id=i,status=selected[i].status,code=selected[i].code) if i in selected else
@@ -61,9 +66,21 @@ class ResearchService:
             query=ReadQuery(capability=c,mode=body.mode,symbol=None if c in ('market.sentiment','market.status') else body.symbol,
                 market=market,event_type='financial',use_cache=False))
             for c in strategy.capability_ids]
+        if context:
+            from datetime import timedelta
+            event=context.event
+            event_time=event.scheduled_at or event.occurred_at
+            anchor=event.source_date or (event_time.date() if event_time else None)
+            for read in reads:
+                if read.capability=='research.events':
+                    read.query=ReadQuery(capability='research.events',mode=body.mode,
+                        symbol=body.symbol if event.kind=='earnings' else None,market=market,
+                        event_type='financial' if event.kind=='earnings' else 'macrodata',count=100,use_cache=False,
+                        start=anchor-timedelta(days=1) if anchor else None,end=anchor+timedelta(days=1) if anchor else None)
+                    read.availability=self.registry.state('calendar.'+event.kind,body.mode,body.provider)
         with self.providers.settings.lock:
             return ResearchPlan(input=body,source=SOURCE,provider_revision=self.providers.settings.profile(body.provider).revision,
-                provider_identity=self.providers.settings.identity(body.provider),timeout_seconds=self.timeout_seconds,skills=skill_states,reads=reads)
+                provider_identity=self.providers.settings.identity(body.provider),timeout_seconds=self.timeout_seconds,skills=skill_states,reads=reads,event_context=context)
 
     def start(self, body):
         with self.lock:

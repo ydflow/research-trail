@@ -2,6 +2,7 @@
 from typing import Literal
 from pydantic import Field, StrictBool, StrictFloat, StrictInt, StrictStr
 from .provider_contracts import Boundary, ProviderSuccess
+from .calendar_contracts import EventResearchContext
 
 class ReportGenerate(Boundary):
     mode: Literal['fixed', 'real'] = 'fixed'
@@ -53,6 +54,7 @@ class ReportDocument(Boundary):
     evidence: list[ReportEvidence]
     gaps: list[ReportGap]
     synthesis: ReportSynthesis
+    event_context: EventResearchContext | None = None
     disclaimer: str = '事实值来自能力执行记录；分析与预测来自合成器。引用可追溯不等于论断正确。'
 
 class ReportSummary(Boundary):

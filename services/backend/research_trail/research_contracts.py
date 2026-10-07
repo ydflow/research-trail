@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic import AwareDatetime, Field
 from .provider_contracts import Boundary, ReadQuery, ProviderSuccess
 from .capabilities import CapabilityState
+from .calendar_contracts import EventResearchRef, EventResearchContext
 
 StrategyId = Literal['comprehensive', 'value', 'growth', 'technical', 'earnings', 'event-driven', 'risk-review', 'income']
 ResearchStatus = Literal['fetching', 'collected', 'partial', 'failed', 'cancelled', 'interrupted']
@@ -14,6 +15,7 @@ class ResearchInput(Boundary):
     mode: Literal['simulated', 'real'] = 'simulated'
     provider: Literal['longbridge', 'massive'] = 'longbridge'
     concurrency: int = Field(default=4, ge=1, le=4, strict=True)
+    event_ref: EventResearchRef | None = None
 
 class ResearchStrategy(Boundary):
     id: StrategyId
@@ -40,6 +42,7 @@ class ResearchPlan(Boundary):
     timeout_seconds: float
     skills: list[PlannedSkill]
     reads: list[PlannedRead]
+    event_context: EventResearchContext | None = None
     label: str = '仅结构化数据采集；策略名称不代表指标、投资结论或报告已实现'
 
 class ResearchStep(Boundary):

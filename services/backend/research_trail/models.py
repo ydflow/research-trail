@@ -251,6 +251,16 @@ class ScreeningRecord(Base):
     payload: Mapped[dict] = mapped_column(JSON)
 
 
+class CalendarSnapshotRecord(Base):
+    __tablename__ = 'calendar_snapshots'
+    id: Mapped[str] = mapped_column(String(36),primary_key=True)
+    request_id: Mapped[str] = mapped_column(String(36),unique=True)
+    request_hash: Mapped[str] = mapped_column(String(64))
+    saved_at: Mapped[str] = mapped_column(String(40),index=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+    checksum: Mapped[str] = mapped_column(String(64))
+
+
 class ThesisVersionRecord(Base):
     __tablename__ = 'thesis_versions'
     __table_args__ = (CheckConstraint('version >= 1'),)

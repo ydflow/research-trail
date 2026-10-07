@@ -83,5 +83,7 @@ def execute_cli(snapshot,query,stop=None,*,executor=run_process):
         if not isinstance(group,dict) or not isinstance(group.get('infos'),list): raise ProviderFault('INVALID_RESPONSE')
         for info in group['infos']:
             if not isinstance(info,dict): raise ProviderFault('INVALID_RESPONSE')
-            events.append({k:info.get(k) for k in ('id','datetime','type','activity_type','counter_id','counter_name','market','currency','content')})
+            # Preserve source-local date and precision: epoch may be a date anchor for before/after market.
+            events.append({k:info.get(k) for k in ('id','datetime','type','activity_type','counter_id','counter_name','market','currency','content',
+                'date','date_type','financial_market_time','ext','timezone','scheduled_at','occurred_at','updated_at','status')})
     return events[:query.count]

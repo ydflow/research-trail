@@ -77,6 +77,7 @@ class LiveReportSynthesizer:
 fact的text必须为空，且只能选实际证据ID。analysis/prediction的text写简短中文，禁止任何数值字符，包括阿拉伯数字、中文数词、百分号、倍数或英文数词。不要使用“一致”“进一步”等含数词的词，改用“吻合”“继续”。不要写目标价、估值数值或置信度。
 严格避免“一定”“一笔”“一条”“两”“半”“双”“倍”等表达。用“相关”“某个”“较多”等不含数词的定性文字；金额、日期、数量和比率只能由fact引用呈现，任何未经采集的数字会使整个报告拒收。为确保输出可用，请在返回前逐字段检查text与title均没有数词。
 每条内容必须引用输入中存在的证据ID。analysis和prediction是未核实判断，引用不证明正确。缺口由Python展示，不要改写或补齐缺口。
+event_context仅为来源快照研究线索，不属于本次能力执行的evidence列表。预告或经过预告不能声称已发生，不能为上下文虚构证据ID。
 risks、bull_case、bear_case中的kind必须是analysis；catalysts中的kind必须是prediction，写成条件式未来可能性，不能声称已发生。
 summary及四类列表必须各有内容，sections必须有章节，stance只能bullish/bearish/neutral。每类最多两条、章节最多四个、每条最多两个证据引用。保持简短，覆盖摘要、章节、风险、条件式催化因素、多空论点。
 '''

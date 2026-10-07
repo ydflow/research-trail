@@ -237,7 +237,9 @@ def test_cli_baseline_wire_shapes_preflight_and_public_projection(tmp_path,cap):
         'account.portfolio':{'overview':{'currency':'USD','total_asset':'100','total_cash':'10','market_cap':'90'},
             'market_accounts':{'HK':{'currency':'HKD','balance':'3','debug':SENTINEL}},
             'holdings':[{'symbol':'AAPL.US','quantity':'1','cost_price':None,'currency':'USD','debug':SENTINEL}]},
-        'research.events':{'list':[{'infos':[{'id':'fixture-event','datetime':'2024-01-01','counter_name':'test','debug':SENTINEL}]}]},
+        'research.events':{'list':[{'infos':[{'id':'fixture-event','datetime':'2024-01-01','counter_name':'test',
+            'ext':{'local_date':'2024-01-01','date_zone':'(美东)','financial_report':{'market_time':'after'}},
+            'status':'announced','debug':SENTINEL}]}]},
         'company.financials':{'symbol':'AAPL.US','report':'2024Q1','list':{'IS':{'indicators':[{'title':'Revenue','debug':SENTINEL,'accounts':[{'name':'sales','debug':SENTINEL,'values':[{'value':None,'debug':SENTINEL}]}]}]},'debug':SENTINEL}}
     }
     def executor(argv,**kw):
@@ -249,7 +251,10 @@ def test_cli_baseline_wire_shapes_preflight_and_public_projection(tmp_path,cap):
     if cap=='account.portfolio':
         assert data['total_assets']==100 and data['cash']==10
         assert data['accounts'][0]['currency']=='HKD' and data['holdings'][0]['cost_price'] is None
-    if cap=='research.events': assert data[0]['id']=='fixture-event'
+    if cap=='research.events':
+        assert data[0]['id']=='fixture-event' and data[0]['status']=='announced'
+        assert data[0]['ext']==bodies[cap]['list'][0]['infos'][0]['ext']
+        assert data[0]['occurred_at'] is None
     if cap=='company.financials': assert calls[1][1:]==['financial-report','AAPL.US','--kind','ALL','--report','2024Q1','--format','json']
 
 def test_cli_missing_session_does_not_issue_query(tmp_path):

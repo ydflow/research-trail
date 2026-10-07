@@ -108,6 +108,592 @@
         "title": "AnalysisRead",
         "type": "object"
       },
+      "CalendarEventView": {
+        "additionalProperties": false,
+        "properties": {
+          "conflict": {
+            "default": false,
+            "title": "Conflict",
+            "type": "boolean"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "display_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Date"
+          },
+          "display_time": {
+            "title": "Display Time",
+            "type": "string"
+          },
+          "display_timezone": {
+            "title": "Display Timezone",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "earnings",
+              "macro",
+              "central-bank"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "occurred_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurred At"
+          },
+          "occurrence_status": {
+            "enum": [
+              "announced",
+              "occurred",
+              "cancelled",
+              "postponed",
+              "unknown"
+            ],
+            "title": "Occurrence Status",
+            "type": "string"
+          },
+          "pointer": {
+            "title": "Pointer",
+            "type": "string"
+          },
+          "precision": {
+            "enum": [
+              "instant",
+              "date",
+              "unknown"
+            ],
+            "title": "Precision",
+            "type": "string"
+          },
+          "read_id": {
+            "title": "Read Id",
+            "type": "string"
+          },
+          "related_symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Related Symbols",
+            "type": "array"
+          },
+          "schedule_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schedule Label"
+          },
+          "scheduled_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled At"
+          },
+          "source_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Date"
+          },
+          "source_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Event Id"
+          },
+          "source_timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Timezone"
+          },
+          "time_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Code"
+          },
+          "time_relation": {
+            "enum": [
+              "upcoming",
+              "elapsed_unconfirmed",
+              "occurred",
+              "cancelled",
+              "postponed",
+              "date_only",
+              "unknown"
+            ],
+            "title": "Time Relation",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "id",
+          "source_event_id",
+          "kind",
+          "title",
+          "description",
+          "related_symbols",
+          "scheduled_at",
+          "occurred_at",
+          "source_date",
+          "source_timezone",
+          "precision",
+          "schedule_label",
+          "occurrence_status",
+          "updated_at",
+          "time_code",
+          "read_id",
+          "pointer",
+          "display_timezone",
+          "display_time",
+          "display_date",
+          "time_relation"
+        ],
+        "title": "CalendarEventView",
+        "type": "object"
+      },
+      "CalendarIssue": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "pointer": {
+            "title": "Pointer",
+            "type": "string"
+          },
+          "read_id": {
+            "title": "Read Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "read_id",
+          "pointer",
+          "code"
+        ],
+        "title": "CalendarIssue",
+        "type": "object"
+      },
+      "CalendarOriginal": {
+        "additionalProperties": false,
+        "properties": {
+          "read": {
+            "$ref": "#/components/schemas/CalendarRead"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProviderSuccess"
+              },
+              {
+                "$ref": "#/components/schemas/ProviderFailure"
+              }
+            ],
+            "title": "Result"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "snapshot_id",
+          "read",
+          "result"
+        ],
+        "title": "CalendarOriginal",
+        "type": "object"
+      },
+      "CalendarPage": {
+        "additionalProperties": false,
+        "properties": {
+          "duplicate_count": {
+            "title": "Duplicate Count",
+            "type": "integer"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarEventView"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarIssue"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "label": {
+            "default": "历史事件快照；仅显式刷新更新。预告时间经过不等于已发生，获取时间不是事件时间。",
+            "title": "Label",
+            "type": "string"
+          },
+          "query": {
+            "$ref": "#/components/schemas/CalendarRefresh"
+          },
+          "reads": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarRead"
+            },
+            "title": "Reads",
+            "type": "array"
+          },
+          "reference_time": {
+            "format": "date-time",
+            "title": "Reference Time",
+            "type": "string"
+          },
+          "saved_at": {
+            "format": "date-time",
+            "title": "Saved At",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CalendarSource"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "completed",
+              "partial",
+              "failed",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "query",
+          "reference_time",
+          "saved_at",
+          "status",
+          "sources",
+          "reads",
+          "events",
+          "issues",
+          "duplicate_count"
+        ],
+        "title": "CalendarPage",
+        "type": "object"
+      },
+      "CalendarRead": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "fetched_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fetched At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "query": {
+            "$ref": "#/components/schemas/ReadQuery"
+          },
+          "result_hash": {
+            "title": "Result Hash",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "success",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "query",
+          "status",
+          "result_hash"
+        ],
+        "title": "CalendarRead",
+        "type": "object"
+      },
+      "CalendarRefresh": {
+        "additionalProperties": false,
+        "properties": {
+          "end": {
+            "default": "2024-01-25",
+            "format": "date",
+            "title": "End",
+            "type": "string"
+          },
+          "kinds": {
+            "items": {
+              "enum": [
+                "earnings",
+                "macro",
+                "central-bank"
+              ],
+              "type": "string"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Kinds",
+            "type": "array"
+          },
+          "mode": {
+            "default": "simulated",
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "provider": {
+            "default": "longbridge",
+            "enum": [
+              "longbridge",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "start": {
+            "default": "2024-01-15",
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "timezone": {
+            "default": "Asia/Shanghai",
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id"
+        ],
+        "title": "CalendarRefresh",
+        "type": "object"
+      },
+      "CalendarSelection": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "default": "simulated",
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "provider": {
+            "default": "longbridge",
+            "enum": [
+              "longbridge",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "title": "CalendarSelection",
+        "type": "object"
+      },
+      "CalendarSource": {
+        "additionalProperties": false,
+        "properties": {
+          "availability": {
+            "$ref": "#/components/schemas/CapabilityState"
+          },
+          "coverage": {
+            "title": "Coverage",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "earnings",
+              "macro",
+              "central-bank"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "name",
+          "availability",
+          "coverage"
+        ],
+        "title": "CalendarSource",
+        "type": "object"
+      },
+      "CalendarSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "event_count": {
+            "title": "Event Count",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "saved_at": {
+            "format": "date-time",
+            "title": "Saved At",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "mode",
+          "provider",
+          "status",
+          "saved_at",
+          "event_count"
+        ],
+        "title": "CalendarSummary",
+        "type": "object"
+      },
+      "CalendarViewInput": {
+        "additionalProperties": false,
+        "properties": {
+          "timezone": {
+            "default": "Asia/Shanghai",
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "title": "CalendarViewInput",
+        "type": "object"
+      },
       "CancelledEvent": {
         "additionalProperties": false,
         "properties": {
@@ -1212,6 +1798,100 @@
           "last_sequence"
         ],
         "title": "EventPage",
+        "type": "object"
+      },
+      "EventResearchContext": {
+        "additionalProperties": false,
+        "properties": {
+          "association": {
+            "enum": [
+              "source",
+              "user-selected"
+            ],
+            "title": "Association",
+            "type": "string"
+          },
+          "event": {
+            "$ref": "#/components/schemas/CalendarEventView"
+          },
+          "label": {
+            "default": "事件来源快照仅为研究上下文，不证明投资影响；预告不等于已经发生。",
+            "title": "Label",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "reference_time": {
+            "format": "date-time",
+            "title": "Reference Time",
+            "type": "string"
+          },
+          "result_hash": {
+            "title": "Result Hash",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "target_symbol": {
+            "title": "Target Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "snapshot_id",
+          "mode",
+          "provider",
+          "target_symbol",
+          "association",
+          "reference_time",
+          "result_hash",
+          "event"
+        ],
+        "title": "EventResearchContext",
+        "type": "object"
+      },
+      "EventResearchRef": {
+        "additionalProperties": false,
+        "properties": {
+          "event_id": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "snapshot_id": {
+            "format": "uuid",
+            "title": "Snapshot Id",
+            "type": "string"
+          },
+          "timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone"
+          }
+        },
+        "required": [
+          "snapshot_id",
+          "event_id"
+        ],
+        "title": "EventResearchRef",
         "type": "object"
       },
       "FinancialRow": {
@@ -3464,6 +4144,16 @@
             "title": "Disclaimer",
             "type": "string"
           },
+          "event_context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EventResearchContext"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "evidence": {
             "items": {
               "$ref": "#/components/schemas/ReportEvidence"
@@ -4033,6 +4723,16 @@
             "title": "Concurrency",
             "type": "integer"
           },
+          "event_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EventResearchRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "mode": {
             "default": "simulated",
             "enum": [
@@ -4081,6 +4781,16 @@
       "ResearchPlan": {
         "additionalProperties": false,
         "properties": {
+          "event_context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EventResearchContext"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "input": {
             "$ref": "#/components/schemas/ResearchInput"
           },
@@ -7797,6 +8507,302 @@
           }
         },
         "summary": "Portfolio Risk"
+      }
+    },
+    "/calendar/snapshots": {
+      "get": {
+        "operationId": "calendar_list_calendar_snapshots_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CalendarSummary"
+                  },
+                  "title": "Response Calendar List Calendar Snapshots Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Calendar List"
+      },
+      "post": {
+        "operationId": "calendar_refresh_calendar_snapshots_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarRefresh"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Calendar Refresh"
+      }
+    },
+    "/calendar/snapshots/{identity}/reads/{read_id}": {
+      "get": {
+        "operationId": "calendar_original_calendar_snapshots__identity__reads__read_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "read_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Read Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarOriginal"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Calendar Original"
+      }
+    },
+    "/calendar/snapshots/{identity}/view": {
+      "post": {
+        "operationId": "calendar_view_calendar_snapshots__identity__view_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarViewInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalendarPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Calendar View"
+      }
+    },
+    "/calendar/sources": {
+      "post": {
+        "operationId": "calendar_sources_calendar_sources_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalendarSelection"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CalendarSource"
+                  },
+                  "title": "Response Calendar Sources Calendar Sources Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Calendar Sources"
       }
     },
     "/capabilities": {
