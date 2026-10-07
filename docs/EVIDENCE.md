@@ -1441,7 +1441,11 @@ clean source，迁移research-trail-verify-89y1Ww，CMD证据research-trail-cmd-
 163份运行/构建/测试源码在本机工作文件、修复提交Git blob及最终隔离副本逐字节一致。
 未新增依赖、工作流或放宽业务断言；实际修复只保护页面操作回执，不改变采集/报告业务状态。
 
-检查、最终head、PR与合并状态以提交后GitHub实查及根PROJECT_STATE发布回执为准。
+已创建[第17步PR #16](https://github.com/ydflow/research-trail/pull/16)，base main
+a50fc0ea2092b83292f507f0a82ff50709ea78e1，初始head
+1710b179cde08c44a2d7bd64e0e0fadf3ce5b70a。此head为验收文档提交，另四个来源/实现/修复
+提交如上。创建后push/PR CI正在运行，尚不称成功。此后补实际PR链接为独立文档提交，
+不改运行代码/测试，最终head检查与普通merge以GitHub实查及根PROJECT_STATE发布回执为准。
 原v0.1.0标签object 3dd216557cdc81ac8fc35b14e0585dc43731be86与Release assets0保留。
 真实SDK/CLI服务凭证过期、真实模型硬退出/消费账单、投资分析正确性、长期负载、其他OS、
 另一台机器、安装包、用户亲自操作和学习答案未验证。完成发布后停止。
