@@ -6,19 +6,21 @@
 
 ## 当前状态
 
-第19步17个固定筛选任务及机会发现页已实现，模拟及本机自动验收通过。Python对1—40只有界股票池确定性筛选/评分，保存规则、指标、实际能力结果和失败；缺数据不生成候选。候选可入自选、带入对比或研究入口。定向33项Python与2项实际Electron通过；完整502 Python / 8 Node / 43实际Electron、契约/类型/构建和0014重复迁移检查通过。来源、阈值及操作见[第19步清单](docs/ACCEPTANCE-step19.md)和EVIDENCE第44节。独立发布复核新增两项失败回归并修复，筛选35项通过；最终本机及独立干净源码均504/8/43通过，根CMD重启历史通过，已创建[PR #18](https://github.com/ydflow/research-trail/pull/18)，远程CI与最终合并见EVIDENCE第45节、PR及根回执。第20—24步未开始。
+第20步固定财报、宏观与央行事件日历已实现，模拟及本机自动验收通过。Python复用同一能力注册表和数据提供商，保存事件精度、预告/发生/更新时刻、时区、股票关联、读取结果与不可变快照。六条自造固定示例、跨日/DST、去重与冲突、缺口及带事件研究/报告上下文的定向28 Python/3实际Electron通过；完整本机与独立干净源码均532 Python/8 Node/46实际Electron、契约/类型/构建、0015重复迁移及根CMD重启历史通过。真实央行未实现，Massive事件不支持；真实不可用不回退，过去预告不算已发生。范围见[第20步清单](docs/ACCEPTANCE-step20.md)与EVIDENCE第46节，第21—24步未开始。本轮只开发，未提交/发布。
+
+第19步17个固定筛选任务及机会发现页已实现，模拟及本机自动验收通过。Python对1—40只有界股票池确定性筛选/评分，保存规则、指标、实际能力结果和失败；缺数据不生成候选。候选可入自选、带入对比或研究入口。开发定向33项Python与2项实际Electron、完整502/8/43通过；发布复核修复两项边界后筛选35项、本机与干净源码504/8/43及根CMD重启通过。来源、阈值及操作见[第19步清单](docs/ACCEPTANCE-step19.md)和EVIDENCE第44—45节。[PR #18](https://github.com/ydflow/research-trail/pull/18)已普通合并，当前开发基线a8bb67938e9cb962d5f532a5920b8f99d765ea44，发布CI与回执保留在根PROJECT_STATE。
 
 第18步投资论点、版本与复审已实现，模拟及本机自动验收通过。Python从已保存报告形成论点，编辑追加版本；新采集报告与旧论点数据比较，缺数据记录无法评估，投资影响由用户显式判断并保存理由。来源和操作范围见[第18步清单](docs/ACCEPTANCE-step18.md)，完整检查469 Python/8 Node/41实际Electron与0013迁移通过，定向18项Python/2项Electron通过。独立发布复验修复清空条目列表被拒绝的问题；[PR #17](https://github.com/ydflow/research-trail/pull/17)已普通合并，本机main为c4e1679b；最终发布回执与main CI证据见根PROJECT_STATE，第43节保留发布过程。
 
-第17步研究检查点及显式恢复、重新发起、放弃已实现，模拟、协议与本机进程中断自动验收通过。SQLite保留原计划、逐项证据与报告历史；恢复复用成功采集，续跑中断工作；报告中断后等待显式生成，不自动消费模型请求。配置变化、凭证缺失、证据损坏与重复操作有明确反馈。范围见[第17步清单](docs/ACCEPTANCE-step17.md)与EVIDENCE第40—41节；本步[PR #16](https://github.com/ydflow/research-trail/pull/16)已普通合并；main CI首次SSE超时及第二次完整通过均保留，最终发布回执见根PROJECT_STATE，第20—24步未开始。
+第17步研究检查点及显式恢复、重新发起、放弃已实现，模拟、协议与本机进程中断自动验收通过。SQLite保留原计划、逐项证据与报告历史；恢复复用成功采集，续跑中断工作；报告中断后等待显式生成，不自动消费模型请求。配置变化、凭证缺失、证据损坏与重复操作有明确反馈。范围见[第17步清单](docs/ACCEPTANCE-step17.md)与EVIDENCE第40—41节；本步[PR #16](https://github.com/ydflow/research-trail/pull/16)已普通合并；main CI首次SSE超时及第二次完整通过均保留，最终发布回执见根PROJECT_STATE，第21—24步未开始。
 
-第16步结构化报告、事实追溯、版本保存、Markdown导出与Research Diff已实现。固定合成器、模拟协议及本机桌面验收通过；发布复验中一次真实LLM请求成功保存报告，37条模拟数据证据回读通过，此前五次失败记录保留。该真实验证只证明结构、引用和保存流程通过，报告仍使用模拟采集数据，且出现定性文字与原始值不符，不能声称分析正确。事实值只来自已有执行结果，分析/预测独立标记。范围及发布验证见[第16步清单](docs/ACCEPTANCE-step16.md)与EVIDENCE第38—39节；发布状态以Git/PR回执为准，第20—24步未开始。
+第16步结构化报告、事实追溯、版本保存、Markdown导出与Research Diff已实现。固定合成器、模拟协议及本机桌面验收通过；发布复验中一次真实LLM请求成功保存报告，37条模拟数据证据回读通过，此前五次失败记录保留。该真实验证只证明结构、引用和保存流程通过，报告仍使用模拟采集数据，且出现定性文字与原始值不符，不能声称分析正确。事实值只来自已有执行结果，分析/预测独立标记。范围及发布验证见[第16步清单](docs/ACCEPTANCE-step16.md)与EVIDENCE第38—39节；发布状态以Git/PR回执为准，第21—24步未开始。
 
 第15步Python研究执行器已实现，8种固定策略驱动同一能力注册表和现有提供商采集，默认并发4、单项20秒；计划、逐项状态和成功数据保存在SQLite。支持整体取消、明确部分失败、全失败标失败和重启读取不重执行。采集服务本身不调用LLM，终态后可显式进入第16步报告生成；技能缺口如实显示。历史验收见[第15步清单](docs/ACCEPTANCE-step15.md)及EVIDENCE第36—37节。本地main已包含[PR #14](https://github.com/ydflow/research-trail/pull/14)合并。
 
 第14步统一能力注册与技能目录保留，同一注册表驱动工具、能力页和技能依赖状态；支持持久启用禁用、受限SKILL.md解析与按需安全读取，首批两个固定Folio技能目录保留原字节及许可。见[第14步清单](docs/ACCEPTANCE-step14.md)与EVIDENCE第34—35节；本地main已包含[PR #13](https://github.com/ydflow/research-trail/pull/13)合并，真实服务仍未验证。
 
-第13步风险与2—4股票对比已实现，模拟和本机自动验收通过，见[第13步清单](docs/ACCEPTANCE-step13.md)与EVIDENCE第32节。Python统一计算权重、Top1/Top5、HHI、波动、回撤与基线风险信号；13项对比指标标明币种、期间和缺失原因。页面和Agent共用同一服务与快照，LLM不计算确定性数值。真实数据未验证；本步按用户独立授权通过[PR #12](https://github.com/ydflow/research-trail/pull/12)交付，发布复验见第33节，最终提交/合并以Git与回执为准；第20—24步未开始。第12步组合导入及持久化保留，已通过[PR #11](https://github.com/ydflow/research-trail/pull/11)交付，历史证据见第30—31节。
+第13步风险与2—4股票对比已实现，模拟和本机自动验收通过，见[第13步清单](docs/ACCEPTANCE-step13.md)与EVIDENCE第32节。Python统一计算权重、Top1/Top5、HHI、波动、回撤与基线风险信号；13项对比指标标明币种、期间和缺失原因。页面和Agent共用同一服务与快照，LLM不计算确定性数值。真实数据未验证；本步按用户独立授权通过[PR #12](https://github.com/ydflow/research-trail/pull/12)交付，发布复验见第33节，最终提交/合并以Git与回执为准；第21—24步未开始。第12步组合导入及持久化保留，已通过[PR #11](https://github.com/ydflow/research-trail/pull/11)交付，历史证据见第30—31节。
 
 截至 2026-10-07：**第0/2/3/4/5/6/7/8/9/10/11/12/13/14/15/16/17/18/19步自动验收通过（第11—19步含模拟与本机实窗，第16步另含一次真实LLM结构/引用验证，第9步历史含一次真实模型工具验证）；第1步原用户手动记录仍待填写**。v0.1.0源码版已发布，仅假模型＋模拟数据。第8步新增设置/连接/个人资料/脱敏诊断，五类配置和健康由Python独立管理、凭证存于Windows系统凭证管理器；第8步连接探针仍是假测试；第9步真实模型运行需显式选择，第10步SDK/只读CLI/Massive适配已实现并通过模拟验收，真实行情/账户因未配置仍未验证。用户逐项亲自操作和学习记录仍待填写，第8步按独立授权通过 [PR #7](https://github.com/ydflow/research-trail/pull/7)交付，开发与发布复验见EVIDENCE第22—23节；最终合并状态以GitHub与发布回执为准。
 
@@ -27,15 +29,15 @@
 - 公开仓库：[ydflow/research-trail](https://github.com/ydflow/research-trail)。仅上传源码、测试、文档、依赖清单与锁文件；不包含运行数据或截图。
 - 第2步已普通合并，main基线为 `0e1dfd5ccf7e99c66d58188dcac9497ddd6e2bd8`；第3步以 [PR #2](https://github.com/ydflow/research-trail/pull/2) 交付，开发与发布验证见EVIDENCE第12—13节，最终提交和合并状态以Git与发布回执为准。
 - 第3步合并基线为 `7f925dee768ff33c076582dd9d41055aca9a5932`；第4步以 [PR #3](https://github.com/ydflow/research-trail/pull/3) 交付，开发及发布复验见EVIDENCE第14—15节，按功能分支/PR保留提交，最终远程状态以GitHub和发布回执为准。
-- 第5步开发基线为 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`；以 [PR #4](https://github.com/ydflow/research-trail/pull/4) 普通合并，第6步发布基线为`a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677`。第6步 [PR #5](https://github.com/ydflow/research-trail/pull/5)已普通合并，第7步发布基线为`f51b802d61896f9da30cd1f6df331c90e75e24b9`。第7步以 [PR #6](https://github.com/ydflow/research-trail/pull/6)交付，开发与发布证据见EVIDENCE第20—21节；第11步本机开发交付见下方；第12步已发布，第13步本机自动验收通过，独立发布复验见EVIDENCE第33节；第20—24步未开始。
-- [v0.1.0源码Release](https://github.com/ydflow/research-trail/releases/tag/v0.1.0)对应main `716543305ba5d74f57336c589c4b2dffaf6e3592`，没有安装包。第8—19步改动不在此标签内；[首版清单](docs/ACCEPTANCE-v0.1.0.md)保留标签创建前的验收快照，完整版本 `v1.0.0`仍为计划。
+- 第5步开发基线为 `4a72e47f79d478ed4f611444ee8d64dccf9d6a17`；以 [PR #4](https://github.com/ydflow/research-trail/pull/4) 普通合并，第6步发布基线为`a56cc62d9efe4ca6e02cb9f0f06af1bcd3dc6677`。第6步 [PR #5](https://github.com/ydflow/research-trail/pull/5)已普通合并，第7步发布基线为`f51b802d61896f9da30cd1f6df331c90e75e24b9`。第7步以 [PR #6](https://github.com/ydflow/research-trail/pull/6)交付，开发与发布证据见EVIDENCE第20—21节；第11步本机开发交付见下方；第12步已发布，第13步本机自动验收通过，独立发布复验见EVIDENCE第33节；第21—24步未开始。
+- [v0.1.0源码Release](https://github.com/ydflow/research-trail/releases/tag/v0.1.0)对应main `716543305ba5d74f57336c589c4b2dffaf6e3592`，没有安装包。第8—20步改动不在此标签内；[首版清单](docs/ACCEPTANCE-v0.1.0.md)保留标签创建前的验收快照，完整版本 `v1.0.0`仍为计划。
 - Folio 功能和测试属于参考项目，不代表研迹已实现或用户已完成的贡献。
 
 ## 架构与当前边界
 
 ```text
 React 页面
-  → preload：82个命名操作，新闻只允许显式点击打开HTTP(S)来源
+  → preload：93个命名操作，新闻只允许显式点击打开HTTP(S)来源
     → Electron main：随机端口/令牌、所属Python进程、SSE续读
       → 本机 Python / FastAPI：鉴权与Pydantic契约
         ├─ 行情：FixtureMarketProvider（四股票固定示例）
@@ -55,7 +57,9 @@ React 页面
 
 Python 统一管理业务状态，前端维护显示缓存。假模型和模拟行情分别实现；会话可主动选择OpenAI兼容真实模型，行情仍为模拟数据。真实数据来源与模型回答不能混为一谈。
 
-行情调用链：股票选择 → `MarketPanel` → preload 的 `marketSnapshot` → Electron 主进程 → 带令牌的 `/market/snapshot/{symbol}` → Python `FixtureMarketProvider` → 同一份 `MarketSnapshot` → 行情卡片与 K 线。桥共74个命名操作：原健康/行情/会话/运行19项、设置/凭证/资料/诊断11项、提供商配置/凭证/能力/只读查询7项、证券工作区/自选/页面/新闻6项、组合/预览/确认/撤销/只读刷新7项、风险/股票对比2项、能力/技能4项、研究7项、报告7项、研究检查点/恢复/重启/放弃4项。订阅返回解除函数；页面不能指定后端URL、端口、令牌、文件或进程。诊断和报告导出只通过主进程系统保存对话框选择目的地，不给页面任意文件能力。Python无reload worker，直接作为Electron子进程启动。
+行情调用链：股票选择 → `MarketPanel` → preload 的 `marketSnapshot` → Electron 主进程 → 带令牌的 `/market/snapshot/{symbol}` → Python `FixtureMarketProvider` → 同一份 `MarketSnapshot` → 行情卡片与 K 线。桥共93个命名操作：原健康/行情/会话/运行19项、设置/凭证/资料/诊断11项、提供商配置/凭证/能力/只读查询7项、证券工作区/自选/页面/新闻6项、组合/预览/确认/撤销/只读刷新7项、风险/股票对比2项、能力/技能4项、研究7项、报告7项、研究检查点/恢复/重启/放弃4项、论点8项、筛选6项、事件5项。订阅返回解除函数；页面不能指定后端URL、端口、令牌、文件或进程。诊断和报告导出只通过主进程系统保存对话框选择目的地，不给页面任意文件能力。Python无reload worker，直接作为Electron子进程启动。
+
+事件链：CalendarPanel → 五个命名桥 → Python CalendarService → 同一CapabilityRegistry/ProviderService → calendar_snapshots及原始读取证据。EventResearchRef只传保存ID与显示时区，Python核对后冻结事件上下文到研究计划、报告及Markdown；宏观研究股票标明用户选择。切时区、读历史和重启不重新查询，跳转不自动消费模型。
 
 会话调用链：`SessionPanel` → preload.sessionSnapshot → main → GET /sessions/{id}/snapshot → Store单一SQLite读事务。消息、运行、事件及各运行last_sequence来自同一快照；页面先显示它，再通过subscribeRun从活动运行的水位订阅SSE。订阅间隙提交的事件会重放，不丢失或重新调用工具。工作区/会话/运行选择只作为sessionStorage显示偏好，业务内容仍从Python数据库读取。
 
@@ -102,7 +106,8 @@ Pydantic 是业务契约来源。离线导出 OpenAPI 后，`openapi-typescript`
 | 14 | 统一能力注册、技能目录/开关/依赖与安全按需资料读取 | 验收通过（模拟/本机自动）；真实未验证；见第14步清单 |
 | 15 | Python八种研究策略与结构化能力采集 | 验收通过（模拟/本机自动）；4并发/20秒、取消、部分失败与保存；真实未验证 |
 | 16—18 | 报告/恢复、论点与复审 | 16/17/18验收通过（各自验证边界见清单） |
-| 19—20 | 筛选与事件 | 未开始 |
+| 19 | 17个固定筛选任务与机会发现 | 验收通过（模拟/本机自动）；PR #18已合并 |
+| 20 | 固定财报/宏观/央行事件日历与事件研究上下文 | 验收通过（固定模拟/本机自动）；真实覆盖未验证 |
 | 21—24 | 提醒与 Today、评测、研究结果校准、Windows 交付 | 未开始 |
 
 每次只执行用户发送的一步，运行验证后再决定上传或下一步。界面逐步复用，Python 核心按功能实现；不导入整套 TypeScript 后端同时管理业务。

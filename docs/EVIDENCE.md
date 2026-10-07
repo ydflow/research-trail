@@ -1692,3 +1692,65 @@ Git diff检查通过；246份UTF-8源码、102个本地链接、5份固定参考
 已正常推送feat/step-19-screening并创建[PR #18](https://github.com/ydflow/research-trail/pull/18)，CI正在执行，尚未合并。
 最终head、远程检查和合并回执由根PROJECT_STATE与PR记录，不能将本机通过冒称远程通过。
 真实行情/账户、模型解释、安装包、用户逐项亲自操作仍未执行；既有TestClient/Vite提示保留。
+
+## 46. 第20步：Python事件日历与事件研究上下文（2026-10-07—10-08）
+
+当前用户只授权第20步实现并交付后停止；第19步已按此前独立授权通过PR #18普通合并。
+开工核对项目AGENTS/ROADMAP/EVIDENCE、根PROJECT_STATE及相关实现，开发根D:\folio\research-trail，
+main/HEAD基线a8bb67938e9cb962d5f532a5920b8f99d765ea44，工作区起初干净。
+本轮未暂存、提交、推送、创建PR、标签、Release或定时付费评测，未实施第21步。
+
+固定helsome/folio ba5dcdfd概念/字段参考为EventsView、todayAtoms、demoData、market-data、
+longbridge-tools calendar及finance-calendar-events fixture，6份SHA256和实际适配范围见SOURCES-step20.json。
+上游页面缺来源/空/失败的demo回退、动态Date.now日期和只传symbol的跳转没有照搬。
+本轮没有原样上游代码/资料导入；新Python实现复用已有注册表、ProviderService和研究/报告链。
+六条事件为自造固定例子，非真实Apple/Tesla/港股/PCE/FOMC安排。
+原模拟research.events不再返回无时刻占位记录，沿同一ProviderService改为这些固定事件；其他能力的固定数据未改。
+原30份技能/许可资源保留工作字节与Git blob，参考目录只读未改。
+公开授权沿第9—11节用户原作者确认事实，不扩大全仓MIT；原授权文本未独立取得，skills/LICENSE声明仍保留。
+
+CalendarService统一来源、精度、时区、股票关联、预告/发生/更新/获取时刻和失败状态；
+三个calendar能力从同一research.events健康状态派生，真实央行明确NOT_IMPLEMENTED，Massive事件不支持。
+均非新增Agent工具，不用第二套状态声称真实能力已就绪；不可用不查询、不回退。
+Python zoneinfo加锁定tzdata==2026.5，uv仅增这一依赖，其余版本保持。
+工程依据：[Python zoneinfo文档](https://docs.python.org/3.12/library/zoneinfo.html)、[tzdata包](https://pypi.org/project/tzdata/)。
+财报日期/盘后只保留当地日期；日锚点、外层date、fetched_at均不当事件准确时刻。
+已过预告不确认发生，未来发生声明标冲突；DST歧义/不存在/缺时区/偏移冲突显式，最大90天含界窗口。
+同来源ID稳定合并，明确更新取较新记录；同名无ID不同发生日不合并，不能排序的冲突不允许研究。
+
+0015_calendar只追加calendar_snapshots，保存请求、能力执行、完整安全结果、哈希、Pointer、事件与缺口。
+刷新UUID幂等，冲突内容拒绝；历史/切时区/重启不查询。校验损坏、异常/错误模式或来源返回明确失败。
+五个命名IPC有来源/启动令牌/字段验证，Python契约生成OpenAPI及TS；没有任意后端URL/文件读取能力。
+CalendarPanel独立懒加载，作用域generation拒绝迟到来源/原始事实；重复刷新一个快照。
+EventResearchRef传快照ID/事件ID/显示时区，Python验证关联、模式、来源、冲突和证据后冻结context。
+财报只用来源股票；宏观/央行明确用户研究股票选择，不能伪造关联。
+既有event-driven策略/技能/进度/采集入口沿用；financial指定股票、macrodata不带股票。
+上下文保存进研究计划、报告、Markdown与原始事实入口，不伪造当前执行证据ID，也不自动采集/请求模型。
+手工改研究股票/模式/提供商清除旧草稿；旧计划/报告默认无context继续可读，历史不覆盖。
+
+定向日历首次24项1失败为UTC Z与+00:00断言编码差异，改比较实际时间后24项通过；补四项边界后最终28项通过。
+另一次从仓库根误运行pytest导致导入收集失败，按后端目录重跑通过，未修改包路径掩盖错误。
+原CLI协议测试补自造ext/local_date/date_zone/market_time/status保留断言及秘密剔除。
+实际Electron新增3项，首次2通过1失败为测试返回懒加载页面未等待挂载；补等待真实机会发现标题再返回，3项通过，
+没有扩大原超时或放宽迟到响应断言。现在显示时区随跳转冻结；600px无横向溢出，截图已查看。
+覆盖固定6事件/2去重/时区/原始事实、AAPL与FOMC/TSLA研究、显式固定报告、重启同快照/研究/报告，
+真实不可用不回退、桥拒绝越界、来源/原始事实迟到竞争。截图和日志仅Temp。
+
+完整本机check.cmd退出0：532 Python/8 Node/46实际Electron，零失败/取消/跳过；
+契约/类型/构建、0015重复迁移/current/check及No new upgrade operations detected通过。
+日志Temp/research-trail-step20-check.log，隔离迁移库research-trail-verify-QoF5yK，均不进入业务Git。
+独立干净源码verify:clean也退出0：258份源码导出到research-trail-clean-kdKIVH/clean source含空格目录，
+未复制Git、依赖、构建或运行数据，锁定新装71前端/30 Python依赖及Electron。同一完整离线532/8/46通过，
+零失败/取消/跳过及0015重复迁移/current/check通过。根CMD实际启动/关闭/重开会话/运行快照相同、无新运行、所属进程退出；
+日历/研究/报告重启由新增Electron独立断言，未用旧会话烟测代替。日志Temp/research-trail-step20-clean.log，
+第二隔离迁移库research-trail-verify-ylpgf2、根CMD证据research-trail-cmd-qa-kFtwnI均在Temp。
+当前审计258份UTF-8源码/105个本地链接、6参考hash、30技能/许可Git与工作字节、8忽略探针通过，
+常见秘密/禁传文件0；既有4资料断链与10尾空白保留。188运行/测试/配置与干净导出逐字节一致。
+契约语义核对仅新增4路径/5操作/12模型，3旧模型只增可选context/ref，旧路径及旧字段/必填约束不变；实际93桥操作。
+临时审计脚本初次因Windows默认GBK读取UTF-8、未计入两种方法简写而失败；显式UTF-8与真实preload方法语法核对后通过，
+没有改产品编码或减少预期桥数量。diff检查通过，HEAD不变/index空。
+最终文档在检查结束后更新；188份运行/测试/配置再次与已验收干净导出逐字节核对，源码与测试未在通过后改动。
+
+真实Longbridge/CLI日历覆盖、Massive/央行真实来源、真实LLM事件生成、实际安排准确性/投资解释、
+安装包/独立设备和用户亲自操作未验证。本轮零真实数据/账户/模型业务调用，只有固定数据/假模型/固定合成器；
+TestClient弃用与Vite主chunk提示保留。验收清单ACCEPTANCE-step20.md，教程/练习C13新增但用户答案不代填。
