@@ -1,0 +1,44 @@
+{
+  "repository": "https://github.com/helsome/folio",
+  "commit": "ba5dcdfd31b162f5edb8b908f7f099a560389326",
+  "files": [
+    {
+      "upstream": "packages/ui/src/components/events/EventsView.tsx",
+      "sha256": "357f767f349a9299a9cd2cc212aacbe537387686607c6a74d50a1e46bedf6a04"
+    },
+    {
+      "upstream": "packages/ui/src/atoms/todayAtoms.ts",
+      "sha256": "ed760b0f65a20e66d7cd1ce3f83f4c2a93a694b5bcc1d9c44f6d8c3e8d47e3c3"
+    },
+    {
+      "upstream": "packages/ui/src/demo/demoData.ts",
+      "sha256": "99e41b7b0d85be504720a0c17e327d4b29d879b78d02611c406a193e8cbd6d48"
+    },
+    {
+      "upstream": "packages/core/src/market-data.ts",
+      "sha256": "36e2964a8e718eb7ef313c3a10b15b9f1a955e2e2ce2bd6272ebbc350ef7a496"
+    },
+    {
+      "upstream": "packages/longbridge-tools/src/tools/calendar.ts",
+      "sha256": "5f49aa13d77d1fbfdfb357f246d30790739b63f1a29d1f90e733a57edc6782b7"
+    },
+    {
+      "upstream": "packages/longbridge-tools/src/testing/fixtures/finance-calendar-events.json",
+      "sha256": "a30ba34e10077e076aa2118ab4e87a174a66b96e42f9759e2d33d065fd8067e9"
+    }
+  ],
+  "adapted_to": [
+    "services/backend/research_trail/calendar_contracts.py",
+    "services/backend/research_trail/calendar_normalize.py",
+    "services/backend/research_trail/calendar.py",
+    "apps/desktop/src/renderer/calendar/CalendarPanel.tsx"
+  ],
+  "scope": "Concept, event field and fixed baseline category reference only; new Python time normalization, immutable source snapshots and context handoff through existing registry/ProviderService/research/report. No upstream TS business runtime, verbatim code/resource imports or LLM calls. Six fixed authored examples are not real schedules. Upstream dynamic demo fallback is not copied; unavailable sources remain unavailable, occurrence cannot be inferred from query time.",
+  "authorization": "Original-author reuse authorization confirmation recorded in EVIDENCE sections 9-11; original authorization text not independently obtained. Only skills/LICENSE confirmed MIT (Copyright 2026 Longbridge Inc.); no whole-repository MIT claim.",
+  "preserved_resources": "Existing 30 skill/license files from SOURCES-step14.json retain original bytes and notices; readonly upstream files and original baseline fixtures unchanged. No new baseline resource imported in Step20.",
+  "engineering_references": [
+    "https://docs.python.org/3.12/library/zoneinfo.html",
+    "https://pypi.org/project/tzdata/"
+  ],
+  "dependency": "Python standard zoneinfo with locked tzdata==2026.5 for Windows IANA data; existing dependencies kept locked. No new provider, account, scheduler or paid model evaluation."
+}
