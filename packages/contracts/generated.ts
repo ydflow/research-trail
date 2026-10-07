@@ -256,6 +256,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/research/report-diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Compare Reports */
+        post: operations["compare_reports_research_report_diff_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reports */
+        get: operations["reports_research_reports_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/reports/{identity}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Report */
+        get: operations["get_report_research_reports__identity__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/reports/{identity}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Report */
+        post: operations["cancel_report_research_reports__identity__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/reports/{identity}/evidence/{reference}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Report Evidence */
+        get: operations["report_evidence_research_reports__identity__evidence__reference__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/reports/{identity}/markdown": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Report */
+        get: operations["export_report_research_reports__identity__markdown_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/research/runs": {
         parameters: {
             query?: never;
@@ -319,6 +421,23 @@ export interface paths {
         get: operations["research_data_research_runs__identity__data__capability__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/runs/{identity}/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Generate Report */
+        post: operations["generate_report_research_runs__identity__reports_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2107,6 +2226,243 @@ export interface components {
              */
             use_cache: boolean;
         };
+        /** ReportChange */
+        ReportChange: {
+            /** After */
+            after: string | null;
+            /** After Evidence */
+            after_evidence?: string | null;
+            /** Before */
+            before: string | null;
+            /** Before Evidence */
+            before_evidence?: string | null;
+            /** Key */
+            key: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "fact" | "gap" | "analysis";
+        };
+        /** ReportClaim */
+        ReportClaim: {
+            /** Evidence Ids */
+            evidence_ids: string[];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "fact" | "analysis" | "prediction";
+            /**
+             * Text
+             * @default
+             */
+            text: string;
+        };
+        /** ReportDiff */
+        ReportDiff: {
+            /** After Id */
+            after_id: string;
+            /** Before Id */
+            before_id: string;
+            /** Changes */
+            changes: components["schemas"]["ReportChange"][];
+            /**
+             * Label
+             * @default 比较两份已保存报告；字段或文字变化不代表论断已证明，也不自动推断投资结果。
+             */
+            label: string;
+            /** Source Changed */
+            source_changed: boolean;
+            /** Symbol */
+            symbol: string;
+        };
+        /** ReportDiffInput */
+        ReportDiffInput: {
+            /** After Id */
+            after_id: string;
+            /** Before Id */
+            before_id: string;
+        };
+        /** ReportDocument */
+        ReportDocument: {
+            /** Collection Status */
+            collection_status: string;
+            /**
+             * Disclaimer
+             * @default 事实值来自能力执行记录；分析与预测来自合成器。引用可追溯不等于论断正确。
+             */
+            disclaimer: string;
+            /** Evidence */
+            evidence: components["schemas"]["ReportEvidence"][];
+            /** Gaps */
+            gaps: components["schemas"]["ReportGap"][];
+            /** Provider */
+            provider: string;
+            /**
+             * Source Mode
+             * @enum {string}
+             */
+            source_mode: "simulated" | "real";
+            /** Source Run Id */
+            source_run_id: string;
+            /** Strategy */
+            strategy: string;
+            /** Symbol */
+            symbol: string;
+            synthesis: components["schemas"]["ReportSynthesis"];
+        };
+        /** ReportEvidence */
+        ReportEvidence: {
+            /** Capability */
+            capability: string;
+            /** Fetched At */
+            fetched_at: string;
+            /** Id */
+            id: string;
+            /** Ordinal */
+            ordinal: number;
+            /** Pointer */
+            pointer: string;
+            /** Provider */
+            provider: string;
+            /** Result Hash */
+            result_hash: string;
+            /** Run Id */
+            run_id: string;
+            /**
+             * Source Mode
+             * @enum {string}
+             */
+            source_mode: "simulated" | "real";
+            /** Value */
+            value: boolean | number | string;
+        };
+        /** ReportGap */
+        ReportGap: {
+            /** Code */
+            code: string;
+            /** Key */
+            key: string;
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "capability" | "field" | "skill" | "projection";
+        };
+        /** ReportGenerate */
+        ReportGenerate: {
+            /**
+             * Mode
+             * @default fixed
+             * @enum {string}
+             */
+            mode: "fixed" | "real";
+        };
+        /** ReportJob */
+        ReportJob: {
+            /** Code */
+            code: string | null;
+            /** Completed At */
+            completed_at: string | null;
+            document: components["schemas"]["ReportDocument"] | null;
+            /** Id */
+            id: string;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "fixed" | "real";
+            /** Requests Started */
+            requests_started: number;
+            /** Run Id */
+            run_id: string;
+            /** Started At */
+            started_at: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "generating" | "completed" | "failed" | "cancelled" | "interrupted";
+            /** Symbol */
+            symbol: string;
+            /** Version */
+            version: number;
+        };
+        /** ReportMarkdown */
+        ReportMarkdown: {
+            /** Content */
+            content: string;
+            /** Filename */
+            filename: string;
+        };
+        /** ReportOriginal */
+        ReportOriginal: {
+            evidence: components["schemas"]["ReportEvidence"];
+            result: components["schemas"]["ProviderSuccess"];
+            /** Step Completed At */
+            step_completed_at: string;
+            /** Step Started At */
+            step_started_at: string;
+        };
+        /** ReportSection */
+        ReportSection: {
+            /** Claims */
+            claims: components["schemas"]["ReportClaim"][];
+            /** Key */
+            key: string;
+            /** Title */
+            title: string;
+        };
+        /** ReportSummary */
+        ReportSummary: {
+            /** Code */
+            code: string | null;
+            /** Completed At */
+            completed_at: string | null;
+            /** Id */
+            id: string;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "fixed" | "real";
+            /** Requests Started */
+            requests_started: number;
+            /** Run Id */
+            run_id: string;
+            /** Started At */
+            started_at: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "generating" | "completed" | "failed" | "cancelled" | "interrupted";
+            /** Symbol */
+            symbol: string;
+            /** Version */
+            version: number;
+        };
+        /** ReportSynthesis */
+        ReportSynthesis: {
+            /** Bear Case */
+            bear_case: components["schemas"]["ReportClaim"][];
+            /** Bull Case */
+            bull_case: components["schemas"]["ReportClaim"][];
+            /** Catalysts */
+            catalysts: components["schemas"]["ReportClaim"][];
+            /** Risks */
+            risks: components["schemas"]["ReportClaim"][];
+            /** Sections */
+            sections: components["schemas"]["ReportSection"][];
+            /**
+             * Stance
+             * @enum {string}
+             */
+            stance: "bullish" | "bearish" | "neutral";
+            /** Summary */
+            summary: components["schemas"]["ReportClaim"][];
+        };
         /** ResearchData */
         ResearchData: {
             /** Capability */
@@ -3549,6 +3905,207 @@ export interface operations {
             };
         };
     };
+    compare_reports_research_report_diff_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportDiffInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportDiff"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reports_research_reports_get: {
+        parameters: {
+            query?: {
+                run_id?: string | null;
+            };
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_report_research_reports__identity__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportJob"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_report_research_reports__identity__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportJob"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    report_evidence_research_reports__identity__evidence__reference__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+                reference: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportOriginal"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_report_research_reports__identity__markdown_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportMarkdown"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     research_runs_research_runs_get: {
         parameters: {
             query?: never;
@@ -3702,6 +4259,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResearchData"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    generate_report_research_runs__identity__reports_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportGenerate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportJob"];
                 };
             };
             /** @description Validation Error */

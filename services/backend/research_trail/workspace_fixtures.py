@@ -3,7 +3,15 @@ from .provider_errors import ProviderFault
 from .provider_service import authored_data
 
 def fixture_executor(case):
+    import threading
+    lock=threading.Lock(); valuation_count=0
     def execute(query):
+        nonlocal valuation_count
+        if case=='report-updated' and query.capability=='company.valuation':
+            with lock: valuation_count+=1; count=valuation_count
+            data=authored_data(query)
+            data['pe_ttm_ratio']=20 if count==1 else 25
+            return data
         if case=='research-partial' and query.capability=='company.financials': raise ProviderFault('NETWORK_ERROR',retryable=True)
         if case=='research-delayed' and query.capability=='company.profile':
             import time

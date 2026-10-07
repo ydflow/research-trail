@@ -36,12 +36,17 @@ class OpenAIModelProvider:
         self._snapshot = None
         self.transport = transport
         self.requests_started = 0  # Internal accounting only; no request bodies/headers are logged.
+        self.last_response_info = None  # Bounded protocol diagnostics, never content or credentials.
 
-    def complete(self, messages, tools, stop, deadline):
+    def complete(self, messages, tools, stop, deadline, *, max_output_tokens=1024, json_output=False):
+        if type(max_output_tokens) is not int or not 1 <= max_output_tokens <= 8192:
+            raise ModelError('MODEL_OUTPUT_LIMIT', '模型输出限额无效。')
+        if type(json_output) is not bool: raise ModelError('MODEL_FORMAT_INVALID','模型输出格式无效。')
         if self._snapshot is None:
             self._snapshot = self.configuration() if callable(self.configuration) else self.configuration
         config = self._snapshot
-        payload = {"model": config.model, "messages": messages, "stream": False, "max_tokens": 1024}
+        payload = {"model": config.model, "messages": messages, "stream": False, "max_tokens": max_output_tokens}
+        if json_output: payload['response_format']={'type':'json_object'}
         if tools:
             payload.update(tools=tools, tool_choice="auto", parallel_tool_calls=False)
         if len(json.dumps(payload, ensure_ascii=False).encode("utf-8")) > 1024 * 1024:
@@ -49,6 +54,11 @@ class OpenAIModelProvider:
         try:
             response = asyncio.run(self._request(config, payload, stop, deadline))
             choices = response.get("choices")
+            if isinstance(choices,list) and len(choices)==1 and isinstance(choices[0],dict):
+                reason=choices[0].get('finish_reason')
+                msg=choices[0].get('message')
+                self.last_response_info={'finish_reason':reason if reason in ('stop','tool_calls','length','content_filter') else 'other',
+                    'content_present':isinstance(msg,dict) and isinstance(msg.get('content'),str) and bool(msg['content'])}
             if not isinstance(choices, list) or len(choices) != 1:
                 raise ValueError()
             choice = choices[0]

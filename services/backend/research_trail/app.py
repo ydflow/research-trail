@@ -37,6 +37,9 @@ from .research import ResearchService
 from .research_store import ResearchError
 from .research_strategies import strategies as research_strategies
 from .research_contracts import ResearchInput, ResearchPlan, ResearchStrategy, ResearchSummary, ResearchRun, ResearchData
+from .reports import ReportService
+from .report_contracts import ReportGenerate, ReportSummary, ReportJob, ReportOriginal, ReportMarkdown, ReportDiff, ReportDiffInput
+from .report_output import markdown as report_markdown, diff as report_diff
 from .portfolio_contracts import (PortfolioInfo, PortfolioView, PortfolioCreate, PortfolioId,
     CsvPreviewInput, ImportPreview, ImportConfirm, ImportUndo)
 
@@ -49,7 +52,7 @@ class Health(BaseModel):
 
 def create_app(token: str, market_provider: MarketProvider | None = None, *,
                database_path: Path | str | None = None, model_provider: ModelProvider | None = None,
-               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None, research_options=None) -> FastAPI:
+               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None, research_options=None, report_options=None) -> FastAPI:
     if len(token) < 32:
         raise ValueError("启动令牌缺失或过短；请由 Electron 启动服务。")
     @asynccontextmanager
@@ -74,11 +77,18 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             app.state.portfolios = PortfolioService(database,app.state.providers)
             app.state.analytics = AnalyticsService(app.state.portfolios,app.state.providers)
             app.state.research = ResearchService(database,app.state.capabilities,app.state.skills,app.state.providers,**(research_options or {}))
+            def report_model():
+                with app.state.settings.lock:
+                    config=app.state.settings.model_configuration()
+                return OpenAIModelProvider(config,transport=openai_transport)
+            app.state.reports = ReportService(database,app.state.research.store,report_model,**(report_options or {}))
             app.state.store.recover_interrupted()
             manager = app.state.manager = RunManager(app.state.store, runner, run_timings)
             yield
         finally:
             try:
+                if hasattr(app.state,'reports'):
+                    app.state.reports.close()
                 if hasattr(app.state,'research'):
                     app.state.research.close()
                 if hasattr(app.state,'analytics'):
@@ -147,7 +157,36 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
 
     @app.exception_handler(ResearchError)
     async def research_error(_request,error):
-        return JSONResponse(status_code=404 if error.code=='RESEARCH_NOT_FOUND' else 409,content={'detail':error.code})
+        return JSONResponse(status_code=404 if error.code in ('RESEARCH_NOT_FOUND','REPORT_NOT_FOUND') else 409,content={'detail':error.code})
+
+    @app.get('/research/reports',response_model=list[ReportSummary],dependencies=protected)
+    def reports(run_id: str | None=None):
+        if run_id is not None: app.state.research.store.get(run_id)
+        return app.state.reports.store.list(run_id)
+
+    @app.post('/research/runs/{identity}/reports',response_model=ReportJob,dependencies=protected)
+    def generate_report(identity: str,body: ReportGenerate):
+        return app.state.reports.start(identity,body)
+
+    @app.get('/research/reports/{identity}',response_model=ReportJob,dependencies=protected)
+    def get_report(identity: str):
+        return app.state.reports.store.get(identity)
+
+    @app.post('/research/reports/{identity}/cancel',response_model=ReportJob,dependencies=protected)
+    def cancel_report(identity: str):
+        return app.state.reports.cancel(identity)
+
+    @app.get('/research/reports/{identity}/evidence/{reference}',response_model=ReportOriginal,dependencies=protected)
+    def report_evidence(identity: str,reference: str):
+        return app.state.reports.evidence(identity,reference)
+
+    @app.get('/research/reports/{identity}/markdown',response_model=ReportMarkdown,dependencies=protected)
+    def export_report(identity: str):
+        return report_markdown(app.state.reports.completed(identity))
+
+    @app.post('/research/report-diff',response_model=ReportDiff,dependencies=protected)
+    def compare_reports(body: ReportDiffInput):
+        return report_diff(app.state.reports.completed(body.before_id),app.state.reports.completed(body.after_id))
 
     @app.get('/research/strategies',response_model=list[ResearchStrategy],dependencies=protected)
     def strategies():
