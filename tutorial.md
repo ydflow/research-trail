@@ -395,7 +395,7 @@ app/bridge/RecoveryPanel；实际中断用例见test_recovery.py、tests/desktop
 
 ## C12：研究结论如何变成可复审的论点？
 
-状态：大纲。关联步骤18。
+状态：第18步调用链已展开，用户学习记录待填写。下列packages路径仍指只读固定Folio，研迹Python链另见下方。
 
 - 主链：报告 → saveFromReport → 论点/版本 → 新数据评估 → impact记录。
 - 必读1：`packages/shared/src/thesis/service.ts` / `ThesisService.saveFromReport`：报告到论点，追converter。
@@ -403,6 +403,17 @@ app/bridge/RecoveryPanel；实际中断用例见test_recovery.py、tests/desktop
 - 必读3：`packages/shared/src/thesis/evaluator-local.ts`、`agent-eval.ts`：核对本地和模型评估目标及绑定。
 - 验证选读：`packages/shared/src/thesis/service.test.ts`、`converter.test.ts`。
 - 暂缓：提醒触发由C14，收益窗口由C16。
+
+### 研迹第18步实际调用链
+
+1. 已保存报告的“将报告形成投资论点”或论点页报告选择 → preload八项theses命名操作 → main assertSender/ID/字段白名单 → BackendManager带启动令牌请求/theses。renderer不采集、不保存业务状态；thesis-types仅引用Python生成契约。
+2. ThesisService.create → checked → 原ReportService.completed、ResearchStore.validate_checkpoint及report_facts.original：验证每条真实执行引用/hash。convert_content只转换分析/预测，事实引用仍在ReportJob快照；0013追加version1，原报告不变。同来源报告幂等，UUID内容hash拒绝跨操作复用。
+3. edit在Database.write的BEGIN IMMEDIATE内核对expected_version，追加ThesisVersionRecord及理由，再递增当前指针。旧版本含对应完整报告快照。没有新采集时编辑不会假装拿到新数据。
+4. evaluate核对较新独立采集、同证券/数据模式/提供商，检查新事实覆盖旧字段、缓存及fetched_at，再调用原report_output.diff比较两份实际报告。保存ThesisReviewRecord和base_content/新旧快照/差异/缺口。无法评估保存unable+code，comparison/judgment为空，不自动增强/失效。
+5. judge明确接收用户判断、content及reason，重查评估base_version与新证据，追加版本及关联judgment记录同事务；旧评估仍ready，旧版本不改。前端显示自动字段比较与用户投资判断的来源区别。
+6. ThesisPanel当前草稿和历史只读展示分离；身份/卸载代次丢弃迟到历史读取。两个实窗验收使用实际Python采集20→25、保存/重开及真实IPC延迟，不用页面假状态代替数据库证据。
+
+缺失报告、相同/更早采集、缓存、缺字段或证据失效不能标为完成判断；可比较字段unchanged不证明论点正确。复述任务：解释“用户编辑没有新数据”与“用户基于新报告保存复审”各自如何保留对应数据和历史。
 
 ## C13：发现候选与事件如何进入研究？
 

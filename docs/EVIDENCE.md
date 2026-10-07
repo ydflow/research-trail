@@ -1449,3 +1449,148 @@ a50fc0ea2092b83292f507f0a82ff50709ea78e1，初始head
 原v0.1.0标签object 3dd216557cdc81ac8fc35b14e0585dc43731be86与Release assets0保留。
 真实SDK/CLI服务凭证过期、真实模型硬退出/消费账单、投资分析正确性、长期负载、其他OS、
 另一台机器、安装包、用户亲自操作和学习答案未验证。完成发布后停止。
+
+## 42. 第18步投资论点与显式复审（2026-10-07）
+
+用户当前仅授权开发第18步。先读取AGENTS、ROADMAP、原第40—41节、ACCEPTANCE-step17及
+当前模型、报告/原始事实/差异/研究/桥接/页面和只读固定Folio论点源码。main/HEAD
+f365d122544c119134afba4726d6f10c0b81720e，开工工作区/index干净，已含第17步PR #16。
+第17步发布中断后遗留main CI已只读核实attempt 2 completed/success，451/8/39及0012一致；
+首次原SSE用例5秒轮询失败保留，单独复验1项通过，不称修复SSE长期时序。
+根PROJECT_STATE已核验补齐发布回执；本轮没有新的GitHub写入、提交/推送、标签或Release。
+
+### Python实现与实际链
+
+ThesisService复用ReportService.completed、原ResearchStore.validate_checkpoint、
+report_facts.original与report_output.diff，同一Database.write/SQLite，未新增提供商访问、
+模型调用或第二套能力注册表。0013新增investment_theses/thesis_versions/thesis_reviews；
+头记录只有当前指针，历史版本和评估/判断记录持久追加，含分析内容、变化理由、时间、
+新旧报告及对应执行证据快照。原研究、报告、证据不覆盖，0012迁移记录和历史报告保留。
+
+create从已完成且证据可验证的报告形成版本1，原分析/预测仍标明来源；事实引用原值保存在
+完整ReportJob快照和执行记录，不从合成文字抽取行情或新数字。同一报告不重复建论点。
+edit核对expected_version，在同一事务追加内容/理由/旧对应数据快照；UUID+输入hash持久
+去重，跨操作/内容复用拒绝，重复操作或并发不产生重复版本或覆盖原版本。
+
+evaluate要求同证券/数据模式/提供商的较新独立采集报告，并核对新字段覆盖原论点对应事实、
+非缓存和较新fetched_at。复用原Diff保存真实变化和缺口，字段变化为changed，字段未变仅
+为可比较数据unchanged，不推断投资增强/减弱/失效。不存在新报告、未完成报告、旧采集、
+缺事实、来源不兼容、缓存/陈旧时间或证据丢失记录unable/code、comparison/judgment空；
+仍保存已取得的新旧快照、缺失字段和尝试报告ID，不抹掉成功数据。
+
+judge接收用户明确的strengthened/weakened/invalidated/unchanged/needs_revision判断、
+content和reason，重新核对评估所基于版本及数据完整性，同事务追加新版本与关联judgment。
+旧ready评估和旧版本不修改，不将自动字段变化当作已证明的投资结论。用户判断允许改变
+分析方向，页面标记人工来源；这是显式复审流程，不是Agent自动影响评估或收益测算。
+
+7条路由/8项HTTP操作沿启动令牌和严格Pydantic边界，8个命名IPC接入，桥总82项。
+ThesisPanel懒加载，独立当前编辑草稿与历史只读展示；获取身份切换/卸载代次阻止迟到版本
+污染当前页面。报告页增加转换入口，论点页新报告选择、评估/缺口/比较/旧新事实回读和
+复审历史可见。摘要列表最近100条标明上限，完整旧版本仍保留并可按版本号读取。
+
+### 来源与验证
+
+固定Folio ba5dcdfd的core/thesis.ts、thesis/converter.ts及evaluator-local.ts提供概念参考，
+三份实际SHA256见SOURCES-step18.json。没有新增原样导入、TS业务内核或依赖；原本地
+evaluator缺数据标unchanged和新闻/价格推断影响的启发式不移入本项目，改为unable和
+显式用户判断。原30份技能/许可字节与版权/来源声明保留；授权沿第9—11节用户确认，
+原授权文本未独立取得，只确认skills/LICENSE MIT，不扩大全仓MIT。
+
+后端首轮12通过/2失败为测试夹具问题：试图将success结果置NULL被原CHECK拒绝；改为
+真正删除对应执行记录模拟缺证据。认证测试误用Authorization，改为现有X-ResearchTrail-Token。
+没有放宽数据库或业务断言，复验14通过，补缓存/陈旧获取时间、评估重放/版本冲突及未知
+报告请求追踪后18通过。每项均为模拟/固定合成器，未调用真实模型或提供商。
+
+两项实际Electron定向通过（原39+2）：从原研究入口模拟价值采集与保存固定报告，报告
+直接形成论点，双击编辑只追加一次，版本1完整保留；重新采集实际估值20→25，再保存
+用户减弱判断/中性方向为新版本，旧新报告/事实和原评估未变。缺新报告unable且复审按钮
+禁用；关闭重开同库保存视图完全相同，仅2份报告/2个研究，没有隐式采集或模型。
+第二项延迟真实theses:version IPC结果再切换证券，旧结果不能污染新论点或草稿。
+截图1100×800/600×680仅Temp/research-trail-step18-qa，均已查看，自动无横向溢出。
+契约/类型与构建通过；结构比较旧OpenAPI全部已有paths/schemas无改变，只新增7路径/11模型。
+定向日志仅Temp/research-trail-step18-theses-tests{-2,-3}.log、step18-desktop-focus.log。
+完整check.cmd退出0：469 Python（451基线+18新增）/8 Node/41实际Electron（39基线+2新增）
+全部通过，无失败/取消/跳过；契约/类型、main/preload/renderer构建、0013隔离重复迁移/
+current/check与No new upgrade operations通过。原SSE用例本轮完整也通过。日志仅Temp/
+research-trail-step18-check.log，迁移目录research-trail-verify-0LQpjf。没有新增依赖、改变
+工作流、跳过测试或放宽检查。另隔离库以真实论点页直接转换入口验证生成版本1、按钮可用，
+编辑页1100宽/600×680截图均已查看，无横向溢出；视觉日志step18-visual.log、visual.json
+及两份editor截图只在Temp，不进Git。
+
+最终审查236份UTF-8、101个本地Markdown链接、3份固定来源SHA256、原30份技能/许可
+工作文件和HEAD blob原字节、8项保护忽略探针通过，秘密/禁传发现0；原4处资料断链与
+10处上游行尾空格保留。git diff --check通过，index为空，main/HEAD仍开工基线。运行库、
+账户、密钥、日志、缓存、构建及截图不上传；本步差异仅论点、桥接、生成契约、0013最新
+迁移断言与验收/学习材料。审查仅Temp/research-trail-step18-audit.json。
+
+### 边界
+
+新报告是显式新采集的证据，不保证完整资料、市场实际新事件或分析正确。数据一致性hash
+不是数字签名或防管理员修改；用户投资影响判断不保证正确。来源数据、字段差异、
+合成器/用户分析和投资效果保持独立。未实现LLM自动复审、监控、提醒、筛选、收益窗口、
+权重校准或其他未来阶段。真实行情/账户论点、真实模型分析正确性、长期负载、其他OS、
+安装包、远程CI与用户亲自操作/学习答案未验证。本步没有真实服务/付费评测请求。
+范围与CMD见ACCEPTANCE-step18，实际调用链与可撤销练习/三题见tutorial/practice C12，
+用户笔记和答案保留。不提交、推送或发布，完成后停止，不执行第19步。
+
+## 43. 第18步独立发布复验与公开范围（2026-10-07）
+
+第42节开发交付后，用户单独授权只发布第18步：功能分支/对应PR，检查通过且无未解决
+阻塞时普通合并保留提交并同步本地main。不实施第19步，不打标签、创建Release或付费评测。
+开工main/origin/main/GitHub main一致为f365d122544c119134afba4726d6f10c0b81720e，
+index为空。读取规则、进度、验收和实际差异，29份文件均属本步：1份来源清单、12份Python/
+迁移/测试及生成契约、10份桌面/实窗测试、6份验收/进度/学习文档。依赖和工作流未改。
+
+### 来源与隐私
+
+固定Folio三份参考SHA256再次核对，只有概念参考，无本步原样导入或TS业务内核；保留
+原30份技能/许可文件及Git blob字节。授权按第9—11节用户确认，原授权文本未独立取得，
+只确认skills/LICENSE为MIT，不扩大全仓MIT。使用真实时间和现有ydflow/noreply作者配置，
+不改写上游或作者历史。236份候选UTF-8、101个本地Markdown链接、8项忽略保护探针及
+git diff --check通过，原4处上游断链和10处行尾空格保留，无新违规。
+常见密钥特征/禁传产物为0；只读核对运行配置引用的1项系统凭证，源码内已配置秘密
+出现0，不输出秘密、不枚举其他账户、不改变凭证。数据库、账户数据、日志、缓存、
+构建及截图不纳入Git，审查和验证材料仅Temp。
+
+### 修复与复验
+
+修复前独立完整check.cmd退出0：469 Python / 8 Node / 41实际Electron，无失败/取消/
+跳过；契约/类型/构建、0013隔离重复迁移/current/check及模型一致性通过。
+日志research-trail-step18-publication-check.log，迁移目录research-trail-verify-1GhwXT。
+这只证明原覆盖路径通过，额外复核发现验收未覆盖的空列表编辑问题。
+
+实际窗口清空风险列表后，页面把空字符串作为条目提交，被Python严格边界拒绝，版本
+不前进；同接口提交合法空列表可以保存。新增实窗断言修复前失败（期望版本2，实际1）。
+ThesisPanel.mutation仅提交时trim和过滤空行，草稿仍允许输入换行，不截断有效条目或
+放宽Python条目/长度/版本保护、测试断言或超时。修复后两项Step18实窗通过，空风险列表
+及去掉空白行的催化条目保存为版本2，版本1保留；仍通过复审/重启和迟到读取隔离。
+日志仅Temp/research-trail-step18-empty-list-regression-{before,after}.log；修复单独提交。
+
+本地提交：88510a90d04a39b27fa3944f5b217153cf63e6f3记录固定来源，
+6ead1b2f9d26c9926a5faf07fa8995b24b57aaee为Python新实现/生成契约，
+c4f98c79eb67867f2403a6f47e6b2051b613d36a为桌面接入/实窗验证，
+65a834a49e0db4d8af987057b5d89f60e95b70fe为已复现的空列表保存修复。
+170份运行/测试/配置源文件工作字节与Git blob一致。修复后最终完整check.cmd退出0，
+469 Python / 8 Node / 41实际Electron全部通过，无失败/取消/跳过；0013迁移和全部检查
+通过。日志research-trail-step18-publication-check-final.log，迁移research-trail-verify-BhhUxF。
+独立干净源码verify:clean退出0：236份源码导出，不复制Git、依赖、构建或运行数据；
+锁定新装71份前端/29份Python依赖和Electron，完整469/8/41及0013全部通过，无失败/
+取消/跳过。根CMD实际启动、关闭、重开及保存历史完全一致，无额外运行或遗留所属进程。
+170份运行/测试/配置源文件在工作文件、Git和干净导出逐字节一致；原paths/schemas不变，
+契约仅增加7路径/11模型。日志research-trail-step18-publication-clean.log，干净导出
+research-trail-clean-R3p1bN/clean source，迁移research-trail-verify-6xWmE2，根CMD证据
+research-trail-cmd-qa-NTqcIi，均仅Temp。文档提交据实际结果完成，不虚构自身SHA或远程成功。
+
+### 远程与未验证边界
+
+只读核验账号ydflow，目标ydflow/research-trail为本项目公开仓库，非fork/非归档、默认
+main、允许merge commit；origin fetch/push均为该仓库HTTPS。当前无开放PR，main无保护/
+规则集。每次GitHub写入仍现场核对账号、目标和main，任何不符即停，不切换账号、不
+删除、不强推或绕过。现有v0.1.0标签对象3dd216557cdc81ac8fc35b14e0585dc43731be86和
+Release（id403094537，非draft/非prerelease、assets0）未改。PR/CI/合并尚未执行，最终
+按实际GitHub和根发布回执确认。
+
+全部本步验收使用固定合成器/模拟数据、假SDK/CLI/MockTransport及本机实际HTTP/桌面，
+没有真实提供商或模型请求。真实行情/账户论点、真实模型分析正确性、投资效果、长期
+负载、其他OS/机器、安装包及用户亲自操作/学习仍未验证；第16步历史真实结构验证不能
+证明本步投资判断正确。没有增加监控、筛选、自动调度、收益校准或后续阶段。
