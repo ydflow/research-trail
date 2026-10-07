@@ -23,7 +23,7 @@
 - 第15步：验收通过（模拟/本机自动）；Python固定8策略与结构化采集、4并发/20秒、整体取消、部分失败/全失败及计划/逐项记录/结果保存已实现。清单见ACCEPTANCE-step15.md，证据见EVIDENCE第36节；开发轮未提交/发布；独立发布复验见EVIDENCE第37节，最终PR/合并以实际Git与回执为准；真实服务和用户亲自记录未验证。
 - 第16步：本机功能验收通过；结构化报告、执行证据/原始事实、不可覆盖版本、Markdown和实际两报告Diff已实现。固定合成器/模拟协议/本机桌面通过，发布复验一次真实LLM请求完成、37条模拟事实可追溯；此前五次失败保留。真实调用证明结构和保存，不证明分析正确或真实行情就绪；见ACCEPTANCE-step16.md与EVIDENCE第38—39节，发布状态以Git/PR回执为准。
 - 第17步：验收通过（模拟/协议/本机自动）；Python事务检查点、显式恢复/重新发起/放弃已实现，发布复验修复延迟放弃回执竞态，最终隔离完整451 Python / 8 Node / 39实际Electron及0012迁移通过。报告恢复零自动模型请求；来源及验收见ACCEPTANCE-step17.md、SOURCES-step17.json与EVIDENCE第40—41节。[PR #16](https://github.com/ydflow/research-trail/pull/16)已普通合并；main CI首次SSE超时及第二次通过均保留，最终回执见根PROJECT_STATE。
-- 第18步：验收通过（模拟/本机自动）；论点转换、追加版本编辑、显式数据评估与用户复审已实现，18项Python及2项Electron定向通过，完整469 Python/8 Node/41实际Electron及0013迁移通过。来源见SOURCES-step18.json，范围见ACCEPTANCE-step18.md；发布轮修复空列表提交，复验及公开范围见EVIDENCE第43节，最终PR/合并以Git与回执为准。
+- 第18步：验收通过（模拟/本机自动）；论点转换、追加版本编辑、显式数据评估与用户复审已实现，18项Python及2项Electron定向通过，完整469 Python/8 Node/41实际Electron及0013迁移通过。来源见SOURCES-step18.json，范围见ACCEPTANCE-step18.md；发布轮修复空列表提交，复验及公开范围见EVIDENCE第43节，[PR #17](https://github.com/ydflow/research-trail/pull/17)已创建，最终检查/合并以Git与回执为准。
 - 第19—24步：未开始；没有用户具体指令不继续。
 - 默认分支 `main`；第0/1步首次上传检查见EVIDENCE第7节，第2步发布检查见第9—10节，提交历史和远程状态以Git为准。
 - 状态取值：未开始 / 进行中 / 代码完成/待验收 / 验收通过 / 受阻。

@@ -1594,3 +1594,15 @@ Release（id403094537，非draft/非prerelease、assets0）未改。PR/CI/合并
 没有真实提供商或模型请求。真实行情/账户论点、真实模型分析正确性、投资效果、长期
 负载、其他OS/机器、安装包及用户亲自操作/学习仍未验证；第16步历史真实结构验证不能
 证明本步投资判断正确。没有增加监控、筛选、自动调度、收益校准或后续阶段。
+
+### PR及合并前检查状态
+
+重新现场核验ydflow、目标公开仓库、两个origin地址和原main后，已推送feat/step-18-theses
+并创建[PR #17](https://github.com/ydflow/research-trail/pull/17)。首次head
+b0253726029b8748e3d5a84c0e2d057baa7c0383，base仍f365d122；29份文件/五个提交。
+上文“PR/CI/合并尚未执行”为外部写入前状态，现PR已存在，push/PR离线Windows检查
+启动，合并尚未执行。此补充只更新PR链接和检查状态，不改变已验收的170份运行源码。
+文档推送后以新最终head逐项核对CI，不把早期head取消或本地通过记为最终远程成功。
+合并前将再次核对文件blob、完整提交/作者、审查请求和未解决讨论；检查通过且无阻塞才
+按用户授权普通merge，不squash/rebase/admin或删分支。合并、最终main CI与本地同步结果
+按实际GitHub和根PROJECT_STATE发布回执确认，不在此预写成功。
