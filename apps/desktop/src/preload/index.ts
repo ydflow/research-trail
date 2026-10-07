@@ -3,7 +3,7 @@ import type { BackendState, ResearchTrailBridge, RunStreamUpdate } from '../brid
 
 const bridge: ResearchTrailBridge = {
   reportList: runId => ipcRenderer.invoke('reports:list', runId),
-  generateReport: (runId, mode) => ipcRenderer.invoke('reports:generate', runId, mode),
+  generateReport: (runId, mode, requestId) => ipcRenderer.invoke('reports:generate', runId, mode, requestId),
   report: id => ipcRenderer.invoke('reports:get', id),
   cancelReport: id => ipcRenderer.invoke('reports:cancel', id),
   reportEvidence: (id, evidenceId) => ipcRenderer.invoke('reports:evidence', id, evidenceId),
@@ -16,6 +16,10 @@ const bridge: ResearchTrailBridge = {
   researchRun: id => ipcRenderer.invoke('research:get', id),
   cancelResearch: id => ipcRenderer.invoke('research:cancel', id),
   researchData: (id, capability) => ipcRenderer.invoke('research:data', id, capability),
+  researchCheckpoint: id => ipcRenderer.invoke('research:checkpoint', id),
+  resumeResearch: (id, requestId) => ipcRenderer.invoke('research:resume', id, requestId),
+  restartResearch: (id, requestId) => ipcRenderer.invoke('research:restart', id, requestId),
+  abandonResearch: (id, requestId) => ipcRenderer.invoke('research:abandon', id, requestId),
   capabilities: context => ipcRenderer.invoke('capabilities:list', context),
   skills: context => ipcRenderer.invoke('skills:list', context),
   setSkillEnabled: (id, enabled, context) => ipcRenderer.invoke('skills:enabled', id, enabled, context),

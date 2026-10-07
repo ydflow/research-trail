@@ -6,3 +6,4 @@ export type ResearchSummary = components['schemas']['ResearchSummary'];
 export type ResearchRun = components['schemas']['ResearchRun'];
 export type ResearchData = components['schemas']['ResearchData'];
 export type StrategyId = ResearchStrategy['id'];
+export type RecoveryView = components['schemas']['RecoveryView'];

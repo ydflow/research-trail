@@ -1,0 +1,25 @@
+{
+  "repository": "https://github.com/helsome/folio",
+  "commit": "ba5dcdfd31b162f5edb8b908f7f099a560389326",
+  "files": [
+    {
+      "upstream": "packages/shared/src/research/checkpoint.ts",
+      "sha256": "1665491dfe9b371c39c1fe551b0f1c69ed561b7d37be4f18a1524391667f0f35",
+      "adapted_to": [
+        "services/backend/research_trail/research_checkpoints.py",
+        "services/backend/research_trail/research_store.py"
+      ]
+    },
+    {
+      "upstream": "packages/shared/src/research/service.ts",
+      "sha256": "d21a136ffb3caa4e3e1eda8d252886262420e6b73ecd59fd4da2f0193eb532bc",
+      "adapted_to": [
+        "services/backend/research_trail/research_recovery.py",
+        "apps/desktop/src/renderer/research/RecoveryPanel.tsx"
+      ]
+    }
+  ],
+  "scope": "Conceptual checkpoint validation and explicit resume/restart actions from fixed baseline; no verbatim new resource import. Python same-transaction SQLite checkpoints, durable idempotent actions, generation fences, abandoned lifecycle, configuration identities and uncertain model-request handling are newly implemented over existing stores/executors. No file checkpoint authority, TS runtime, automatic model replay or second registry.",
+  "authorization": "Original-author reuse authorization confirmation recorded in EVIDENCE sections 9-11; original authorization text not independently obtained. Only skills/LICENSE is confirmed MIT (Copyright 2026 Longbridge Inc.). No whole-repository MIT claim.",
+  "preserved_resources": "Existing source notices, attribution, step14 30 original resource bytes and LICENSE retained; see SOURCES-step14.json. Readonly upstream unchanged."
+}

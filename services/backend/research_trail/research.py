@@ -32,6 +32,7 @@ class Call:
 class Work:
     identity: str
     plan: ResearchPlan
+    generation: int = 0
     stop: threading.Event = field(default_factory=threading.Event)
     calls: list[Call] = field(default_factory=list)
     thread: threading.Thread | None = None
@@ -60,8 +61,9 @@ class ResearchService:
             query=ReadQuery(capability=c,mode=body.mode,symbol=None if c in ('market.sentiment','market.status') else body.symbol,
                 market=market,event_type='financial',use_cache=False))
             for c in strategy.capability_ids]
-        return ResearchPlan(input=body,source=SOURCE,provider_revision=self.providers.settings.profile(body.provider).revision,
-            timeout_seconds=self.timeout_seconds,skills=skill_states,reads=reads)
+        with self.providers.settings.lock:
+            return ResearchPlan(input=body,source=SOURCE,provider_revision=self.providers.settings.profile(body.provider).revision,
+                provider_identity=self.providers.settings.identity(body.provider),timeout_seconds=self.timeout_seconds,skills=skill_states,reads=reads)
 
     def start(self, body):
         with self.lock:
@@ -87,10 +89,30 @@ class ResearchService:
                 for call in self.work.calls: call.stop.set()
             return self.store.get(identity)
 
+    def resume(self,identity,request_id):
+        with self.lock:
+            previous=self.store.action(identity,'resume',request_id)
+            if previous: return self.store.get(previous)
+            if self.closed: raise ResearchError('BACKEND_CLOSED')
+            active=self.store.active()
+            if active and active!=identity: raise ResearchError('RESEARCH_ACTIVE')
+            self.calls=[c for c in self.calls if c.thread and c.thread.is_alive()]
+            if not active and self.calls: raise ResearchError('EXECUTOR_DRAINING')
+            saved=self.store.resume(identity,request_id)
+            if saved.status=='fetching' and (not self.work or self.work.identity!=identity or self.work.generation!=saved.generation):
+                work=self.work=Work(identity,saved.plan,generation=saved.generation)
+                try:
+                    work.thread=threading.Thread(target=self.execute,args=(work,),daemon=True,name=f'research-{identity}')
+                    work.thread.start()
+                except Exception:
+                    self.store.finish(identity,'interrupted','WORKER_START_FAILED',generation=work.generation); self.work=None
+            return self.store.get(identity)
+
     def fetch(self, work, call):
         try:
             result = RESULT.validate_python(self.providers.query(work.plan.input.provider,call.read.query,
-                stop=call.stop,timeout_seconds=work.plan.timeout_seconds,expected_revision=work.plan.provider_revision))
+                stop=call.stop,timeout_seconds=work.plan.timeout_seconds,expected_revision=work.plan.provider_revision,
+                expected_identity=work.plan.provider_identity))
             if result.provider != work.plan.input.provider or result.capability != call.read.capability: raise ValueError()
             if result.ok:
                 if result.provenance.mode != work.plan.input.mode or result.provenance.provider != result.provider: raise ValueError()
@@ -107,11 +129,12 @@ class ResearchService:
 
     def launch(self, work, read):
         state = self.registry.state(read.capability,work.plan.input.mode,work.plan.input.provider)
-        if not state.available:
-            self.store.step(work.identity,read.capability,'unavailable',state.code); return
+        continuing_verified_plan = work.generation>0 and read.availability.available and state.code=='REAL_UNVERIFIED'
+        if not state.available and not continuing_verified_plan:
+            self.store.step(work.identity,read.capability,'unavailable',state.code,generation=work.generation); return
         if self.providers.settings.profile(work.plan.input.provider).revision != work.plan.provider_revision:
-            self.store.step(work.identity,read.capability,'failed','CONFIG_CHANGED'); return
-        if not self.store.step(work.identity,read.capability,'running'): return
+            self.store.step(work.identity,read.capability,'failed','CONFIG_CHANGED',generation=work.generation); return
+        if not self.store.step(work.identity,read.capability,'running',generation=work.generation): return
         call = Call(read=read,started=time.monotonic())
         work.calls.append(call); self.calls.append(call)
         try:
@@ -119,7 +142,7 @@ class ResearchService:
             call.thread.start()
         except Exception:
             call.applied=True; call.stop.set()
-            self.store.step(work.identity,read.capability,'failed','WORKER_START_FAILED')
+            self.store.step(work.identity,read.capability,'failed','WORKER_START_FAILED',generation=work.generation)
 
     def advance(self, work):
         timestamp = time.monotonic()
@@ -128,12 +151,12 @@ class ResearchService:
             if (call.done.is_set() and call.ended-call.started > self.timeout_seconds) or (
                 not call.done.is_set() and timestamp-call.started >= self.timeout_seconds):
                 call.stop.set(); call.applied=True
-                self.store.step(work.identity,call.read.capability,'timed_out','TIMEOUT')
+                self.store.step(work.identity,call.read.capability,'timed_out','TIMEOUT',generation=work.generation)
             elif call.done.is_set():
                 call.applied=True; result=call.result
                 status = 'success' if result.ok else 'timed_out' if result.state=='timed_out' else 'cancelled' if result.state=='cancelled' else 'failed'
                 self.store.step(work.identity,call.read.capability,status,None if result.ok else result.code,
-                    result.model_dump(mode='json') if result.ok else None)
+                    result.model_dump(mode='json') if result.ok else None,generation=work.generation)
         self.calls = [c for c in self.calls if c.thread and c.thread.is_alive()]
         view = self.store.get(work.identity)
         pending = [s.capability for s in view.steps if s.status=='queued']
@@ -148,9 +171,9 @@ class ResearchService:
         if pending and self.calls and all(c.applied for c in self.calls):
             if work.draining_since is None: work.draining_since=timestamp
             elif timestamp-work.draining_since >= self.drain_seconds:
-                for capability in pending: self.store.step(work.identity,capability,'failed','EXECUTOR_DRAINING')
+                for capability in pending: self.store.step(work.identity,capability,'failed','EXECUTOR_DRAINING',generation=work.generation)
         else: work.draining_since=None
-        self.store.finish(work.identity)
+        self.store.finish(work.identity,generation=work.generation)
         return self.store.get(work.identity).status != 'fetching'
 
     def execute(self, work):
@@ -162,7 +185,7 @@ class ResearchService:
                 work.stop.wait(min(0.05,self.timeout_seconds/5))
         except Exception:
             with self.lock:
-                if not self.closed and not work.stop.is_set(): self.store.finish(work.identity,'failed','RESEARCH_ERROR')
+                if not self.closed and not work.stop.is_set(): self.store.finish(work.identity,'failed','RESEARCH_ERROR',generation=work.generation)
         finally:
             with self.lock:
                 work.stop.set()
@@ -174,5 +197,5 @@ class ResearchService:
             self.closed=True; work=self.work
             for call in self.calls: call.stop.set()
             if work:
-                work.stop.set(); self.store.finish(work.identity,'interrupted','BACKEND_SHUTDOWN')
+                work.stop.set(); self.store.finish(work.identity,'interrupted','BACKEND_SHUTDOWN',generation=work.generation)
         if work and work.thread: work.thread.join(1)

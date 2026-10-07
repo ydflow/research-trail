@@ -21,3 +21,4 @@
 .report-references { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .report-panel button { overflow-wrap: anywhere; max-width: 100%; }
 .report-panel select { width: 340px; }
+.recovery-panel { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 12px; overflow-wrap: anywhere; }

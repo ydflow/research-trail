@@ -9,6 +9,122 @@ const { tmpdir } = require('node:os');
 const { createRequire } = require('node:module');
 const { pathToFileURL } = require('node:url');
 
+test('Step17 actual collection process interruption preserves evidence resumes and restarts explicitly', {timeout:90000}, async()=>{
+  let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'research-checkpoint'});
+  const path=instance.databasePath; let original,raw;
+  try{
+    let page=instance.page; const errors=[]; page.on('pageerror',e=>errors.push(e.message)); await waitForBackend(page);
+    await page.getByRole('button',{name:'研究采集',exact:true}).click(); await page.getByRole('radio',{name:/价值投资/}).check();
+    await expect(page.getByTestId('research-plan').locator('summary')).toContainText('4 项');
+    await page.getByRole('button',{name:'开始采集',exact:true}).click();
+    await expect.poll(async()=> page.evaluate(async()=>{const rows=await window.researchTrail.researchRuns();return rows.length ? (await window.researchTrail.researchRun(rows[0].id)).succeeded : 0;})).toBe(3);
+    original=await page.evaluate(async()=>{const rows=await window.researchTrail.researchRuns();return window.researchTrail.researchRun(rows[0].id);});
+    raw=await page.evaluate(id=>window.researchTrail.researchData(id,'company.valuation'),original.id);
+    const owned=children(instance.pid); assert.equal(owned.length,1); process.kill(owned[0]);
+    await expect(page.getByRole('heading',{name:'连接未就绪'})).toBeVisible(); await instance.app.close();
+    instance=await launch({RESEARCH_TRAIL_DB_PATH:path}); page=instance.page; page.on('pageerror',e=>errors.push(e.message)); await waitForBackend(page);
+    await page.getByRole('button',{name:'研究采集',exact:true}).click();
+    await expect(page.getByTestId('research-run')).toHaveAttribute('data-run-id',original.id);
+    await expect(page.getByTestId('research-run')).toHaveAttribute('data-status','interrupted');
+    await expect(page.getByTestId('research-checkpoint')).toHaveAttribute('data-stage','collection_interrupted');
+    assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,0);
+    await page.getByTestId('research-checkpoint').scrollIntoViewIfNeeded(); await screenshot(page,'step17-collection-interrupted.png');
+    await page.getByRole('button',{name:'恢复原任务（不调用模型）',exact:true}).click();
+    await expect(page.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    const resumed=await page.evaluate(id=>window.researchTrail.researchRun(id),original.id);
+    assert.equal(resumed.generation,1); assert.equal(resumed.id,original.id);
+    assert.deepEqual(resumed.steps.filter(s=>s.status==='success'&&s.capability!=='company.profile'),original.steps.filter(s=>s.status==='success'));
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.researchData(id,'company.valuation'),original.id),raw);
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,1);
+    assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,0);
+    await page.getByRole('button',{name:'放弃原任务（保留历史）',exact:true}).click();
+    await expect(page.getByTestId('research-checkpoint')).toHaveAttribute('data-stage','abandoned');
+    await expect(page.getByRole('button',{name:'生成新报告',exact:true})).toBeDisabled();
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.researchData(id,'company.valuation'),original.id),raw);
+    await page.getByRole('button',{name:'重新发起新任务',exact:true}).click();
+    await expect(page.getByTestId('research-run')).not.toHaveAttribute('data-run-id',original.id);
+    await expect(page.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    const fresh=await page.evaluate(async()=>{const rows=await window.researchTrail.researchRuns();return window.researchTrail.researchRun(rows[0].id);});
+    assert.notEqual(fresh.id,original.id); assert.equal(fresh.parent_run_id,original.id); assert.equal(fresh.generation,0);
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,2);
+    assert.ok((await page.evaluate(id=>window.researchTrail.researchRun(id),original.id)).abandoned_at);
+    await page.setViewportSize({width:600,height:680});
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await page.getByTestId('research-checkpoint').scrollIntoViewIfNeeded(); await screenshot(page,'step17-restart-narrow.png');
+    assert.deepEqual(errors,[]);
+  }finally{await instance.app.close();}
+});
+
+test('Step17 actual report process interruption never resumes synthesis or duplicates reports', {timeout:90000}, async()=>{
+  let instance=await launch({}); const path=instance.databasePath; let runId,original,interrupted;
+  try{
+    let page=instance.page; const errors=[]; page.on('pageerror',e=>errors.push(e.message)); await waitForBackend(page);
+    await page.getByRole('button',{name:'研究采集',exact:true}).click(); await page.getByRole('radio',{name:/价值投资/}).check();
+    await expect(page.getByTestId('research-plan').locator('summary')).toContainText('4 项');
+    await page.getByRole('button',{name:'开始采集',exact:true}).click(); await expect(page.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    runId=await page.getByTestId('research-run').getAttribute('data-run-id');
+    await page.getByRole('button',{name:'生成新报告',exact:true}).click(); await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','completed');
+    original=await page.evaluate(async()=>{const rows=await window.researchTrail.reportList();return window.researchTrail.report(rows[0].id);});
+    await instance.app.close(); instance=await launch({RESEARCH_TRAIL_DB_PATH:path,RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'report-checkpoint'});
+    page=instance.page; await waitForBackend(page); await page.getByRole('button',{name:'研究采集',exact:true}).click();
+    await page.getByRole('button',{name:'读取已保存任务',exact:true}).click();
+    await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','completed');
+    await page.getByRole('button',{name:'生成新报告',exact:true}).click(); await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','generating');
+    const rows=await page.evaluate(()=>window.researchTrail.reportList()); assert.equal(rows.length,2); const rid=rows[0].id;
+    const owned=children(instance.pid); assert.equal(owned.length,1); process.kill(owned[0]); await instance.app.close();
+    instance=await launch({RESEARCH_TRAIL_DB_PATH:path}); page=instance.page; page.on('pageerror',e=>errors.push(e.message)); await waitForBackend(page);
+    await page.getByRole('button',{name:'研究采集',exact:true}).click();
+    await expect(page.getByTestId('research-run')).toHaveAttribute('data-run-id',runId);
+    await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','interrupted');
+    await expect(page.getByTestId('research-checkpoint')).toHaveAttribute('data-stage','awaiting_report');
+    interrupted=await page.evaluate(id=>window.researchTrail.report(id),rid);
+    assert.equal(interrupted.document,null); assert.equal(interrupted.requests_started,0);
+    await page.getByRole('button',{name:'恢复原任务（不调用模型）',exact:true}).click();
+    await expect(page.getByTestId('research-checkpoint')).toHaveAttribute('data-stage','awaiting_report');
+    const replay=await page.evaluate(async id=>{const key=crypto.randomUUID();return Promise.all([window.researchTrail.resumeResearch(id,key),window.researchTrail.resumeResearch(id,key)]);},runId);
+    assert.deepEqual(replay[0],replay[1]);
+    assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,2);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.report(id),rid),interrupted);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.report(id),original.id),original);
+    await page.getByTestId('research-checkpoint').scrollIntoViewIfNeeded(); await screenshot(page,'step17-report-awaiting.png');
+    await page.getByRole('button',{name:'生成新报告',exact:true}).click(); await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','completed');
+    const latest=await page.evaluate(async()=>{const rows=await window.researchTrail.reportList();return window.researchTrail.report(rows[0].id);});
+    assert.equal(latest.version,3); assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,3);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.report(id),rid),interrupted);
+    assert.deepEqual(errors,[]);
+  }finally{await instance.app.close();}
+});
+
+test('Step17 delayed abandon response survives report status refresh', {timeout:60000}, async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'report-checkpoint'});
+  try{
+    const page=instance.page; await waitForBackend(page);
+    await page.getByRole('button',{name:'研究采集',exact:true}).click(); await page.getByRole('radio',{name:/价值投资/}).check();
+    await expect(page.getByTestId('research-plan').locator('summary')).toContainText('4 项');
+    await page.getByRole('button',{name:'开始采集',exact:true}).click(); await expect(page.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    await page.getByRole('button',{name:'生成新报告',exact:true}).click(); await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','generating');
+    await instance.app.evaluate(({ipcMain})=>{
+      const original=ipcMain._invokeHandlers.get('research:abandon');
+      ipcMain.removeHandler('research:abandon');
+      ipcMain.handle('research:abandon',async(...args)=>{
+        const result=await original(...args);
+        await new Promise(resolve=>setTimeout(resolve,2000));
+        return result;
+      });
+    });
+    await page.getByRole('button',{name:'放弃原任务（保留历史）',exact:true}).click();
+    await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','cancelled');
+    await expect(page.getByTestId('research-checkpoint')).toHaveAttribute('data-stage','abandoned');
+    await expect(page.getByTestId('research-run')).toContainText('已放弃原任务');
+    await expect(page.getByRole('button',{name:'放弃原任务（保留历史）',exact:true})).toBeDisabled();
+    await expect(page.getByRole('button',{name:'生成新报告',exact:true})).toBeDisabled();
+    const saved=await page.evaluate(async()=>{const rows=await window.researchTrail.researchRuns();return window.researchTrail.researchRun(rows[0].id);});
+    assert.ok(saved.abandoned_at);
+    const reports=await page.evaluate(()=>window.researchTrail.reportList());
+    assert.equal(reports.length,1); assert.equal(reports[0].status,'cancelled');
+  }finally{await instance.app.close();}
+});
+
 test('Step16 saved reports, actual collected diff, original facts, Markdown dialog and restart', {timeout:90000}, async()=>{
   let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'report-updated'});
   const path=instance.databasePath; let first,second;
@@ -1023,6 +1139,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       'providerProfiles', 'saveProvider', 'deleteProvider', 'saveProviderCredential', 'deleteProviderCredential', 'providerCapabilities', 'queryProvider',
       'workspaceState', 'addWatch', 'removeWatch', 'selectSecurity', 'securityPage', 'openNewsSource',
       'reportList', 'generateReport', 'report', 'cancelReport', 'reportEvidence', 'exportReport', 'reportDiff',
+      'researchCheckpoint', 'resumeResearch', 'restartResearch', 'abandonResearch',
       'capabilities', 'skills', 'setSkillEnabled', 'readSkillResource', 'researchStrategies', 'researchPlan', 'researchRuns', 'startResearch', 'researchRun', 'cancelResearch', 'researchData', 'portfolioRisk', 'compareStocks', 'portfolioList', 'createPortfolio', 'portfolioView', 'previewPortfolio', 'confirmPortfolio', 'undoPortfolio', 'refreshPortfolio'].sort(), node: 'undefined', process: 'undefined' });
     assert.deepEqual(await first.app.evaluate(({ BrowserWindow }) => {
       const pref = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();

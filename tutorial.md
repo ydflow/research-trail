@@ -337,7 +337,7 @@ SQLite研究记录 → researchRun/researchData → 页面显示已保存状态�
 
 ## C11：证据报告怎样生成、比较并恢复？
 
-状态：第16步已按实际代码展开，固定/模拟与本机验收通过，发布复验一次真实LLM结构、引用和保存通过；原五次失败保留。真实报告的数据仍为模拟，定性分析可能与事实不符，引用不证明正确，见EVIDENCE第39节；第17步检查点/显式恢复仍为大纲，未执行。
+状态：第16步已按实际代码展开，固定/模拟与本机验收通过，发布复验一次真实LLM结构、引用和保存通过；原五次失败保留。真实报告的数据仍为模拟，定性分析可能与事实不符，引用不证明正确，见EVIDENCE第39节；第17步检查点/显式恢复已实现，模拟/协议与本机自动验收通过，本步没有真实LLM请求。
 
 研迹真实调用链：
 
@@ -358,7 +358,33 @@ SQLite研究记录 → researchRun/researchData → 页面显示已保存状态�
 
 读链：report_contracts → report_facts → report_synthesis → reports/report_store →
 report_output → app → report-types/bridge → ReportPanel；[验收清单](docs/ACCEPTANCE-step16.md)。
-恢复的身份配置核对和检查点续跑留到第17步，不能把历史读取称为恢复执行。
+第17步恢复真实调用链：
+
+1. `ResearchStore.begin/step/finish`调用`research_checkpoints.save`，与原计划、执行状态和
+   原始结果在同一事务提交。检查点记录计划hash、结果hash、状态、代次和时间；它是审计
+   快照，原业务行仍是唯一执行状态。0012迁移为旧库生成一次legacy-migration快照。
+2. Python启动`ResearchStore.recover`与`ReportStore.recover`，只把活动状态标为interrupted。
+   打开研究页会识别采集或最新报告的中断任务，读取检查点；启动和查看均零业务重执行。
+3. `RecoveryPanel` → preload的`researchCheckpoint/resumeResearch/restartResearch/abandonResearch`
+   → main来源/UUID校验 → `app.py`受启动令牌保护的四条路由 → `ResearchRecovery`。
+4. `inspect`在单一读事务核对校验和、版本、计划、成功结果与数据库。待续采再核对原配置
+   revision及identity、同一能力注册表与本机凭证。配置变化或缺证据阻止恢复；模型变化
+   只给警告，因为恢复不创建模型。远端凭证过期只能在实际只读查询时得知并保存失败。
+5. `resume`保留原ID、原计划和已完成结果，只重置中断/取消的工作；既有有界执行器续采，
+   不复制提供商代码。恢复代次阻止旧协调器回写；操作UUID入库去重，重复请求返回原任务。
+6. 报告阶段恢复只读取旧版本，不继续HTTP请求或自动生成。发送前持久标记可能已消费，
+   硬退出后无法知道服务端结果时显示不确定。只有另点“生成新报告”才新增版本和显式调用；
+   同一报告请求UUID返回同一版本，迟到输出不能覆盖终态或制造成功。
+7. `restart`按旧研究输入、当前配置创建新ID/新计划并重新采集，parent_run_id指向原任务。
+   `abandon`同一事务标记原任务放弃、取消未完成采集/报告并记录操作；旧成功证据/报告保留。
+   放弃后禁止续采与新报告，可以只读历史或重新发起；不会把已完成采集伪改为失败。
+
+检查点hash证明当前记录间一致，不证明投资分析正确，也不是防数据库管理员伪造的签名。
+已完成采集不会重复查询；中断且未提交的只读调用可能在显式续采时再执行，不能承诺外部
+请求恰好一次。已经确定失败/超时/不可用的项保留缺口，不通过恢复偷偷重试。
+读链：research_checkpoints → research_store/research → research_recovery → reports/report_store →
+app/bridge/RecoveryPanel；实际中断用例见test_recovery.py、tests/desktop.test.cjs与
+[第17步清单](docs/ACCEPTANCE-step17.md)。
 
 - 主链：已采集数据包 → synthesizer → 带EvidenceRef报告 → 存储/显示/差异；中断经checkpoint显式恢复。
 - 必读1：`packages/core/src/research.ts` / `ResearchReport`、`EvidenceRef`；`packages/shared/src/research/agent-synth.ts`：输入事实到结构输出，追注入合成器。

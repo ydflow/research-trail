@@ -1,6 +1,7 @@
 """Separate data-provider profiles; native secret bundles never enter SQLite."""
 from dataclasses import dataclass, field
 import json
+from hashlib import sha256
 from uuid import uuid4
 from sqlalchemy import select
 from .models import DataProviderRecord
@@ -40,6 +41,13 @@ class ProviderSettings:
 
     def profile(self, provider):
         return next(p for p in self.profiles() if p.provider == provider)
+
+    def identity(self,provider):
+        """Bind recovery to the actual profile and credential reference, never a key."""
+        with self.lock,self.database.sessions() as db:
+            row=db.get(DataProviderRecord,provider)
+            value=None if row is None else dict(configuration=row.configuration,credential_ref=row.credential_ref,revision=row.revision)
+            return sha256(json.dumps(value,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 
     def save(self, provider, body):
         with self.lock, self.database.write() as db:

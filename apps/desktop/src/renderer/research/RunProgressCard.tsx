@@ -9,6 +9,7 @@ export function RunProgressCard({ run, busy, onCancel, onRead }: {
 }) {
   return <section data-testid="research-run" data-run-id={run.id} data-status={run.status}>
     <h3>已保存任务：{run.symbol} · {run.strategy}</h3>
+    {run.abandoned_at && <p role="status">已放弃原任务；完成的数据和证据保留，只能读取历史或重新发起新任务。</p>}
     <p role="status" data-testid="research-status">{researchLabels[run.status]} · 已结束 {run.completed}/{run.total} · 已采集 {run.succeeded} · 失败或不可用 {run.failed}</p>
     <progress aria-label="采集进度" max={Math.max(1, run.total)} value={run.completed} />
     <p>{run.mode === 'simulated' ? '模拟数据' : '真实模式'} · {run.provider} · 并发上限 {run.plan.input.concurrency} · 单项限时 {run.plan.timeout_seconds} 秒</p>

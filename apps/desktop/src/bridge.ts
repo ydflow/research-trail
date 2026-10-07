@@ -11,7 +11,7 @@ export interface BackendState {
 }
 export interface ResearchTrailBridge {
   reportList(runId?: string): Promise<import('./report-types').ReportSummary[]>;
-  generateReport(runId: string, mode: 'fixed' | 'real'): Promise<import('./report-types').ReportJob>;
+  generateReport(runId: string, mode: 'fixed' | 'real', requestId?: string): Promise<import('./report-types').ReportJob>;
   report(id: string): Promise<import('./report-types').ReportJob>;
   cancelReport(id: string): Promise<import('./report-types').ReportJob>;
   reportEvidence(id: string, evidenceId: string): Promise<import('./report-types').ReportOriginal>;
@@ -24,6 +24,10 @@ export interface ResearchTrailBridge {
   researchRun(id: string): Promise<import('./research-types').ResearchRun>;
   cancelResearch(id: string): Promise<import('./research-types').ResearchRun>;
   researchData(id: string, capability: string): Promise<import('./research-types').ResearchData>;
+  researchCheckpoint(id: string): Promise<import('./research-types').RecoveryView>;
+  resumeResearch(id: string, requestId: string): Promise<import('./research-types').ResearchRun>;
+  restartResearch(id: string, requestId: string): Promise<import('./research-types').ResearchRun>;
+  abandonResearch(id: string, requestId: string): Promise<import('./research-types').ResearchRun>;
   capabilities(context: import('./skill-types').SkillContext): Promise<import('./skill-types').CapabilityState[]>;
   skills(context: import('./skill-types').SkillContext): Promise<import('./skill-types').SkillView[]>;
   setSkillEnabled(id: string, enabled: boolean, context: import('./skill-types').SkillContext): Promise<import('./skill-types').SkillView>;

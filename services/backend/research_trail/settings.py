@@ -206,6 +206,15 @@ class SettingsService:
                 raise ModelError("MODEL_CREDENTIAL_MISSING", "模型API Key未配置，请仅在本机设置页保存。")
             return ModelConfiguration(row.endpoint, row.model, secret, row.request_timeout_seconds)
 
+    def model_identity(self):
+        """Opaque recovery identity, including credential reference but never key bytes."""
+        import json
+        with self.lock,self.database.sessions() as db:
+            row=db.get(ConnectionRecord,'model')
+            fields=('enabled','endpoint','model','requires_credential','credential_ref','revision','request_timeout_seconds')
+            value={k:getattr(row,k) for k in fields} if row else None
+            return sha256(json.dumps(value,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+
     def credential(self, kind, body):
         if kind in ("skills", "runtime"):
             raise SettingsError("技能和本机运行时配置不接受凭证。")

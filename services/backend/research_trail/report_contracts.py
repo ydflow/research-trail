@@ -5,6 +5,7 @@ from .provider_contracts import Boundary, ProviderSuccess
 
 class ReportGenerate(Boundary):
     mode: Literal['fixed', 'real'] = 'fixed'
+    request_id: str | None = Field(default=None, pattern=r'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$')
 
 class ReportClaim(Boundary):
     kind: Literal['fact', 'analysis', 'prediction']
@@ -65,6 +66,7 @@ class ReportSummary(Boundary):
     started_at: str
     completed_at: str | None
     requests_started: int
+    request_uncertain: bool
 
 class ReportJob(ReportSummary):
     document: ReportDocument | None

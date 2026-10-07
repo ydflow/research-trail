@@ -3173,6 +3173,119 @@
         "title": "ReadQuery",
         "type": "object"
       },
+      "RecoveryAction": {
+        "additionalProperties": false,
+        "properties": {
+          "request_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id"
+        ],
+        "title": "RecoveryAction",
+        "type": "object"
+      },
+      "RecoveryView": {
+        "additionalProperties": false,
+        "properties": {
+          "checkpoint_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checkpoint Id"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "generation": {
+            "title": "Generation",
+            "type": "integer"
+          },
+          "label": {
+            "default": "恢复保留原任务并复用采集；重新发起创建新任务并重新采集。恢复不会调用模型，报告须另行显式生成。",
+            "title": "Label",
+            "type": "string"
+          },
+          "model_request_uncertain": {
+            "title": "Model Request Uncertain",
+            "type": "boolean"
+          },
+          "remaining_capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Remaining Capabilities",
+            "type": "array"
+          },
+          "report_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Report Ids",
+            "type": "array"
+          },
+          "resume_allowed": {
+            "title": "Resume Allowed",
+            "type": "boolean"
+          },
+          "reuse_capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reuse Capabilities",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "stage": {
+            "enum": [
+              "collecting",
+              "collection_interrupted",
+              "report_generating",
+              "awaiting_report",
+              "completed",
+              "no_data",
+              "abandoned",
+              "blocked"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_id",
+          "checkpoint_id",
+          "generation",
+          "stage",
+          "resume_allowed",
+          "code",
+          "reuse_capabilities",
+          "remaining_capabilities",
+          "report_ids",
+          "warnings",
+          "model_request_uncertain"
+        ],
+        "title": "RecoveryView",
+        "type": "object"
+      },
       "ReportChange": {
         "additionalProperties": false,
         "properties": {
@@ -3524,6 +3637,18 @@
             ],
             "title": "Mode",
             "type": "string"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
           }
         },
         "title": "ReportGenerate",
@@ -3576,6 +3701,10 @@
             "title": "Mode",
             "type": "string"
           },
+          "request_uncertain": {
+            "title": "Request Uncertain",
+            "type": "boolean"
+          },
           "requests_started": {
             "title": "Requests Started",
             "type": "integer"
@@ -3619,6 +3748,7 @@
           "started_at",
           "completed_at",
           "requests_started",
+          "request_uncertain",
           "document"
         ],
         "title": "ReportJob",
@@ -3739,6 +3869,10 @@
             "title": "Mode",
             "type": "string"
           },
+          "request_uncertain": {
+            "title": "Request Uncertain",
+            "type": "boolean"
+          },
           "requests_started": {
             "title": "Requests Started",
             "type": "integer"
@@ -3781,7 +3915,8 @@
           "code",
           "started_at",
           "completed_at",
-          "requests_started"
+          "requests_started",
+          "request_uncertain"
         ],
         "title": "ReportSummary",
         "type": "object"
@@ -3954,6 +4089,17 @@
             "title": "Label",
             "type": "string"
           },
+          "provider_identity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Identity"
+          },
           "provider_revision": {
             "title": "Provider Revision",
             "type": "integer"
@@ -3995,6 +4141,18 @@
       "ResearchRun": {
         "additionalProperties": false,
         "properties": {
+          "abandoned_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abandoned At"
+          },
           "completed": {
             "title": "Completed",
             "type": "integer"
@@ -4015,6 +4173,10 @@
             "title": "Failed",
             "type": "integer"
           },
+          "generation": {
+            "title": "Generation",
+            "type": "integer"
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -4026,6 +4188,17 @@
             ],
             "title": "Mode",
             "type": "string"
+          },
+          "parent_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Run Id"
           },
           "plan": {
             "$ref": "#/components/schemas/ResearchPlan"
@@ -4102,6 +4275,9 @@
           "completed",
           "succeeded",
           "failed",
+          "generation",
+          "parent_run_id",
+          "abandoned_at",
           "plan",
           "steps"
         ],
@@ -4238,6 +4414,18 @@
       "ResearchSummary": {
         "additionalProperties": false,
         "properties": {
+          "abandoned_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abandoned At"
+          },
           "completed": {
             "title": "Completed",
             "type": "integer"
@@ -4258,6 +4446,10 @@
             "title": "Failed",
             "type": "integer"
           },
+          "generation": {
+            "title": "Generation",
+            "type": "integer"
+          },
           "id": {
             "title": "Id",
             "type": "string"
@@ -4269,6 +4461,17 @@
             ],
             "title": "Mode",
             "type": "string"
+          },
+          "parent_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Run Id"
           },
           "provider": {
             "enum": [
@@ -4334,7 +4537,10 @@
           "total",
           "completed",
           "succeeded",
-          "failed"
+          "failed",
+          "generation",
+          "parent_run_id",
+          "abandoned_at"
         ],
         "title": "ResearchSummary",
         "type": "object"
@@ -7620,6 +7826,71 @@
         "summary": "Get Research"
       }
     },
+    "/research/runs/{identity}/abandon": {
+      "post": {
+        "operationId": "abandon_research_research_runs__identity__abandon_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryAction"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchRun"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Abandon Research"
+      }
+    },
     "/research/runs/{identity}/cancel": {
       "post": {
         "operationId": "cancel_research_research_runs__identity__cancel_post",
@@ -7673,6 +7944,61 @@
           }
         },
         "summary": "Cancel Research"
+      }
+    },
+    "/research/runs/{identity}/checkpoint": {
+      "get": {
+        "operationId": "research_checkpoint_research_runs__identity__checkpoint_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Research Checkpoint"
       }
     },
     "/research/runs/{identity}/data/{capability}": {
@@ -7802,6 +8128,136 @@
           }
         },
         "summary": "Generate Report"
+      }
+    },
+    "/research/runs/{identity}/restart": {
+      "post": {
+        "operationId": "restart_research_research_runs__identity__restart_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryAction"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchRun"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restart Research"
+      }
+    },
+    "/research/runs/{identity}/resume": {
+      "post": {
+        "operationId": "resume_research_research_runs__identity__resume_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoveryAction"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchRun"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resume Research"
       }
     },
     "/research/strategies": {

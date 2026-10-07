@@ -38,6 +38,11 @@ class ReportService:
     def start(self,run_id,body):
         with self.lock:
             if self.closed: raise ResearchError('BACKEND_CLOSED')
+            previous=self.store.request(run_id,body.request_id)
+            if previous:
+                job=self.store.get(previous)
+                if job.mode!=body.mode: raise ResearchError('ACTION_ID_CONFLICT')
+                return job
             if self.work:
                 if self.store.get(self.work.identity).status=='generating': raise ResearchError('REPORT_ACTIVE')
                 if self.work.thread and self.work.thread.is_alive(): raise ResearchError('REPORT_DRAINING')
@@ -45,7 +50,8 @@ class ReportService:
             # Snapshot configured credentials once; no network or credential in stored report.
             try: synthesizer=self.fixed_factory() if body.mode=='fixed' else LiveReportSynthesizer(self.model_factory())
             except ModelError as error: raise ResearchError(error.error.code) from None
-            identity=self.store.begin(bundle,body.mode)
+            identity=self.store.begin(bundle,body.mode,request_id=body.request_id,
+                model_identity=getattr(getattr(synthesizer,'model',None),'settings_identity',None))
             work=self.work=Generation(identity,bundle,synthesizer)
             work.coordinator=threading.Thread(target=self.execute,args=(work,),daemon=True,name='report-coordinator')
             try: work.coordinator.start()
@@ -64,6 +70,7 @@ class ReportService:
         try:
             with self.lock:
                 if work.stop.is_set(): return
+                if not self.store.before_call(work.identity): return
                 work.thread=threading.Thread(target=self.invoke,args=(work,deadline),daemon=True,name='report-synthesis')
                 work.thread.start()
             while not work.done.wait(0.025):
@@ -76,14 +83,16 @@ class ReportService:
                 if work.ended>=deadline:
                     self.store.finish(work.identity,'failed','REPORT_TIMEOUT',requests_started=self.requests(work)); return
                 if work.code:
-                    self.store.finish(work.identity,'failed',work.code,requests_started=self.requests(work)); return
+                    uncertain=None if work.code in ('MODEL_TIMEOUT','MODEL_NETWORK_ERROR') else False
+                    self.store.finish(work.identity,'failed',work.code,requests_started=self.requests(work),request_uncertain=uncertain); return
                 synthesis=validate(work.output,work.bundle['evidence'])
                 document=ReportDocument(**work.bundle,synthesis=synthesis)
-                self.store.finish(work.identity,'completed',document=document,requests_started=self.requests(work))
+                self.research.validate_checkpoint(work.bundle['source_run_id'])
+                self.store.finish(work.identity,'completed',document=document,requests_started=self.requests(work),request_uncertain=False)
         except ResearchError as error:
-            with self.lock: self.store.finish(work.identity,'failed',error.code,requests_started=self.requests(work))
+            with self.lock: self.store.finish(work.identity,'failed',error.code,requests_started=self.requests(work),request_uncertain=False)
         except Exception:
-            with self.lock: self.store.finish(work.identity,'failed','REPORT_GENERATION_FAILED',requests_started=self.requests(work))
+            with self.lock: self.store.finish(work.identity,'failed','REPORT_GENERATION_FAILED',requests_started=self.requests(work),request_uncertain=False)
 
     def cancel(self,identity):
         with self.lock:

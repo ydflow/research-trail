@@ -36,6 +36,7 @@ class ResearchPlan(Boundary):
     input: ResearchInput
     source: str
     provider_revision: int
+    provider_identity: str | None = None
     timeout_seconds: float
     skills: list[PlannedSkill]
     reads: list[PlannedRead]
@@ -63,6 +64,9 @@ class ResearchSummary(Boundary):
     completed: int
     succeeded: int
     failed: int
+    generation: int
+    parent_run_id: str | None
+    abandoned_at: AwareDatetime | None
 
 class ResearchRun(ResearchSummary):
     plan: ResearchPlan
@@ -72,3 +76,20 @@ class ResearchData(Boundary):
     run_id: str
     capability: str
     result: ProviderSuccess
+
+class RecoveryAction(Boundary):
+    request_id: str = Field(pattern=r'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$')
+
+class RecoveryView(Boundary):
+    run_id: str
+    checkpoint_id: int | None
+    generation: int
+    stage: Literal['collecting','collection_interrupted','report_generating','awaiting_report','completed','no_data','abandoned','blocked']
+    resume_allowed: bool
+    code: str
+    reuse_capabilities: list[str]
+    remaining_capabilities: list[str]
+    report_ids: list[str]
+    warnings: list[str]
+    model_request_uncertain: bool
+    label: str = '恢复保留原任务并复用采集；重新发起创建新任务并重新采集。恢复不会调用模型，报告须另行显式生成。'
