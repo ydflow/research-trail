@@ -101,7 +101,7 @@ call start-dev.cmd
 平铺及分组响应超过200条时，保留前200条及完整原始读取，显式`CALENDAR_ROW_LIMIT`/partial，不再静默截断后标completed。
 用户配置60秒时原两项能力可各等待60秒而桌面只等45秒，现在沿原ProviderService将本次查询各限制20秒；
 提供商原配置仍为60秒，不增加独立适配器、不延长桌面超时。使用本机假SDK/CLI协议验证，不能冒称真实来源验证。
-修复单独提交。最终完整本机check.cmd和独立干净源码verify:clean均退出0：535 Python / 8 Node / 46实际Electron，
+修复单独提交。发布首轮完整本机check.cmd和独立干净源码verify:clean均退出0：535 Python / 8 Node / 46实际Electron，
 零失败/取消/跳过，契约/类型/构建、0015重复迁移/current/check通过。
 258份干净源码锁定新装依赖与Electron，根CMD实际启动、关闭/重开会话/运行快照相同、无新运行、所属进程剩余0。
 188份运行/测试/配置与干净导出逐字节相同，并按Git clean-filter规范化后与提交blob一致；Windows换行不冒称原字节一致。
@@ -109,3 +109,7 @@ call start-dev.cmd
 隔离迁移库research-trail-verify-X1GIno、research-trail-verify-tw7Ih3，根CMD证据research-trail-cmd-qa-w5vdsV。
 已创建[PR #19](https://github.com/ydflow/research-trail/pull/19)，远程检查正在执行；最终head/CI/合并按PR及根PROJECT_STATE回执。
 本机通过不冒称远程通过；未实施第21步，未打标签或创建Release。
+
+远程CI旧采集用例的两次5秒终态等待失败及对应修复见EVIDENCE第47节末段。新增15秒实际采集回归原断言失败、修复后相关5项通过；
+从实际Python计划等待终态后仍用默认5秒断言页面，partial/failed被当collected必须失败，生产期限未改。
+新全套535/8/47待本机、独立干净源码及最终head两项远程CI复验，实际结果和合并回执由PR/根PROJECT_STATE记录。

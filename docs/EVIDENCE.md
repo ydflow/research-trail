@@ -1776,7 +1776,7 @@ TestClient弃用与Vite主chunk提示保留。验收清单ACCEPTANCE-step20.md�
 保留用户配置与桌面原超时，不复制适配器。用本机假SDK/CLI传递实际配置验证，不把其标作真实日历通过。
 两处修复与三个回归单独提交，未放宽断言或修改数据制造通过。
 回归日志仅Temp/research-trail-step20-publication-regression-{before,after}.log。
-最终完整本机check.cmd与独立干净源码verify:clean均退出0：535 Python/8 Node/46实际Electron，零失败/取消/跳过，
+发布首轮完整本机check.cmd与独立干净源码verify:clean均退出0：535 Python/8 Node/46实际Electron，零失败/取消/跳过，
 契约/类型/构建、0015重复迁移/current/check及No new upgrade operations detected通过。
 258份干净源码锁定新装71前端/30 Python依赖及Electron，根CMD真实启动/关闭/重开会话/运行快照相同、无新运行，所属进程剩余0。
 188份运行/测试/配置与干净导出逐字节相同，按Git clean-filter规范化后与已提交blob一致，Windows换行不冒称原字节一致。
@@ -1785,3 +1785,22 @@ TestClient弃用与Vite主chunk提示保留。验收清单ACCEPTANCE-step20.md�
 已正常推送feat/step-20-calendar并创建[PR #19](https://github.com/ydflow/research-trail/pull/19)，远程CI正在执行，尚未合并。
 最终head、远程检查和合并回执见PR与根PROJECT_STATE，本机通过不冒称远程CI通过。
 真实来源/账户/LLM事件报告、安装包、投资解释正确性及用户亲自记录仍未验证，固定数据/假协议不代替真实覆盖。
+
+### 远程CI采集等待阻塞及实际修复
+
+同一30487d0 head的PR CI 37654213109通过535/8/46；push CI 37654206140 attempt1在旧Step17采集终态5秒断言失败，
+attempt2在旧Step15部分失败采集的同类断言失败，均535 Python/8 Node通过、45/46桌面通过；第20步三项原桌面用例两轮均通过。
+两次重跑API HTTP500后具体job重跑成功，失败原始日志均保留，不用另一组绿色检查绕过失败合并。
+单独复测及三次重复Step17通过不能证明CI阻塞消失，因此定位并修复等待前置条件，而非继续碰运气重跑。
+
+采集计划单能力20秒、并发最多4；旧业务终态断言隐含整项采集必须5秒结束，既非计划契约亦非性能承诺。
+验收helper从实际Python计划推导批数和单项时限，加6秒用于既有清理/IPC；轮询同一任务到第一个非fetching终态，
+随后严格检查预期collected/partial/failed、完成总数、成功/失败计数、步骤无queued/running，再用原默认5秒检查页面同一ID/状态。
+不重启任务、不重试能力或模型、不把失败等成成功，不改变生产20秒超时及报告等待。恢复动作先在5秒内离开旧interrupted显示。
+所有原证据、部分成功数、失败原因、报告/恢复断言保留；部分/全部失败还反向断言helper不得接受collected。
+
+新增实际Electron回归使用既有research-checkpoint的15秒采集夹具：原5秒断言1失败，修复后该用例及恢复、放弃、部分/全部失败共5项通过。
+断言实际profile执行至少14秒、4项成功、计划仍20秒、报告数0。新全套为535 Python/8 Node/47实际Electron，待重新执行后记录结果。
+变更新增tests/backend-ready.cjs相对基线的实际修复，发布差异现48份（1来源/28 Python与契约/13桌面与验收/6文档），258源码与来源范围不变。
+本节、PR与根PROJECT_STATE保留首轮535/8/46含义；新head完整本机、干净源码与两项CI全部通过且无阻塞前不合并。
+日志仅Temp/research-trail-step20-ci-push-attempt1-failed.log、ci-push-attempt2.log、ci-readiness-{before,after}.log，均不上传。
