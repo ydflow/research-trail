@@ -3,13 +3,13 @@ import type { RiskReport, Comparison } from '../../analytics-types';
 import type { PortfolioInfo } from '../../portfolio-types';
 import Results from './Results';
 
-export function AnalyticsPanel({ available }: { available: boolean }) {
-  const [tab,setTab]=useState<'risk'|'compare'>('risk');
+export function AnalyticsPanel({ available, initialSymbols, initialMode, initialProvider }: { available: boolean; initialSymbols?: string; initialMode?: 'simulated'|'real'; initialProvider?: 'longbridge'|'massive' }) {
+  const [tab,setTab]=useState<'risk'|'compare'>(initialSymbols?'compare':'risk');
   const [portfolios,setPortfolios]=useState<PortfolioInfo[]>([]);
   const [selected,setSelected]=useState('');
-  const [provider,setProvider]=useState<'longbridge'|'massive'>('longbridge');
-  const [mode,setMode]=useState<'simulated'|'real'>('simulated');
-  const [symbols,setSymbols]=useState('AAPL.US MSFT.US');
+  const [provider,setProvider]=useState<'longbridge'|'massive'>(initialProvider??'longbridge');
+  const [mode,setMode]=useState<'simulated'|'real'>(initialMode??'simulated');
+  const [symbols,setSymbols]=useState(initialSymbols??'AAPL.US MSFT.US');
   const [currency,setCurrency]=useState('USD'); const [year,setYear]=useState(2023);
   const [result,setResult]=useState<RiskReport|Comparison>();
   const [error,setError]=useState(''); const [busy,setBusy]=useState(false);

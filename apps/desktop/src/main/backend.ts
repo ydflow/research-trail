@@ -203,6 +203,12 @@ export class BackendManager extends EventEmitter {
   }
 
   listSessions() { return this.business<SessionDTO[]>('/sessions'); }
+  screeningTasks(body: unknown) { return this.business<import('../screening-types').ScreeningTask[]>('/screening/tasks','POST',this.thesisBody(body,['mode','provider'])); }
+  startScreening(body: unknown) { return this.business<import('../screening-types').ScreeningRun>('/screening/runs','POST',this.thesisBody(body,['strategy','mode','provider','universe','limit','request_id'])); }
+  screeningRuns() { return this.business<import('../screening-types').ScreeningSummary[]>('/screening/runs'); }
+  screeningRun(id: unknown) { return this.business<import('../screening-types').ScreeningRun>(`/screening/runs/${this.id(id)}`); }
+  cancelScreening(id: unknown) { return this.business<import('../screening-types').ScreeningRun>(`/screening/runs/${this.id(id)}/cancel`,'POST'); }
+  screeningEvidence(id: unknown,readId: unknown) { return this.business<import('../screening-types').ScreeningEvidence>(`/screening/runs/${this.id(id)}/evidence/${this.id(readId)}`); }
   private connectionKind(value: unknown): string {
     if (typeof value !== 'string' || !['model', 'market', 'account', 'skills', 'runtime'].includes(value)) throw new Error('未知连接类别。');
     return value;
@@ -231,12 +237,12 @@ export class BackendManager extends EventEmitter {
     return this.business<import('../thesis-types').ThesisReview>(`/theses/${this.id(id)}/reviews/${this.id(reviewId)}`);
   }
   private thesisBody(input: unknown, fields: string[]) {
-    if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('论点输入无效。');
+    if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('操作输入无效。');
     const value = input as Record<string, unknown>;
-    if (Object.keys(value).some(key => !fields.includes(key))) throw new Error('论点字段无效。');
-    this.id(value.request_id);
+    if (Object.keys(value).some(key => !fields.includes(key))) throw new Error('操作字段无效。');
+    if (fields.includes('request_id')) this.id(value.request_id);
     for (const key of ['report_id', 'evaluation_id']) if (value[key] !== undefined && value[key] !== null) this.id(value[key]);
-    if (JSON.stringify(value).length > 150000) throw new Error('论点输入过长。');
+    if (JSON.stringify(value).length > 150000) throw new Error('操作输入过长。');
     return value;
   }
   createThesis(input: unknown) {

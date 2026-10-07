@@ -1,0 +1,10 @@
+.discover-panel { margin-top: 24px; text-align: left; min-width: 0; }
+.discover-controls { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+.discover-controls label { display: flex; flex-direction: column; gap: 6px; flex: 1 1 240px; min-width: 0; }
+.discover-controls textarea { min-height: 70px; resize: vertical; padding: 8px; }
+.discover-controls select { padding: 8px; max-width: 100%; }
+.discover-candidate { border-top: 1px solid var(--border); padding: 14px 0; }
+.discover-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.discover-panel p, .discover-panel li, .discover-panel button { overflow-wrap: anywhere; }
+.discover-panel pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 450px; overflow: auto; }
+.discover-panel details { margin: 10px 0; }
