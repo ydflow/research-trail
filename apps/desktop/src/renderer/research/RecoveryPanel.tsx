@@ -7,7 +7,9 @@ const reasons: Record<string, string> = { CONFIG_CHANGED: '采集配置或凭证
 
 export function RecoveryPanel({ run, available, onRun, onBusy, refresh }: { run: ResearchRun; available: boolean; onRun: (next: ResearchRun) => void; onBusy: (busy: boolean) => void; refresh: number }) {
   const [view, setView] = useState<RecoveryView>(), [busy, setBusy] = useState(false), [error, setError] = useState(''), [revision, setRevision] = useState(0);
-  const activeOperation = useRef(false), generation = useRef(0);
+  const activeOperation = useRef(false), generation = useRef(0), operationGeneration = useRef(0);
+  // Metadata refreshes may invalidate reads, but must not discard an action reply.
+  useEffect(() => () => { ++operationGeneration.current; }, [available, run.id]);
   useEffect(() => {
     let active = true; let timer: ReturnType<typeof setTimeout>;
     const ticket = ++generation.current;
@@ -27,11 +29,11 @@ export function RecoveryPanel({ run, available, onRun, onBusy, refresh }: { run:
   async function act(operation: 'resumeResearch' | 'restartResearch' | 'abandonResearch') {
     if (activeOperation.current) return;
     activeOperation.current = true; setBusy(true); onBusy(true); setError('');
-    const ticket = generation.current, requestId = crypto.randomUUID();
+    const ticket = operationGeneration.current, requestId = crypto.randomUUID();
     try {
       const next = await window.researchTrail![operation](run.id, requestId);
-      if (ticket === generation.current) { onRun(next); setRevision(n => n + 1); }
-    } catch (e) { if (ticket === generation.current) setError(e instanceof Error ? e.message : '恢复操作失败。'); }
+      if (ticket === operationGeneration.current) { onRun(next); setRevision(n => n + 1); }
+    } catch (e) { if (ticket === operationGeneration.current) setError(e instanceof Error ? e.message : '恢复操作失败。'); }
     finally { activeOperation.current = false; setBusy(false); onBusy(false); }
   }
   const blocked = !available || busy;

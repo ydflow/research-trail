@@ -95,6 +95,36 @@ test('Step17 actual report process interruption never resumes synthesis or dupli
   }finally{await instance.app.close();}
 });
 
+test('Step17 delayed abandon response survives report status refresh', {timeout:60000}, async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'report-checkpoint'});
+  try{
+    const page=instance.page; await waitForBackend(page);
+    await page.getByRole('button',{name:'研究采集',exact:true}).click(); await page.getByRole('radio',{name:/价值投资/}).check();
+    await expect(page.getByTestId('research-plan').locator('summary')).toContainText('4 项');
+    await page.getByRole('button',{name:'开始采集',exact:true}).click(); await expect(page.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    await page.getByRole('button',{name:'生成新报告',exact:true}).click(); await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','generating');
+    await instance.app.evaluate(({ipcMain})=>{
+      const original=ipcMain._invokeHandlers.get('research:abandon');
+      ipcMain.removeHandler('research:abandon');
+      ipcMain.handle('research:abandon',async(...args)=>{
+        const result=await original(...args);
+        await new Promise(resolve=>setTimeout(resolve,2000));
+        return result;
+      });
+    });
+    await page.getByRole('button',{name:'放弃原任务（保留历史）',exact:true}).click();
+    await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','cancelled');
+    await expect(page.getByTestId('research-checkpoint')).toHaveAttribute('data-stage','abandoned');
+    await expect(page.getByTestId('research-run')).toContainText('已放弃原任务');
+    await expect(page.getByRole('button',{name:'放弃原任务（保留历史）',exact:true})).toBeDisabled();
+    await expect(page.getByRole('button',{name:'生成新报告',exact:true})).toBeDisabled();
+    const saved=await page.evaluate(async()=>{const rows=await window.researchTrail.researchRuns();return window.researchTrail.researchRun(rows[0].id);});
+    assert.ok(saved.abandoned_at);
+    const reports=await page.evaluate(()=>window.researchTrail.reportList());
+    assert.equal(reports.length,1); assert.equal(reports[0].status,'cancelled');
+  }finally{await instance.app.close();}
+});
+
 test('Step16 saved reports, actual collected diff, original facts, Markdown dialog and restart', {timeout:90000}, async()=>{
   let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'report-updated'});
   const path=instance.databasePath; let first,second;
