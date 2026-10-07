@@ -17,13 +17,14 @@ function Claims({ title, items, document, disabled, onRead }: { title: string; i
   </li>)}</ul></section>;
 }
 
-export function ReportPanel({ runId, symbol, succeeded, available }: { runId: string; symbol: string; succeeded: number; available: boolean }) {
+export function ReportPanel({ runId, symbol, succeeded, available, generateAllowed = true, onStateChange }: { runId: string; symbol: string; succeeded: number; available: boolean; generateAllowed?: boolean; onStateChange?: () => void }) {
   const [mode, setMode] = useState<'fixed' | 'real'>('fixed');
   const [rows, setRows] = useState<ReportSummary[]>([]), [historyId, setHistoryId] = useState('');
   const [job, setJob] = useState<ReportJob>(), [raw, setRaw] = useState<ReportOriginal>(), [difference, setDifference] = useState<ReportDiff>();
   const [beforeId, setBeforeId] = useState(''), [afterId, setAfterId] = useState('');
   const [busy, setBusy] = useState(true), [error, setError] = useState(''), [notice, setNotice] = useState('');
   const generation = useRef(0), rawGeneration = useRef(0), diffGeneration = useRef(0);
+  const activeOperation = useRef(false);
   const running = job?.status === 'generating';
   const blocked = !available || busy;
   const versions = rows.filter(r => r.run_id === runId);
@@ -46,6 +47,7 @@ export function ReportPanel({ runId, symbol, succeeded, available }: { runId: st
   }, [available, runId]);
 
   const jobId = job?.id, status = job?.status;
+  useEffect(() => { onStateChange?.(); }, [jobId, status, onStateChange]);
   useEffect(() => {
     if (!available || !jobId) return;
     let active = true; let timer: ReturnType<typeof setTimeout>;
@@ -66,11 +68,13 @@ export function ReportPanel({ runId, symbol, succeeded, available }: { runId: st
   }, [available, jobId, status]);
 
   async function changeJob(action: () => Promise<ReportJob>) {
+    if (activeOperation.current) return;
+    activeOperation.current = true;
     const ticket = ++generation.current;
     ++rawGeneration.current; ++diffGeneration.current; setRaw(undefined); setDifference(undefined); setBusy(true); setError(''); setNotice('');
     try { const next = await action(); if (ticket === generation.current) { setJob(next); setHistoryId(next.id); } }
     catch (e) { if (ticket === generation.current) setError(message(e)); }
-    finally { if (ticket === generation.current) setBusy(false); }
+    finally { activeOperation.current = false; if (ticket === generation.current) setBusy(false); }
   }
   async function read(reportId: string, reference: string) {
     const ticket = ++rawGeneration.current; setRaw(undefined); setError('');
@@ -96,7 +100,7 @@ export function ReportPanel({ runId, symbol, succeeded, available }: { runId: st
   return <section className="report-panel" aria-label="研究报告工作台">
     <h3>结构化报告</h3><p>使用已保存采集数据生成。固定合成器用于验证流程；真实模型仅生成分析与预测文字，事实值由 Python 引用原始记录。</p>
     <div className="research-toolbar"><label>报告合成器<select aria-label="报告合成器" value={mode} disabled={blocked || running} onChange={e => setMode(e.target.value as typeof mode)}><option value="fixed">固定合成器（离线）</option><option value="real">真实模型（使用现有本机配置）</option></select></label>
-      <button disabled={blocked || running || !succeeded} onClick={() => void changeJob(() => window.researchTrail!.generateReport(runId, mode))}>生成新报告</button>
+      <button disabled={blocked || running || !succeeded || !generateAllowed} onClick={e => { if (e.detail < 2) void changeJob(() => window.researchTrail!.generateReport(runId, mode, crypto.randomUUID())); }}>生成新报告</button>
       {running && <button disabled={blocked} onClick={() => void changeJob(() => window.researchTrail!.cancelReport(job!.id))}>取消报告生成</button>}
       <label>已保存报告<select aria-label="已保存报告" value={historyId} disabled={blocked || running || !versions.length} onChange={e => setHistoryId(e.target.value)}><option value="">选择版本</option>{versions.map(r => <option key={r.id} value={r.id}>版本 {r.version} · {r.mode} · {statusLabel[r.status]} · {r.started_at}</option>)}</select></label>
       <button disabled={blocked || running || !historyId} onClick={() => void changeJob(() => window.researchTrail!.report(historyId))}>读取报告版本</button>
@@ -104,6 +108,7 @@ export function ReportPanel({ runId, symbol, succeeded, available }: { runId: st
     {!succeeded && <p role="status">没有成功采集结果，不能生成报告。</p>}
     {error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
     {job && <p data-testid="report-status" data-status={job.status} data-report-id={job.id}>{statusLabel[job.status]} · 版本 {job.version} · {job.mode} {job.code && `· ${job.code}`}</p>}
+    {job?.request_uncertain && <p role="status">模型请求可能已发出，未取得可确认的报告结果。恢复不会自动再次调用。</p>}
     {doc && <article data-testid="research-report">
       <h3>{doc.symbol} · {doc.synthesis.stance === 'bullish' ? '偏多' : doc.synthesis.stance === 'bearish' ? '偏空' : '中性'}（分析判断）</h3>
       <p>{doc.disclaimer}</p><p>{doc.source_mode === 'simulated' ? '模拟数据，不代表真实行情' : '真实提供商数据'} · {doc.provider} · 采集 {doc.collection_status} · 任务 {doc.source_run_id}</p>

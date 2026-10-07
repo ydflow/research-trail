@@ -221,10 +221,14 @@ export class BackendManager extends EventEmitter {
     return input as import('../research-types').ResearchInput;
   }
   researchStrategies() { return this.business<import('../research-types').ResearchStrategy[]>('/research/strategies'); }
+  researchCheckpoint(id: unknown) { return this.business<import('../research-types').RecoveryView>(`/research/runs/${this.id(id)}/checkpoint`); }
+  recoverResearch(id: unknown, operation: 'resume' | 'restart' | 'abandon', requestId: unknown) {
+    return this.business<import('../research-types').ResearchRun>(`/research/runs/${this.id(id)}/${operation}`, 'POST', { request_id: this.id(requestId) });
+  }
   reportList(runId: unknown) { return this.business<import('../report-types').ReportSummary[]>(`/research/reports${runId === undefined ? '' : `?run_id=${this.id(runId)}`}`); }
-  generateReport(runId: unknown, mode: unknown) {
+  generateReport(runId: unknown, mode: unknown, requestId?: unknown) {
     if (mode !== 'fixed' && mode !== 'real') throw new Error('报告合成器无效。');
-    return this.business<import('../report-types').ReportJob>(`/research/runs/${this.id(runId)}/reports`, 'POST', { mode });
+    return this.business<import('../report-types').ReportJob>(`/research/runs/${this.id(runId)}/reports`, 'POST', { mode, ...(requestId === undefined ? {} : { request_id: this.id(requestId) }) });
   }
   report(id: unknown) { return this.business<import('../report-types').ReportJob>(`/research/reports/${this.id(id)}`); }
   cancelReport(id: unknown) { return this.business<import('../report-types').ReportJob>(`/research/reports/${this.id(id)}/cancel`, 'POST'); }

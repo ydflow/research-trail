@@ -1,11 +1,12 @@
 // Entry/history/progress adapted from Folio ResearchPanel.tsx (fixed ba5dcdfd).
 // Python owns plans and collection history. No Folio TS runner, atoms or synthesis.
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ResearchData, ResearchInput, ResearchPlan, ResearchRun, ResearchStrategy, ResearchSummary, StrategyId } from '../../research-types';
 import { StrategyPicker } from './StrategyPicker';
 import { researchLabels, RunProgressCard } from './RunProgressCard';
 import './research.css';
 import { ReportPanel } from './ReportPanel';
+import { RecoveryPanel } from './RecoveryPanel';
 
 export function ResearchPanel({ available, initialSymbol }: { available: boolean; initialSymbol?: string }) {
   const [symbol, setSymbol] = useState(initialSymbol || 'AAPL.US');
@@ -17,23 +18,27 @@ export function ResearchPanel({ available, initialSymbol }: { available: boolean
   const [plan, setPlan] = useState<ResearchPlan>(), [run, setRun] = useState<ResearchRun>(), [data, setData] = useState<ResearchData>();
   const [ready, setReady] = useState(false), [planning, setPlanning] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('');
   const runGeneration = useRef(0), dataGeneration = useRef(0);
+  const [recoveryRefresh, setRecoveryRefresh] = useState(0);
+  const [recoveryBusy, setRecoveryBusy] = useState(false);
+  const refreshRecovery = useCallback(() => setRecoveryRefresh(n => n + 1), []);
   const input: ResearchInput = { symbol, strategy, mode, provider, concurrency: 4 };
   const running = run?.status === 'fetching';
-  const disabled = !available || !ready || busy || running;
+  const disabled = !available || !ready || busy || recoveryBusy || running;
   const showError = (e: unknown) => e instanceof Error ? e.message : '采集操作失败，请重试。';
 
   useEffect(() => {
     let active = true;
     setReady(false); setBusy(false); setRun(undefined); setData(undefined); setError('');
-    if (available) void Promise.all([window.researchTrail!.researchStrategies(), window.researchTrail!.researchRuns()])
-      .then(async ([strategies, runs]) => {
+    if (available) void Promise.all([window.researchTrail!.researchStrategies(), window.researchTrail!.researchRuns(), window.researchTrail!.reportList()])
+      .then(async ([strategies, runs, reports]) => {
         if (!active) return;
         setPresets(strategies); setHistory(runs); setHistoryId(runs[0]?.id ?? '');
-        const activeRun = runs.find(r => r.status === 'fetching');
+        const activeRun = runs.find(r => r.status === 'fetching') || runs.find(r => !r.abandoned_at &&
+          (r.status === 'interrupted' || reports.find(report => report.run_id === r.id)?.status === 'interrupted'));
         if (activeRun) {
           const saved = await window.researchTrail!.researchRun(activeRun.id);
           if (!active) return;
-          setRun(saved); setSymbol(saved.symbol); setStrategy(saved.strategy); setMode(saved.mode); setProvider(saved.provider);
+          setRun(saved); setHistoryId(saved.id); setSymbol(saved.symbol); setStrategy(saved.strategy); setMode(saved.mode); setProvider(saved.provider);
         }
         if (active) setReady(true);
       }).catch(e => { if (active) setError(showError(e)); });
@@ -113,6 +118,11 @@ export function ResearchPanel({ available, initialSymbol }: { available: boolean
     } catch (e) { if (ticket === dataGeneration.current && runTicket === runGeneration.current) setError(showError(e)); }
     finally { if (ticket === dataGeneration.current) setBusy(false); }
   }
+  function recovered(next: ResearchRun) {
+    ++runGeneration.current; ++dataGeneration.current; setData(undefined); setError('');
+    setRun(next); setHistoryId(next.id); setSymbol(next.symbol); setStrategy(next.strategy); setMode(next.mode); setProvider(next.provider);
+    setHistory(h => [next, ...h.filter(r => r.id !== next.id)].slice(0, 100));
+  }
   return <section className="research-panel" aria-label="研究采集工作台" aria-busy={busy}>
     <h2>研究采集</h2><p>选择策略，采集已有能力的结构化数据。默认最多并发四项，每项二十秒。采集结束后可显式生成报告。</p>
     <div className="research-toolbar">
@@ -131,11 +141,12 @@ export function ResearchPanel({ available, initialSymbol }: { available: boolean
     </div>
     {planning && <p role="status">正在检查采集计划…</p>}{error && <p role="alert">{error}</p>}
     {run && <RunProgressCard run={run} busy={busy || !available} onCancel={() => void cancel()} onRead={capability => void read(capability)} />}
+    {run && <RecoveryPanel key={`recovery-${run.id}`} run={run} available={available && !busy} onRun={recovered} onBusy={setRecoveryBusy} refresh={recoveryRefresh} />}
     {data && <section data-testid="research-data" data-capability={data.capability}><h3>已保存数据：{data.capability}</h3>
       <p>{data.result.provenance.data_label} · {data.result.provenance.provider} · {data.result.provenance.transport} · 获取 {data.result.provenance.fetched_at}</p>
       <p>市场时间 {data.result.provenance.market_time ?? '未提供'}；此数据未经报告合成，不保证字段或窗口完整。</p>
       <pre>{JSON.stringify(data.result.data, null, 2)}</pre>
     </section>}
-    {run && run.status !== 'fetching' && <ReportPanel key={run.id} runId={run.id} symbol={run.symbol} succeeded={run.succeeded} available={available} />}
+    {run && run.status !== 'fetching' && <ReportPanel key={`report-${run.id}`} runId={run.id} symbol={run.symbol} succeeded={run.succeeded} available={available} generateAllowed={!run.abandoned_at} onStateChange={refreshRecovery} />}
   </section>;
 }
