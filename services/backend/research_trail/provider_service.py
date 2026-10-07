@@ -108,7 +108,7 @@ class ProviderService:
     def capabilities(self):
         return self.registry.provider_views()
 
-    def query(self,provider,query,*,stop=None,timeout_seconds=None,expected_revision=None):
+    def query(self,provider,query,*,stop=None,timeout_seconds=None,expected_revision=None,expected_identity=None):
         query=ReadQuery.model_validate(query.model_dump())
         control = self.stop if stop is None else QueryStop(self.stop,stop)
         cap=query.capability; revision=0
@@ -118,12 +118,16 @@ class ProviderService:
             if control.is_set(): raise ProviderFault('CANCELLED','cancelled')
             cached=False; transport='fixture'; config=None; secrets=()
             if query.mode=='simulated':
-                revision=self.settings.profile(provider).revision
+                with self.settings.lock:
+                    revision=self.settings.profile(provider).revision
+                    if expected_identity is not None and self.settings.identity(provider)!=expected_identity: raise ProviderFault('CONFIG_CHANGED')
                 if expected_revision is not None and revision != expected_revision: raise ProviderFault('CONFIG_CHANGED')
                 try: data=self.simulated_executor(query)
                 except UnknownSymbolError: raise ProviderFault('NO_DATA') from None
             else:
-                snapshot=self.settings.snapshot(provider); config=snapshot.configuration; revision=snapshot.revision
+                with self.settings.lock:
+                    snapshot=self.settings.snapshot(provider); config=snapshot.configuration; revision=snapshot.revision
+                    if expected_identity is not None and self.settings.identity(provider)!=expected_identity: raise ProviderFault('CONFIG_CHANGED')
                 if expected_revision is not None and revision != expected_revision: raise ProviderFault('CONFIG_CHANGED')
                 if timeout_seconds is not None:
                     config = config.model_copy(update={'timeout_seconds': min(config.timeout_seconds,max(1,int(timeout_seconds)))})
@@ -178,8 +182,9 @@ class ProviderService:
             if not control.is_set():
                 try: revision=self.settings.profile(provider).revision
                 except Exception: pass
+        identity_matches=expected_identity is None or self.settings.identity(provider)==expected_identity
         with self.lock:
-            if not control.is_set() and generation==self.generations.get(provider,0) and (expected_revision is None or revision==expected_revision):
+            if identity_matches and not control.is_set() and generation==self.generations.get(provider,0) and (expected_revision is None or revision==expected_revision):
                 self.health[(provider,cap,revision)]={'validation':validation,'code':result.code if not result.ok else None,
                                                    'checked_at':datetime.now(timezone.utc)}
         return result

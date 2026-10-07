@@ -15,11 +15,15 @@ def main() -> None:
     if sys.version_info[:2] != (3, 12):
         raise RuntimeError("研迹后端需要 Python 3.12。请通过 start-dev.cmd 同步环境。")
     provider_options=None
+    report_options=None
     case=os.environ.get('RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE')
-    if case in ('missing','failure','delayed','research-partial','research-delayed','report-updated') and os.environ.get('RESEARCH_TRAIL_OFFLINE')=='1':
+    if case in ('missing','failure','delayed','research-partial','research-delayed','report-updated','research-checkpoint') and os.environ.get('RESEARCH_TRAIL_OFFLINE')=='1':
         from .workspace_fixtures import fixture_executor
         provider_options={'simulated_executor':fixture_executor(case)}
-    app = create_app(os.environ.pop("RESEARCH_TRAIL_TOKEN", ""),provider_options=provider_options)
+    if case=='report-checkpoint' and os.environ.get('RESEARCH_TRAIL_OFFLINE')=='1':
+        from .workspace_fixtures import delayed_report_factory
+        report_options={'fixed_factory':delayed_report_factory()}
+    app = create_app(os.environ.pop("RESEARCH_TRAIL_TOKEN", ""),provider_options=provider_options,report_options=report_options)
     # Bind once and pass the same socket to Uvicorn: no free-port reservation race.
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     listener.bind(("127.0.0.1", 0))

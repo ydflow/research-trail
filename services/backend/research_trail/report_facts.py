@@ -22,7 +22,9 @@ def resolve_pointer(value, pointer):
     return value
 
 def packet(store, identity):
+    store.validate_checkpoint(identity)
     run=store.get(identity)
+    if run.abandoned_at: raise ResearchError('RESEARCH_ABANDONED')
     if run.status=='fetching': raise ResearchError('COLLECTION_ACTIVE')
     if not run.succeeded: raise ResearchError('NO_COLLECTED_DATA')
     facts=[]; gaps=[]

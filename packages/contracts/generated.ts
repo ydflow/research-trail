@@ -393,6 +393,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/research/runs/{identity}/abandon": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Abandon Research */
+        post: operations["abandon_research_research_runs__identity__abandon_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/research/runs/{identity}/cancel": {
         parameters: {
             query?: never;
@@ -404,6 +421,23 @@ export interface paths {
         put?: never;
         /** Cancel Research */
         post: operations["cancel_research_research_runs__identity__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/runs/{identity}/checkpoint": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Research Checkpoint */
+        get: operations["research_checkpoint_research_runs__identity__checkpoint_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -438,6 +472,40 @@ export interface paths {
         put?: never;
         /** Generate Report */
         post: operations["generate_report_research_runs__identity__reports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/runs/{identity}/restart": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restart Research */
+        post: operations["restart_research_research_runs__identity__restart_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/runs/{identity}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resume Research */
+        post: operations["resume_research_research_runs__identity__resume_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2226,6 +2294,44 @@ export interface components {
              */
             use_cache: boolean;
         };
+        /** RecoveryAction */
+        RecoveryAction: {
+            /** Request Id */
+            request_id: string;
+        };
+        /** RecoveryView */
+        RecoveryView: {
+            /** Checkpoint Id */
+            checkpoint_id: number | null;
+            /** Code */
+            code: string;
+            /** Generation */
+            generation: number;
+            /**
+             * Label
+             * @default 恢复保留原任务并复用采集；重新发起创建新任务并重新采集。恢复不会调用模型，报告须另行显式生成。
+             */
+            label: string;
+            /** Model Request Uncertain */
+            model_request_uncertain: boolean;
+            /** Remaining Capabilities */
+            remaining_capabilities: string[];
+            /** Report Ids */
+            report_ids: string[];
+            /** Resume Allowed */
+            resume_allowed: boolean;
+            /** Reuse Capabilities */
+            reuse_capabilities: string[];
+            /** Run Id */
+            run_id: string;
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "collecting" | "collection_interrupted" | "report_generating" | "awaiting_report" | "completed" | "no_data" | "abandoned" | "blocked";
+            /** Warnings */
+            warnings: string[];
+        };
         /** ReportChange */
         ReportChange: {
             /** After */
@@ -2358,6 +2464,8 @@ export interface components {
              * @enum {string}
              */
             mode: "fixed" | "real";
+            /** Request Id */
+            request_id?: string | null;
         };
         /** ReportJob */
         ReportJob: {
@@ -2373,6 +2481,8 @@ export interface components {
              * @enum {string}
              */
             mode: "fixed" | "real";
+            /** Request Uncertain */
+            request_uncertain: boolean;
             /** Requests Started */
             requests_started: number;
             /** Run Id */
@@ -2427,6 +2537,8 @@ export interface components {
              * @enum {string}
              */
             mode: "fixed" | "real";
+            /** Request Uncertain */
+            request_uncertain: boolean;
             /** Requests Started */
             requests_started: number;
             /** Run Id */
@@ -2507,6 +2619,8 @@ export interface components {
              * @default 仅结构化数据采集；策略名称不代表指标、投资结论或报告已实现
              */
             label: string;
+            /** Provider Identity */
+            provider_identity?: string | null;
             /** Provider Revision */
             provider_revision: number;
             /** Reads */
@@ -2520,12 +2634,16 @@ export interface components {
         };
         /** ResearchRun */
         ResearchRun: {
+            /** Abandoned At */
+            abandoned_at: string | null;
             /** Completed */
             completed: number;
             /** Completed At */
             completed_at: string | null;
             /** Failed */
             failed: number;
+            /** Generation */
+            generation: number;
             /** Id */
             id: string;
             /**
@@ -2533,6 +2651,8 @@ export interface components {
              * @enum {string}
              */
             mode: "simulated" | "real";
+            /** Parent Run Id */
+            parent_run_id: string | null;
             plan: components["schemas"]["ResearchPlan"];
             /**
              * Provider
@@ -2601,12 +2721,16 @@ export interface components {
         };
         /** ResearchSummary */
         ResearchSummary: {
+            /** Abandoned At */
+            abandoned_at: string | null;
             /** Completed */
             completed: number;
             /** Completed At */
             completed_at: string | null;
             /** Failed */
             failed: number;
+            /** Generation */
+            generation: number;
             /** Id */
             id: string;
             /**
@@ -2614,6 +2738,8 @@ export interface components {
              * @enum {string}
              */
             mode: "simulated" | "real";
+            /** Parent Run Id */
+            parent_run_id: string | null;
             /**
              * Provider
              * @enum {string}
@@ -4205,6 +4331,43 @@ export interface operations {
             };
         };
     };
+    abandon_research_research_runs__identity__abandon_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecoveryAction"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchRun"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     cancel_research_research_runs__identity__cancel_post: {
         parameters: {
             query?: never;
@@ -4225,6 +4388,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResearchRun"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    research_checkpoint_research_runs__identity__checkpoint_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryView"];
                 };
             };
             /** @description Validation Error */
@@ -4296,6 +4492,80 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReportJob"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restart_research_research_runs__identity__restart_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecoveryAction"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchRun"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resume_research_research_runs__identity__resume_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecoveryAction"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchRun"];
                 };
             };
             /** @description Validation Error */

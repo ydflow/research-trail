@@ -35,23 +35,38 @@ class ReportStore:
             rows=db.scalars(query.order_by(ReportRecord.started_at.desc(),ReportRecord.id).limit(100))
             return [ReportSummary(**self.summary(row)) for row in rows]
 
-    def begin(self,bundle,mode):
+    def request(self,run_id,request_id):
+        if request_id is None: return None
+        with self.database.sessions() as db:
+            row=db.scalar(select(ReportRecord).where(ReportRecord.run_id==run_id,ReportRecord.request_id==request_id))
+            return row.id if row else None
+
+    def begin(self,bundle,mode,*,request_id=None,model_identity=None):
         identity=str(uuid4())
         try:
             with self.database.write() as db:
                 version=(db.scalar(select(func.max(ReportRecord.version)).where(ReportRecord.run_id==bundle['source_run_id'])) or 0)+1
                 db.add(ReportRecord(id=identity,run_id=bundle['source_run_id'],symbol=bundle['symbol'],version=version,
-                    mode=mode,status='generating',started_at=now(),requests_started=0))
+                    mode=mode,status='generating',started_at=now(),requests_started=0,request_id=request_id,
+                    model_identity=model_identity,request_uncertain=False))
         except IntegrityError: raise ResearchError('REPORT_ACTIVE') from None
         return identity
 
-    def finish(self,identity,status,code=None,document=None,requests_started=0):
+    def before_call(self,identity):
+        with self.database.write() as db:
+            row=self.row(db,identity)
+            if row.status!='generating': return False
+            row.request_uncertain=row.mode=='real'
+            return True
+
+    def finish(self,identity,status,code=None,document=None,requests_started=0,request_uncertain=None):
         with self.database.write() as db:
             row=self.row(db,identity)
             if row.status!='generating': return
             row.status,row.code,row.completed_at=status,code,now()
             row.document=document.model_dump(mode='json') if document else None
             row.requests_started=requests_started
+            if request_uncertain is not None: row.request_uncertain=request_uncertain
 
     def recover(self):
         with self.database.write() as db:

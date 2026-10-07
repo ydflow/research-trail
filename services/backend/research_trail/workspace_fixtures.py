@@ -16,6 +16,9 @@ def fixture_executor(case):
         if case=='research-delayed' and query.capability=='company.profile':
             import time
             time.sleep(2)
+        if case=='research-checkpoint' and query.capability=='company.profile':
+            import time
+            time.sleep(15)
         if case=='delayed' and query.symbol=='AAPL.US' and query.capability=='company.profile':
             import time
             time.sleep(0.8)
@@ -27,3 +30,12 @@ def fixture_executor(case):
             return {}
         return authored_data(query)
     return execute
+
+def delayed_report_factory():
+    """Offline hard-interruption fixture only; never selected by ordinary startup."""
+    from .report_synthesis import FixedReportSynthesizer
+    class Delayed(FixedReportSynthesizer):
+        def synthesize(self,bundle,stop,deadline):
+            stop.wait(15)
+            return super().synthesize(bundle,stop,deadline)
+    return Delayed

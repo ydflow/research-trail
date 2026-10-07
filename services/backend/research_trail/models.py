@@ -17,6 +17,29 @@ class ResearchRecord(Base):
     plan: Mapped[dict] = mapped_column(JSON)
     started_at: Mapped[str] = mapped_column(String(40), index=True)
     completed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    generation: Mapped[int] = mapped_column(Integer, default=0, server_default=text('0'))
+    parent_run_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    abandoned_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
+
+
+class ResearchCheckpointRecord(Base):
+    __tablename__ = 'research_checkpoints'
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(ForeignKey('research_runs.id'), index=True)
+    created_at: Mapped[str] = mapped_column(String(40))
+    cause: Mapped[str] = mapped_column(String(80))
+    payload: Mapped[dict] = mapped_column(JSON)
+    checksum: Mapped[str] = mapped_column(String(64))
+    valid: Mapped[bool]
+
+
+class ResearchActionRecord(Base):
+    __tablename__ = 'research_actions'
+    request_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    run_id: Mapped[str] = mapped_column(ForeignKey('research_runs.id'), index=True)
+    operation: Mapped[str] = mapped_column(String(10))
+    target_run_id: Mapped[str] = mapped_column(ForeignKey('research_runs.id'))
+    created_at: Mapped[str] = mapped_column(String(40))
 
 
 class ResearchStepRecord(Base):
@@ -188,6 +211,7 @@ class PortfolioImportRecord(Base):
 class ReportRecord(Base):
     __tablename__ = 'research_reports'
     __table_args__ = (UniqueConstraint('run_id', 'version'), CheckConstraint('version >= 1'),
+        Index('ix_report_request','run_id','request_id',unique=True),
         Index('ix_report_one_active','status',unique=True,sqlite_where=text("status = 'generating'")),
         CheckConstraint("mode IN ('fixed','real')"),
         CheckConstraint("status IN ('generating','completed','failed','cancelled','interrupted')"),
@@ -203,3 +227,6 @@ class ReportRecord(Base):
     completed_at: Mapped[str | None] = mapped_column(String(40), nullable=True)
     requests_started: Mapped[int] = mapped_column(Integer, default=0)
     document: Mapped[dict | None] = mapped_column(JSON(none_as_null=True), nullable=True)
+    request_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    model_identity: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    request_uncertain: Mapped[bool] = mapped_column(default=False, server_default=text('0'))

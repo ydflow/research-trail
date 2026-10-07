@@ -38,6 +38,8 @@ from .research_store import ResearchError
 from .research_strategies import strategies as research_strategies
 from .research_contracts import ResearchInput, ResearchPlan, ResearchStrategy, ResearchSummary, ResearchRun, ResearchData
 from .reports import ReportService
+from .research_recovery import ResearchRecovery
+from .research_contracts import RecoveryAction, RecoveryView
 from .report_contracts import ReportGenerate, ReportSummary, ReportJob, ReportOriginal, ReportMarkdown, ReportDiff, ReportDiffInput
 from .report_output import markdown as report_markdown, diff as report_diff
 from .portfolio_contracts import (PortfolioInfo, PortfolioView, PortfolioCreate, PortfolioId,
@@ -80,8 +82,11 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             def report_model():
                 with app.state.settings.lock:
                     config=app.state.settings.model_configuration()
-                return OpenAIModelProvider(config,transport=openai_transport)
+                    model=OpenAIModelProvider(config,transport=openai_transport)
+                    model.settings_identity=app.state.settings.model_identity()
+                    return model
             app.state.reports = ReportService(database,app.state.research.store,report_model,**(report_options or {}))
+            app.state.recovery = ResearchRecovery(app.state.research,app.state.reports,app.state.settings)
             app.state.store.recover_interrupted()
             manager = app.state.manager = RunManager(app.state.store, runner, run_timings)
             yield
@@ -191,6 +196,22 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     @app.get('/research/strategies',response_model=list[ResearchStrategy],dependencies=protected)
     def strategies():
         return research_strategies()
+
+    @app.get('/research/runs/{identity}/checkpoint',response_model=RecoveryView,dependencies=protected)
+    def research_checkpoint(identity: str):
+        return app.state.recovery.inspect(identity)
+
+    @app.post('/research/runs/{identity}/resume',response_model=ResearchRun,dependencies=protected)
+    def resume_research(identity: str,body: RecoveryAction):
+        return app.state.recovery.resume(identity,body)
+
+    @app.post('/research/runs/{identity}/restart',response_model=ResearchRun,dependencies=protected)
+    def restart_research(identity: str,body: RecoveryAction):
+        return app.state.recovery.restart(identity,body)
+
+    @app.post('/research/runs/{identity}/abandon',response_model=ResearchRun,dependencies=protected)
+    def abandon_research(identity: str,body: RecoveryAction):
+        return app.state.recovery.abandon(identity,body)
 
     @app.post('/research/plan',response_model=ResearchPlan,dependencies=protected)
     def research_plan(body: ResearchInput):
