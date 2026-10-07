@@ -895,6 +895,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/theses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Theses */
+        get: operations["theses_theses_get"];
+        put?: never;
+        /** Create Thesis */
+        post: operations["create_thesis_theses_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/theses/{identity}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Thesis */
+        get: operations["thesis_theses__identity__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/theses/{identity}/edit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Edit Thesis */
+        post: operations["edit_thesis_theses__identity__edit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/theses/{identity}/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Evaluate Thesis */
+        post: operations["evaluate_thesis_theses__identity__evaluate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/theses/{identity}/judge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Judge Thesis */
+        post: operations["judge_thesis_theses__identity__judge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/theses/{identity}/reviews/{review_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Thesis Review */
+        get: operations["thesis_review_theses__identity__reviews__review_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/theses/{identity}/versions/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Thesis Version */
+        get: operations["thesis_version_theses__identity__versions__version__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspace": {
         parameters: {
             query?: never;
@@ -3330,6 +3450,225 @@ export interface components {
             /** Text */
             text: string;
         };
+        /** ThesisContent */
+        ThesisContent: {
+            /** Bear Case */
+            bear_case: string[];
+            /** Bull Case */
+            bull_case: string[];
+            /** Catalysts */
+            catalysts: string[];
+            /** Risks */
+            risks: string[];
+            /**
+             * Stance
+             * @enum {string}
+             */
+            stance: "bullish" | "bearish" | "neutral";
+            /** Summary */
+            summary: string;
+        };
+        /** ThesisCreate */
+        ThesisCreate: {
+            /** Report Id */
+            report_id: string;
+            /** Request Id */
+            request_id: string;
+        };
+        /** ThesisEdit */
+        ThesisEdit: {
+            content: components["schemas"]["ThesisContent"];
+            /** Expected Version */
+            expected_version: number;
+            /** Reason */
+            reason: string;
+            /** Request Id */
+            request_id: string;
+        };
+        /** ThesisEvaluate */
+        ThesisEvaluate: {
+            /** Expected Version */
+            expected_version: number;
+            /** Report Id */
+            report_id?: string | null;
+            /** Request Id */
+            request_id: string;
+        };
+        /** ThesisJudge */
+        ThesisJudge: {
+            content: components["schemas"]["ThesisContent"];
+            /** Evaluation Id */
+            evaluation_id: string;
+            /** Expected Version */
+            expected_version: number;
+            /**
+             * Judgment
+             * @enum {string}
+             */
+            judgment: "strengthened" | "weakened" | "invalidated" | "unchanged" | "needs_revision";
+            /** Reason */
+            reason: string;
+            /** Request Id */
+            request_id: string;
+        };
+        /** ThesisReview */
+        ThesisReview: {
+            base_content: components["schemas"]["ThesisContent"];
+            /** Base Version */
+            base_version: number;
+            baseline_report: components["schemas"]["ReportJob"];
+            candidate_report: components["schemas"]["ReportJob"] | null;
+            /** Code */
+            code: string | null;
+            /** Comparison */
+            comparison: ("changed" | "unchanged") | null;
+            /** Created At */
+            created_at: string;
+            difference: components["schemas"]["ReportDiff"] | null;
+            /** Evaluation Id */
+            evaluation_id: string | null;
+            /** Id */
+            id: string;
+            /** Judgment */
+            judgment: ("strengthened" | "weakened" | "invalidated" | "unchanged" | "needs_revision") | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "evaluation" | "judgment";
+            /**
+             * Label
+             * @default 自动评估只比较已保存的新旧事实；投资影响由用户显式判断。缺数据时不产生变化结论。
+             */
+            label: string;
+            /** Missing Keys */
+            missing_keys: string[];
+            /** New Version */
+            new_version: number | null;
+            /** Reason */
+            reason: string;
+            /** Report Id */
+            report_id: string | null;
+            /** Requested Report Id */
+            requested_report_id: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "unable" | "reviewed";
+            /** Thesis Id */
+            thesis_id: string;
+        };
+        /** ThesisReviewSummary */
+        ThesisReviewSummary: {
+            /** Base Version */
+            base_version: number;
+            /** Code */
+            code: string | null;
+            /** Comparison */
+            comparison: ("changed" | "unchanged") | null;
+            /** Created At */
+            created_at: string;
+            /** Id */
+            id: string;
+            /** Judgment */
+            judgment: ("strengthened" | "weakened" | "invalidated" | "unchanged" | "needs_revision") | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "evaluation" | "judgment";
+            /** New Version */
+            new_version: number | null;
+            /** Reason */
+            reason: string;
+            /** Report Id */
+            report_id: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "unable" | "reviewed";
+            /** Thesis Id */
+            thesis_id: string;
+        };
+        /** ThesisSummary */
+        ThesisSummary: {
+            /** Created At */
+            created_at: string;
+            /** Current Version */
+            current_version: number;
+            /** Id */
+            id: string;
+            /** Origin Report Id */
+            origin_report_id: string;
+            /** Symbol */
+            symbol: string;
+        };
+        /** ThesisVersion */
+        ThesisVersion: {
+            content: components["schemas"]["ThesisContent"];
+            /** Created At */
+            created_at: string;
+            data_report: components["schemas"]["ReportJob"];
+            /**
+             * Label
+             * @default 文字是合成器或用户的分析与判断；对应事实保存在来源报告和实际执行记录中，引用不证明判断正确。
+             */
+            label: string;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "report" | "edit" | "review";
+            /** Reason */
+            reason: string;
+            /** Report Id */
+            report_id: string;
+            /** Thesis Id */
+            thesis_id: string;
+            /** Version */
+            version: number;
+        };
+        /** ThesisVersionSummary */
+        ThesisVersionSummary: {
+            /** Created At */
+            created_at: string;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "report" | "edit" | "review";
+            /** Reason */
+            reason: string;
+            /** Report Id */
+            report_id: string;
+            /** Version */
+            version: number;
+        };
+        /** ThesisView */
+        ThesisView: {
+            /** Created At */
+            created_at: string;
+            current: components["schemas"]["ThesisVersion"];
+            /** Current Version */
+            current_version: number;
+            /**
+             * History Limit
+             * @default 100
+             */
+            history_limit: number;
+            /** Id */
+            id: string;
+            /** Origin Report Id */
+            origin_report_id: string;
+            /** Reviews */
+            reviews: components["schemas"]["ThesisReviewSummary"][];
+            /** Symbol */
+            symbol: string;
+            /** Versions */
+            versions: components["schemas"]["ThesisVersionSummary"][];
+        };
         /** ToolArguments */
         ToolArguments: {
             /** Symbol */
@@ -5617,6 +5956,284 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SkillResource"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    theses_theses_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThesisSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_thesis_theses_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ThesisCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThesisView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    thesis_theses__identity__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThesisView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    edit_thesis_theses__identity__edit_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ThesisEdit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThesisView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluate_thesis_theses__identity__evaluate_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ThesisEvaluate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThesisReview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    judge_thesis_theses__identity__judge_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ThesisJudge"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThesisView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    thesis_review_theses__identity__reviews__review_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+                review_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThesisReview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    thesis_version_theses__identity__versions__version__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThesisVersion"];
                 };
             };
             /** @description Validation Error */

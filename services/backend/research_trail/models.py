@@ -230,3 +230,51 @@ class ReportRecord(Base):
     request_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     model_identity: Mapped[str | None] = mapped_column(String(64), nullable=True)
     request_uncertain: Mapped[bool] = mapped_column(default=False, server_default=text('0'))
+
+
+class ThesisRecord(Base):
+    __tablename__ = 'investment_theses'
+    __table_args__ = (CheckConstraint('current_version >= 1'),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    symbol: Mapped[str] = mapped_column(String(20))
+    origin_report_id: Mapped[str] = mapped_column(ForeignKey('research_reports.id'), unique=True)
+    current_version: Mapped[int]
+    created_at: Mapped[str] = mapped_column(String(40))
+
+
+class ThesisVersionRecord(Base):
+    __tablename__ = 'thesis_versions'
+    __table_args__ = (CheckConstraint('version >= 1'),)
+    thesis_id: Mapped[str] = mapped_column(ForeignKey('investment_theses.id'), primary_key=True)
+    version: Mapped[int] = mapped_column(Integer, primary_key=True)
+    origin: Mapped[str] = mapped_column(String(10))
+    reason: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[str] = mapped_column(String(40))
+    report_id: Mapped[str] = mapped_column(ForeignKey('research_reports.id'))
+    content: Mapped[dict] = mapped_column(JSON)
+    data_report: Mapped[dict] = mapped_column(JSON)
+    request_id: Mapped[str] = mapped_column(String(36), unique=True)
+    request_hash: Mapped[str] = mapped_column(String(64))
+
+
+class ThesisReviewRecord(Base):
+    __tablename__ = 'thesis_reviews'
+    __table_args__ = (
+        ForeignKeyConstraint(['thesis_id', 'base_version'], ['thesis_versions.thesis_id', 'thesis_versions.version']),
+        ForeignKeyConstraint(['thesis_id', 'new_version'], ['thesis_versions.thesis_id', 'thesis_versions.version']))
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    thesis_id: Mapped[str] = mapped_column(String(36), index=True)
+    base_version: Mapped[int] = mapped_column(Integer)
+    new_version: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    kind: Mapped[str] = mapped_column(String(12))
+    status: Mapped[str] = mapped_column(String(12))
+    code: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    comparison: Mapped[str | None] = mapped_column(String(12), nullable=True)
+    judgment: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    reason: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[str] = mapped_column(String(40))
+    report_id: Mapped[str | None] = mapped_column(ForeignKey('research_reports.id'), nullable=True)
+    evaluation_id: Mapped[str | None] = mapped_column(ForeignKey('thesis_reviews.id'), unique=True, nullable=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+    request_id: Mapped[str] = mapped_column(String(36), unique=True)
+    request_hash: Mapped[str] = mapped_column(String(64))
