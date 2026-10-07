@@ -6010,6 +6010,716 @@
         "title": "TextPayload",
         "type": "object"
       },
+      "ThesisContent": {
+        "additionalProperties": false,
+        "properties": {
+          "bear_case": {
+            "items": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 16,
+            "title": "Bear Case",
+            "type": "array"
+          },
+          "bull_case": {
+            "items": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 16,
+            "title": "Bull Case",
+            "type": "array"
+          },
+          "catalysts": {
+            "items": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 16,
+            "title": "Catalysts",
+            "type": "array"
+          },
+          "risks": {
+            "items": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 16,
+            "title": "Risks",
+            "type": "array"
+          },
+          "stance": {
+            "enum": [
+              "bullish",
+              "bearish",
+              "neutral"
+            ],
+            "title": "Stance",
+            "type": "string"
+          },
+          "summary": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stance",
+          "summary",
+          "bull_case",
+          "bear_case",
+          "catalysts",
+          "risks"
+        ],
+        "title": "ThesisContent",
+        "type": "object"
+      },
+      "ThesisCreate": {
+        "additionalProperties": false,
+        "properties": {
+          "report_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "title": "Report Id",
+            "type": "string"
+          },
+          "request_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "request_id"
+        ],
+        "title": "ThesisCreate",
+        "type": "object"
+      },
+      "ThesisEdit": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "$ref": "#/components/schemas/ThesisContent"
+          },
+          "expected_version": {
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "request_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "expected_version",
+          "content",
+          "reason"
+        ],
+        "title": "ThesisEdit",
+        "type": "object"
+      },
+      "ThesisEvaluate": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_version": {
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "report_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Id"
+          },
+          "request_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "expected_version"
+        ],
+        "title": "ThesisEvaluate",
+        "type": "object"
+      },
+      "ThesisJudge": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "$ref": "#/components/schemas/ThesisContent"
+          },
+          "evaluation_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "expected_version": {
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "judgment": {
+            "enum": [
+              "strengthened",
+              "weakened",
+              "invalidated",
+              "unchanged",
+              "needs_revision"
+            ],
+            "title": "Judgment",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "request_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "expected_version",
+          "content",
+          "reason",
+          "evaluation_id",
+          "judgment"
+        ],
+        "title": "ThesisJudge",
+        "type": "object"
+      },
+      "ThesisReview": {
+        "additionalProperties": false,
+        "properties": {
+          "base_content": {
+            "$ref": "#/components/schemas/ThesisContent"
+          },
+          "base_version": {
+            "title": "Base Version",
+            "type": "integer"
+          },
+          "baseline_report": {
+            "$ref": "#/components/schemas/ReportJob"
+          },
+          "candidate_report": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportJob"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "comparison": {
+            "anyOf": [
+              {
+                "enum": [
+                  "changed",
+                  "unchanged"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "difference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportDiff"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evaluation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluation Id"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "judgment": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strengthened",
+                  "weakened",
+                  "invalidated",
+                  "unchanged",
+                  "needs_revision"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Judgment"
+          },
+          "kind": {
+            "enum": [
+              "evaluation",
+              "judgment"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "default": "自动评估只比较已保存的新旧事实；投资影响由用户显式判断。缺数据时不产生变化结论。",
+            "title": "Label",
+            "type": "string"
+          },
+          "missing_keys": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Keys",
+            "type": "array"
+          },
+          "new_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Version"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "report_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Id"
+          },
+          "requested_report_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested Report Id"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "unable",
+              "reviewed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "thesis_id": {
+            "title": "Thesis Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "thesis_id",
+          "base_version",
+          "new_version",
+          "kind",
+          "status",
+          "code",
+          "comparison",
+          "judgment",
+          "reason",
+          "created_at",
+          "report_id",
+          "requested_report_id",
+          "evaluation_id",
+          "base_content",
+          "baseline_report",
+          "candidate_report",
+          "difference",
+          "missing_keys"
+        ],
+        "title": "ThesisReview",
+        "type": "object"
+      },
+      "ThesisReviewSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "base_version": {
+            "title": "Base Version",
+            "type": "integer"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "comparison": {
+            "anyOf": [
+              {
+                "enum": [
+                  "changed",
+                  "unchanged"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparison"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "judgment": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strengthened",
+                  "weakened",
+                  "invalidated",
+                  "unchanged",
+                  "needs_revision"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Judgment"
+          },
+          "kind": {
+            "enum": [
+              "evaluation",
+              "judgment"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "new_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Version"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "report_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Id"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "unable",
+              "reviewed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "thesis_id": {
+            "title": "Thesis Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "thesis_id",
+          "base_version",
+          "new_version",
+          "kind",
+          "status",
+          "code",
+          "comparison",
+          "judgment",
+          "reason",
+          "created_at",
+          "report_id"
+        ],
+        "title": "ThesisReviewSummary",
+        "type": "object"
+      },
+      "ThesisSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "current_version": {
+            "title": "Current Version",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "origin_report_id": {
+            "title": "Origin Report Id",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "symbol",
+          "origin_report_id",
+          "current_version",
+          "created_at"
+        ],
+        "title": "ThesisSummary",
+        "type": "object"
+      },
+      "ThesisVersion": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "$ref": "#/components/schemas/ThesisContent"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "data_report": {
+            "$ref": "#/components/schemas/ReportJob"
+          },
+          "label": {
+            "default": "文字是合成器或用户的分析与判断；对应事实保存在来源报告和实际执行记录中，引用不证明判断正确。",
+            "title": "Label",
+            "type": "string"
+          },
+          "origin": {
+            "enum": [
+              "report",
+              "edit",
+              "review"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "thesis_id": {
+            "title": "Thesis Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "origin",
+          "reason",
+          "created_at",
+          "report_id",
+          "thesis_id",
+          "content",
+          "data_report"
+        ],
+        "title": "ThesisVersion",
+        "type": "object"
+      },
+      "ThesisVersionSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "origin": {
+            "enum": [
+              "report",
+              "edit",
+              "review"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "origin",
+          "reason",
+          "created_at",
+          "report_id"
+        ],
+        "title": "ThesisVersionSummary",
+        "type": "object"
+      },
+      "ThesisView": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "current": {
+            "$ref": "#/components/schemas/ThesisVersion"
+          },
+          "current_version": {
+            "title": "Current Version",
+            "type": "integer"
+          },
+          "history_limit": {
+            "default": 100,
+            "title": "History Limit",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "origin_report_id": {
+            "title": "Origin Report Id",
+            "type": "string"
+          },
+          "reviews": {
+            "items": {
+              "$ref": "#/components/schemas/ThesisReviewSummary"
+            },
+            "title": "Reviews",
+            "type": "array"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/ThesisVersionSummary"
+            },
+            "title": "Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "symbol",
+          "origin_report_id",
+          "current_version",
+          "created_at",
+          "current",
+          "versions",
+          "reviews"
+        ],
+        "title": "ThesisView",
+        "type": "object"
+      },
       "ToolArguments": {
         "additionalProperties": false,
         "properties": {
@@ -10146,6 +10856,489 @@
           }
         },
         "summary": "Skill Resource"
+      }
+    },
+    "/theses": {
+      "get": {
+        "operationId": "theses_theses_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ThesisSummary"
+                  },
+                  "title": "Response Theses Theses Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Theses"
+      },
+      "post": {
+        "operationId": "create_thesis_theses_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThesisCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThesisView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Thesis"
+      }
+    },
+    "/theses/{identity}": {
+      "get": {
+        "operationId": "thesis_theses__identity__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThesisView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Thesis"
+      }
+    },
+    "/theses/{identity}/edit": {
+      "post": {
+        "operationId": "edit_thesis_theses__identity__edit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThesisEdit"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThesisView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Edit Thesis"
+      }
+    },
+    "/theses/{identity}/evaluate": {
+      "post": {
+        "operationId": "evaluate_thesis_theses__identity__evaluate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThesisEvaluate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThesisReview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluate Thesis"
+      }
+    },
+    "/theses/{identity}/judge": {
+      "post": {
+        "operationId": "judge_thesis_theses__identity__judge_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThesisJudge"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThesisView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Judge Thesis"
+      }
+    },
+    "/theses/{identity}/reviews/{review_id}": {
+      "get": {
+        "operationId": "thesis_review_theses__identity__reviews__review_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "review_id",
+            "required": true,
+            "schema": {
+              "title": "Review Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThesisReview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Thesis Review"
+      }
+    },
+    "/theses/{identity}/versions/{version}": {
+      "get": {
+        "operationId": "thesis_version_theses__identity__versions__version__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "title": "Version",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThesisVersion"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Thesis Version"
       }
     },
     "/workspace": {

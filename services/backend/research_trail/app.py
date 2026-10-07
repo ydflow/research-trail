@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
+from fastapi import Path as ApiPath
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel
@@ -42,6 +43,9 @@ from .research_recovery import ResearchRecovery
 from .research_contracts import RecoveryAction, RecoveryView
 from .report_contracts import ReportGenerate, ReportSummary, ReportJob, ReportOriginal, ReportMarkdown, ReportDiff, ReportDiffInput
 from .report_output import markdown as report_markdown, diff as report_diff
+from .theses import ThesisService
+from .thesis_contracts import (ThesisCreate, ThesisEdit, ThesisEvaluate, ThesisJudge,
+    ThesisSummary, ThesisView, ThesisVersion, ThesisReview)
 from .portfolio_contracts import (PortfolioInfo, PortfolioView, PortfolioCreate, PortfolioId,
     CsvPreviewInput, ImportPreview, ImportConfirm, ImportUndo)
 
@@ -86,6 +90,7 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
                     model.settings_identity=app.state.settings.model_identity()
                     return model
             app.state.reports = ReportService(database,app.state.research.store,report_model,**(report_options or {}))
+            app.state.theses = ThesisService(database, app.state.reports)
             app.state.recovery = ResearchRecovery(app.state.research,app.state.reports,app.state.settings)
             app.state.store.recover_interrupted()
             manager = app.state.manager = RunManager(app.state.store, runner, run_timings)
@@ -162,7 +167,32 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
 
     @app.exception_handler(ResearchError)
     async def research_error(_request,error):
-        return JSONResponse(status_code=404 if error.code in ('RESEARCH_NOT_FOUND','REPORT_NOT_FOUND') else 409,content={'detail':error.code})
+        return JSONResponse(status_code=404 if error.code in ('RESEARCH_NOT_FOUND','REPORT_NOT_FOUND','THESIS_NOT_FOUND','THESIS_VERSION_NOT_FOUND','THESIS_REVIEW_NOT_FOUND') else 409,content={'detail':error.code})
+
+    @app.get('/theses', response_model=list[ThesisSummary], dependencies=protected)
+    def theses(): return app.state.theses.list()
+
+    @app.post('/theses', response_model=ThesisView, dependencies=protected)
+    def create_thesis(body: ThesisCreate): return app.state.theses.create(body)
+
+    @app.get('/theses/{identity}', response_model=ThesisView, dependencies=protected)
+    def thesis(identity: str): return app.state.theses.get(identity)
+
+    @app.get('/theses/{identity}/versions/{version}', response_model=ThesisVersion, dependencies=protected)
+    def thesis_version(identity: str, version: Annotated[int, ApiPath(ge=1)]):
+        return app.state.theses.version(identity, version)
+
+    @app.post('/theses/{identity}/edit', response_model=ThesisView, dependencies=protected)
+    def edit_thesis(identity: str, body: ThesisEdit): return app.state.theses.edit(identity, body)
+
+    @app.post('/theses/{identity}/evaluate', response_model=ThesisReview, dependencies=protected)
+    def evaluate_thesis(identity: str, body: ThesisEvaluate): return app.state.theses.evaluate(identity, body)
+
+    @app.post('/theses/{identity}/judge', response_model=ThesisView, dependencies=protected)
+    def judge_thesis(identity: str, body: ThesisJudge): return app.state.theses.judge(identity, body)
+
+    @app.get('/theses/{identity}/reviews/{review_id}', response_model=ThesisReview, dependencies=protected)
+    def thesis_review(identity: str, review_id: str): return app.state.theses.review(identity, review_id)
 
     @app.get('/research/reports',response_model=list[ReportSummary],dependencies=protected)
     def reports(run_id: str | None=None):

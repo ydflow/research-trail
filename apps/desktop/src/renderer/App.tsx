@@ -16,13 +16,15 @@ const labels = { idle: '尚未启动', starting: '启动中', healthy: '运行�
 const SkillsPanel = lazy(() => import('./skills/SkillsPanel').then(m => ({ default: m.SkillsPanel })));
 const ResearchPanel = lazy(() => import('./research/ResearchPanel').then(m => ({ default: m.ResearchPanel })));
 
+const ThesisPanel = lazy(() => import('./theses/ThesisPanel').then(m => ({ default: m.ThesisPanel })));
+
 export function App() {
   const [state, setState] = useState<BackendState>({ phase: 'idle', detail: '等待本地服务启动。' });
   const [busy, setBusy] = useState(false);
   const [researchSymbol, setResearchSymbol] = useState<string>();
-  const [view, setView] = useState<'market' | 'sessions' | 'settings' | 'providers' | 'securities' | 'portfolios' | 'analytics' | 'skills' | 'research'>(() => {
+  const [view, setView] = useState<'market' | 'sessions' | 'settings' | 'providers' | 'securities' | 'portfolios' | 'analytics' | 'skills' | 'research' | 'theses'>(() => {
     const saved = sessionStorage.getItem('research-trail.view');
-    return saved === 'sessions' || saved === 'settings' || saved === 'providers' || saved === 'securities' || saved === 'portfolios' || saved === 'analytics' || saved === 'skills' || saved === 'research' ? saved : 'market';
+    return saved === 'sessions' || saved === 'settings' || saved === 'providers' || saved === 'securities' || saved === 'portfolios' || saved === 'analytics' || saved === 'skills' || saved === 'research' || saved === 'theses' ? saved : 'market';
   });
   useEffect(() => { sessionStorage.setItem('research-trail.view', view); }, [view]);
   useEffect(() => {
@@ -59,6 +61,7 @@ export function App() {
         <button onClick={action} disabled={pending}>{pending ? '正在处理…' : state.phase === 'healthy' ? '重新检查' : '重试启动'}</button>
       </section>
       <nav className="view-tabs" aria-label="工作区">
+        <button aria-pressed={view === 'theses'} onClick={() => setView('theses')}>投资论点</button>
         <button aria-pressed={view === 'research'} onClick={() => setView('research')}>研究采集</button>
         <button aria-pressed={view === 'skills'} onClick={() => setView('skills')}>能力与技能</button>
         <button aria-pressed={view === 'analytics'} onClick={() => setView('analytics')}>风险与对比</button>
@@ -69,7 +72,7 @@ export function App() {
         <button aria-pressed={view === 'settings'} onClick={() => setView('settings')}>设置与诊断</button>
         <button aria-pressed={view === 'providers'} onClick={() => setView('providers')}>数据与只读账户</button>
       </nav>
-      {view === 'research' ? <Suspense fallback={<p role="status">正在打开研究采集…</p>}><ResearchPanel available={state.phase === 'healthy'} initialSymbol={researchSymbol} /></Suspense> : view === 'skills' ? <Suspense fallback={<p role="status">正在打开技能目录…</p>}><SkillsPanel available={state.phase === 'healthy'} /></Suspense> : view === 'analytics' ? <Suspense fallback={<p role="status">正在打开风险与对比…</p>}><AnalyticsPanel available={state.phase === 'healthy'} /></Suspense> : view === 'portfolios' ? <Suspense fallback={<p role="status">正在打开组合工作台…</p>}><PortfolioPanel available={state.phase === 'healthy'} /></Suspense> : view === 'securities' ? <SecurityWorkspace available={state.phase === 'healthy'} onResearch={symbol => { setResearchSymbol(symbol); setView('research'); }} /> : view === 'market' ? <MarketPanel available={state.phase === 'healthy'} /> : view === 'sessions' ? <SessionPanel available={state.phase === 'healthy'} /> : view === 'providers' ? <ProviderPanel available={state.phase === 'healthy'} /> : <SettingsPanel available={state.phase === 'healthy'} />}
+      {view === 'theses' ? <Suspense fallback={<p role="status">正在打开投资论点…</p>}><ThesisPanel available={state.phase === 'healthy'} /></Suspense> : view === 'research' ? <Suspense fallback={<p role="status">正在打开研究采集…</p>}><ResearchPanel available={state.phase === 'healthy'} initialSymbol={researchSymbol} /></Suspense> : view === 'skills' ? <Suspense fallback={<p role="status">正在打开技能目录…</p>}><SkillsPanel available={state.phase === 'healthy'} /></Suspense> : view === 'analytics' ? <Suspense fallback={<p role="status">正在打开风险与对比…</p>}><AnalyticsPanel available={state.phase === 'healthy'} /></Suspense> : view === 'portfolios' ? <Suspense fallback={<p role="status">正在打开组合工作台…</p>}><PortfolioPanel available={state.phase === 'healthy'} /></Suspense> : view === 'securities' ? <SecurityWorkspace available={state.phase === 'healthy'} onResearch={symbol => { setResearchSymbol(symbol); setView('research'); }} /> : view === 'market' ? <MarketPanel available={state.phase === 'healthy'} /> : view === 'sessions' ? <SessionPanel available={state.phase === 'healthy'} /> : view === 'providers' ? <ProviderPanel available={state.phase === 'healthy'} /> : <SettingsPanel available={state.phase === 'healthy'} />}
       </main>
       <footer>每次研究，都有据可查。</footer>
     </div>

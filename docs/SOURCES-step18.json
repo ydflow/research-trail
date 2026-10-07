@@ -1,0 +1,36 @@
+{
+  "repository": "https://github.com/helsome/folio",
+  "commit": "ba5dcdfd31b162f5edb8b908f7f099a560389326",
+  "files": [
+    {
+      "upstream": "packages/core/src/thesis.ts",
+      "sha256": "2454f8f758fecae1bcaafe60aa7658d8fd806166235506c8144e271a50852432",
+      "adapted_to": [
+        "services/backend/research_trail/theses.py",
+        "services/backend/research_trail/thesis_contracts.py",
+        "apps/desktop/src/renderer/theses/ThesisPanel.tsx"
+      ]
+    },
+    {
+      "upstream": "packages/shared/src/thesis/converter.ts",
+      "sha256": "aa3a04ae84fdce79e5b2e3e70f182eda61d5c7d5b52fc39f8d4957e955021d57",
+      "adapted_to": [
+        "services/backend/research_trail/theses.py",
+        "services/backend/research_trail/thesis_contracts.py",
+        "apps/desktop/src/renderer/theses/ThesisPanel.tsx"
+      ]
+    },
+    {
+      "upstream": "packages/shared/src/thesis/evaluator-local.ts",
+      "sha256": "18c4929c825a0c569fdaa385699e28fb6f59a86d34c5c8aca63aeab70cbec9d0",
+      "adapted_to": [
+        "services/backend/research_trail/theses.py",
+        "services/backend/research_trail/thesis_contracts.py",
+        "apps/desktop/src/renderer/theses/ThesisPanel.tsx"
+      ]
+    }
+  ],
+  "scope": "Conceptual thesis/report conversion/version/review reference only; no verbatim import or upstream TypeScript runtime. Python append-only SQLite versions, optimistic conflicts, durable request identity, snapshot validation and original fact comparisons are new implementation. The upstream local evaluator heuristics are not imported: missing data is unable rather than unchanged, and investment impact requires explicit user judgment. No extra provider or model calls, monitoring or outcome scoring.",
+  "authorization": "Original-author reuse authorization confirmation recorded in EVIDENCE sections 9-11; original authorization text not independently obtained. Only skills/LICENSE is confirmed MIT (Copyright 2026 Longbridge Inc.). No whole-repository MIT claim.",
+  "preserved_resources": "Existing source notices, 30 original skill/license resource bytes and authorization boundaries retained; see SOURCES-step14.json. Readonly upstream unchanged."
+}

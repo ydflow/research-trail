@@ -94,6 +94,17 @@ export function ReportPanel({ runId, symbol, succeeded, available, generateAllow
     finally { if (ticket === generation.current) setBusy(false); }
   }
 
+  async function formThesis() {
+    if (!job || blocked || activeOperation.current) return;
+    activeOperation.current = true;
+    const ticket = generation.current; setBusy(true); setNotice(''); setError('');
+    try {
+      const saved = await window.researchTrail!.createThesis({ report_id: job.id, request_id: crypto.randomUUID() });
+      if (ticket === generation.current) setNotice(`已形成投资论点 ${saved.id}。请在“投资论点”页面查看与编辑；来源报告保留。`);
+    } catch (e) { if (ticket === generation.current) setError(message(e)); }
+    finally { activeOperation.current = false; if (ticket === generation.current) setBusy(false); }
+  }
+
   const doc = job?.document;
   const groups: [string, ReportClaim[]][] = doc ? [['摘要', doc.synthesis.summary], ...doc.synthesis.sections.map(s => [s.title, s.claims] as [string, ReportClaim[]]),
     ['风险', doc.synthesis.risks], ['催化因素', doc.synthesis.catalysts], ['多头论点', doc.synthesis.bull_case], ['空头论点', doc.synthesis.bear_case]] : [];
@@ -113,6 +124,7 @@ export function ReportPanel({ runId, symbol, succeeded, available, generateAllow
       <h3>{doc.symbol} · {doc.synthesis.stance === 'bullish' ? '偏多' : doc.synthesis.stance === 'bearish' ? '偏空' : '中性'}（分析判断）</h3>
       <p>{doc.disclaimer}</p><p>{doc.source_mode === 'simulated' ? '模拟数据，不代表真实行情' : '真实提供商数据'} · {doc.provider} · 采集 {doc.collection_status} · 任务 {doc.source_run_id}</p>
       <button disabled={blocked} onClick={() => void exportMarkdown()}>导出 Markdown</button>
+      <button disabled={blocked || job?.status !== 'completed'} onClick={() => void formThesis()}>将报告形成投资论点</button>
       {groups.map(([title, items], index) => <Claims key={index} title={title} items={items} document={doc} disabled={blocked} onRead={reference => void read(job!.id, reference)} />)}
       <section data-testid="report-gaps"><h4>数据缺口</h4>{doc.gaps.length ? <ul>{doc.gaps.map((g, i) => <li key={i}>{g.scope} · {g.key} · {g.code}</li>)}</ul> : <p>当前投影范围内未记录缺口；这不保证资料完整。</p>}</section>
       <details><summary>全部原始事实索引 · {doc.evidence.length} 项</summary><ul>{doc.evidence.map(f => <li key={f.id}>{f.capability}{f.pointer} = {JSON.stringify(f.value)} <button disabled={blocked} onClick={() => void read(job!.id, f.id)}>查看原始事实 {f.id}</button></li>)}</ul></details>

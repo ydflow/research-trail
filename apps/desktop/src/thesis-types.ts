@@ -1,0 +1,11 @@
+import type { components } from '../../../packages/contracts/generated';
+type Schemas = components['schemas'];
+export type ThesisSummary = Schemas['ThesisSummary'];
+export type ThesisView = Schemas['ThesisView'];
+export type ThesisVersion = Schemas['ThesisVersion'];
+export type ThesisContent = Schemas['ThesisContent'];
+export type ThesisCreate = Schemas['ThesisCreate'];
+export type ThesisEdit = Schemas['ThesisEdit'];
+export type ThesisEvaluate = Schemas['ThesisEvaluate'];
+export type ThesisJudge = Schemas['ThesisJudge'];
+export type ThesisReview = Schemas['ThesisReview'];

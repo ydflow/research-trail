@@ -9,6 +9,117 @@ const { tmpdir } = require('node:os');
 const { createRequire } = require('node:module');
 const { pathToFileURL } = require('node:url');
 
+test('Step18 report converts to thesis, immutable edits and traceable new-data review survive restart', {timeout:120000}, async()=>{
+  let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'report-updated'});
+  const path=instance.databasePath; let before,after,initial,saved;
+  try {
+    let page=instance.page; const errors=[]; page.on('pageerror',e=>errors.push(e.message));
+    await waitForBackend(page); await page.getByRole('button',{name:'研究采集',exact:true}).click();
+    await page.getByRole('radio',{name:/价值投资/}).check();
+    await page.getByRole('button',{name:'开始采集',exact:true}).click();
+    await expect(page.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    await page.getByRole('button',{name:'生成新报告',exact:true}).click();
+    await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','completed');
+    before=await page.evaluate(async()=>{const r=await window.researchTrail.reportList();return window.researchTrail.report(r[0].id);});
+    await page.getByRole('button',{name:'将报告形成投资论点',exact:true}).click();
+    await expect(page.getByRole('status').filter({hasText:'已形成投资论点'})).toBeVisible();
+    await page.getByRole('button',{name:'投资论点',exact:true}).click();
+    await expect(page.getByTestId('thesis-current')).toHaveAttribute('data-version','1');
+    const id=await page.getByTestId('thesis-current').getAttribute('data-thesis-id');
+    initial=await page.evaluate(id=>window.researchTrail.thesisVersion(id,1),id);
+    assert.deepEqual(initial.data_report,before);
+    await page.getByLabel('论点摘要',{exact:true}).fill('用户版本二：补充估值风险');
+    await page.getByLabel('论点风险',{exact:true}).fill(' \n\n');
+    await page.getByLabel('论点催化因素',{exact:true}).fill(' \n 用户补充催化因素 \n\n');
+    await page.getByLabel('论点变化理由',{exact:true}).fill('手动补充风险解释，没有新数据');
+    await page.getByRole('button',{name:'保存论点新版本',exact:true}).dblclick();
+    await expect(page.getByTestId('thesis-current')).toHaveAttribute('data-version','2');
+    const edited=await page.evaluate(id=>window.researchTrail.thesisVersion(id,2),id);
+    assert.deepEqual(edited.content.risks,[]);
+    assert.deepEqual(edited.content.catalysts,['用户补充催化因素']);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.thesisVersion(id,1),id),initial);
+    await page.getByRole('button',{name:'读取论点版本 1',exact:true}).click();
+    await expect(page.getByTestId('thesis-snapshot')).toContainText('已保存版本 1');
+    await expect(page.getByLabel('论点摘要',{exact:true})).toHaveValue('用户版本二：补充估值风险');
+    await page.getByRole('button',{name:'重新评估新数据',exact:true}).click();
+    await expect(page.getByTestId('thesis-evaluation')).toHaveAttribute('data-status','unable');
+    await expect(page.getByTestId('thesis-evaluation')).toContainText('NEW_DATA_REQUIRED');
+    await expect(page.getByRole('button',{name:'保存复审判断',exact:true})).toBeDisabled();
+    const run=await page.evaluate(()=>window.researchTrail.startResearch({symbol:'AAPL.US',strategy:'value',mode:'simulated',provider:'longbridge',concurrency:4}));
+    await expect.poll(()=>page.evaluate(id=>window.researchTrail.researchRun(id).then(r=>r.status),run.id),{timeout:10000}).toBe('collected');
+    const newJob=await page.evaluate(id=>window.researchTrail.generateReport(id,'fixed',crypto.randomUUID()),run.id);
+    await expect.poll(()=>page.evaluate(id=>window.researchTrail.report(id).then(r=>r.status),newJob.id),{timeout:10000}).toBe('completed');
+    after=await page.evaluate(id=>window.researchTrail.report(id),newJob.id);
+    await page.getByRole('button',{name:'刷新论点和报告',exact:true}).click();
+    await expect(page.getByLabel('复审新报告',{exact:true}).locator('option').filter({hasText:after.id})).toHaveCount(1);
+    await page.getByLabel('复审新报告',{exact:true}).selectOption(after.id);
+    await page.getByRole('button',{name:'重新评估新数据',exact:true}).click();
+    await expect(page.getByTestId('thesis-evaluation')).toHaveAttribute('data-status','ready');
+    await expect(page.getByTestId('thesis-evaluation')).toContainText('company.valuation/pe_ttm_ratio');
+    await expect(page.getByTestId('thesis-evaluation')).toContainText('20 → 25');
+    await page.getByRole('button',{name:'查看复审新事实',exact:true}).first().click();
+    await expect(page.getByTestId('thesis-original')).toContainText(after.run_id);
+    await page.getByLabel('论点方向',{exact:true}).selectOption('neutral');
+    await page.getByLabel('复审判断',{exact:true}).selectOption('weakened');
+    await page.getByLabel('论点变化理由',{exact:true}).fill('新的估值25使我减弱原判断');
+    await page.getByRole('button',{name:'保存复审判断',exact:true}).dblclick();
+    await expect(page.getByTestId('thesis-current')).toHaveAttribute('data-version','3');
+    saved=await page.evaluate(id=>window.researchTrail.thesis(id),id);
+    assert.equal(saved.versions.length,3); assert.equal(saved.reviews.length,3);
+    assert.equal(saved.current.content.stance,'neutral'); assert.deepEqual(saved.current.data_report,after);
+    const judgment=saved.reviews.find(r=>r.kind==='judgment'); assert.equal(judgment.judgment,'weakened');
+    const audit=await page.evaluate(({id,rid})=>window.researchTrail.thesisReview(id,rid),{id,rid:judgment.id});
+    assert.equal(audit.baseline_report.id,before.id); assert.equal(audit.candidate_report.id,after.id);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.thesisVersion(id,1),id),initial);
+    await page.getByRole('button',{name:`读取复审 ${judgment.id}`,exact:true}).click();
+    await expect(page.getByTestId('thesis-evaluation')).toContainText('用户判断：减弱');
+    await screenshot(page,'step18-thesis-reviewed.png');
+    await instance.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(600,680));
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await screenshot(page,'step18-thesis-compact.png');
+    await instance.app.close(); instance=await launch({RESEARCH_TRAIL_DB_PATH:path,RESEARCH_TRAIL_OFFLINE:'1'});
+    page=instance.page; page.on('pageerror',e=>errors.push(e.message)); await waitForBackend(page);
+    await page.getByRole('button',{name:'投资论点',exact:true}).click();
+    await expect(page.getByTestId('thesis-current')).toHaveAttribute('data-version','3');
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.thesis(id),id),saved);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.report(id),before.id),before);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.report(id),after.id),after);
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,2);
+    assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,2);
+    assert.deepEqual(errors,[]);
+  } finally { if(instance) await instance.app.close(); }
+});
+
+test('Step18 thesis selection discards a delayed earlier saved version without contaminating edits', {timeout:60000}, async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  try {
+    const page=instance.page; await waitForBackend(page);
+    const create=async symbol=>{
+      const run=await page.evaluate(symbol=>window.researchTrail.startResearch({symbol,strategy:'value',mode:'simulated',provider:'longbridge',concurrency:4}),symbol);
+      await expect.poll(()=>page.evaluate(id=>window.researchTrail.researchRun(id).then(r=>r.status),run.id),{timeout:10000}).toBe('collected');
+      const job=await page.evaluate(id=>window.researchTrail.generateReport(id,'fixed',crypto.randomUUID()),run.id);
+      await expect.poll(()=>page.evaluate(id=>window.researchTrail.report(id).then(r=>r.status),job.id),{timeout:10000}).toBe('completed');
+      return page.evaluate(id=>window.researchTrail.createThesis({report_id:id,request_id:crypto.randomUUID()}),job.id);
+    };
+    const a=await create('AAPL.US'), b=await create('NVDA.US');
+    await page.getByRole('button',{name:'投资论点',exact:true}).click();
+    await page.getByLabel('已保存论点',{exact:true}).selectOption(a.id);
+    await expect(page.getByTestId('thesis-current')).toHaveAttribute('data-thesis-id',a.id);
+    await instance.app.evaluate(({ipcMain},id)=>{
+      const handler=ipcMain._invokeHandlers.get('theses:version');
+      ipcMain.removeHandler('theses:version');
+      ipcMain.handle('theses:version',async(event,selected,version)=>{const saved=await handler(event,selected,version);if(selected===id)await new Promise(done=>setTimeout(done,1000));return saved;});
+    },a.id);
+    await page.getByRole('button',{name:'读取论点版本 1',exact:true}).click();
+    await page.getByLabel('已保存论点',{exact:true}).selectOption(b.id);
+    await expect(page.getByTestId('thesis-current')).toHaveAttribute('data-thesis-id',b.id);
+    await page.waitForTimeout(1300);
+    await expect(page.getByTestId('thesis-snapshot')).toContainText(b.current.content.summary);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.thesis(id),a.id),a);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.thesis(id),b.id),b);
+  } finally { await instance.app.close(); }
+});
+
 test('Step17 actual collection process interruption preserves evidence resumes and restarts explicitly', {timeout:90000}, async()=>{
   let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'research-checkpoint'});
   const path=instance.databasePath; let original,raw;
@@ -1138,6 +1249,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       'connections', 'saveConnection', 'deleteConnection', 'saveCredential', 'deleteCredential', 'testConnection', 'profile', 'saveProfile', 'deleteProfile', 'diagnostics', 'exportDiagnostics',
       'providerProfiles', 'saveProvider', 'deleteProvider', 'saveProviderCredential', 'deleteProviderCredential', 'providerCapabilities', 'queryProvider',
       'workspaceState', 'addWatch', 'removeWatch', 'selectSecurity', 'securityPage', 'openNewsSource',
+      'thesisList', 'createThesis', 'thesis', 'thesisVersion', 'editThesis', 'evaluateThesis', 'judgeThesis', 'thesisReview',
       'reportList', 'generateReport', 'report', 'cancelReport', 'reportEvidence', 'exportReport', 'reportDiff',
       'researchCheckpoint', 'resumeResearch', 'restartResearch', 'abandonResearch',
       'capabilities', 'skills', 'setSkillEnabled', 'readSkillResource', 'researchStrategies', 'researchPlan', 'researchRuns', 'startResearch', 'researchRun', 'cancelResearch', 'researchData', 'portfolioRisk', 'compareStocks', 'portfolioList', 'createPortfolio', 'portfolioView', 'previewPortfolio', 'confirmPortfolio', 'undoPortfolio', 'refreshPortfolio'].sort(), node: 'undefined', process: 'undefined' });
