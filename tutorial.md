@@ -417,7 +417,7 @@ app/bridge/RecoveryPanel；实际中断用例见test_recovery.py、tests/desktop
 
 ## C13：发现候选与事件如何进入研究？
 
-状态：大纲。关联步骤19/20。
+状态：第19步筛选主链已展开；第20步事件日历仍是大纲，未实现。
 
 - 主链：用户筛选任务/事件 → 有界筛选或事件列表 → 带依据候选 → 自选/对比/研究上下文。
 - 必读1：`packages/core/src/screening.ts`，`packages/shared/src/screening/service.ts` / `ScreeningService.runScreening`：任务/有界池到候选。
@@ -425,6 +425,18 @@ app/bridge/RecoveryPanel；实际中断用例见test_recovery.py、tests/desktop
 - 必读3：`packages/ui/src/components/events/EventsView.tsx` 与 `packages/core/src/market-data.ts`：核对事件加载、时区和研究上下文，不把不同任务强拼成一次调用。
 - 验证选读：`packages/shared/src/screening/service.test.ts`、`strategies.test.ts`。
 - 暂缓：自动提醒不是发现结果本身，由C14。
+
+### 研迹第19步真实调用链
+
+1. 在机会发现选择“跌幅居前”，显式池AAPL.US TSLA.US，Python返回固定规则和能力状态。页面只接收类型，不计算阈值。
+2. `apps/desktop/src/renderer/discover/DiscoverPanel.tsx` → `bridge.startScreening` → preload `screening:start` → 主进程assertSender/字段白名单/启动令牌 → `/screening/runs`。
+3. `services/backend/research_trail/screening.py` / `ScreeningService.start`限制池最多40，保存原规则和参考时钟、生成逐股票能力查询，使用原CapabilityRegistry判断可用性。
+4. `_execute`最多4个物理调用，调用原ProviderService.query，沿原提供商配置和适配器取得结构化数据。每项15秒；超时/配置变化/取消有记录，迟到结果不能改写已保存终态。
+5. `screening_rules.py` / `evaluate`以Decimal比较未舍入指标。每项产生included/excluded/missing/failed；有效零候选是completed，全缺失或失败为failed，混合为partial。TSLA.US的下跌实际指标满足规则。
+6. SQLite `screening_runs`保存计划、结果和SHA256。`screeningEvidence`只凭run/read UUID回读实际ProviderResult；每个指标输入是read_id和JSON Pointer，不是任意磁盘路径。
+7. 候选自选走原WatchlistStore；对比填实际代码并需补第二只；研究填代码及该次数据模式/提供商。跳转不自动执行查询或生成报告。重开应用只读已存历史。
+
+本步未调用LLM。理由来自指标公式，不把当前评级当作变化历史，不把支付日当除息日，不统计未来新闻。默认样例缺财务比率等时页面应展示缺口，这与筛选结果为空的正常情况不同。日历页、宏观/央行事件和提醒仍未实现。来源及17项阈值见`docs/ACCEPTANCE-step19.md`，学习记录保留在practice C13。
 
 ## C14：提醒与简报何时触发？
 

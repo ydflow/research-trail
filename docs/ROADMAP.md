@@ -23,8 +23,9 @@
 - 第15步：验收通过（模拟/本机自动）；Python固定8策略与结构化采集、4并发/20秒、整体取消、部分失败/全失败及计划/逐项记录/结果保存已实现。清单见ACCEPTANCE-step15.md，证据见EVIDENCE第36节；开发轮未提交/发布；独立发布复验见EVIDENCE第37节，最终PR/合并以实际Git与回执为准；真实服务和用户亲自记录未验证。
 - 第16步：本机功能验收通过；结构化报告、执行证据/原始事实、不可覆盖版本、Markdown和实际两报告Diff已实现。固定合成器/模拟协议/本机桌面通过，发布复验一次真实LLM请求完成、37条模拟事实可追溯；此前五次失败保留。真实调用证明结构和保存，不证明分析正确或真实行情就绪；见ACCEPTANCE-step16.md与EVIDENCE第38—39节，发布状态以Git/PR回执为准。
 - 第17步：验收通过（模拟/协议/本机自动）；Python事务检查点、显式恢复/重新发起/放弃已实现，发布复验修复延迟放弃回执竞态，最终隔离完整451 Python / 8 Node / 39实际Electron及0012迁移通过。报告恢复零自动模型请求；来源及验收见ACCEPTANCE-step17.md、SOURCES-step17.json与EVIDENCE第40—41节。[PR #16](https://github.com/ydflow/research-trail/pull/16)已普通合并；main CI首次SSE超时及第二次通过均保留，最终回执见根PROJECT_STATE。
-- 第18步：验收通过（模拟/本机自动）；论点转换、追加版本编辑、显式数据评估与用户复审已实现，18项Python及2项Electron定向通过，完整469 Python/8 Node/41实际Electron及0013迁移通过。来源见SOURCES-step18.json，范围见ACCEPTANCE-step18.md；发布轮修复空列表提交，复验及公开范围见EVIDENCE第43节，[PR #17](https://github.com/ydflow/research-trail/pull/17)已创建，最终检查/合并以Git与回执为准。
-- 第19—24步：未开始；没有用户具体指令不继续。
+- 第18步：验收通过（模拟/本机自动）；论点转换、追加版本编辑、显式数据评估与用户复审已实现，18项Python及2项Electron定向通过，完整469 Python/8 Node/41实际Electron及0013迁移通过。来源见SOURCES-step18.json，范围见ACCEPTANCE-step18.md；发布轮修复空列表提交，复验及公开范围见EVIDENCE第43节，[PR #17](https://github.com/ydflow/research-trail/pull/17)已普通合并至c4e1679b，最终main CI回执见根PROJECT_STATE。
+- 第19步：验收通过（模拟/本机自动）；17个固定筛选任务、有界股票池和机会发现页已实现，定向33项Python及2项实际Electron通过，完整502 Python/8 Node/43实际Electron、契约/类型/构建和0014重复迁移检查通过。来源SOURCES-step19.json，范围ACCEPTANCE-step19.md及EVIDENCE第44节。开发轮未提交/发布；本次独立发布复核新增两项回归并修复，筛选35项通过，完整复验和PR状态见EVIDENCE第45节。
+- 第20—24步：未开始；没有用户具体指令不继续。
 - 默认分支 `main`；第0/1步首次上传检查见EVIDENCE第7节，第2步发布检查见第9—10节，提交历史和远程状态以Git为准。
 - 状态取值：未开始 / 进行中 / 代码完成/待验收 / 验收通过 / 受阻。
 - 来源：固定 ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`，本地只读路径 `D:\folio\主分支和简历skill\folio-main`。
@@ -52,7 +53,7 @@
 | 16 | 结构报告、证据、导出、Research Diff | 15 | 数据包驱动；事实/分析/预测分开；证据可追；两报告真实差异 | 验收通过（本机功能及单次真实LLM结构验证） |
 | 17 | 研究检查点、显式恢复/重启/放弃 | 16 | 已采集复用；配置变化/缺证据有反馈；不自动消费模型或重复报告 | 验收通过（模拟/本机自动） |
 | 18 | 投资论点、版本、复审和重评 | 17 | 报告转论点，历史不覆盖，缺新数据不编判断 | 验收通过（模拟/本机自动） |
-| 19 | 17 个筛选任务与机会发现 | 18 | 有界池、确定性筛选、来源记录；候选可入自选/对比/研究 | 未开始 |
+| 19 | 17 个筛选任务与机会发现 | 18 | 有界池、确定性筛选、来源记录；候选可入自选/对比/研究 | 验收通过（模拟/本机自动） |
 | 20 | 财报/宏观/央行事件日历 | 19 | 固定事件先验，时区跨日正确，去重与事件上下文研究 | 未开始 |
 | 21 | 提醒/自动化/简报/Today 聚合 | 20 | 固定时钟触发/冷却/重启/去重；仅应用运行时调度 | 未开始 |
 | 22 | Agent 评测、本地 trace、反馈、外部追踪 | 21 | 离线 CI；未执行/取消/错误/差质量分开；追踪默认关闭与脱敏 | 未开始 |
@@ -81,7 +82,7 @@
 | 研究报告与证据 | `packages/core/src/research.ts`；`packages/shared/src/research/agent-synth.ts`；`claim-verifier.ts` | Python 数据包/报告/证据，步骤16 | 固定/模拟协议/本机报告、证据、版本、Markdown与实际两报告Diff通过；发布复验一次真实LLM结构/引用通过、此前五次失败保留；分析正确性未通过证明 |
 | 研究恢复 | `packages/shared/src/research/service.ts`、`checkpoint.ts`、`repository.ts` | Python 检查点/显式恢复，步骤17 | 已实现 / 同一SQLite事务、成功证据复用、显式新任务/放弃、报告零隐式模型；模拟/协议/本机自动验收通过 |
 | 投资论点 | `packages/shared/src/thesis/service.ts`、`repository.ts` | Python 版本/复审，步骤18 | 已实现 / 报告转换、追加版本、可追溯新数据比较与显式用户复审；模拟/本机自动验收通过，真实数据和用户亲自操作未验证 |
-| 发现与筛选 | `packages/core/src/screening.ts`；`packages/shared/src/screening/service.ts`、`strategies.ts` | Python 17任务，步骤19 | 未实现 / 未执行 |
+| 发现与筛选 | `packages/core/src/screening.ts`；`packages/shared/src/screening/service.ts`、`strategies.ts` | Python 17任务，步骤19 | 已实现 / 模拟小池边界、实窗操作及完整回归通过；真实数据未验证 |
 | 事件与催化日历 | `packages/ui/src/components/events/EventsView.tsx`；`packages/core/src/market-data.ts` | Python 事件源 + 页面，步骤20 | 未实现 / 未执行 |
 | 提醒/自动化/简报/Today | `packages/shared/src/alerts/engine.ts`；`automation/scheduler.ts`、`brief.ts`；`packages/ui/src/components/today` | Python 调度 + Electron 通知，步骤21 | 未实现 / 未执行 |
 | Agent 评测与追踪 | `packages/shared/src/evaluation/experiment-service.ts`、`evaluators`、`langfuse`；`docs/EVALUATION.md` | Python 本地评测/追踪适配，步骤22 | 未实现 / 未执行 |
@@ -96,7 +97,7 @@
 
 参考 17 个筛选任务：top-gainers、top-losers、high-volume、unusual-movement、low-valuation、high-roe、revenue-growth、high-dividend、quality-growth、strong-momentum、breakout、oversold、trend-reversal、upcoming-earnings、rating-changes、news-surge、dividend-events。
 
-八种研究策略已在第15步实现并验收；17个筛选任务仍是步骤19范围清单，未实现，不能借研究策略的验收声称筛选已就绪。
+八种研究策略在第15步实现；第19步实现上述17个筛选任务，由同一Python能力/提供商链采集，有界池规则与8种研究计划分别保存。筛选不消费模型，能力/指标缺失不会生成候选；真实全市场扫描未实施。
 
 ## 发布与完整验收
 
