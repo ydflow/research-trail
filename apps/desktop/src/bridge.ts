@@ -10,6 +10,12 @@ export interface BackendState {
   pythonVersion?: string;
 }
 export interface ResearchTrailBridge {
+  screeningTasks(context: import('./screening-types').ScreeningContext): Promise<import('./screening-types').ScreeningTask[]>;
+  startScreening(input: import('./screening-types').ScreeningInput): Promise<import('./screening-types').ScreeningRun>;
+  screeningRuns(): Promise<import('./screening-types').ScreeningSummary[]>;
+  screeningRun(id: string): Promise<import('./screening-types').ScreeningRun>;
+  cancelScreening(id: string): Promise<import('./screening-types').ScreeningRun>;
+  screeningEvidence(id: string, readId: string): Promise<import('./screening-types').ScreeningEvidence>;
   thesisList(): Promise<import('./thesis-types').ThesisSummary[]>;
   createThesis(input: import('./thesis-types').ThesisCreate): Promise<import('./thesis-types').ThesisView>;
   thesis(id: string): Promise<import('./thesis-types').ThesisView>;

@@ -529,6 +529,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/screening/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Screening List */
+        get: operations["screening_list_screening_runs_get"];
+        put?: never;
+        /** Screening Start */
+        post: operations["screening_start_screening_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/screening/runs/{identity}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Screening Get */
+        get: operations["screening_get_screening_runs__identity__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/screening/runs/{identity}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Screening Cancel */
+        post: operations["screening_cancel_screening_runs__identity__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/screening/runs/{identity}/evidence/{read_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Screening Evidence */
+        get: operations["screening_evidence_screening_runs__identity__evidence__read_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/screening/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Screening Tasks */
+        post: operations["screening_tasks_screening_tasks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sessions": {
         parameters: {
             query?: never;
@@ -3094,6 +3180,216 @@ export interface components {
              */
             type: "run_started";
         };
+        /** ScreeningContext */
+        ScreeningContext: {
+            /**
+             * Mode
+             * @default simulated
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /**
+             * Provider
+             * @default longbridge
+             * @enum {string}
+             */
+            provider: "longbridge" | "massive";
+        };
+        /** ScreeningDecision */
+        ScreeningDecision: {
+            /** Code */
+            code?: string | null;
+            /** Metrics */
+            metrics?: components["schemas"]["ScreeningMetric"][];
+            /** Name */
+            name: string;
+            /** Reasons */
+            reasons?: string[];
+            /** Score */
+            score?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "included" | "excluded" | "missing" | "failed";
+            /** Symbol */
+            symbol: string;
+        };
+        /** ScreeningEvidence */
+        ScreeningEvidence: {
+            read: components["schemas"]["ScreeningRead"];
+            /** Result */
+            result: components["schemas"]["ProviderSuccess"] | components["schemas"]["ProviderFailure"];
+            /** Run Id */
+            run_id: string;
+        };
+        /** ScreeningInput */
+        ScreeningInput: {
+            /**
+             * Limit
+             * @default 20
+             */
+            limit: number;
+            /**
+             * Mode
+             * @default simulated
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /**
+             * Provider
+             * @default longbridge
+             * @enum {string}
+             */
+            provider: "longbridge" | "massive";
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            /**
+             * Strategy
+             * @default top-gainers
+             * @enum {string}
+             */
+            strategy: "top-gainers" | "top-losers" | "high-volume" | "unusual-movement" | "low-valuation" | "high-roe" | "revenue-growth" | "high-dividend" | "quality-growth" | "strong-momentum" | "breakout" | "oversold" | "trend-reversal" | "upcoming-earnings" | "rating-changes" | "news-surge" | "dividend-events";
+            /** Universe */
+            universe?: string[] | null;
+        };
+        /** ScreeningMetric */
+        ScreeningMetric: {
+            /** Formula */
+            formula: string;
+            /** Inputs */
+            inputs: components["schemas"]["ScreeningReference"][];
+            /** Name */
+            name: string;
+            /** Unit */
+            unit: string;
+            /** Value */
+            value: string;
+        };
+        /** ScreeningRead */
+        ScreeningRead: {
+            /** Code */
+            code?: string | null;
+            /** Ended At */
+            ended_at?: string | null;
+            /** Id */
+            id: string;
+            query: components["schemas"]["ReadQuery"];
+            /** Result Hash */
+            result_hash?: string | null;
+            /** Started At */
+            started_at?: string | null;
+            /**
+             * Status
+             * @default pending
+             * @enum {string}
+             */
+            status: "pending" | "running" | "completed" | "failed";
+            /** Symbol */
+            symbol: string;
+        };
+        /** ScreeningReference */
+        ScreeningReference: {
+            /** Pointer */
+            pointer: string;
+            /** Read Id */
+            read_id: string;
+        };
+        /** ScreeningRun */
+        ScreeningRun: {
+            /**
+             * Candidate Count
+             * @default 0
+             */
+            candidate_count: number;
+            /** Candidates */
+            candidates?: components["schemas"]["ScreeningDecision"][];
+            /**
+             * Concurrency
+             * @default 4
+             */
+            concurrency: number;
+            /** Created At */
+            created_at: string;
+            /** Decisions */
+            decisions?: components["schemas"]["ScreeningDecision"][];
+            /** Id */
+            id: string;
+            input: components["schemas"]["ScreeningInput"];
+            /**
+             * Label
+             * @default 仅筛选这个有界股票池；分数是固定规则分数，不是收益概率。模拟、历史和缺失数据见原始执行记录。未调用LLM。
+             */
+            label: string;
+            /** Reads */
+            reads: components["schemas"]["ScreeningRead"][];
+            /** Reference Time */
+            reference_time: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "fetching" | "completed" | "partial" | "failed" | "cancelled" | "interrupted";
+            /**
+             * Strategy
+             * @enum {string}
+             */
+            strategy: "top-gainers" | "top-losers" | "high-volume" | "unusual-movement" | "low-valuation" | "high-roe" | "revenue-growth" | "high-dividend" | "quality-growth" | "strong-momentum" | "breakout" | "oversold" | "trend-reversal" | "upcoming-earnings" | "rating-changes" | "news-surge" | "dividend-events";
+            task: components["schemas"]["ScreeningTask"];
+            /**
+             * Timeout Seconds
+             * @default 15
+             */
+            timeout_seconds: number;
+            /** Universe */
+            universe: string[];
+            /**
+             * Universe Source
+             * @enum {string}
+             */
+            universe_source: "explicit" | "watchlist" | "fixture-catalog";
+        };
+        /** ScreeningSummary */
+        ScreeningSummary: {
+            /**
+             * Candidate Count
+             * @default 0
+             */
+            candidate_count: number;
+            /** Created At */
+            created_at: string;
+            /** Id */
+            id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "fetching" | "completed" | "partial" | "failed" | "cancelled" | "interrupted";
+            /**
+             * Strategy
+             * @enum {string}
+             */
+            strategy: "top-gainers" | "top-losers" | "high-volume" | "unusual-movement" | "low-valuation" | "high-roe" | "revenue-growth" | "high-dividend" | "quality-growth" | "strong-momentum" | "breakout" | "oversold" | "trend-reversal" | "upcoming-earnings" | "rating-changes" | "news-surge" | "dividend-events";
+        };
+        /** ScreeningTask */
+        ScreeningTask: {
+            /** Capabilities */
+            capabilities: components["schemas"]["CapabilityState"][];
+            /**
+             * Id
+             * @enum {string}
+             */
+            id: "top-gainers" | "top-losers" | "high-volume" | "unusual-movement" | "low-valuation" | "high-roe" | "revenue-growth" | "high-dividend" | "quality-growth" | "strong-momentum" | "breakout" | "oversold" | "trend-reversal" | "upcoming-earnings" | "rating-changes" | "news-surge" | "dividend-events";
+            /** Rule */
+            rule: string;
+            /** Score Rule */
+            score_rule: string;
+            /** Title */
+            title: string;
+        };
         /** SecurityBlock */
         SecurityBlock: {
             /** Bars */
@@ -4936,6 +5232,207 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResearchStrategy"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    screening_list_screening_runs_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScreeningSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    screening_start_screening_runs_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScreeningInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScreeningRun"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    screening_get_screening_runs__identity__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScreeningRun"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    screening_cancel_screening_runs__identity__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScreeningRun"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    screening_evidence_screening_runs__identity__evidence__read_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+                read_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScreeningEvidence"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    screening_tasks_screening_tasks_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScreeningContext"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScreeningTask"][];
                 };
             };
             /** @description Validation Error */

@@ -9,6 +9,76 @@ const { tmpdir } = require('node:os');
 const { createRequire } = require('node:module');
 const { pathToFileURL } = require('node:url');
 
+test('Step19 17 tasks, evidence, watch/compare/research symbols and persisted history', {timeout:120000}, async()=>{
+  let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'}); const path=instance.databasePath; let saved;
+  try {
+    let page=instance.page;await waitForBackend(page);
+    assert.equal((await page.evaluate(()=>window.researchTrail.screeningTasks({mode:'simulated',provider:'longbridge'}))).length,17);
+    page.on('pageerror',e=>console.log('Step19 debug',e.message));
+    await page.getByRole('button',{name:'机会发现',exact:true}).click();
+    await expect(page.getByLabel('筛选任务',{exact:true}).locator('option')).toHaveCount(17);
+    await page.getByLabel('筛选任务',{exact:true}).selectOption('top-losers');
+    await expect(page.getByTestId('screening-rule')).toContainText('<= -1%');
+    await page.getByLabel(/有界股票池/).fill('AAPL.US TSLA.US');
+    await page.getByRole('button',{name:'开始筛选',exact:true}).dblclick();
+    await expect(page.getByTestId('screening-run')).toHaveAttribute('data-status','completed');
+    await expect(page.getByTestId('screening-candidate')).toHaveAttribute('data-symbol','TSLA.US');
+    const rows=await page.evaluate(()=>window.researchTrail.screeningRuns());assert.equal(rows.length,1);
+    saved=await page.evaluate(id=>window.researchTrail.screeningRun(id),rows[0].id);
+    await page.getByTestId('screening-candidate').getByText('涨跌幅 · 指标来源',{exact:true}).click();
+    await page.getByRole('button',{name:'查看指标原始事实',exact:true}).click();
+    await expect(page.getByTestId('screening-original')).toContainText(saved.id);
+    await expect(page.getByTestId('screening-original')).toContainText('模拟数据');
+    await page.evaluate(()=>window.researchTrail.removeWatch('TSLA.US'));
+    await page.getByRole('button',{name:'加入自选 TSLA.US',exact:true}).click();
+    await expect(page.getByRole('status').filter({hasText:'已加入自选：TSLA.US'})).toBeVisible();
+    assert.ok((await page.evaluate(()=>window.researchTrail.workspaceState())).entries.some(e=>e.symbol==='TSLA.US'));
+    await page.getByRole('button',{name:'加入对比 TSLA.US',exact:true}).click();
+    await expect(page.getByLabel('对比股票（2—4只，空格分隔）',{exact:true})).toHaveValue('TSLA.US');
+    await expect(page.getByRole('combobox',{name:'分析数据模式',exact:true})).toHaveValue('simulated');
+    await page.getByRole('button',{name:'机会发现',exact:true}).click();
+    await page.getByText('已保存筛选记录（最多显示100条）',{exact:true}).click();
+    await page.getByRole('button',{name:'读取筛选 '+saved.id,exact:true}).click();
+    await expect(page.getByTestId('screening-candidate')).toHaveAttribute('data-symbol','TSLA.US');
+    await page.getByRole('button',{name:'发起研究 TSLA.US',exact:true}).click();
+    await expect(page.getByLabel('研究股票',{exact:true})).toHaveValue('TSLA.US');
+    await page.getByRole('button',{name:'机会发现',exact:true}).click();
+    await page.getByText('已保存筛选记录（最多显示100条）',{exact:true}).click();
+    await page.getByRole('button',{name:'读取筛选 '+saved.id,exact:true}).click();
+    await screenshot(page,'step19-discovery-wide.png');
+    await instance.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(600,700));
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await screenshot(page,'step19-discovery-compact.png');
+    await instance.app.close();instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_DB_PATH:path});page=instance.page;await waitForBackend(page);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.screeningRun(id),saved.id),saved);
+    assert.equal((await page.evaluate(()=>window.researchTrail.screeningRuns())).length,1);
+  } finally {await instance.app.close();}
+});
+
+test('Step19 missing data and unavailable capabilities cannot create candidates', {timeout:120000}, async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  try {
+    const page=instance.page;await waitForBackend(page);await page.getByRole('button',{name:'机会发现',exact:true}).click();
+    await expect(page.getByLabel('筛选任务',{exact:true}).locator('option')).toHaveCount(17);
+    await page.getByLabel('筛选任务',{exact:true}).selectOption('high-roe');
+    await page.getByRole('button',{name:'开始筛选',exact:true}).click();
+    await expect(page.getByTestId('screening-run')).toHaveAttribute('data-status','failed');
+    await expect(page.getByTestId('screening-candidate')).toHaveCount(0);
+    await page.getByText('全部股票的筛选结论和缺口',{exact:true}).click();
+    await expect(page.getByTestId('screening-run')).toContainText('MISSING_OR_AMBIGUOUS_ANNUAL');
+    await screenshot(page,'step19-missing.png');
+    await page.getByLabel('筛选提供商',{exact:true}).selectOption('massive');
+    await expect(page.getByTestId('screening-rule')).toContainText('不可用');
+    await expect(page.getByRole('button',{name:'开始筛选',exact:true})).toBeDisabled();
+    await page.getByLabel('筛选数据模式',{exact:true}).selectOption('real');
+    await expect(page.getByRole('button',{name:'开始筛选',exact:true})).toBeDisabled();
+    await expect(page.getByTestId('screening-run')).toHaveCount(0);
+    assert.equal((await page.evaluate(()=>window.researchTrail.screeningRuns())).length,1);
+    await assert.rejects(page.evaluate(()=>window.researchTrail.screeningTasks({mode:'simulated',provider:'longbridge',unexpected:true})),/字段无效/);
+    await assert.rejects(page.evaluate(()=>window.researchTrail.screeningEvidence('../secret','../secret')),/ID格式无效/);
+  } finally {await instance.app.close();}
+});
+
 test('Step18 report converts to thesis, immutable edits and traceable new-data review survive restart', {timeout:120000}, async()=>{
   let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'report-updated'});
   const path=instance.databasePath; let before,after,initial,saved;
@@ -1249,6 +1319,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       'connections', 'saveConnection', 'deleteConnection', 'saveCredential', 'deleteCredential', 'testConnection', 'profile', 'saveProfile', 'deleteProfile', 'diagnostics', 'exportDiagnostics',
       'providerProfiles', 'saveProvider', 'deleteProvider', 'saveProviderCredential', 'deleteProviderCredential', 'providerCapabilities', 'queryProvider',
       'workspaceState', 'addWatch', 'removeWatch', 'selectSecurity', 'securityPage', 'openNewsSource',
+      'screeningTasks', 'startScreening', 'screeningRuns', 'screeningRun', 'cancelScreening', 'screeningEvidence',
       'thesisList', 'createThesis', 'thesis', 'thesisVersion', 'editThesis', 'evaluateThesis', 'judgeThesis', 'thesisReview',
       'reportList', 'generateReport', 'report', 'cancelReport', 'reportEvidence', 'exportReport', 'reportDiff',
       'researchCheckpoint', 'resumeResearch', 'restartResearch', 'abandonResearch',

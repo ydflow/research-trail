@@ -1,0 +1,35 @@
+{
+  "repository": "https://github.com/helsome/folio",
+  "commit": "ba5dcdfd31b162f5edb8b908f7f099a560389326",
+  "files": [
+    {
+      "upstream": "packages/core/src/screening.ts",
+      "sha256": "1f0ac1dc0823a07c60380462d84b1f4714eeb6c9e6f6f6be2e5749445971ec35"
+    },
+    {
+      "upstream": "packages/shared/src/screening/strategies.ts",
+      "sha256": "4df49d65409c3fe110da326a3da71055f92246b116e70395de6e3ae2c9c7b159"
+    },
+    {
+      "upstream": "packages/shared/src/screening/service.ts",
+      "sha256": "1642af900ae93166955068478642648c0d2dc7a2d71866aede0bae11b5cc9ea0"
+    },
+    {
+      "upstream": "packages/shared/src/screening/strategies.test.ts",
+      "sha256": "694052ce9571bb3c05f596dcca65f69d168d7508abe844807d7057fb96e86f1b"
+    },
+    {
+      "upstream": "packages/ui/src/components/discover/DiscoverView.tsx",
+      "sha256": "9de288d9472ba11855526a2d62e8b2b9a6ad474f764473050fdb9ee821f74a38"
+    }
+  ],
+  "adapted_to": [
+    "services/backend/research_trail/screening_contracts.py",
+    "services/backend/research_trail/screening_rules.py",
+    "services/backend/research_trail/screening.py",
+    "apps/desktop/src/renderer/discover/DiscoverPanel.tsx"
+  ],
+  "scope": "Concept and fixed 17-task rules reference; new Python Decimal implementation, existing CapabilityRegistry and ProviderService, additive SQLite history and named Electron bridge. No upstream TS business runtime, verbatim resource import or LLM calls. Explicit <=40 pool rejects overflow instead of silently truncating. Strict missing inputs, no bridged Kline bars, date attribution, no future or duplicate news, annual adjacent periods and raw evidence. No Step20 calendar.",
+  "authorization": "Original-author reuse authorization confirmation recorded in EVIDENCE sections 9-11; original authorization text not independently obtained. Only skills/LICENSE confirmed MIT (Copyright 2026 Longbridge Inc.); no whole-repository MIT claim.",
+  "preserved_resources": "Existing 30 skill/license files from SOURCES-step14.json retain original bytes and notices; readonly upstream unchanged."
+}

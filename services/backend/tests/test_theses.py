@@ -160,13 +160,13 @@ def test_old_database_upgrade_preserves_reports_and_starts_without_auto_thesis(a
         job=source(c,strategy='value'); path=app.state.theses.database.path
         # Remove only additive empty Step18 tables in an isolated test database.
         with app.state.theses.database.engine.begin() as db:
-            for name in ('thesis_reviews','thesis_versions','investment_theses'): db.execute(text('DROP TABLE '+name))
+            for name in ('screening_runs','thesis_reviews','thesis_versions','investment_theses'): db.execute(text('DROP TABLE '+name))
             db.execute(text("UPDATE alembic_version SET version_num='0012_checkpoints'"))
     with api(path=path) as (c,app):
         assert c.get('/theses').json()==[] and c.get('/research/reports/'+job['id']).json()==job
         assert thesis(c,job)['current_version']==1
         with app.state.theses.database.engine.connect() as db:
-            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0013_theses'
+            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0014_screening'
             assert not db.execute(text('PRAGMA foreign_key_check')).all()
 
 @pytest.mark.parametrize('case',['cached','old-fetched'])

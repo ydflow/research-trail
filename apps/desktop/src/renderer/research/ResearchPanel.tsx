@@ -8,11 +8,11 @@ import './research.css';
 import { ReportPanel } from './ReportPanel';
 import { RecoveryPanel } from './RecoveryPanel';
 
-export function ResearchPanel({ available, initialSymbol }: { available: boolean; initialSymbol?: string }) {
+export function ResearchPanel({ available, initialSymbol, initialMode, initialProvider }: { available: boolean; initialSymbol?: string; initialMode?: 'simulated'|'real'; initialProvider?: 'longbridge'|'massive' }) {
   const [symbol, setSymbol] = useState(initialSymbol || 'AAPL.US');
   const [strategy, setStrategy] = useState<StrategyId>('comprehensive');
-  const [mode, setMode] = useState<'simulated' | 'real'>('simulated');
-  const [provider, setProvider] = useState<'longbridge' | 'massive'>('longbridge');
+  const [mode, setMode] = useState<'simulated' | 'real'>(initialMode??'simulated');
+  const [provider, setProvider] = useState<'longbridge' | 'massive'>(initialProvider??'longbridge');
   const [presets, setPresets] = useState<ResearchStrategy[]>([]), [history, setHistory] = useState<ResearchSummary[]>([]);
   const [historyId, setHistoryId] = useState('');
   const [plan, setPlan] = useState<ResearchPlan>(), [run, setRun] = useState<ResearchRun>(), [data, setData] = useState<ResearchData>();
@@ -35,7 +35,7 @@ export function ResearchPanel({ available, initialSymbol }: { available: boolean
         setPresets(strategies); setHistory(runs); setHistoryId(runs[0]?.id ?? '');
         const activeRun = runs.find(r => r.status === 'fetching') || runs.find(r => !r.abandoned_at &&
           (r.status === 'interrupted' || reports.find(report => report.run_id === r.id)?.status === 'interrupted'));
-        if (activeRun) {
+        if (activeRun && !initialSymbol) {
           const saved = await window.researchTrail!.researchRun(activeRun.id);
           if (!active) return;
           setRun(saved); setHistoryId(saved.id); setSymbol(saved.symbol); setStrategy(saved.strategy); setMode(saved.mode); setProvider(saved.provider);

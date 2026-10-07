@@ -1606,3 +1606,89 @@ b0253726029b8748e3d5a84c0e2d057baa7c0383，base仍f365d122；29份文件/五个�
 合并前将再次核对文件blob、完整提交/作者、审查请求和未解决讨论；检查通过且无阻塞才
 按用户授权普通merge，不squash/rebase/admin或删分支。合并、最终main CI与本地同步结果
 按实际GitHub和根PROJECT_STATE发布回执确认，不在此预写成功。
+
+## 44. 第19步：固定17任务、有界池筛选与机会发现（2026-10-07）
+
+用户本轮只授权第19步开发。开工核对main/HEAD c4e1679b4463835530c3648c3f698fdaa9f0a766、
+index/worktree干净，第18步PR #17已普通合并，最终push/PR/main CI均成功，回执见根PROJECT_STATE。
+本步没有提交、推送、PR、标签或Release操作，没有实施第20步或定时评测。
+
+### 来源与新实现
+
+只读固定Folio ba5dcdfd的core screening契约、shared strategies/service及策略测试、DiscoverView，
+路径/SHA256记录SOURCES-step19.json。没有原样导入新资源或运行上游TS业务内核。
+Python新实现17项Decimal规则、单一注册表/原ProviderService采集编排、逐股票决策和证据，
+新增0014_screening表保存本次股票池/计划/规则/时间/实际结果/失败/指标输入/sha256；
+Electron只接入六项命名桥和发现页，复用自选、对比、研究入口。现有配置、凭证、健康和数据
+适配器继续由原服务管理，没有第二套行情访问或状态。具体阈值与差异见ACCEPTANCE-step19.md。
+
+原上游来源/声明与30份既有技能/许可原字节保留。本次概念/规则参考沿第9—11节用户确认的
+原作者复用授权；原授权文本未独立取得，只确认skills/LICENSE的MIT及Copyright 2026 Longbridge Inc.，
+不把全仓标成MIT或伪装上游作者、开发时间。本轮只有本机开发，不扩张公开授权边界。
+
+股票池显式1—40，不静默扩大/截断；缺省是持久自选，空自选明确记录四只示例目录。
+与基线一致默认4物理并发/15秒/90日K请求，超时槽位保留、排空前拒绝新任务，取消和应用中断
+保留已保存数据。保存参考时钟，原结果hash回读；重启不隐式重扫。同request_id同输入复用，
+不同输入冲突。合法零候选与全失败分开，部分成功不会被其他股票或能力失败抹掉。
+
+17任务逐项使用三股票固定输入验证满足边界、边界外、指标缺失；复合阈值补充单独验证。
+指标/理由关联实际读取和JSON Pointer，财报按明确年度/相邻年份，K线不丢坏柱或补量；
+事件明确股票归属，除息日不替支付日；新闻去重且排除未来。当前buy评级和目标价空间只是
+基线观察规则，不表示已证明评级变化或投资正确。明确空列表/非买入评级是正常排除；缺必要
+字段、失败、受限或未实现能力不给假候选。引用及hash是一致性证据，不是事实正确性签名。
+
+本步没有模型请求，模型spy零调用，LLM没有扫描、打分、补数字或生成理由。未来若实现候选解释，
+只能使用已取得候选事实，当前没有此功能。默认模拟数据仍缺ROE等，页面如实显示，不扩充样例
+伪装真实数据。真实数据/协议能力覆盖不能借模拟形状测试声称通过。
+
+### 本机验证与修复记录
+
+定向33项Python及2项实际Electron通过。桌面显示17任务、切规则、TSLA.US候选及来源，
+自选持久、对比/研究入口实际代码及模拟模式、重启同记录且无新任务；缺指标/不支持/真实未就绪
+无候选，越界ID和额外IPC字段拒绝。实际窗口宽屏/600px无横向溢出，截图仅Temp。
+初轮桌面隐式select标签包含选项文本，严格定位失败；补明确aria-label后重新验证通过。
+对比页用实际combobox角色验证模式，未更改原分析规则或伪造第二只股票。
+
+完整check.cmd首轮5失败/496通过：四个旧迁移head断言仍期待0013，实际新迁移0014；
+一个取消测试只睡40毫秒便假定第一条结果已保存，负载下取消发生在保存之前。
+更新四个head断言；取消测试先观察成功执行已提交再取消，继续检查保留成功结果。
+不放宽原历史/外键断言，不加产品超时、跳过测试或修改数据制造通过。首次日志保留Temp
+research-trail-step19-check.log；最终重跑research-trail-step19-check-final.log退出0，
+502 Python/8 Node/43实际Electron零失败/取消/跳过，契约/类型/构建、0014重复迁移/current/check
+及No new upgrade operations detected通过。隔离迁移库research-trail-verify-m0JDIE在Temp。
+
+原OpenAPI全部路径/模型逐项深比较无变化，新增5路径/10模型、共6命名操作，桥白名单88项；
+契约、TypeScript及构建通过，无新增依赖/工作流，保留TestClient弃用及Vite大chunk提示。
+Git diff检查通过；246份UTF-8源码、102个本地链接、5份固定参考SHA256、30份既有技能/许可工作字节及Git blob一致，8项忽略探针通过。常见密钥模式与禁传文件0；原4处上游资料断链、10处上游空白保留。未读出或打印私密凭证。
+真实Longbridge/Massive/CLI、真实筛选行情、模型解释、安装包、用户亲自验收、CI、提交/发布未执行。
+路线、教程和练习只展开第19步主链；用户原笔记/答案保留，完成后停止。
+
+## 45. 第19步独立发布复核（2026-10-07）
+
+用户单独授权发布当前已验收第19步，允许功能分支/PR、检查通过且无阻塞后普通合并、同步main。
+第44节的未提交/发布及502/8/43是开发轮历史；本节记录发布轮，不实现第20步。
+
+现场gh api user返回ydflow；origin fetch/push均https://github.com/ydflow/research-trail.git，
+公开非fork非归档仓库属于本项目，默认main及远程基线均c4e1679b。不存在同名功能分支或打开的PR。
+当前32份改动全部属于第19步，沿第9—11节实际授权确认保留来源，不声称全仓MIT。
+246份UTF-8源码/102个链接、5份固定参考哈希、30份既有技能/许可工作字节及Git blob、8项忽略探针通过；
+常见密钥/禁传文件0，只读复核本项目配置引用的1项凭证，秘密原文源码出现0，未输出秘密。
+数据库、账户数据、日志、缓存、构建及截图不在本次提交列表。
+
+复核补测发现两个实际边界：调度器被阻塞时，读取在超时后已返回，原逻辑先看done会将其作为成功；
+除息记录若明确标注另一股票，原规则仍用该日期筛选当前股票。新增两项回归修复前2失败/33未选，
+修复后完整35项筛选Python通过。现在记录物理完成时刻后判断截止，正常截止前完成不会因调度延迟误判；
+除息记录明确不同symbol拒绝，不把其他股票来源作为当前股票候选。保留现有15秒默认超时和槽位约束，
+不放宽断言，不改模拟数据制造通过。日志仅Temp/step19-regression-{before,after}.log。
+
+正常本机作者ydflow/noreply及真实时间。按来源概念记录、Python新实现、桌面接入、实际修复分开提交；
+没有本轮上游原样资源导入，不能把Python实现提交伪装为上游作者历史。功能分支feat/step-19-screening。
+最终本机check.cmd及独立干净源码verify:clean均退出0，504 Python/8 Node/43实际Electron，
+零失败/取消/跳过；契约/类型/构建、0014重复迁移/current/check及No new upgrade operations通过。
+干净导出246份源码后锁定新装依赖与Electron，根CMD实际启动、关闭/重开与相同历史、无新运行、所属进程退出通过。
+178份运行/测试/配置与干净导出逐字节一致，按Git clean-filter规范化后与HEAD blob一致（Windows换行不冒称原字节一致）。
+日志仅Temp/research-trail-step19-publication-{check,clean}.log；独立源码research-trail-clean-lViLFl/clean source，
+隔离迁移库research-trail-verify-yRin3A、research-trail-verify-Wij7qc，根CMD证据research-trail-cmd-qa-4fgjX4均在Temp。
+已正常推送feat/step-19-screening并创建[PR #18](https://github.com/ydflow/research-trail/pull/18)，CI正在执行，尚未合并。
+最终head、远程检查和合并回执由根PROJECT_STATE与PR记录，不能将本机通过冒称远程通过。
+真实行情/账户、模型解释、安装包、用户逐项亲自操作仍未执行；既有TestClient/Vite提示保留。

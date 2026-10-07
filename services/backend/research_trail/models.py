@@ -242,6 +242,15 @@ class ThesisRecord(Base):
     created_at: Mapped[str] = mapped_column(String(40))
 
 
+class ScreeningRecord(Base):
+    __tablename__ = 'screening_runs'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    request_id: Mapped[str] = mapped_column(String(36), unique=True)
+    request_hash: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[str] = mapped_column(String(40), index=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
 class ThesisVersionRecord(Base):
     __tablename__ = 'thesis_versions'
     __table_args__ = (CheckConstraint('version >= 1'),)
