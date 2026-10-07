@@ -2,7 +2,7 @@
 
 开发日期：2026-10-07—10-08（Asia/Shanghai）。只实现第20步，不实施提醒、自动化或Today。
 开发基线：main `a8bb67938e9cb962d5f532a5920b8f99d765ea44`（第19步PR #18普通合并）。
-本轮未暂存、提交、推送、创建PR、标签或Release；源码交付与公开发布分别记录。
+开发轮未暂存、提交、推送、创建PR、标签或Release；下方独立发布复验另记，源码交付与公开发布分别记录。
 
 ## 实现与边界
 
@@ -93,3 +93,18 @@ call start-dev.cmd
 1. 为什么`fetched_at`不能代替`scheduled_at`，过去的预告为什么仍不等于已经发生？
 2. 为什么宏观事件选择TSLA必须记为用户选择，而Apple财报只允许来源关联股票？
 3. 哪个Python对象/数据库记录负责复用同一快照，哪些页面缓存或模型文字不能成为证据？
+
+## 独立发布复验
+
+2026-10-08用户另行授权只发布第20步；上方开发轮532/8/46与28项日历记录保留历史含义。
+复核新增三项实际边界回归，修复前3失败/28未选，修复后日历31项通过：
+平铺及分组响应超过200条时，保留前200条及完整原始读取，显式`CALENDAR_ROW_LIMIT`/partial，不再静默截断后标completed。
+用户配置60秒时原两项能力可各等待60秒而桌面只等45秒，现在沿原ProviderService将本次查询各限制20秒；
+提供商原配置仍为60秒，不增加独立适配器、不延长桌面超时。使用本机假SDK/CLI协议验证，不能冒称真实来源验证。
+修复单独提交。最终完整本机check.cmd和独立干净源码verify:clean均退出0：535 Python / 8 Node / 46实际Electron，
+零失败/取消/跳过，契约/类型/构建、0015重复迁移/current/check通过。
+258份干净源码锁定新装依赖与Electron，根CMD实际启动、关闭/重开会话/运行快照相同、无新运行、所属进程剩余0。
+188份运行/测试/配置与干净导出逐字节相同，并按Git clean-filter规范化后与提交blob一致；Windows换行不冒称原字节一致。
+日志仅Temp/research-trail-step20-publication-{check,clean}.log，干净源码research-trail-clean-A1GlIA/clean source，
+隔离迁移库research-trail-verify-X1GIno、research-trail-verify-tw7Ih3，根CMD证据research-trail-cmd-qa-w5vdsV。
+PR链接及远程检查按实际结果追加；未实施第21步，未打标签或创建Release。

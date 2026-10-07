@@ -1754,3 +1754,33 @@ EventResearchRef传快照ID/事件ID/显示时区，Python验证关联、模式�
 真实Longbridge/CLI日历覆盖、Massive/央行真实来源、真实LLM事件生成、实际安排准确性/投资解释、
 安装包/独立设备和用户亲自操作未验证。本轮零真实数据/账户/模型业务调用，只有固定数据/假模型/固定合成器；
 TestClient弃用与Vite主chunk提示保留。验收清单ACCEPTANCE-step20.md，教程/练习C13新增但用户答案不代填。
+
+## 47. 第20步独立发布复验（2026-10-08）
+
+用户另行授权发布已验收第20步，功能分支/真实提交/PR，检查通过且无未解决阻塞时普通合并并同步main。
+保留第46节开发记录，不将发布修复记为开发时已经实现；不实施第21步，不打标签/Release/定时付费评测。
+现场gh api user为ydflow，origin fetch/push均https://github.com/ydflow/research-trail.git，
+目标PUBLIC非fork非归档本项目，默认main，远程与本地开发基线a8bb67938e9cb962d5f532a5920b8f99d765ea44。
+没有同名功能分支或打开的PR，不覆盖无关仓库；实际检查后创建feat/step-20-calendar。
+当前47份改动全部属于第20步：1来源记录、28 Python/契约/依赖、12桌面/实际Electron测试、6进度/验收/课程文档。
+按真实来源概念、Python新实现、桌面接入和文档分四提交，正常本机ydflow/noreply与真实时间；没有本轮原样上游导入，
+不伪造上游作者或把资源授权扩成全仓MIT。第9—11节实际授权确认和原声明保留，原授权文本未独立取得。
+
+发布前审计258份UTF-8源码/105个本地链接、6固定参考SHA256、30技能/许可工作字节及Git blob、8忽略探针通过。
+常见秘密/禁传文件0，只读核对本项目配置引用1项系统凭证，秘密原文源码出现0且未输出。
+既有4处资料断链与10处尾空白保留；数据库/账户/日志/缓存/构建/截图不在待提交文件中。
+
+新增3项边界回归在原代码3失败/28未选，修复后完整31项日历测试通过。
+平铺及分组事件超过200条原逻辑静默截断且标completed，现在保留前200条/完整原始结果并记CALENDAR_ROW_LIMIT、partial。
+原日历沿用户最大60秒配置采集两项，可能超过桌面45秒等待；现在用同一ProviderService把本次各项上限设20秒，
+保留用户配置与桌面原超时，不复制适配器。用本机假SDK/CLI传递实际配置验证，不把其标作真实日历通过。
+两处修复与三个回归单独提交，未放宽断言或修改数据制造通过。
+回归日志仅Temp/research-trail-step20-publication-regression-{before,after}.log。
+最终完整本机check.cmd与独立干净源码verify:clean均退出0：535 Python/8 Node/46实际Electron，零失败/取消/跳过，
+契约/类型/构建、0015重复迁移/current/check及No new upgrade operations detected通过。
+258份干净源码锁定新装71前端/30 Python依赖及Electron，根CMD真实启动/关闭/重开会话/运行快照相同、无新运行，所属进程剩余0。
+188份运行/测试/配置与干净导出逐字节相同，按Git clean-filter规范化后与已提交blob一致，Windows换行不冒称原字节一致。
+日志Temp/research-trail-step20-publication-{check,clean}.log；干净源码research-trail-clean-A1GlIA/clean source，
+隔离迁移库research-trail-verify-X1GIno、research-trail-verify-tw7Ih3，根CMD证据research-trail-cmd-qa-w5vdsV，均不进入Git。
+PR链接、远程检查与合并按真实结果追加；本机通过不冒称远程CI通过。
+真实来源/账户/LLM事件报告、安装包、投资解释正确性及用户亲自记录仍未验证，固定数据/假协议不代替真实覆盖。
