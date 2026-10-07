@@ -107,4 +107,5 @@ call start-dev.cmd
 188份运行/测试/配置与干净导出逐字节相同，并按Git clean-filter规范化后与提交blob一致；Windows换行不冒称原字节一致。
 日志仅Temp/research-trail-step20-publication-{check,clean}.log，干净源码research-trail-clean-A1GlIA/clean source，
 隔离迁移库research-trail-verify-X1GIno、research-trail-verify-tw7Ih3，根CMD证据research-trail-cmd-qa-w5vdsV。
-PR链接及远程检查按实际结果追加；未实施第21步，未打标签或创建Release。
+已创建[PR #19](https://github.com/ydflow/research-trail/pull/19)，远程检查正在执行；最终head/CI/合并按PR及根PROJECT_STATE回执。
+本机通过不冒称远程通过；未实施第21步，未打标签或创建Release。

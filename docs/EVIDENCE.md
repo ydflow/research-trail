@@ -1782,5 +1782,6 @@ TestClient弃用与Vite主chunk提示保留。验收清单ACCEPTANCE-step20.md�
 188份运行/测试/配置与干净导出逐字节相同，按Git clean-filter规范化后与已提交blob一致，Windows换行不冒称原字节一致。
 日志Temp/research-trail-step20-publication-{check,clean}.log；干净源码research-trail-clean-A1GlIA/clean source，
 隔离迁移库research-trail-verify-X1GIno、research-trail-verify-tw7Ih3，根CMD证据research-trail-cmd-qa-w5vdsV，均不进入Git。
-PR链接、远程检查与合并按真实结果追加；本机通过不冒称远程CI通过。
+已正常推送feat/step-20-calendar并创建[PR #19](https://github.com/ydflow/research-trail/pull/19)，远程CI正在执行，尚未合并。
+最终head、远程检查和合并回执见PR与根PROJECT_STATE，本机通过不冒称远程CI通过。
 真实来源/账户/LLM事件报告、安装包、投资解释正确性及用户亲自记录仍未验证，固定数据/假协议不代替真实覆盖。
