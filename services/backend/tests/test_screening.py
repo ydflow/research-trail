@@ -288,3 +288,23 @@ def test_explicit_nonbuy_and_empty_lists_are_excluded_not_capability_failures(ap
         for strategy in ('rating-changes','news-surge','upcoming-earnings','dividend-events'):
             run,_=start(c,strategy,universe=['AAPL.US']);run=settled(c,run['id'])
             assert run['status']=='completed' and not run['candidates'] and run['decisions'][0]['status']=='excluded'
+
+def test_result_finished_after_deadline_is_not_success_when_coordinator_delayed(api):
+    entered=threading.Event(); release=threading.Event()
+    def executor(q):
+        entered.set(); release.wait(2); return fixture('top-gainers')[q.capability]
+    with api(executor,timeout=.03) as (c,app):
+        run,_=start(c,universe=['AAPL.US']); assert entered.wait(1)
+        with app.state.screening.lock:
+            time.sleep(.06)
+            release.set(); assert app.state.screening.calls[0]['done'].wait(1)
+        run=settled(c,run['id'])
+        assert run['status']=='failed' and not run['candidates']
+        assert run['reads'][0]['code']=='TIMEOUT'
+
+def test_explicit_other_stock_dividend_cannot_be_candidate_evidence(api):
+    def executor(q): return {'list':[{'symbol':'MSFT.US','ex_date':NOW.isoformat()}]}
+    with api(executor) as (c,app):
+        run,_=start(c,'dividend-events',universe=['AAPL.US']); run=settled(c,run['id'])
+        assert run['status']=='failed' and not run['candidates']
+        assert run['decisions'][0]['code']=='MISSING_ATTRIBUTED_EVENT_DATE'

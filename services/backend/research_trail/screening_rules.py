@@ -243,7 +243,9 @@ def evaluate(strategy, symbol, name, results, now):
                             actual=match[2]+'.'+match[1] if match else None
                         if actual!=symbol or str(row.get('type',row.get('event_type'))).lower()!='financial': continue
                         keys=('datetime','date','timestamp')
-                    else: keys=('ex_date','exDate')
+                    else:
+                        if row.get('symbol') not in (None,symbol): continue
+                        keys=('ex_date','exDate')
                     key=next((k for k in keys if k in row),None)
                     dt=event_time(row.get(key)) if key else None
                     if dt is None: continue

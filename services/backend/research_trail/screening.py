@@ -125,12 +125,13 @@ class ScreeningService:
                         read=call['read']
                         if read['status']!='running': continue
                         if stop.is_set(): result=self._failure(read,'APP_INTERRUPTED' if self.closed else 'CANCELLED','cancelled'); call['stop'].set()
+                        elif (call['done'].is_set() and call['ended']-call['started']>=self.timeout) or (not call['done'].is_set() and time.monotonic()-call['started']>=self.timeout):
+                            result=self._failure(read,'TIMEOUT','timed_out'); call['stop'].set()
                         elif call['done'].is_set():
                             result=call['result']
                             with self.providers.settings.lock:
                                 unchanged=self.providers.settings.profile(self.current_provider).revision==revision and self.providers.settings.identity(self.current_provider)==identity
                             if not unchanged: result=self._failure(read,'CONFIG_CHANGED')
-                        elif time.monotonic()-call['started']>=self.timeout: result=self._failure(read,'TIMEOUT','timed_out'); call['stop'].set()
                         else: continue
                         if len(json.dumps(payload['results'],ensure_ascii=False).encode())+len(json.dumps(result,ensure_ascii=False).encode())>8*1024*1024: result=self._failure(read,'RESULT_BUDGET_EXCEEDED')
                         payload['results'][read['id']]=result
@@ -154,7 +155,9 @@ class ScreeningService:
                                     result=self.providers.query(self.current_provider,ReadQuery.model_validate(call['read']['query']),stop=call['stop'],timeout_seconds=self.timeout,expected_revision=revision,expected_identity=identity)
                                     call['result']=result.model_dump(mode='json')
                                 except Exception: call['result']=self._failure(call['read'],'EXECUTION_FAILED')
-                                finally: call['done'].set()
+                                finally:
+                                    call['ended']=time.monotonic()
+                                    call['done'].set()
                             call['thread']=threading.Thread(target=fetch,daemon=True); self.calls.append(call); call['thread'].start()
                     self._decisions(payload)
                     unsettled=any(r['status'] in ('pending','running') for r in run['reads'])
