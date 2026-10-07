@@ -1284,5 +1284,164 @@ Python新实现606d0dcf646a350132e4f966ee4df9f3945ff33c，
 PROJECT_STATE发布回执为准。检查未通过则修复并复验，不强推、不绕过未解决阻塞。
 原v0.1.0标签object 3dd216557cdc81ac8fc35b14e0585dc43731be86及Release assets0保留；
 不新增标签、Release、定时付费评测或第17步。
+
 未验证真实Longbridge/Massive/CLI行情、账户权限/字段、真实数据报告和差异、模型定性语义正确性、
 投资效果、长期负载、其他OS、另一台机器、安装包、用户亲自操作和学习回答。
+
+## 40. 第17步研究检查点与显式恢复（2026-10-07）
+
+仅执行用户本轮第17步。开工核对AGENTS、路线、第38—39节、已有采集/报告/注册表/
+技能/提供商/设置/数据库/白名单桥及页面；根PROJECT_STATE第16步发布回执与实际Git一致。
+业务目录D:\folio\research-trail，main/HEAD/origin/main基线
+`a50fc0ea2092b83292f507f0a82ff50709ea78e1`，开工工作区/index为空。
+本步没有Git暂存、提交、推送、PR、标签、Release、定时付费评测或GitHub写入；不实施第18步。
+
+### 实现与真实调用链
+
+Python既有ResearchStore/ReportStore/SQLite仍管理计划、执行证据、结果和版本。
+新增0012_checkpoints只加列和审计/操作表；ResearchStore.begin/step/finish/resume与
+research_checkpoints.save在同一write事务提交原业务行和检查点，计划/结果只保存摘要于快照，
+不运行第二套状态内核、提供商或能力注册表。快照version=1，覆盖状态/时间/代次/父任务与证据hash。
+启动把遗留fetching/generating标interrupted，保留成功数据和旧报告，无工具或模型重执行。
+旧0011库一次legacy-migration快照不证明迁移前真实性；已有报告和来源字段不改写。
+
+RecoveryPanel → preload四个命名操作 → main来源/UUID校验 → app.py启动令牌路由 →
+ResearchRecovery.inspect/resume/restart/abandon → 既有研究执行器和存储。桥共74项；
+OpenAPI为唯一类型来源。打开研究页识别采集或最新报告的中断任务；页面轮询只读元数据。
+恢复保留原ID/计划、只继续中断或取消项；成功结果/时间/hash及原失败、超时、不可用项不重跑。
+重启操作创建新ID、当前配置新计划、parent_run_id指向旧任务，并重新采集；旧数据/报告不删除。
+放弃同事务标abandoned_at、停止未完成采集和生成、记操作；完成证据和报告可读，不能续采或新生成。
+
+检查点校验和/版本、计划/步骤集合与原始成功结果/状态不符时阻止恢复与生成，不称已就绪；
+损坏任务可以放弃，但后续快照valid=false，不能把损坏记录修成可信事实。
+续采沿用同一CapabilityRegistry和ProviderService.query，核对配置revision及非敏感identity，
+防删除重建同revision换配置或凭证引用。实际运行中的原快照查询结果仍保留；后续读取
+CONFIG_CHANGED明确失败，不把原快照有效结果抹掉。外部本机凭证丢失前置拒绝，远端过期
+须在实际查询中AUTH_FAILED；只读预检不发送探针。重启后健康需重核时有警告，仅允许原计划
+曾可用的真实读取显式续采，不改变全局就绪状态，不给未实现能力放行。
+
+恢复代次generation阻止旧协调器迟到回写，并识别同ID旧代次仍清理时需要启动新代次。
+操作request_id持久去重/跨操作冲突；报告request_id唯一到原版本。
+ReportStore.before_call先持久记录真实请求可能已发出，结果未知时request_uncertain保留；
+已知成功/内容失败才清除标记。硬退出时已知requests_started=0不能证明外部服务未消费。
+报告恢复不创建模型、不重发、不新增版本；显式生成新报告才走当前模型配置和凭证前置。
+中断版本、失败版本、已完成报告不覆盖；迟到回复不能制造成功。
+模型配置/凭证变化只警告历史恢复，新生成单独验证，不自动回退固定合成器。
+
+### 来源与授权
+
+只读固定Folio ba5dcdfd31b162f5edb8b908f7f099a560389326的
+packages/shared/src/research/checkpoint.ts、service.ts提供概念参考；两文件实际SHA256登记
+于SOURCES-step17.json。没有新原样资源导入、TS业务运行时或文件检查点权威状态。
+同事务快照、配置身份、请求去重、恢复代次、放弃、模型不确定标记由本项目Python实现。
+既有来源注释、30份技能/许可原字节及Copyright 2026 Longbridge Inc.保留。
+授权沿EVIDENCE第9—11节用户原作者复用确认，未独立取得授权原文，不扩大全仓MIT结论。
+
+### 验证与修正
+
+定向研究/报告/恢复首轮59通过/1失败：新增配置结束后检查错误地丢弃了原配置快照的有效
+在途结果，已有配置变化回归应保留四份成功。修正为只拦截后续调度/健康更新，复验72通过。
+复查发现同revision重建测试用了无效transport字段，替换为有效region=cn并显式断言revision
+与原值相同；补本机凭证外部丢失、模型身份变化和旧库实际记录迁移，定向75通过。
+随后补旧代次仍清理时启动续采的真实协调器回归，共新增16项后端验收。
+
+初次两项实际Electron验收未通过：一项过早读取空任务列表，另一项发现恢复/报告组件使用
+相同React key造成重复面板。修正等待任务及唯一key，继续发现新任务按钮返回前误读原collected
+任务的测试竞态，增加等待新ID；最终定向两项通过，不降低业务断言。
+完整检查中的两个用例又验证报告中断页面自动识别原任务，无需手动历史选择。
+
+实际采集阶段终止所属测试Python进程时三项成功、一项执行中；重开同库原ID/interrupted，
+恢复后collected/generation=1，原三份逐项记录与原始结果完全相同，报告0份、任务1份。
+放弃保留成功结果且新报告禁用，重新发起新ID/generation=0/parent_run_id，原任务仍保留。
+实际报告阶段保留completed版本1，在生成固定版本2时终止所属Python；重开版本2
+interrupted/document=null，原版本1完整相同。恢复及相同UUID并发重放仍只有两版本；
+显式生成才追加completed版本3，版本1/2不变，无错误成功或自动模型调用。
+离线fixture只在RESEARCH_TRAIL_OFFLINE=1下延迟采集/固定合成器；没有真实请求。
+1100×800及600×680截图三份仅Temp/research-trail-step17-qa，已查看，窄窗无横向溢出。
+
+完整check.cmd退出0：451 Python（435基线+16新增）/8 Node/38实际Electron（36基线+2新增）
+通过，无失败/取消/跳过；契约/类型、main/preload/renderer构建、隔离0012重复迁移/current/check
+及No new upgrade operations通过。后续最终类型/契约复验通过。日志仅Temp/
+research-trail-step17-check.log；迁移临时目录research-trail-verify-lhoK0a。既有TestClient弃用
+和Vite主chunk提示保留；未安装依赖、变更工作流或降低检查。
+
+### 边界与交付
+
+检查点hash校验当前记录一致性，不证明论断正确或防管理员同时改数据和hash。
+成功数据不重复获取；尚未提交的中断只读调用在显式恢复时可能重执行，外部恰好一次未承诺。
+非协作在途线程仍占原物理槽，恢复可报EXECUTOR_DRAINING；不承诺强杀任意Python线程。
+报告HTTP请求不能从未保存回复续传，未知外部结果必须保留interrupted/不确定并等待用户新尝试。
+
+本步SDK/CLI执行器、凭证库及模型HTTP均为fake/MockTransport；未发送真实行情、账户或LLM请求。
+第16步真实结构成功和定性文字错误仍保留，不转作本步真实恢复或分析正确性证明。
+真实SDK/CLI远端凭证失效、真实LLM硬退出/消费账单、长期负载、其他OS、安装包、远程CI与
+用户亲自操作/学习答案未验证。CMD、操作语义与用例见ACCEPTANCE-step17，实际调用链见
+tutorial C11，可撤销练习与三题见practice C11；用户答案保留。交付后停止，不执行第18步或发布。
+
+最终产物审查227份UTF-8、97个可访问本地Markdown链接，两份固定参考SHA256和30份既有
+技能/许可工作文件及HEAD blob原字节通过；8项保护忽略探针通过，秘密签名/禁传发现0。
+原4处资料断链与10处上游行尾空格保留；git diff --check通过。运行库/账户/凭证/日志/
+缓存/构建与三份截图不入Git。实际差异42份仅本步相关，index为空，HEAD/main未改变。
+审查仅Temp/research-trail-step17-audit.json；根PROJECT_STATE新增本步开发回执，旧发布记录保留。
+
+## 41. 第17步发布复验（2026-10-07）
+
+用户本轮独立授权仅发布已验收第17步，检查失败先修复、无未解决阻塞才普通合并并同步main。
+不实现第18步，不打标签、不创建Release、不启用定时付费评测。读取AGENTS、ROADMAP、
+第40节、ACCEPTANCE-step17、根PROJECT_STATE回执及42份实际差异；main基线
+`a50fc0ea2092b83292f507f0a82ff50709ea78e1`，index为空。
+
+实时确认gh账号ydflow、既有公开非fork非归档ydflow/research-trail、默认main、origin
+fetch/push均https://github.com/ydflow/research-trail.git，远程main同基线，无重复开放PR。
+历史main及项目来源一致；既有仓库描述仍写第1步，本轮不修改无关仓库元数据。
+初次只读GraphQL仓库查询EOF，随后REST读取成功，不将错误当成仓库不存在或创建替代仓库。
+每次外部写入前重新核验账号和目标，不切换账号、不删除、不强推、不绕过阻塞。
+
+公开候选仅227份源码/测试/文档/锁文件中的42份本步差异。来源概念记录1份，Python新实现/
+生成契约/迁移/测试24份，桌面白名单/页面/实际中断测试11份，验收与学习文档6份。
+没有新增原样上游导入；来源记录明确固定Folio概念适配，既有30份技能/许可原字节和版权保留。
+授权沿第9—11节用户原作者复用确认及本轮上传授权；原授权文本未独立取得，不扩大全仓MIT。
+秘密签名/禁传发现0，本机已配置凭证原文额外扫描候选源码出现0；读取只限定本应用已保存引用，
+不枚举系统凭证、不输出原文、不修改运行库。运行数据库/WAL、账户/CSV、日志、缓存、构建
+和截图不上传。原4处资料断链及10处上游行尾空格保留，本步git diff --check通过。
+
+本机check.cmd退出0：451 Python / 8 Node / 38实际Electron，无失败/取消/跳过；
+契约/类型/构建、隔离0012重复迁移/current/check与No new upgrade operations通过，
+两项实际进程中断验收通过。日志仅Temp/research-trail-step17-publication-check.log，
+迁移目录research-trail-verify-HiGUnq。第一份隔离源码新装同样451/8/38通过，根CMD启动、
+关闭重开、保存快照一致及所属进程退出通过；锁定安装71项前端/29项Python，源码目录
+research-trail-clean-MMmfva/clean source，迁移research-trail-verify-NAzxy2，CMD证据
+research-trail-cmd-qa-yed8Fh。发布后续修复使此结果成为修复前历史，最终源码另行复验。
+本轮没有真实行情/账户/模型请求、自动重试或付费评测，未把第16步历史真实结构验证
+转作第17步真实恢复证明。当前接受范围仍为fixture/fakeSDK/MockTransport和本机实际进程中断。
+
+提交按真实差异分为固定来源记录、Python新实现、桌面接入、验收/发布文档；作者沿用当前
+ydflow/noreply，Git记录实际时间。不重建原作者历史，不制造故障提交。开发时在途配置回归
+和恢复代次/唯一组件key修正包含于对应新实现。发布复查新增一个实际复现的页面竞态，
+修复与回归单独提交，不归入原Python实现或伪造上游导入。
+
+固定来源记录705a76062a21cd0ea87560dd44dcd3127d093870；
+Python新实现d787c3b2d93d137d531032b2aedae43b6cc342e8；
+桌面接入2f293cbcf47658a63c13c92f7b2d51f73bbda6d6。验收/发布文档及实际PR链接另建文档提交，
+自身SHA由Git及回执核对，不循环写入自身SHA或伪造未来提交。
+
+新增回归将真实abandon路由结果通过命名IPC延迟2秒，同时让原报告轮询观察cancelled。
+修复前定向1失败：数据库及检查点已abandoned，但元数据刷新使操作回执generation失效，
+ResearchPanel未取得abandoned_at。RecoveryPanel新增独立操作回执代次，仅页面可用性/
+任务身份/卸载使其失效；检查点刷新只取消旧读取，不丢掉已提交操作结果。后端状态不改，
+仍拒绝过期页面回写。修复后契约/类型/构建通过，三项Step17实窗通过，无跳过；
+延迟回执用例核对页面放弃标记、新报告禁用、同一原ID和数据库记录/报告cancelled一致。
+复现及复验日志仅Temp/research-trail-step17-publication-race-before.log、race-after.log。
+修复提交fd3a8dcd79f961bc9ce6af7118756f91f92d25c1；此前38项是修复前历史。
+最终隔离源码再次锁定新装71项前端/29项Python、准备Electron，通过同一完整离线流程：
+451 Python / 8 Node / 39实际Electron，无失败/取消/跳过；契约/类型/构建、0012重复迁移/
+外键/模型一致性和根CMD关闭重启/历史快照相同通过，所属进程全部退出。
+日志仅Temp/research-trail-step17-publication-clean-final.log；源码research-trail-clean-ziw8Mw/
+clean source，迁移research-trail-verify-89y1Ww，CMD证据research-trail-cmd-qa-rUHg11。
+163份运行/构建/测试源码在本机工作文件、修复提交Git blob及最终隔离副本逐字节一致。
+未新增依赖、工作流或放宽业务断言；实际修复只保护页面操作回执，不改变采集/报告业务状态。
+
+检查、最终head、PR与合并状态以提交后GitHub实查及根PROJECT_STATE发布回执为准。
+原v0.1.0标签object 3dd216557cdc81ac8fc35b14e0585dc43731be86与Release assets0保留。
+真实SDK/CLI服务凭证过期、真实模型硬退出/消费账单、投资分析正确性、长期负载、其他OS、
+另一台机器、安装包、用户亲自操作和学习答案未验证。完成发布后停止。
