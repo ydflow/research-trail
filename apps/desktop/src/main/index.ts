@@ -46,6 +46,21 @@ app.whenReady().then(async () => {
   ipcMain.handle('research:get', (event, id: unknown) => { assertSender(event); return backend.researchRun(id); });
   ipcMain.handle('research:cancel', (event, id: unknown) => { assertSender(event); return backend.cancelResearch(id); });
   ipcMain.handle('research:data', (event, id: unknown, capability: unknown) => { assertSender(event); return backend.researchData(id, capability); });
+  ipcMain.handle('reports:list', (event, runId: unknown) => { assertSender(event); return backend.reportList(runId); });
+  ipcMain.handle('reports:generate', (event, runId: unknown, mode: unknown) => { assertSender(event); return backend.generateReport(runId, mode); });
+  ipcMain.handle('reports:get', (event, id: unknown) => { assertSender(event); return backend.report(id); });
+  ipcMain.handle('reports:cancel', (event, id: unknown) => { assertSender(event); return backend.cancelReport(id); });
+  ipcMain.handle('reports:evidence', (event, id: unknown, reference: unknown) => { assertSender(event); return backend.reportEvidence(id, reference); });
+  ipcMain.handle('reports:diff', (event, before: unknown, after: unknown) => { assertSender(event); return backend.reportDiff(before, after); });
+  ipcMain.handle('reports:export', async (event, id: unknown) => {
+    assertSender(event);
+    const report = await backend.reportMarkdown(id);
+    const chosen = await dialog.showSaveDialog(window!, { defaultPath: report.filename, filters: [{ name: 'Markdown', extensions: ['md'] }] });
+    if (chosen.canceled || !chosen.filePath) return false;
+    try { await writeFile(chosen.filePath, report.content, { encoding: 'utf8', mode: 0o600 }); }
+    catch { throw new Error('报告未保存，请检查所选位置。'); }
+    return true;
+  });
   ipcMain.handle('capabilities:list', (event, context: unknown) => { assertSender(event); return backend.capabilities(context); });
   ipcMain.handle('skills:list', (event, context: unknown) => { assertSender(event); return backend.skills(context); });
   ipcMain.handle('skills:enabled', (event, id: unknown, enabled: unknown, context: unknown) => { assertSender(event); return backend.setSkillEnabled(id, enabled, context); });

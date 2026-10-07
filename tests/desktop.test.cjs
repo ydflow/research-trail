@@ -9,6 +9,100 @@ const { tmpdir } = require('node:os');
 const { createRequire } = require('node:module');
 const { pathToFileURL } = require('node:url');
 
+test('Step16 saved reports, actual collected diff, original facts, Markdown dialog and restart', {timeout:90000}, async()=>{
+  let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'report-updated'});
+  const path=instance.databasePath; let first,second;
+  const exportPath=resolve(mkdtempSync(resolve(tmpdir(),'research-trail-report-export-')),'report.md');
+  try{
+    let page=instance.page; const errors=[]; page.on('pageerror',e=>errors.push(e.message));
+    await waitForBackend(page); await page.getByRole('button',{name:'研究采集',exact:true}).click();
+    const panel=page.getByRole('region',{name:'研究采集工作台'});
+    await panel.getByRole('radio',{name:/价值投资/}).check();
+    await expect(panel.getByTestId('research-plan').locator('summary')).toContainText('4 项');
+    await panel.getByRole('button',{name:'开始采集',exact:true}).click();
+    await expect(panel.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    await panel.getByRole('button',{name:'生成新报告',exact:true}).click();
+    await expect(panel.getByTestId('report-status')).toHaveAttribute('data-status','completed');
+    first=await page.evaluate(async()=>{const rows=await window.researchTrail.reportList();return window.researchTrail.report(rows[0].id);});
+    assert.equal(first.requests_started,0); assert.equal(first.document.source_mode,'simulated');
+    await expect(panel.getByTestId('research-report')).toContainText('不等于论断正确');
+    await panel.getByRole('button',{name:/^查看原始事实 ev-/}).first().click();
+    await expect(panel.getByTestId('report-original')).toContainText(first.document.source_run_id);
+    await expect(panel.getByTestId('report-original')).toContainText('SHA256');
+    await instance.app.evaluate(({dialog})=>{dialog.showSaveDialog=async()=>({canceled:true});});
+    await panel.getByRole('button',{name:'导出 Markdown',exact:true}).click();
+    await expect(panel.getByRole('status').filter({hasText:'已取消导出'})).toBeVisible();
+    await instance.app.evaluate(({dialog},path)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:path});},resolve(exportPath,'missing','report.md'));
+    await panel.getByRole('button',{name:'导出 Markdown',exact:true}).click();
+    await expect(panel.getByRole('alert')).toContainText('报告未保存');
+    await instance.app.evaluate(({dialog},path)=>{dialog.showSaveDialog=async()=>({canceled:false,filePath:path});},exportPath);
+    await panel.getByRole('button',{name:'导出 Markdown',exact:true}).click();
+    await expect(panel.getByRole('status').filter({hasText:'Markdown 已保存'})).toBeVisible();
+    const md=readFileSync(exportPath,'utf8');
+    assert.match(md,/## 摘要/); assert.match(md,/## 原始事实索引/); assert.match(md,/pe\\_ttm\\_ratio = 20/); assert.ok(md.includes(first.id));
+    await panel.getByRole('button',{name:'生成新报告',exact:true}).click();
+    await expect(panel.getByTestId('report-status')).toHaveAttribute('data-status','completed');
+    await expect(panel.getByLabel('已保存报告').locator('option')).toHaveCount(3);
+    await panel.getByLabel('已保存报告').selectOption(first.id);
+    await panel.getByRole('button',{name:'读取报告版本',exact:true}).click();
+    await expect(panel.getByTestId('report-status')).toHaveAttribute('data-report-id',first.id);
+    await panel.getByRole('button',{name:'开始采集',exact:true}).click();
+    await expect(panel.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    await panel.getByRole('button',{name:'生成新报告',exact:true}).click();
+    await expect(panel.getByTestId('report-status')).toHaveAttribute('data-status','completed');
+    second=await page.evaluate(async()=>{const rows=await window.researchTrail.reportList();return window.researchTrail.report(rows[0].id);});
+    assert.notEqual(first.run_id,second.run_id);
+    await panel.getByLabel('差异旧报告').selectOption(first.id); await panel.getByLabel('差异新报告').selectOption(second.id);
+    await panel.getByRole('button',{name:'比较两份报告',exact:true}).click();
+    await expect(panel.getByTestId('report-diff')).toContainText('company.valuation/pe_ttm_ratio');
+    await expect(panel.getByTestId('report-diff')).toContainText('20 → 25');
+    await panel.getByRole('button',{name:'查看旧原始事实',exact:true}).click();
+    await expect(panel.getByTestId('report-original')).toContainText(first.run_id);
+    await panel.getByRole('button',{name:'查看新原始事实',exact:true}).click();
+    await expect(panel.getByTestId('report-original')).toContainText(second.run_id);
+    const invalid=await page.evaluate(async id=>{try{await window.researchTrail.reportEvidence(id,'../../private');return 'unexpected';}catch(e){return e.message;}},first.id);
+    assert.match(invalid,/证据引用无效/);
+    await panel.getByTestId('research-report').scrollIntoViewIfNeeded(); await screenshot(page,'step16-report-wide.png');
+    await page.setViewportSize({width:600,height:680});
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await screenshot(page,'step16-report-narrow.png');
+    await panel.getByTestId('report-diff').scrollIntoViewIfNeeded(); await screenshot(page,'step16-diff.png');
+    assert.deepEqual(errors,[]);
+    await instance.app.close(); instance=await launch({RESEARCH_TRAIL_DB_PATH:path}); page=instance.page; await waitForBackend(page);
+    await page.getByRole('button',{name:'研究采集',exact:true}).click();
+    await page.getByRole('button',{name:'读取已保存任务',exact:true}).click();
+    await expect(page.getByTestId('report-status')).toHaveAttribute('data-report-id',second.id);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.report(id),first.id),first);
+    assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,3);
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,2);
+  }finally{await instance.app.close();}
+});
+
+for(const scenario of ['research-partial','failure']) test(`Step16 ${scenario} report gaps and no all-failed synthesis`,{timeout:45000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:scenario});
+  try{
+    const page=instance.page; await waitForBackend(page); await page.getByRole('button',{name:'研究采集',exact:true}).click();
+    await page.getByRole('radio',{name:/价值投资/}).check();
+    await expect(page.getByTestId('research-plan').locator('summary')).toContainText('4 项');
+    await page.getByRole('button',{name:'开始采集',exact:true}).click();
+    await expect(page.getByTestId('research-run')).toHaveAttribute('data-status',scenario==='failure'?'failed':'partial');
+    if(scenario==='failure'){
+      await expect(page.getByRole('button',{name:'生成新报告',exact:true})).toBeDisabled();
+      assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,0);
+    }else{
+      await page.getByRole('button',{name:'生成新报告',exact:true}).click();
+      await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','completed');
+      await expect(page.getByTestId('report-gaps')).toContainText('company.financials · NETWORK_ERROR');
+      await page.getByLabel('报告合成器').selectOption('real');
+      await page.getByRole('button',{name:'生成新报告',exact:true}).click();
+      await expect(page.getByRole('alert')).toContainText('MODEL_UNCONFIGURED');
+      await expect(page.getByTestId('report-status')).toHaveAttribute('data-status','completed');
+      assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,1);
+      await page.getByTestId('report-gaps').scrollIntoViewIfNeeded(); await screenshot(page,'step16-partial-gaps.png');
+    }
+  }finally{await instance.app.close();}
+});
+
 const root = resolve(__dirname, '..');
 const desktop = resolve(root, 'apps/desktop');
 const env = { ...process.env };
@@ -928,6 +1022,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       'connections', 'saveConnection', 'deleteConnection', 'saveCredential', 'deleteCredential', 'testConnection', 'profile', 'saveProfile', 'deleteProfile', 'diagnostics', 'exportDiagnostics',
       'providerProfiles', 'saveProvider', 'deleteProvider', 'saveProviderCredential', 'deleteProviderCredential', 'providerCapabilities', 'queryProvider',
       'workspaceState', 'addWatch', 'removeWatch', 'selectSecurity', 'securityPage', 'openNewsSource',
+      'reportList', 'generateReport', 'report', 'cancelReport', 'reportEvidence', 'exportReport', 'reportDiff',
       'capabilities', 'skills', 'setSkillEnabled', 'readSkillResource', 'researchStrategies', 'researchPlan', 'researchRuns', 'startResearch', 'researchRun', 'cancelResearch', 'researchData', 'portfolioRisk', 'compareStocks', 'portfolioList', 'createPortfolio', 'portfolioView', 'previewPortfolio', 'confirmPortfolio', 'undoPortfolio', 'refreshPortfolio'].sort(), node: 'undefined', process: 'undefined' });
     assert.deepEqual(await first.app.evaluate(({ BrowserWindow }) => {
       const pref = BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences();
