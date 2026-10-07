@@ -2,6 +2,14 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendState, ResearchTrailBridge, RunStreamUpdate } from '../bridge';
 
 const bridge: ResearchTrailBridge = {
+  thesisList: () => ipcRenderer.invoke('theses:list'),
+  createThesis: input => ipcRenderer.invoke('theses:create', input),
+  thesis: id => ipcRenderer.invoke('theses:get', id),
+  thesisVersion: (id, version) => ipcRenderer.invoke('theses:version', id, version),
+  editThesis: (id, input) => ipcRenderer.invoke('theses:edit', id, input),
+  evaluateThesis: (id, input) => ipcRenderer.invoke('theses:evaluate', id, input),
+  judgeThesis: (id, input) => ipcRenderer.invoke('theses:judge', id, input),
+  thesisReview: (id, reviewId) => ipcRenderer.invoke('theses:review', id, reviewId),
   reportList: runId => ipcRenderer.invoke('reports:list', runId),
   generateReport: (runId, mode, requestId) => ipcRenderer.invoke('reports:generate', runId, mode, requestId),
   report: id => ipcRenderer.invoke('reports:get', id),

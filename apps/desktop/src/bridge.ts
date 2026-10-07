@@ -10,6 +10,14 @@ export interface BackendState {
   pythonVersion?: string;
 }
 export interface ResearchTrailBridge {
+  thesisList(): Promise<import('./thesis-types').ThesisSummary[]>;
+  createThesis(input: import('./thesis-types').ThesisCreate): Promise<import('./thesis-types').ThesisView>;
+  thesis(id: string): Promise<import('./thesis-types').ThesisView>;
+  thesisVersion(id: string, version: number): Promise<import('./thesis-types').ThesisVersion>;
+  editThesis(id: string, input: import('./thesis-types').ThesisEdit): Promise<import('./thesis-types').ThesisView>;
+  evaluateThesis(id: string, input: import('./thesis-types').ThesisEvaluate): Promise<import('./thesis-types').ThesisReview>;
+  judgeThesis(id: string, input: import('./thesis-types').ThesisJudge): Promise<import('./thesis-types').ThesisView>;
+  thesisReview(id: string, reviewId: string): Promise<import('./thesis-types').ThesisReview>;
   reportList(runId?: string): Promise<import('./report-types').ReportSummary[]>;
   generateReport(runId: string, mode: 'fixed' | 'real', requestId?: string): Promise<import('./report-types').ReportJob>;
   report(id: string): Promise<import('./report-types').ReportJob>;

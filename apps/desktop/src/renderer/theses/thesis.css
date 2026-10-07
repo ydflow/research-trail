@@ -1,0 +1,9 @@
+.thesis-panel { display: flex; flex-direction: column; gap: 16px; min-width: 0; overflow-wrap: anywhere; }
+.thesis-panel section, .thesis-panel article { border-top: 1px solid var(--border); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.thesis-panel label { display: flex; flex-direction: column; gap: 6px; max-width: 100%; }
+.thesis-panel textarea { width: 100%; min-height: 80px; padding: 10px; border: 1px solid var(--border); border-radius: 6px; resize: vertical; font: inherit; }
+.thesis-panel select { max-width: 100%; width: 420px; }
+.thesis-panel button { max-width: 100%; overflow-wrap: anywhere; }
+.thesis-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+.thesis-panel pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 360px; overflow: auto; background: #f2f0eb; padding: 12px; }
+.thesis-panel li { margin-bottom: 10px; }

@@ -221,6 +221,31 @@ export class BackendManager extends EventEmitter {
     return input as import('../research-types').ResearchInput;
   }
   researchStrategies() { return this.business<import('../research-types').ResearchStrategy[]>('/research/strategies'); }
+  thesisList() { return this.business<import('../thesis-types').ThesisSummary[]>('/theses'); }
+  thesis(id: unknown) { return this.business<import('../thesis-types').ThesisView>(`/theses/${this.id(id)}`); }
+  thesisVersion(id: unknown, version: unknown) {
+    if (!Number.isSafeInteger(version) || (version as number) < 1) throw new Error('论点版本无效。');
+    return this.business<import('../thesis-types').ThesisVersion>(`/theses/${this.id(id)}/versions/${version}`);
+  }
+  thesisReview(id: unknown, reviewId: unknown) {
+    return this.business<import('../thesis-types').ThesisReview>(`/theses/${this.id(id)}/reviews/${this.id(reviewId)}`);
+  }
+  private thesisBody(input: unknown, fields: string[]) {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('论点输入无效。');
+    const value = input as Record<string, unknown>;
+    if (Object.keys(value).some(key => !fields.includes(key))) throw new Error('论点字段无效。');
+    this.id(value.request_id);
+    for (const key of ['report_id', 'evaluation_id']) if (value[key] !== undefined && value[key] !== null) this.id(value[key]);
+    if (JSON.stringify(value).length > 150000) throw new Error('论点输入过长。');
+    return value;
+  }
+  createThesis(input: unknown) {
+    return this.business<import('../thesis-types').ThesisView>('/theses', 'POST', this.thesisBody(input, ['report_id', 'request_id']));
+  }
+  mutateThesis(id: unknown, operation: 'edit' | 'evaluate' | 'judge', input: unknown) {
+    const fields = operation === 'evaluate' ? ['request_id', 'expected_version', 'report_id'] : ['request_id', 'expected_version', 'content', 'reason', ...(operation === 'judge' ? ['evaluation_id', 'judgment'] : [])];
+    return this.business<import('../thesis-types').ThesisView | import('../thesis-types').ThesisReview>(`/theses/${this.id(id)}/${operation}`, 'POST', this.thesisBody(input, fields));
+  }
   researchCheckpoint(id: unknown) { return this.business<import('../research-types').RecoveryView>(`/research/runs/${this.id(id)}/checkpoint`); }
   recoverResearch(id: unknown, operation: 'resume' | 'restart' | 'abandon', requestId: unknown) {
     return this.business<import('../research-types').ResearchRun>(`/research/runs/${this.id(id)}/${operation}`, 'POST', { request_id: this.id(requestId) });
