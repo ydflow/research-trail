@@ -1,0 +1,49 @@
+{
+  "repository": "https://github.com/helsome/folio",
+  "commit": "ba5dcdfd31b162f5edb8b908f7f099a560389326",
+  "files": [
+    {
+      "upstream": "docs/EVALUATION.md",
+      "sha256": "8ba75a58b0c57fe27d74659f706b5efd97db0452a53b0c72565b8333a1234e72"
+    },
+    {
+      "upstream": "packages/core/src/evaluation.ts",
+      "sha256": "09fa65efcd0d440c2811c6df06de7f01f80f5444df185a3befe035b87cfe1967"
+    },
+    {
+      "upstream": "packages/shared/src/evaluation/experiment-service.ts",
+      "sha256": "e852a28fd0499b70b8a4ec9d38fc955a089c71ecf34fe73975f7eb053c5d84f0"
+    },
+    {
+      "upstream": "packages/shared/src/evaluation/aggregate.ts",
+      "sha256": "86bd7805e270736af18352679439f510a7d9401a7566f076a836c3e6d24d1122"
+    },
+    {
+      "upstream": "packages/shared/src/evaluation/evaluators/deterministic.ts",
+      "sha256": "d282b189f58f524ae4ad2d42e79e7bcd505fbab5aeabee6330849db4eee84ec7"
+    },
+    {
+      "upstream": "packages/shared/src/evaluation/redactor.ts",
+      "sha256": "74c8738076d4adeabf96f7211d25209d29f55a1d8e72800264f80c31e6dc56a1"
+    },
+    {
+      "upstream": "packages/shared/src/evaluation/langfuse/protocol.ts",
+      "sha256": "81ed212790d9a86db5631d526fc893066dc368600e98f9c8b2d2f4c2ae9a1a57"
+    }
+  ],
+  "engineering_references": [
+    "https://docs.langchain.com/langsmith/trace-with-api",
+    "https://langfuse.com/docs/observability/get-started",
+    "https://langfuse.com/docs/api-and-data-platform/features/public-api"
+  ],
+  "authorization": "Original-author reuse confirmation in EVIDENCE sections 9-11; original authorization text not independently obtained. Only skills/LICENSE confirmed MIT; no whole-repository MIT claim.",
+  "scope": "Conceptual reference only: Python original offline evaluator, 12 ResearchTrail-owned cases/results, immutable baselines, append-only feedback and explicit minimal trace export. No copied upstream case, score, test history, TypeScript business engine or new upstream resource. Langfuse historical v3 ingestion replaced by current OTLP JSON adapter.",
+  "adapted_to": [
+    "services/backend/research_trail/evaluation.py",
+    "services/backend/research_trail/evaluation_engine.py",
+    "services/backend/research_trail/evaluation_trace.py",
+    "apps/desktop/src/renderer/evaluation/EvaluationPanel.tsx"
+  ],
+  "dependencies": "Existing locked dependencies only. No tracing SDK or background exporter.",
+  "preserved_resources": "Existing 30 original skill/license files retained unchanged."
+}
