@@ -2,6 +2,14 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendState, ResearchTrailBridge, RunStreamUpdate } from '../bridge';
 
 const bridge: ResearchTrailBridge = {
+  outcomeOpinions: () => ipcRenderer.invoke('outcomes:opinions'),
+  captureOutcome: input => ipcRenderer.invoke('outcomes:capture',input),
+  outcomeOpinion: id => ipcRenderer.invoke('outcomes:opinion',id),
+  evaluateOutcome: (id,requestId) => ipcRenderer.invoke('outcomes:evaluate',id,requestId),
+  outcomePolicies: () => ipcRenderer.invoke('outcomes:policies'),
+  changeOutcomePolicy: input => ipcRenderer.invoke('outcomes:policy-change',input),
+  outcomePerformance: input => ipcRenderer.invoke('outcomes:performance',input),
+  outcomeSnapshot: id => ipcRenderer.invoke('outcomes:snapshot',id),
   evaluationCases: () => ipcRenderer.invoke('evaluation:evaluationCases'),
   evaluationExperiments: () => ipcRenderer.invoke('evaluation:evaluationExperiments'),
   createExperiment: (input) => ipcRenderer.invoke('evaluation:createExperiment',input),

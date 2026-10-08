@@ -43,6 +43,7 @@ run('OpenAPI / TypeScript consistency', process.execPath, ['scripts/contracts.mj
 run('Frontend type check', process.execPath, [require.resolve('typescript/bin/tsc'), '--noEmit'], resolve(root, 'apps/desktop'));
 run('Python fixture / lifecycle / snapshot tests', python, ['-m', 'pytest', '-q'], resolve(root, 'services/backend'));
 run('ResearchTrail original deterministic offline evaluation', python, ['-m', 'research_trail.verify_evaluations'], resolve(root, 'services/backend'));
+run('ResearchTrail original deterministic historical observations', python, ['-m', 'research_trail.verify_outcomes'], resolve(root, 'services/backend'));
 for (const operation of [['upgrade', 'head'], ['upgrade', 'head'], ['current'], ['check']]) {
   run(`Temporary database migration: ${operation.join(' ')}`, python, ['-m', 'alembic', ...operation], resolve(root, 'services/backend'));
 }

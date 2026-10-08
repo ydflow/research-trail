@@ -8,7 +8,7 @@
 - 参考来源：ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`；本地无Git，不能保证逐文件无本地变化。
 - 新项目根：`D:\folio\research-trail`，当前有第1—6步业务、第7步验收脚本/离线CI文件、第8步设置/凭证/假连接/诊断。v0.1.0源码发布只包含第1—7步，第8步已通过PR #7交付，第9步实现模型适配/受限工具循环；发布轮一次真实模型工具验证通过（2次请求、1次工具），真实行情未接入。
 - 本次覆盖：入口、界面/客户端、模型与数据、持久化/事件、组合、技能、研究、监控、评测与打包的阅读路线。
-- C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；C06已展开第8步设置/凭证/假健康，C05已补第9步模型协议/工具循环；一次真实模型工具验证通过（模拟行情），第10步数据与只读账户适配及第11步证券工作台已展开，真实行情查询未执行，第12步C07已展开组合CSV与账户计算，第13步C08已展开风险/对比同源计算；C09—C17仍待后续。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
+- C01—C05已展开第1—6步流程，C04包含取消/超时、中断及快照/流续读；C06已展开第8步设置/凭证/假健康，C05已补第9步模型协议/工具循环；一次真实模型工具验证通过（模拟行情），第10步数据与只读账户适配及第11步证券工作台已展开，真实行情查询未执行，第12步C07已展开组合CSV与账户计算，第13步C08已展开风险/对比同源计算；C09—C16按当前步骤记录，C17未展开。完整业务、真实服务、性能测量与安装包未覆盖；用户练习与掌握程度尚未确认。
 - 前置知识：Python函数/类与异步、HTTP/JSON、TypeScript接口、React状态、进程与IPC、SQLite基本操作；按课程需要补，不要求先学完全部框架。
 
 主链先建立整体印象：
@@ -499,18 +499,21 @@ app/bridge/RecoveryPanel；实际中断用例见test_recovery.py、tests/desktop
 5. `evaluation_trace.minimal_result/wire_payload`重新投影固定安全字段，不转发完整trace或反馈。`TracingPanel`先生成本地预览，再分别确认连接/上传；凭证存Windows系统凭证管理器，SQLite只有引用。上传先落领取记录，重复内容回读；断线不自动重传。
 6. LangSmith REST、Langfuse OTLP仅导出实验根及脱敏案例/工具摘要，当前真实连接未执行。测试中MockTransport证明协议边界；`verify_evaluations`和CI网络门禁证明离线工程基线，不证明真实模型质量、生产追踪或投资表现。
 
-阅读顺序：`evaluation_contracts.py`→`evaluation_cases.py`→`evaluation_engine.py`→`evaluation.py`→`evaluation_trace.py`→`tests/test_evaluation.py`；跟踪quote-aapl与provider-failure的同一工具链，复述为什么一个可评分、另一个无分。上游设计参考及固定SHA见[SOURCES-step22](docs/SOURCES-step22.json)，不是研迹自己的执行证据。投资结果/校准留给未实施的C16。
+阅读顺序：`evaluation_contracts.py`→`evaluation_cases.py`→`evaluation_engine.py`→`evaluation.py`→`evaluation_trace.py`→`tests/test_evaluation.py`；跟踪quote-aapl与provider-failure的同一工具链，复述为什么一个可评分、另一个无分。上游设计参考及固定SHA见[SOURCES-step22](docs/SOURCES-step22.json)，不是研迹自己的执行证据。投资结果／校准已在独立C16展开。
 
 ## C16：研究表现与置信度如何校准？
 
-状态：大纲。关联步骤23。
+场景：报告完成几周后观察价格，不能把新价格写回旧判断，也不能用工程评测分数证明投资效果。
 
-- 主链：研究时点判断 → 到期窗口与历史行情 → outcome → performance聚合 → calibration版本。
-- 必读1：`packages/shared/src/outcome/service.ts` / `OutcomeService.createOpinionFromReport`、`evaluateDue`：输入判断与窗口，何时可计算。
-- 必读2：`packages/shared/src/performance/service.ts` / `PerformanceService`、`aggregate.ts`：从历史结果到技能/策略表现。
-- 必读3：`packages/shared/src/calibration/compute.ts` / `computeSkillCalibrations`、`computeStrategyCalibrations`：样本与权重输出。
-- 验证选读：`packages/shared/src/outcome/engine.test.ts`、`performance/aggregate.test.ts`、`calibration/compute.test.ts`。
-- 暂缓：真实样本是否足够未验证，不能承诺盈利；发行由C17。
+1. `ReportService.execute`验证报告与证据 → `ReportStore.finish`写终态 → 同一事务的`OutcomeService.capture_completed/freeze`冻结30天观点。读取已存报价，不额外调用行情或模型。
+2. `OutcomePanel` → 八个preload命名桥 → `BackendManager`校验 → 鉴权`/outcomes/*` → Python状态。前端只格式化显示及保存编辑草稿。
+3. `evaluate`先持久领取、检查窗口与入场价，随后最多一次`ProviderService.query(market.kline)`；保存实际来源。`outcome_engine.calculate`只用已结束日线完整窗口，不拿后来的首根行情补价。未到／缺失／未来数据输出空值和原因。
+4. `performance`按截至时点选择已存在记录和参数，分窗口／行情／模型／录入类型；`aggregate`至少30有效样本才计算Decimal统计及参考权重。工具断言通过率仍在独立评测中心。
+5. `change`用旧版本及UUID防覆盖，回滚追加版本，旧快照保持原参数与输入摘要。GET／重启恢复显示；中断请求不自动重发，也不产生研究任务。
+
+阅读`outcome_contracts.py`→`outcome_engine.py`→`outcomes.py`→`0018_outcomes.py`→`OutcomePanel.tsx`→`tests/test_outcomes.py`与Electron Step23用例。按[验收清单](docs/ACCEPTANCE-step23.md)运行CLI，两个库的原创历史样例不是个人真实结果。
+
+上游只读对照（不是研迹结果）：`packages/shared/src/outcome/service.ts`、`performance/aggregate.ts`、`calibration/compute.ts`。真实样本、盈利和概率预测仍未验证。
 
 ## C17：开发窗口与Windows安装包为什么要分别验收？
 

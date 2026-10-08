@@ -265,6 +265,48 @@ class PortfolioImportRecord(Base):
     active: Mapped[bool]
 
 
+class OutcomeOpinionRecord(Base):
+    __tablename__ = 'outcome_opinions'
+    __table_args__ = (UniqueConstraint('report_id', 'horizon'),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    report_id: Mapped[str] = mapped_column(ForeignKey('research_reports.id'))
+    horizon: Mapped[str] = mapped_column(String(2))
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
+class OutcomeAttemptRecord(Base):
+    __tablename__ = 'outcome_attempts'
+    __table_args__ = (Index('ix_outcome_one_running', 'opinion_id', unique=True, sqlite_where=text("status = 'running'")),
+        Index('ix_outcome_one_evaluated', 'opinion_id', unique=True, sqlite_where=text("status = 'evaluated'")))
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    opinion_id: Mapped[str] = mapped_column(ForeignKey('outcome_opinions.id'))
+    request_id: Mapped[str] = mapped_column(String(36), unique=True)
+    status: Mapped[str] = mapped_column(String(20))
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
+class OutcomePolicyRecord(Base):
+    __tablename__ = 'outcome_policy_versions'
+    version: Mapped[int] = mapped_column(Integer, primary_key=True)
+    request_id: Mapped[str | None] = mapped_column(String(36), unique=True, nullable=True)
+    request_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
+class OutcomePolicyState(Base):
+    __tablename__ = 'outcome_policy_state'
+    __table_args__ = (CheckConstraint('id = 1'),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    current_version: Mapped[int] = mapped_column(ForeignKey('outcome_policy_versions.version'))
+
+
+class OutcomeSnapshotRecord(Base):
+    __tablename__ = 'outcome_performance_snapshots'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), unique=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
 class ReportRecord(Base):
     __tablename__ = 'research_reports'
     __table_args__ = (UniqueConstraint('run_id', 'version'), CheckConstraint('version >= 1'),

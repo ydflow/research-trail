@@ -1,0 +1,56 @@
+{
+  "repository": "https://github.com/helsome/folio",
+  "commit": "ba5dcdfd31b162f5edb8b908f7f099a560389326",
+  "files": [
+    {
+      "upstream": "packages/core/src/outcome.ts",
+      "sha256": "7a57c7bf0ef8778b8c7fbf3da4c9d1837d9ea44a5c924a20911672d0b0b47ea9"
+    },
+    {
+      "upstream": "packages/core/src/performance.ts",
+      "sha256": "e2b57914cedbd30a5eb9c0bc06472125cb5f5163c59fb83c83f87b76c0d1989f"
+    },
+    {
+      "upstream": "packages/core/src/calibration.ts",
+      "sha256": "807e91a688fc11dc75ec4ec251102ffc99dabf492ffb400dc73b75faf2e46953"
+    },
+    {
+      "upstream": "packages/shared/src/outcome/engine.ts",
+      "sha256": "de87a434a9859d6e351670866ffb8bd8e09fb5c1c5383900b99689e8645b0147"
+    },
+    {
+      "upstream": "packages/shared/src/outcome/opinions.ts",
+      "sha256": "5218ef303d763926042cf020f0a6cba134b981b1581c55608455ca73f6ff5a66"
+    },
+    {
+      "upstream": "packages/shared/src/outcome/service.ts",
+      "sha256": "6bc0a497d3c1449e965097d128668e951e6d31575d138c981906ef0a9b751479"
+    },
+    {
+      "upstream": "packages/shared/src/performance/aggregate.ts",
+      "sha256": "5198cd5775a805883763c5d5f213d353989ba3a079f7687200a2e05abef8f688"
+    },
+    {
+      "upstream": "packages/shared/src/performance/service.ts",
+      "sha256": "f4eb9f41b58fe68842497663838e536b2ae7a950509cd489dec6b44809617a5e"
+    },
+    {
+      "upstream": "packages/shared/src/calibration/compute.ts",
+      "sha256": "3c5cc36fc67f99e5a6476cc3d1fb036ff8c58c9ce5b775750cad24b69d405f29"
+    },
+    {
+      "upstream": "apps/electron/src/main/kernelHost.ts",
+      "sha256": "8e4b6c783a3b16a895469f03639c02644212af1d11ebcfecc304ecae93939d2b"
+    }
+  ],
+  "authorization": "Original-author reuse confirmation retained in EVIDENCE sections 9-11; original authorization text not independently obtained. Only skills/LICENSE confirmed MIT; no whole-repository MIT claim.",
+  "scope": "Conceptual formulas and domain reference only. Original Python implementation and ResearchTrail-authored historical samples/results. No copied upstream code, cases, scores or author history. Stricter time/coverage checks, no later-entry backfill, separate source strata, null below 30 and immutable parameter rollback. Informational weight only; no automatic planner tuning.",
+  "adapted_to": [
+    "services/backend/research_trail/outcomes.py",
+    "services/backend/research_trail/outcome_engine.py",
+    "services/backend/research_trail/outcome_fixtures.py",
+    "apps/desktop/src/renderer/outcomes/OutcomePanel.tsx"
+  ],
+  "dependencies": "Existing locked dependencies only; no external evaluation/model/trading dependency.",
+  "preserved_resources": "Existing 30 original skill/license files retained unchanged."
+}

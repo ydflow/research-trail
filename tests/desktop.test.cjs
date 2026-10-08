@@ -9,6 +9,88 @@ const { tmpdir } = require('node:os');
 const { createRequire } = require('node:module');
 const { pathToFileURL } = require('node:url');
 
+test('Step23 report snapshot pending window policy rollback and restart in real Electron', {timeout:90000},async()=>{
+  let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});const databasePath=instance.databasePath;const errors=[];let original,record;
+  try{
+    let page=instance.page;page.on('pageerror',e=>errors.push(e.message));await waitForBackend(page);
+    const run=await page.evaluate(()=>window.researchTrail.startResearch({symbol:'AAPL.US',strategy:'comprehensive',mode:'simulated',provider:'longbridge'}));
+    await expect.poll(()=>page.evaluate(id=>window.researchTrail.researchRun(id).then(r=>r.status),run.id),{timeout:25000}).not.toBe('fetching');
+    const job=await page.evaluate(id=>window.researchTrail.generateReport(id,'fixed'),run.id);
+    await expect.poll(()=>page.evaluate(id=>window.researchTrail.report(id).then(r=>r.status),job.id),{timeout:10000}).toBe('completed');
+    original=await page.evaluate(()=>window.researchTrail.outcomeOpinions());assert.equal(original.length,1);
+    await page.getByRole('button',{name:'投资结果',exact:true}).click();
+    await expect(page.getByTestId('outcome-opinions').getByRole('button')).toHaveCount(1);
+    await page.getByTestId('outcome-opinions').getByRole('button').click();
+    await expect(page.getByTestId('outcome-detail')).toContainText('ENTRY_STALE');
+    await page.getByRole('button',{name:'读取后续行情并评估',exact:true}).click();
+    await expect(page.getByTestId('outcome-detail')).toHaveAttribute('data-status','pending');
+    await expect(page.getByTestId('outcome-detail')).toContainText('WINDOW_NOT_DUE');
+    record=await page.evaluate(id=>window.researchTrail.outcomeOpinion(id),original[0].id);
+    assert.equal(record.attempts.length,1);assert.equal(record.attempts[0].return_percent,null);assert.equal(record.attempts[0].source_data,null);
+    await page.getByRole('button',{name:'查看来源报告',exact:true}).click();await expect(page.getByTestId('outcome-source')).toContainText('事实值来自能力执行记录');
+    await page.getByRole('button',{name:'计算并保存统计',exact:true}).click();await expect(page.getByTestId('outcome-performance')).toContainText('样本不足');
+    const saved=await page.getByLabel('保存的统计快照',{exact:true}).inputValue();
+    await page.getByLabel('最低有效样本',{exact:true}).fill('40');await page.getByLabel('权重变更理由',{exact:true}).fill('桌面验收提高样本门槛');
+    await page.getByRole('button',{name:'保存参数版本',exact:true}).click();await expect(page.getByTestId('outcome-policy')).toContainText('当前 v2');
+    await page.getByRole('button',{name:'追加回滚版本',exact:true}).click();await expect(page.getByTestId('outcome-policy')).toContainText('当前 v3');
+    assert.equal((await page.evaluate(id=>window.researchTrail.outcomeSnapshot(id),saved)).policy_version,1);
+    await assert.rejects(page.evaluate(()=>window.researchTrail.outcomeOpinion('../../private')),/标识|无效/);
+    await assert.rejects(page.evaluate(()=>window.researchTrail.outcomePerformance({extra:'private'})),/字段无效/);
+    await assert.rejects(page.evaluate(()=>window.researchTrail.changeOutcomePolicy({request_id:crypto.randomUUID(),expected_version:3,reason:'bad',parameters:{min_samples:1}})),/参数|字段|输入|422/);
+    await instance.app.close();instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_DB_PATH:databasePath});page=instance.page;await waitForBackend(page);
+    assert.deepEqual(await page.evaluate(()=>window.researchTrail.outcomeOpinions()),original);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.outcomeOpinion(id),original[0].id),record);
+    assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,1);
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,1);
+    assert.equal((await page.evaluate(()=>window.researchTrail.outcomePolicies())).current_version,3);assert.deepEqual(errors,[]);
+  }finally{await instance.app.close();}
+});
+
+test('Step23 authored history reaches threshold shows isolated weights sources and saved snapshots', {timeout:120000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'outcome-history'});const errors=[];
+  try{
+    const page=instance.page;page.on('pageerror',e=>errors.push(e.message));await waitForBackend(page);
+    const ids=await page.evaluate(()=>window.researchTrail.outcomeOpinions().then(rows=>rows.map(r=>r.id)));assert.equal(ids.length,30);
+    for(const id of ids.slice(0,29))assert.equal((await page.evaluate(id=>window.researchTrail.evaluateOutcome(id,crypto.randomUUID()),id)).status,'evaluated');
+    await page.getByRole('button',{name:'投资结果',exact:true}).click();
+    await page.getByLabel('表现窗口',{exact:true}).selectOption('1w');await page.getByLabel('表现行情',{exact:true}).selectOption('simulated');
+    await page.getByLabel('表现模型',{exact:true}).selectOption('fixed');await page.getByLabel('表现记录类型',{exact:true}).selectOption('authored-history');
+    await page.getByRole('button',{name:'计算并保存统计',exact:true}).click();await expect(page.getByTestId('outcome-performance')).toContainText('29 / 0 / 1');
+    await expect(page.getByTestId('outcome-performance')).toContainText('样本不足');
+    assert.equal((await page.evaluate(()=>window.researchTrail.outcomePerformance({horizon:'1w',source_mode:'simulated',analysis_mode:'fixed',origin:'authored-history'}))).rows[0].adaptive_weight,null);
+    await page.evaluate(id=>window.researchTrail.evaluateOutcome(id,crypto.randomUUID()),ids[29]);
+    await page.getByRole('button',{name:'计算并保存统计',exact:true}).click();await expect(page.getByTestId('outcome-performance')).toContainText('30 / 0 / 0');
+    await expect(page.getByTestId('outcome-performance')).toContainText('1.25');await expect(page.getByTestId('outcome-performance')).toContainText('30.0%');
+    await expect(page.getByTestId('outcome-panel')).toContainText('工具正确率不代表盈利能力');
+    await page.getByTestId('outcome-performance').scrollIntoViewIfNeeded();await screenshot(page,'step23-performance-wide.png');
+    const captured=await page.evaluate(id=>window.researchTrail.outcomeOpinion(id),ids[0]);
+    assert.equal(captured.attempts[0].bars.length,5);assert.equal(captured.attempts[0].source_data.length,5);assert.equal(captured.opinion.confidence,null);
+    await page.getByTestId('outcome-opinions').getByRole('button').first().click();await expect(page.getByTestId('outcome-detail')).toHaveAttribute('data-status','evaluated');
+    await page.getByRole('button',{name:'查看来源报告',exact:true}).click();await expect(page.getByTestId('outcome-source')).toContainText('原创人工历史夹具');
+    await page.getByTestId('outcome-detail').scrollIntoViewIfNeeded();await screenshot(page,'step23-source-wide.png');
+    await page.setViewportSize({width:620,height:760});await page.getByTestId('outcome-panel').scrollIntoViewIfNeeded();await screenshot(page,'step23-outcome-compact.png');
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1),false);
+    await page.getByLabel('表现行情',{exact:true}).selectOption('real');await page.getByRole('button',{name:'计算并保存统计',exact:true}).click();
+    await expect(page.getByTestId('outcome-performance')).toContainText('没有可用研究记录');assert.deepEqual(errors,[]);
+  }finally{await instance.app.close();}
+});
+
+test('Step23 missing history has no evaluation and restart preserves failure without new attempts', {timeout:60000},async()=>{
+  let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'outcome-missing'});const databasePath=instance.databasePath;let saved;
+  try{
+    let page=instance.page;await waitForBackend(page);await page.getByRole('button',{name:'投资结果',exact:true}).click();
+    await page.getByTestId('outcome-opinions').getByRole('button').first().click();
+    await page.getByRole('button',{name:'读取后续行情并评估',exact:true}).click();
+    await expect(page.getByTestId('outcome-detail')).toHaveAttribute('data-status','unable');await expect(page.getByTestId('outcome-detail')).toContainText('HISTORY_INCOMPLETE');
+    saved=await page.evaluate(async()=>{const b=window.researchTrail;const rows=await b.outcomeOpinions();return b.outcomeOpinion(rows[0].id);});
+    assert.equal(saved.attempts[0].return_percent,null);assert.equal(saved.attempts[0].direction_correct,null);assert.deepEqual(saved.attempts[0].source_data,[]);
+    await screenshot(page,'step23-history-missing.png');await instance.app.close();
+    instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_DB_PATH:databasePath,RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'outcome-missing'});page=instance.page;await waitForBackend(page);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.outcomeOpinion(id),saved.opinion.id),saved);
+    assert.equal((await page.evaluate(()=>window.researchTrail.outcomeOpinions())).length,1);
+  }finally{await instance.app.close();}
+});
+
 test('Step22 evaluation window executes compares feedback and preserves restart without duplicate work', {timeout:120000},async()=>{
   let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
   const databasePath=instance.databasePath;const errors=[];let baselineId,candidateId;
@@ -1652,6 +1734,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       'workspaceState', 'addWatch', 'removeWatch', 'selectSecurity', 'securityPage', 'openNewsSource',
       'screeningTasks', 'startScreening', 'screeningRuns', 'screeningRun', 'cancelScreening', 'screeningEvidence',
       'calendarSources','refreshCalendar','calendarHistory','calendarView','calendarOriginal',
+      'outcomeOpinions','captureOutcome','outcomeOpinion','evaluateOutcome','outcomePolicies','changeOutcomePolicy','outcomePerformance','outcomeSnapshot',
       'evaluationCases','evaluationExperiments','createExperiment','evaluationExperiment','startExperiment','cancelExperiment','evaluationBaselines','saveEvaluationBaseline','evaluationFeedback','addEvaluationFeedback','tracingConfigurations','saveTracingConfiguration','saveTracingCredential','deleteTracingCredential','probeTracing','previewEvaluationTrace','uploadEvaluationTrace','evaluationTraceDeliveries',
       'today','monitoringRules','createMonitoringRule','toggleMonitoringRule','monitoringRuns','monitoringResearch',
       'thesisList', 'createThesis', 'thesis', 'thesisVersion', 'editThesis', 'evaluateThesis', 'judgeThesis', 'thesisReview',

@@ -3698,6 +3698,503 @@
         "title": "NotificationResult",
         "type": "object"
       },
+      "OutcomeAttempt": {
+        "additionalProperties": false,
+        "properties": {
+          "bars": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeBar"
+            },
+            "maxItems": 260,
+            "title": "Bars",
+            "type": "array"
+          },
+          "bars_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bars Hash"
+          },
+          "benchmark_return": {
+            "title": "Benchmark Return",
+            "type": "null"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "data_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Hash"
+          },
+          "direction_correct": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction Correct"
+          },
+          "engine_version": {
+            "default": "research-trail-outcome-v1",
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "evaluated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluated At"
+          },
+          "exit_price": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Price"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "maximum_drawdown": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maximum Drawdown"
+          },
+          "opinion_id": {
+            "title": "Opinion Id",
+            "type": "string"
+          },
+          "price_basis": {
+            "default": "unadjusted-daily-close",
+            "title": "Price Basis",
+            "type": "string"
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Provenance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "query": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query"
+          },
+          "request_id": {
+            "title": "Request Id",
+            "type": "string"
+          },
+          "return_percent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Return Percent"
+          },
+          "source_data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/JsonValue"
+                },
+                "maxItems": 260,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Data"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "running",
+              "pending",
+              "unable",
+              "evaluated",
+              "interrupted"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "opinion_id",
+          "request_id",
+          "started_at",
+          "evaluated_at",
+          "status",
+          "code"
+        ],
+        "title": "OutcomeAttempt",
+        "type": "object"
+      },
+      "OutcomeBar": {
+        "additionalProperties": false,
+        "properties": {
+          "close": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,18}|(?=[\\d.]{1,31}0*$)\\d{0,18}\\.\\d{0,12}0*$)",
+            "title": "Close",
+            "type": "string"
+          },
+          "timestamp": {
+            "maximum": 4102444800,
+            "minimum": 946684800,
+            "title": "Timestamp",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "timestamp",
+          "close"
+        ],
+        "title": "OutcomeBar",
+        "type": "object"
+      },
+      "OutcomeCapture": {
+        "additionalProperties": false,
+        "properties": {
+          "horizon": {
+            "default": "1m",
+            "enum": [
+              "1w",
+              "1m",
+              "3m"
+            ],
+            "title": "Horizon",
+            "type": "string"
+          },
+          "report_id": {
+            "pattern": "^[a-f0-9-]{36}$",
+            "title": "Report Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id"
+        ],
+        "title": "OutcomeCapture",
+        "type": "object"
+      },
+      "OutcomeOpinion": {
+        "additionalProperties": false,
+        "properties": {
+          "analysis_mode": {
+            "enum": [
+              "fixed",
+              "real"
+            ],
+            "title": "Analysis Mode",
+            "type": "string"
+          },
+          "capture_version": {
+            "default": "research-trail-capture-v1",
+            "title": "Capture Version",
+            "type": "string"
+          },
+          "captured_at": {
+            "format": "date-time",
+            "title": "Captured At",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "null"
+          },
+          "due_at": {
+            "format": "date-time",
+            "title": "Due At",
+            "type": "string"
+          },
+          "entry_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Code"
+          },
+          "entry_fetched_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Fetched At"
+          },
+          "entry_market_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Market At"
+          },
+          "entry_price": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Price"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "horizon": {
+            "enum": [
+              "1w",
+              "1m",
+              "3m"
+            ],
+            "title": "Horizon",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "origin": {
+            "enum": [
+              "prospective",
+              "retrospective",
+              "authored-history"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "longbridge",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "provider_identity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Identity"
+          },
+          "provider_revision": {
+            "title": "Provider Revision",
+            "type": "integer"
+          },
+          "report_hash": {
+            "title": "Report Hash",
+            "type": "string"
+          },
+          "report_id": {
+            "title": "Report Id",
+            "type": "string"
+          },
+          "report_version": {
+            "title": "Report Version",
+            "type": "integer"
+          },
+          "research_at": {
+            "format": "date-time",
+            "title": "Research At",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "skill_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Skill Ids",
+            "type": "array"
+          },
+          "source_mode": {
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Source Mode",
+            "type": "string"
+          },
+          "stance": {
+            "enum": [
+              "bullish",
+              "bearish",
+              "neutral"
+            ],
+            "title": "Stance",
+            "type": "string"
+          },
+          "strategy": {
+            "title": "Strategy",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "window_end": {
+            "format": "date-time",
+            "title": "Window End",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "report_id",
+          "report_version",
+          "report_hash",
+          "run_id",
+          "symbol",
+          "strategy",
+          "skill_ids",
+          "stance",
+          "source_mode",
+          "analysis_mode",
+          "origin",
+          "horizon",
+          "research_at",
+          "captured_at",
+          "window_end",
+          "due_at",
+          "entry_price",
+          "entry_market_at",
+          "entry_fetched_at",
+          "entry_code",
+          "provider",
+          "provider_revision",
+          "provider_identity",
+          "evidence_ids"
+        ],
+        "title": "OutcomeOpinion",
+        "type": "object"
+      },
+      "OutcomeRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "request_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id"
+        ],
+        "title": "OutcomeRequest",
+        "type": "object"
+      },
+      "OutcomeView": {
+        "additionalProperties": false,
+        "properties": {
+          "attempts": {
+            "items": {
+              "$ref": "#/components/schemas/OutcomeAttempt"
+            },
+            "title": "Attempts",
+            "type": "array"
+          },
+          "label": {
+            "default": "不复权日线价格变化及方向匹配，不是账户收益；未计交易成本、分红、拆股或基准超额收益。",
+            "title": "Label",
+            "type": "string"
+          },
+          "opinion": {
+            "$ref": "#/components/schemas/OutcomeOpinion"
+          }
+        },
+        "required": [
+          "opinion",
+          "attempts"
+        ],
+        "title": "OutcomeView",
+        "type": "object"
+      },
       "PartialText": {
         "additionalProperties": false,
         "properties": {
@@ -3710,6 +4207,256 @@
           "text"
         ],
         "title": "PartialText",
+        "type": "object"
+      },
+      "PerformanceQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "analysis_mode": {
+            "default": "real",
+            "enum": [
+              "fixed",
+              "real"
+            ],
+            "title": "Analysis Mode",
+            "type": "string"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "horizon": {
+            "default": "1m",
+            "enum": [
+              "1w",
+              "1m",
+              "3m"
+            ],
+            "title": "Horizon",
+            "type": "string"
+          },
+          "origin": {
+            "default": "prospective",
+            "enum": [
+              "prospective",
+              "retrospective",
+              "authored-history"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "source_mode": {
+            "default": "real",
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Source Mode",
+            "type": "string"
+          }
+        },
+        "title": "PerformanceQuery",
+        "type": "object"
+      },
+      "PerformanceRow": {
+        "additionalProperties": false,
+        "properties": {
+          "adaptive_weight": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adaptive Weight"
+          },
+          "average_return": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Return"
+          },
+          "direction_hit_rate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction Hit Rate"
+          },
+          "evaluation_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evaluation Ids",
+            "type": "array"
+          },
+          "historical_reliability": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Historical Reliability"
+          },
+          "insufficient_data": {
+            "title": "Insufficient Data",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "skill",
+              "strategy"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "median_excess_return": {
+            "title": "Median Excess Return",
+            "type": "null"
+          },
+          "pending": {
+            "title": "Pending",
+            "type": "integer"
+          },
+          "sample_confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Confidence"
+          },
+          "samples": {
+            "title": "Samples",
+            "type": "integer"
+          },
+          "unable": {
+            "title": "Unable",
+            "type": "integer"
+          },
+          "unable_rate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unable Rate"
+          }
+        },
+        "required": [
+          "kind",
+          "key",
+          "samples",
+          "unable",
+          "pending",
+          "insufficient_data",
+          "direction_hit_rate",
+          "average_return",
+          "unable_rate",
+          "historical_reliability",
+          "sample_confidence",
+          "adaptive_weight",
+          "evaluation_ids"
+        ],
+        "title": "PerformanceRow",
+        "type": "object"
+      },
+      "PerformanceSnapshot": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "attempt_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Attempt Ids",
+            "type": "array"
+          },
+          "calculation_version": {
+            "default": "research-trail-calibration-v1",
+            "title": "Calculation Version",
+            "type": "string"
+          },
+          "filter": {
+            "$ref": "#/components/schemas/PerformanceQuery"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "input_hash": {
+            "title": "Input Hash",
+            "type": "string"
+          },
+          "label": {
+            "default": "至少30个有效样本；样本置信度是样本强度，非预测概率。权重仅供参考，不自动改策略。工具正确率不代表盈利能力。",
+            "title": "Label",
+            "type": "string"
+          },
+          "opinion_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Opinion Ids",
+            "type": "array"
+          },
+          "policy_version": {
+            "title": "Policy Version",
+            "type": "integer"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/PerformanceRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "as_of",
+          "filter",
+          "policy_version",
+          "rows",
+          "input_hash"
+        ],
+        "title": "PerformanceSnapshot",
         "type": "object"
       },
       "PlannedRead": {
@@ -10014,6 +10761,220 @@
         "title": "WatchEntry",
         "type": "object"
       },
+      "WeightChange": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_version": {
+            "minimum": 1,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "parameters": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WeightParameters-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "request_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "rollback_version": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rollback Version"
+          }
+        },
+        "required": [
+          "request_id",
+          "expected_version",
+          "reason"
+        ],
+        "title": "WeightChange",
+        "type": "object"
+      },
+      "WeightHistory": {
+        "additionalProperties": false,
+        "properties": {
+          "current_version": {
+            "title": "Current Version",
+            "type": "integer"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/WeightVersion"
+            },
+            "title": "Versions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "current_version",
+          "versions"
+        ],
+        "title": "WeightHistory",
+        "type": "object"
+      },
+      "WeightParameters-Input": {
+        "additionalProperties": false,
+        "properties": {
+          "full_confidence_samples": {
+            "default": 100,
+            "maximum": 10000,
+            "minimum": 30,
+            "title": "Full Confidence Samples",
+            "type": "integer"
+          },
+          "min_samples": {
+            "default": 30,
+            "maximum": 1000,
+            "minimum": 30,
+            "title": "Min Samples",
+            "type": "integer"
+          },
+          "sensitivity": {
+            "anyOf": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,2}|(?=[\\d.]{1,9}0*$)\\d{0,2}\\.\\d{0,6}0*$)",
+                "type": "string"
+              }
+            ],
+            "default": "0.5",
+            "title": "Sensitivity"
+          },
+          "unable_penalty": {
+            "anyOf": [
+              {
+                "maximum": 0.05,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,2}|(?=[\\d.]{1,9}0*$)\\d{0,2}\\.\\d{0,6}0*$)",
+                "type": "string"
+              }
+            ],
+            "default": "0.05",
+            "title": "Unable Penalty"
+          }
+        },
+        "title": "WeightParameters",
+        "type": "object"
+      },
+      "WeightParameters-Output": {
+        "additionalProperties": false,
+        "properties": {
+          "full_confidence_samples": {
+            "default": 100,
+            "maximum": 10000,
+            "minimum": 30,
+            "title": "Full Confidence Samples",
+            "type": "integer"
+          },
+          "min_samples": {
+            "default": 30,
+            "maximum": 1000,
+            "minimum": 30,
+            "title": "Min Samples",
+            "type": "integer"
+          },
+          "sensitivity": {
+            "default": "0.5",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,2}|(?=[\\d.]{1,9}0*$)\\d{0,2}\\.\\d{0,6}0*$)",
+            "title": "Sensitivity",
+            "type": "string"
+          },
+          "unable_penalty": {
+            "default": "0.05",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,2}|(?=[\\d.]{1,9}0*$)\\d{0,2}\\.\\d{0,6}0*$)",
+            "title": "Unable Penalty",
+            "type": "string"
+          }
+        },
+        "title": "WeightParameters",
+        "type": "object"
+      },
+      "WeightVersion": {
+        "additionalProperties": false,
+        "properties": {
+          "calculation_version": {
+            "default": "research-trail-calibration-v1",
+            "title": "Calculation Version",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/WeightParameters-Output"
+          },
+          "parent_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Version"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "rollback_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rollback Version"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "parent_version",
+          "rollback_version",
+          "created_at",
+          "reason",
+          "parameters"
+        ],
+        "title": "WeightVersion",
+        "type": "object"
+      },
       "WorkspaceState": {
         "additionalProperties": false,
         "properties": {
@@ -12247,6 +13208,444 @@
           }
         },
         "summary": "Monitoring Research"
+      }
+    },
+    "/outcomes/opinions": {
+      "get": {
+        "operationId": "outcome_opinions_outcomes_opinions_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OutcomeOpinion"
+                  },
+                  "title": "Response Outcome Opinions Outcomes Opinions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Outcome Opinions"
+      },
+      "post": {
+        "operationId": "outcome_capture_outcomes_opinions_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutcomeCapture"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutcomeOpinion"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Outcome Capture"
+      }
+    },
+    "/outcomes/opinions/{identity}": {
+      "get": {
+        "operationId": "outcome_view_outcomes_opinions__identity__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutcomeView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Outcome View"
+      }
+    },
+    "/outcomes/opinions/{identity}/evaluate": {
+      "post": {
+        "operationId": "outcome_evaluate_outcomes_opinions__identity__evaluate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutcomeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutcomeAttempt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Outcome Evaluate"
+      }
+    },
+    "/outcomes/performance": {
+      "post": {
+        "operationId": "outcome_performance_outcomes_performance_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PerformanceQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerformanceSnapshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Outcome Performance"
+      }
+    },
+    "/outcomes/performance/{identity}": {
+      "get": {
+        "operationId": "outcome_snapshot_outcomes_performance__identity__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerformanceSnapshot"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Outcome Snapshot"
+      }
+    },
+    "/outcomes/policies": {
+      "get": {
+        "operationId": "outcome_policies_outcomes_policies_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeightHistory"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Outcome Policies"
+      },
+      "post": {
+        "operationId": "outcome_policy_change_outcomes_policies_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WeightChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WeightVersion"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Outcome Policy Change"
       }
     },
     "/portfolios": {

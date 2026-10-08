@@ -10,6 +10,14 @@ export interface BackendState {
   pythonVersion?: string;
 }
 export interface ResearchTrailBridge {
+  outcomeOpinions(): Promise<import('./outcome-types').OutcomeOpinion[]>;
+  captureOutcome(input: import('./outcome-types').OutcomeCapture): Promise<import('./outcome-types').OutcomeOpinion>;
+  outcomeOpinion(id: string): Promise<import('./outcome-types').OutcomeView>;
+  evaluateOutcome(id: string, requestId: string): Promise<import('./outcome-types').OutcomeAttempt>;
+  outcomePolicies(): Promise<import('./outcome-types').WeightHistory>;
+  changeOutcomePolicy(input: import('./outcome-types').WeightChange): Promise<import('./outcome-types').WeightVersion>;
+  outcomePerformance(input: import('./outcome-types').PerformanceQuery): Promise<import('./outcome-types').PerformanceSnapshot>;
+  outcomeSnapshot(id: string): Promise<import('./outcome-types').PerformanceSnapshot>;
   evaluationCases(): Promise<import('./evaluation-types').EvaluationCase[]>;
   evaluationExperiments(): Promise<import('./evaluation-types').ExperimentSummary[]>;
   createExperiment(input: import('./evaluation-types').ExperimentInput): Promise<import('./evaluation-types').ExperimentView>;

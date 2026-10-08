@@ -18,7 +18,16 @@ def main() -> None:
     report_options=None
     monitoring_options=None
     calendar_options=None
+    outcome_options=None
     case=os.environ.get('RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE')
+    if case in ('outcome-history','outcome-missing') and os.environ.get('RESEARCH_TRAIL_OFFLINE')=='1':
+        from pathlib import Path
+        from tempfile import gettempdir
+        fixture_path=os.environ.get('RESEARCH_TRAIL_DB_PATH')
+        if not fixture_path or not Path(fixture_path).resolve().is_relative_to(Path(gettempdir()).resolve()):
+            raise RuntimeError('历史验收夹具仅允许显式指定Temp内隔离数据库。')
+        from .outcome_fixtures import AS_OF
+        outcome_options={'clock':lambda:AS_OF}
     if case in ('missing','failure','delayed','research-partial','research-delayed','report-updated','research-checkpoint') and os.environ.get('RESEARCH_TRAIL_OFFLINE')=='1':
         from .workspace_fixtures import fixture_executor
         provider_options={'simulated_executor':fixture_executor(case)}
@@ -31,7 +40,7 @@ def main() -> None:
         monitoring_options={'clock':lambda:fixed,'interval_seconds':0.1}
         calendar_options={'clock':lambda:fixed}
     app = create_app(os.environ.pop("RESEARCH_TRAIL_TOKEN", ""),provider_options=provider_options,
-        report_options=report_options,monitoring_options=monitoring_options,calendar_options=calendar_options)
+        report_options=report_options,monitoring_options=monitoring_options,calendar_options=calendar_options,outcome_options=outcome_options)
     # Bind once and pass the same socket to Uvicorn: no free-port reservation race.
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     listener.bind(("127.0.0.1", 0))
@@ -45,6 +54,10 @@ def main() -> None:
     @asynccontextmanager
     async def lifespan(_app):
         async with database_lifespan(_app):
+            if case in ('outcome-history','outcome-missing') and os.environ.get('RESEARCH_TRAIL_OFFLINE')=='1':
+                from .outcome_fixtures import HistoricalProvider, seed_history
+                app.state.outcomes.providers=HistoricalProvider(missing=case=='outcome-missing')
+                seed_history(app.state.outcomes,count=1 if case=='outcome-missing' else 30)
             print(json.dumps({"type": "ready", "port": port}), flush=True)
             yield
 

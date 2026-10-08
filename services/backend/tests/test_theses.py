@@ -158,15 +158,20 @@ def test_old_database_upgrade_preserves_reports_and_starts_without_auto_thesis(a
     from alembic.config import Config
     with api() as (c,app):
         job=source(c,strategy='value'); path=app.state.theses.database.path
-        # Remove additive empty tables after 0012 in an isolated test database.
-        with app.state.theses.database.engine.begin() as db:
-            for name in ('evaluation_trace_deliveries','evaluation_trace_config','evaluation_feedback','evaluation_baselines','evaluation_experiments','monitoring_research_actions','monitoring_runs','monitoring_rules','calendar_snapshots','screening_runs','thesis_reviews','thesis_versions','investment_theses'): db.execute(text('DROP TABLE '+name))
+    # Build a pre-Step18 snapshot only after its app has closed. Step23's
+    # test-created opinion/policy records do not exist in that legacy schema.
+    from research_trail.database import Database
+    legacy=Database(path)
+    try:
+        with legacy.engine.begin() as db:
+            for name in ('outcome_performance_snapshots','outcome_policy_state','outcome_policy_versions','outcome_attempts','outcome_opinions','evaluation_trace_deliveries','evaluation_trace_config','evaluation_feedback','evaluation_baselines','evaluation_experiments','monitoring_research_actions','monitoring_runs','monitoring_rules','calendar_snapshots','screening_runs','thesis_reviews','thesis_versions','investment_theses'): db.execute(text('DROP TABLE '+name))
             db.execute(text("UPDATE alembic_version SET version_num='0012_checkpoints'"))
+    finally:legacy.close()
     with api(path=path) as (c,app):
         assert c.get('/theses').json()==[] and c.get('/research/reports/'+job['id']).json()==job
         assert thesis(c,job)['current_version']==1
         with app.state.theses.database.engine.connect() as db:
-            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0017_evaluation'
+            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0018_outcomes'
             assert not db.execute(text('PRAGMA foreign_key_check')).all()
 
 @pytest.mark.parametrize('case',['cached','old-fetched'])

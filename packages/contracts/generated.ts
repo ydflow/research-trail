@@ -533,6 +533,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/outcomes/opinions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Outcome Opinions */
+        get: operations["outcome_opinions_outcomes_opinions_get"];
+        put?: never;
+        /** Outcome Capture */
+        post: operations["outcome_capture_outcomes_opinions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/outcomes/opinions/{identity}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Outcome View */
+        get: operations["outcome_view_outcomes_opinions__identity__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/outcomes/opinions/{identity}/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Outcome Evaluate */
+        post: operations["outcome_evaluate_outcomes_opinions__identity__evaluate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/outcomes/performance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Outcome Performance */
+        post: operations["outcome_performance_outcomes_performance_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/outcomes/performance/{identity}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Outcome Snapshot */
+        get: operations["outcome_snapshot_outcomes_performance__identity__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/outcomes/policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Outcome Policies */
+        get: operations["outcome_policies_outcomes_policies_get"];
+        put?: never;
+        /** Outcome Policy Change */
+        post: operations["outcome_policy_change_outcomes_policies_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portfolios": {
         parameters: {
             query?: never;
@@ -3145,10 +3249,284 @@ export interface components {
              */
             status: "shown" | "failed" | "unsupported";
         };
+        /** OutcomeAttempt */
+        OutcomeAttempt: {
+            /** Bars */
+            bars?: components["schemas"]["OutcomeBar"][];
+            /** Bars Hash */
+            bars_hash?: string | null;
+            /** Benchmark Return */
+            benchmark_return?: null;
+            /** Code */
+            code: string | null;
+            /** Data Hash */
+            data_hash?: string | null;
+            /** Direction Correct */
+            direction_correct?: boolean | null;
+            /**
+             * Engine Version
+             * @default research-trail-outcome-v1
+             */
+            engine_version: string;
+            /** Evaluated At */
+            evaluated_at: string | null;
+            /** Exit Price */
+            exit_price?: string | null;
+            /** Id */
+            id: string;
+            /** Maximum Drawdown */
+            maximum_drawdown?: string | null;
+            /** Opinion Id */
+            opinion_id: string;
+            /**
+             * Price Basis
+             * @default unadjusted-daily-close
+             */
+            price_basis: string;
+            provenance?: components["schemas"]["Provenance"] | null;
+            /** Query */
+            query?: {
+                [key: string]: unknown;
+            } | null;
+            /** Request Id */
+            request_id: string;
+            /** Return Percent */
+            return_percent?: string | null;
+            /** Source Data */
+            source_data?: components["schemas"]["JsonValue"][] | null;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "running" | "pending" | "unable" | "evaluated" | "interrupted";
+        };
+        /** OutcomeBar */
+        OutcomeBar: {
+            /** Close */
+            close: string;
+            /** Timestamp */
+            timestamp: number;
+        };
+        /** OutcomeCapture */
+        OutcomeCapture: {
+            /**
+             * Horizon
+             * @default 1m
+             * @enum {string}
+             */
+            horizon: "1w" | "1m" | "3m";
+            /** Report Id */
+            report_id: string;
+        };
+        /** OutcomeOpinion */
+        OutcomeOpinion: {
+            /**
+             * Analysis Mode
+             * @enum {string}
+             */
+            analysis_mode: "fixed" | "real";
+            /**
+             * Capture Version
+             * @default research-trail-capture-v1
+             */
+            capture_version: string;
+            /**
+             * Captured At
+             * Format: date-time
+             */
+            captured_at: string;
+            /** Confidence */
+            confidence?: null;
+            /**
+             * Due At
+             * Format: date-time
+             */
+            due_at: string;
+            /** Entry Code */
+            entry_code: string | null;
+            /** Entry Fetched At */
+            entry_fetched_at: string | null;
+            /** Entry Market At */
+            entry_market_at: string | null;
+            /** Entry Price */
+            entry_price: string | null;
+            /** Evidence Ids */
+            evidence_ids: string[];
+            /**
+             * Horizon
+             * @enum {string}
+             */
+            horizon: "1w" | "1m" | "3m";
+            /** Id */
+            id: string;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "prospective" | "retrospective" | "authored-history";
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "longbridge" | "massive";
+            /** Provider Identity */
+            provider_identity: string | null;
+            /** Provider Revision */
+            provider_revision: number;
+            /** Report Hash */
+            report_hash: string;
+            /** Report Id */
+            report_id: string;
+            /** Report Version */
+            report_version: number;
+            /**
+             * Research At
+             * Format: date-time
+             */
+            research_at: string;
+            /** Run Id */
+            run_id: string;
+            /** Skill Ids */
+            skill_ids: string[];
+            /**
+             * Source Mode
+             * @enum {string}
+             */
+            source_mode: "simulated" | "real";
+            /**
+             * Stance
+             * @enum {string}
+             */
+            stance: "bullish" | "bearish" | "neutral";
+            /** Strategy */
+            strategy: string;
+            /** Symbol */
+            symbol: string;
+            /**
+             * Window End
+             * Format: date-time
+             */
+            window_end: string;
+        };
+        /** OutcomeRequest */
+        OutcomeRequest: {
+            /** Request Id */
+            request_id: string;
+        };
+        /** OutcomeView */
+        OutcomeView: {
+            /** Attempts */
+            attempts: components["schemas"]["OutcomeAttempt"][];
+            /**
+             * Label
+             * @default 不复权日线价格变化及方向匹配，不是账户收益；未计交易成本、分红、拆股或基准超额收益。
+             */
+            label: string;
+            opinion: components["schemas"]["OutcomeOpinion"];
+        };
         /** PartialText */
         PartialText: {
             /** Text */
             text: string;
+        };
+        /** PerformanceQuery */
+        PerformanceQuery: {
+            /**
+             * Analysis Mode
+             * @default real
+             * @enum {string}
+             */
+            analysis_mode: "fixed" | "real";
+            /** As Of */
+            as_of?: string | null;
+            /**
+             * Horizon
+             * @default 1m
+             * @enum {string}
+             */
+            horizon: "1w" | "1m" | "3m";
+            /**
+             * Origin
+             * @default prospective
+             * @enum {string}
+             */
+            origin: "prospective" | "retrospective" | "authored-history";
+            /**
+             * Source Mode
+             * @default real
+             * @enum {string}
+             */
+            source_mode: "simulated" | "real";
+        };
+        /** PerformanceRow */
+        PerformanceRow: {
+            /** Adaptive Weight */
+            adaptive_weight: string | null;
+            /** Average Return */
+            average_return: string | null;
+            /** Direction Hit Rate */
+            direction_hit_rate: string | null;
+            /** Evaluation Ids */
+            evaluation_ids: string[];
+            /** Historical Reliability */
+            historical_reliability: string | null;
+            /** Insufficient Data */
+            insufficient_data: boolean;
+            /** Key */
+            key: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "skill" | "strategy";
+            /** Median Excess Return */
+            median_excess_return?: null;
+            /** Pending */
+            pending: number;
+            /** Sample Confidence */
+            sample_confidence: string | null;
+            /** Samples */
+            samples: number;
+            /** Unable */
+            unable: number;
+            /** Unable Rate */
+            unable_rate: string | null;
+        };
+        /** PerformanceSnapshot */
+        PerformanceSnapshot: {
+            /**
+             * As Of
+             * Format: date-time
+             */
+            as_of: string;
+            /** Attempt Ids */
+            attempt_ids?: string[];
+            /**
+             * Calculation Version
+             * @default research-trail-calibration-v1
+             */
+            calculation_version: string;
+            filter: components["schemas"]["PerformanceQuery"];
+            /** Id */
+            id: string;
+            /** Input Hash */
+            input_hash: string;
+            /**
+             * Label
+             * @default 至少30个有效样本；样本置信度是样本强度，非预测概率。权重仅供参考，不自动改策略。工具正确率不代表盈利能力。
+             */
+            label: string;
+            /** Opinion Ids */
+            opinion_ids?: string[];
+            /** Policy Version */
+            policy_version: number;
+            /** Rows */
+            rows: components["schemas"]["PerformanceRow"][];
         };
         /** PlannedRead */
         PlannedRead: {
@@ -5533,6 +5911,93 @@ export interface components {
             /** Symbol */
             symbol: string;
         };
+        /** WeightChange */
+        WeightChange: {
+            /** Expected Version */
+            expected_version: number;
+            parameters?: components["schemas"]["WeightParameters-Input"] | null;
+            /** Reason */
+            reason: string;
+            /** Request Id */
+            request_id: string;
+            /** Rollback Version */
+            rollback_version?: number | null;
+        };
+        /** WeightHistory */
+        WeightHistory: {
+            /** Current Version */
+            current_version: number;
+            /** Versions */
+            versions: components["schemas"]["WeightVersion"][];
+        };
+        /** WeightParameters */
+        "WeightParameters-Input": {
+            /**
+             * Full Confidence Samples
+             * @default 100
+             */
+            full_confidence_samples: number;
+            /**
+             * Min Samples
+             * @default 30
+             */
+            min_samples: number;
+            /**
+             * Sensitivity
+             * @default 0.5
+             */
+            sensitivity: number | string;
+            /**
+             * Unable Penalty
+             * @default 0.05
+             */
+            unable_penalty: number | string;
+        };
+        /** WeightParameters */
+        "WeightParameters-Output": {
+            /**
+             * Full Confidence Samples
+             * @default 100
+             */
+            full_confidence_samples: number;
+            /**
+             * Min Samples
+             * @default 30
+             */
+            min_samples: number;
+            /**
+             * Sensitivity
+             * @default 0.5
+             */
+            sensitivity: string;
+            /**
+             * Unable Penalty
+             * @default 0.05
+             */
+            unable_penalty: string;
+        };
+        /** WeightVersion */
+        WeightVersion: {
+            /**
+             * Calculation Version
+             * @default research-trail-calibration-v1
+             */
+            calculation_version: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            parameters: components["schemas"]["WeightParameters-Output"];
+            /** Parent Version */
+            parent_version: number | null;
+            /** Reason */
+            reason: string;
+            /** Rollback Version */
+            rollback_version: number | null;
+            /** Version */
+            version: number;
+        };
         /** WorkspaceState */
         WorkspaceState: {
             /** Active Symbol */
@@ -6802,6 +7267,276 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MonitorResearchAction"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outcome_opinions_outcomes_opinions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutcomeOpinion"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outcome_capture_outcomes_opinions_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OutcomeCapture"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutcomeOpinion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outcome_view_outcomes_opinions__identity__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutcomeView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outcome_evaluate_outcomes_opinions__identity__evaluate_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OutcomeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutcomeAttempt"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outcome_performance_outcomes_performance_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PerformanceQuery"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerformanceSnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outcome_snapshot_outcomes_performance__identity__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerformanceSnapshot"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outcome_policies_outcomes_policies_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeightHistory"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outcome_policy_change_outcomes_policies_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WeightChange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WeightVersion"];
                 };
             };
             /** @description Validation Error */

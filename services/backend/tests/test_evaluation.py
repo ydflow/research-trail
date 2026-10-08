@@ -315,6 +315,6 @@ def test_upgrade_from_step21_preserves_existing_session_and_monitoring_rows(tmp_
         assert store.sessions()[0].id==session.id
         with db.engine.connect() as connection:
             assert connection.execute(text('SELECT * FROM monitoring_rules')).all()==before
-            assert connection.execute(text('SELECT version_num FROM alembic_version')).scalar()=='0017_evaluation'
+            assert connection.execute(text('SELECT version_num FROM alembic_version')).scalar()=='0018_outcomes'
             assert connection.execute(text('SELECT count(*) FROM evaluation_experiments')).scalar()==0
     finally:db.close()

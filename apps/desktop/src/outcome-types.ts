@@ -1,0 +1,10 @@
+import type { components } from '../../../packages/contracts/generated';
+export type OutcomeOpinion = components['schemas']['OutcomeOpinion'];
+export type OutcomeCapture = components['schemas']['OutcomeCapture'];
+export type OutcomeAttempt = components['schemas']['OutcomeAttempt'];
+export type OutcomeView = components['schemas']['OutcomeView'];
+export type WeightHistory = components['schemas']['WeightHistory'];
+export type WeightVersion = components['schemas']['WeightVersion'];
+export type WeightChange = components['schemas']['WeightChange'];
+export type PerformanceQuery = components['schemas']['PerformanceQuery'];
+export type PerformanceSnapshot = components['schemas']['PerformanceSnapshot'];
