@@ -1,0 +1,49 @@
+{
+  "files": [
+    {
+      "sha256": "62447514cc9cd4679ae09d32a68d2d89a341cb8a5f1950747260c9dc8b2dea34",
+      "upstream": "packages/core/src/alert-rules.ts"
+    },
+    {
+      "sha256": "da2568e11140990f478198fbe46d3f4b831b34ce052bff1553db051fcda86735",
+      "upstream": "packages/core/src/automation.ts"
+    },
+    {
+      "sha256": "630547674abd680da8556d9997f847cac4a0720df8b69f9f3808d35b653c94bc",
+      "upstream": "packages/shared/src/alerts/engine.ts"
+    },
+    {
+      "sha256": "b221d42e83634ce3d486703dd001cda7fcd59645eb16afea33ad4d345202e7e9",
+      "upstream": "packages/shared/src/alerts/evaluators.ts"
+    },
+    {
+      "sha256": "a56f7a6ee2f61fb5148fb868240fa1015a06c207839fdb6d97e75e10fd79d020",
+      "upstream": "packages/shared/src/automation/scheduler.ts"
+    },
+    {
+      "sha256": "fd8abc39dc41df5dffbfdf513a8479bddcab07105311677661e233c8d18dc5e3",
+      "upstream": "packages/shared/src/automation/brief.ts"
+    },
+    {
+      "sha256": "0a818dbc9ed0c6c6b62dc93790ba7ff3fc8e2fa3c85bc1d52aa881dc6f653386",
+      "upstream": "packages/ui/src/components/today/TodayView.tsx"
+    }
+  ],
+  "engineering_references": [
+    "https://www.electronjs.org/docs/latest/api/notification",
+    "https://docs.python.org/3.12/library/zoneinfo.html"
+  ],
+  "commit": "ba5dcdfd31b162f5edb8b908f7f099a560389326",
+  "repository": "https://github.com/helsome/folio",
+  "authorization": "Original-author reuse confirmation in EVIDENCE sections 9-11; original authorization text not independently obtained. Only skills/LICENSE confirmed MIT; no whole-repository MIT claim.",
+  "dependencies": "Existing locked dependencies; no added SDK, scheduler daemon, external trace or model evaluation.",
+  "adapted_to": [
+    "services/backend/research_trail/monitoring.py",
+    "services/backend/research_trail/monitoring_contracts.py",
+    "services/backend/research_trail/monitoring_schedule.py",
+    "apps/desktop/src/main/monitor-notifications.ts",
+    "apps/desktop/src/renderer/today/TodayPanel.tsx"
+  ],
+  "scope": "Conceptual reference only. New Python rule evaluation, durable occurrences/cursors, runtime scheduler and same-service Today/brief. New Electron claim-before-show delivery and whitelist UI. No verbatim upstream imports or TS business kernel. Eight alert kinds and five bounded automation kinds; automations perform deterministic lightweight review, offer explicit one-time research, or opt-in automatic pre/post-earnings collection with durable claims; never paid synthesis.",
+  "preserved_resources": "Existing 30 original skill/license files retained; upstream reference is readonly. No new upstream resource copied."
+}
