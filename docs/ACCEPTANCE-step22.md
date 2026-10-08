@@ -68,3 +68,6 @@ CI沿用现有Windows离线门禁，在全量pytest之后额外执行原创案�
 远程CI、PR与合并按实际回执，发布过程见EVIDENCE第51节；真实服务缺口不因源码发布而消失。不打标签/Release，不实施下一步。
 
 已创建[第22步PR #21](https://github.com/ydflow/research-trail/pull/21)，初始head a53aba58adcd1db719a9b1ffe35522b01d06d574。最终CI/合并与本地main同步见PR及根PROJECT_STATE；不得以本地通过预先称远程通过。
+
+
+发布CI修复：push 37766332829通过，PR 37766338266在既有Step17中断测试失败（51 Electron通过/1失败），未合并。已将CIM查询移到15秒采集窗口前，杀进程前断言fetching/3成功；注入16秒延迟旧测试复现、修复后1通过。业务代码及断言超时不变，新的完整干净验收单独记录，初始244文件与旧副本一致不再代表修复后的测试。详情见EVIDENCE第51节。

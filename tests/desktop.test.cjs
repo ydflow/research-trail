@@ -514,13 +514,20 @@ test('Step17 actual collection process interruption preserves evidence resumes a
   const path=instance.databasePath; let original,raw;
   try{
     let page=instance.page; const errors=[]; page.on('pageerror',e=>errors.push(e.message)); await waitForBackend(page);
+    // CIM discovery can take longer than the 15s checkpoint on a busy Windows
+    // runner. Resolve the owned process before starting the timed collection.
+    const owned=children(instance.pid); assert.equal(owned.length,1);
     await page.getByRole('button',{name:'研究采集',exact:true}).click(); await page.getByRole('radio',{name:/价值投资/}).check();
     await expect(page.getByTestId('research-plan').locator('summary')).toContainText('4 项');
     await page.getByRole('button',{name:'开始采集',exact:true}).click();
     await expect.poll(async()=> page.evaluate(async()=>{const rows=await window.researchTrail.researchRuns();return rows.length ? (await window.researchTrail.researchRun(rows[0].id)).succeeded : 0;})).toBe(3);
-    original=await page.evaluate(async()=>{const rows=await window.researchTrail.researchRuns();return window.researchTrail.researchRun(rows[0].id);});
-    raw=await page.evaluate(id=>window.researchTrail.researchData(id,'company.valuation'),original.id);
-    const owned=children(instance.pid); assert.equal(owned.length,1); process.kill(owned[0]);
+    ({original,raw}=await page.evaluate(async()=>{
+      const bridge=window.researchTrail, rows=await bridge.researchRuns();
+      const raw=await bridge.researchData(rows[0].id,'company.valuation');
+      return {original:await bridge.researchRun(rows[0].id),raw};
+    }));
+    assert.equal(original.status,'fetching'); assert.equal(original.succeeded,3);
+    process.kill(owned[0]);
     await expect(page.getByRole('heading',{name:'连接未就绪'})).toBeVisible(); await instance.app.close();
     instance=await launch({RESEARCH_TRAIL_DB_PATH:path}); page=instance.page; page.on('pageerror',e=>errors.push(e.message)); await waitForBackend(page);
     await page.getByRole('button',{name:'研究采集',exact:true}).click();

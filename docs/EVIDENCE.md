@@ -1929,3 +1929,10 @@ MockTransport协议验收与真实连接严格区分；离线门禁只允许loop
 来源05c19ef1e843281c7164de8b13ac7ecc848e2102、Python ba2c2dab445821850965a6c768a09fd1c99cfe61、迁移测试修复a7ce6e66ff4096a3998037fdfdd37e6f712bcab4、桌面25f7d194d9eff248db6404fedf77bdcff99d84e2、文档a53aba58adcd1db719a9b1ffe35522b01d06d574使用实际ydflow/noreply作者及当次时间保留，未伪造上游导入或开发时间。
 推送前283个Git blob与工作区规范化LF一致；首轮push/PR Actions37766232480/37766245716已启动。本PR链接回执会形成新head，旧head若被并发机制取消不计为通过。
 最终检查、审查状态、普通merge SHA及main同步/CI按PR与根PROJECT_STATE实际回执记录，本行不预先宣称通过或合并。
+
+
+### 第22步发布CI阻塞修复
+
+最终回执head d3f18a20f4c12e22c325cfef464d3afeb76fdd35的push CI [37766332829](https://github.com/ydflow/research-trail/actions/runs/37766332829)通过623 Python/12 Node/52 Electron；PR CI [37766338266](https://github.com/ydflow/research-trail/actions/runs/37766338266)为失败：623 Python/12 Node及12案例CLI、0017、契约/类型/构建通过，Electron 51通过/1失败。没有将该PR失败计作通过或合并。
+失败在既有第17步采集中断测试：Windows CIM查找子进程放在15秒夹具窗口内，慢查询后研究已完成，重启不会自动恢复已完成任务，因此卡片不存在。修复仅tests/desktop.test.cjs：开始采集前查找所属Python进程，同一renderer读取原数据与最新状态，并断言fetching/3成功后再kill。不改业务逻辑、不增加超时、不重试错误终态。
+Temp注入16秒CIM查询延迟，旧测试在同一行527复现相同失败；修复后相同注入实际Electron测试1通过，原证据/恢复/重新发起断言保留。日志research-trail-step22-cim-before.log与research-trail-step22-cim-after.log仅Temp，不上传。此前244文件等于旧干净副本为初始推送事实；当前测试已修复，后续以新干净源码完整验收为准，不能继续复用旧字节一致性主张。
