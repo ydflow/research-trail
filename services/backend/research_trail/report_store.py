@@ -8,7 +8,7 @@ from .report_contracts import ReportJob, ReportSummary
 from .research_store import ResearchError, now
 
 class ReportStore:
-    def __init__(self,database): self.database=database
+    def __init__(self,database): self.database=database; self.on_completed=None
 
     @staticmethod
     def row(db,identity):
@@ -67,6 +67,8 @@ class ReportStore:
             row.document=document.model_dump(mode='json') if document else None
             row.requests_started=requests_started
             if request_uncertain is not None: row.request_uncertain=request_uncertain
+            if status == 'completed' and self.on_completed is not None:
+                self.on_completed(db, row)
 
     def recover(self):
         with self.database.write() as db:

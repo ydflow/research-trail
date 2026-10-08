@@ -50,6 +50,9 @@ from .calendar import CalendarService, CalendarError
 from .monitoring import MonitoringService, MonitoringError
 from .evaluation import EvaluationService, EvaluationError
 from .evaluation_cases import CASES
+from .outcomes import OutcomeService, OutcomeError
+from .outcome_contracts import (OutcomeCapture, OutcomeOpinion, OutcomeRequest, OutcomeAttempt,
+    OutcomeView, WeightChange, WeightVersion, WeightHistory, PerformanceQuery, PerformanceSnapshot)
 from .evaluation_trace import EvaluationTracing
 from .evaluation_contracts import (EvaluationCase, ExperimentInput, ExperimentView, ExperimentSummary, BaselineInput, BaselineView, BaselineSummary,
     FeedbackInput, FeedbackView, TraceProvider, TraceConfig, TraceConfigView, TraceCredential,
@@ -72,7 +75,7 @@ class Health(BaseModel):
 
 def create_app(token: str, market_provider: MarketProvider | None = None, *,
                database_path: Path | str | None = None, model_provider: ModelProvider | None = None,
-               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None, research_options=None, report_options=None, screening_options=None, calendar_options=None, monitoring_options=None, evaluation_options=None, trace_options=None) -> FastAPI:
+               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None, research_options=None, report_options=None, screening_options=None, calendar_options=None, monitoring_options=None, evaluation_options=None, trace_options=None, outcome_options=None) -> FastAPI:
     if len(token) < 32:
         raise ValueError("启动令牌缺失或过短；请由 Electron 启动服务。")
     @asynccontextmanager
@@ -108,6 +111,7 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
                     model.settings_identity=app.state.settings.model_identity()
                     return model
             app.state.reports = ReportService(database,app.state.research.store,report_model,**(report_options or {}))
+            app.state.outcomes = OutcomeService(database,app.state.providers,app.state.reports,**(outcome_options or {}))
             app.state.theses = ThesisService(database, app.state.reports)
             app.state.recovery = ResearchRecovery(app.state.research,app.state.reports,app.state.settings)
             app.state.store.recover_interrupted()
@@ -118,6 +122,8 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             yield
         finally:
             try:
+                if hasattr(app.state,'outcomes'):
+                    app.state.outcomes.close()
                 if hasattr(app.state,'evaluation'):
                     app.state.evaluation.close()
                 if hasattr(app.state,'monitoring'):
@@ -161,6 +167,26 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
         return JSONResponse(status_code=409, content={"detail": str(error)})
 
     protected = [Depends(authorize)]
+
+    @app.exception_handler(OutcomeError)
+    async def outcome_error(_request,error):
+        return JSONResponse(status_code=404 if error.code.endswith('NOT_FOUND') else 409,content={'detail':error.code})
+    @app.get('/outcomes/opinions',response_model=list[OutcomeOpinion],dependencies=protected)
+    def outcome_opinions(): return app.state.outcomes.opinions()
+    @app.post('/outcomes/opinions',response_model=OutcomeOpinion,dependencies=protected)
+    def outcome_capture(body:OutcomeCapture): return app.state.outcomes.capture(body)
+    @app.get('/outcomes/opinions/{identity}',response_model=OutcomeView,dependencies=protected)
+    def outcome_view(identity:UUID): return app.state.outcomes.get(identity)
+    @app.post('/outcomes/opinions/{identity}/evaluate',response_model=OutcomeAttempt,dependencies=protected)
+    def outcome_evaluate(identity:UUID,body:OutcomeRequest): return app.state.outcomes.evaluate(identity,body)
+    @app.get('/outcomes/policies',response_model=WeightHistory,dependencies=protected)
+    def outcome_policies(): return app.state.outcomes.policies()
+    @app.post('/outcomes/policies',response_model=WeightVersion,dependencies=protected)
+    def outcome_policy_change(body:WeightChange): return app.state.outcomes.change(body)
+    @app.post('/outcomes/performance',response_model=PerformanceSnapshot,dependencies=protected)
+    def outcome_performance(body:PerformanceQuery): return app.state.outcomes.performance(body)
+    @app.get('/outcomes/performance/{identity}',response_model=PerformanceSnapshot,dependencies=protected)
+    def outcome_snapshot(identity:UUID): return app.state.outcomes.snapshot(identity)
 
     @app.exception_handler(EvaluationError)
     async def evaluation_error(_request,error):
