@@ -1,0 +1,12 @@
+.today-panel{max-width:1120px;margin:24px auto;padding:0 18px;color:#173e38;min-width:0}
+.today-panel h2{font-size:25px}.today-panel p,.today-panel small{overflow-wrap:anywhere}
+.today-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:end;padding:14px 0}
+.today-controls label{display:flex;flex-direction:column;gap:6px;max-width:100%}
+.today-controls label:has(input[type=checkbox]){flex-direction:row;align-items:center}
+.today-controls input,.today-controls select{max-width:100%;min-height:34px;border:1px solid #b5c9c4;background:#fff;border-radius:4px;padding:4px 8px;font:inherit;box-sizing:border-box}
+.today-panel button{background:#eff6f3;color:#173e38;border:1px solid #aac5bc;padding:8px 12px;border-radius:4px;cursor:pointer;min-width:0;min-height:36px;font-size:14px}
+.today-panel button:hover:not(:disabled){background:#d8e9e2;color:#143f36}
+.today-panel button:disabled{opacity:.5;cursor:default}.today-items{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:12px}
+.today-panel article{padding:13px 0;border-bottom:1px solid #d7e3de;min-width:0}.today-run{margin:12px 0}
+.today-panel pre{overflow:auto;max-height:340px;white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f7f4;padding:10px}
+.today-panel details{margin:12px 0}.today-panel summary{cursor:pointer;font-weight:600}

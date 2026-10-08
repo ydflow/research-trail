@@ -203,6 +203,27 @@ export class BackendManager extends EventEmitter {
   }
 
   listSessions() { return this.business<SessionDTO[]>('/sessions'); }
+  today(timezone: unknown) {
+    if (typeof timezone !== 'string' || timezone.length > 100 || !/^[-+A-Za-z0-9_]+(?:\/[-+A-Za-z0-9_]+)*$/.test(timezone)) throw new Error('时区格式无效。');
+    return this.business<import('../monitoring-types').TodayView>('/today','POST',{timezone});
+  }
+  monitoringRules() { return this.business<import('../monitoring-types').RuleView[]>('/monitoring/rules'); }
+  createMonitoringRule(input: unknown) {
+    return this.business<import('../monitoring-types').RuleView>('/monitoring/rules','POST',this.thesisBody(input,
+      ['request_id','name','kind','enabled','mode','provider','symbol','portfolio_id','threshold','cooldown_minutes','horizon_days','timezone','hour','minute','days','notify','auto_research']));
+  }
+  toggleMonitoringRule(id: unknown, enabled: unknown) {
+    if(typeof enabled !== 'boolean') throw new Error('启用状态无效。');
+    return this.business<import('../monitoring-types').RuleView>(`/monitoring/rules/${this.id(id)}/enabled`,'PUT',{enabled});
+  }
+  monitoringRuns() { return this.business<import('../monitoring-types').MonitorRun[]>('/monitoring/runs'); }
+  monitoringResearch(id: unknown, symbol: unknown) {
+    if (typeof symbol !== 'string' || !/^[A-Z0-9]{1,6}\.(US|HK|SG|SH|SZ|HAS)$/.test(symbol)) throw new Error('股票代码无效。');
+    return this.business<import('../monitoring-types').MonitorResearchAction>(`/monitoring/runs/${this.id(id)}/research`,'POST',{symbol});
+  }
+  pendingNotifications() { return this.business<import('../monitoring-types').MonitorRun[]>('/monitoring/notifications'); }
+  claimNotification(id: string) { return this.business<import('../monitoring-types').MonitorRun | null>(`/monitoring/notifications/${this.id(id)}/claim`,'POST'); }
+  finishNotification(id: string,status: 'shown' | 'failed' | 'unsupported') { return this.business<import('../monitoring-types').MonitorRun>(`/monitoring/notifications/${this.id(id)}/result`,'POST',{status}); }
   calendarSources(body: unknown) { return this.business<import('../calendar-types').CalendarSource[]>('/calendar/sources','POST',this.thesisBody(body,['mode','provider'])); }
   refreshCalendar(body: unknown) { return this.business<import('../calendar-types').CalendarPage>('/calendar/snapshots','POST',this.thesisBody(body,['mode','provider','timezone','start','end','kinds','request_id']),45000); }
   calendarHistory() { return this.business<import('../calendar-types').CalendarSummary[]>('/calendar/snapshots'); }

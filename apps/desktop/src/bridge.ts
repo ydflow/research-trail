@@ -10,6 +10,12 @@ export interface BackendState {
   pythonVersion?: string;
 }
 export interface ResearchTrailBridge {
+  today(timezone: string): Promise<import('./monitoring-types').TodayView>;
+  monitoringRules(): Promise<import('./monitoring-types').RuleView[]>;
+  createMonitoringRule(input: import('./monitoring-types').RuleInput): Promise<import('./monitoring-types').RuleView>;
+  toggleMonitoringRule(id: string, enabled: boolean): Promise<import('./monitoring-types').RuleView>;
+  monitoringRuns(): Promise<import('./monitoring-types').MonitorRun[]>;
+  monitoringResearch(id: string, symbol: string): Promise<import('./monitoring-types').MonitorResearchAction>;
   calendarSources(input: import('./calendar-types').CalendarSelection): Promise<import('./calendar-types').CalendarSource[]>;
   refreshCalendar(input: import('./calendar-types').CalendarRefresh): Promise<import('./calendar-types').CalendarPage>;
   calendarHistory(): Promise<import('./calendar-types').CalendarSummary[]>;

@@ -2,6 +2,12 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendState, ResearchTrailBridge, RunStreamUpdate } from '../bridge';
 
 const bridge: ResearchTrailBridge = {
+  today: timezone => ipcRenderer.invoke('today:view',timezone),
+  monitoringRules: () => ipcRenderer.invoke('monitoring:rules'),
+  createMonitoringRule: input => ipcRenderer.invoke('monitoring:create',input),
+  toggleMonitoringRule: (id,enabled) => ipcRenderer.invoke('monitoring:toggle',id,enabled),
+  monitoringRuns: () => ipcRenderer.invoke('monitoring:runs'),
+  monitoringResearch: (id,symbol) => ipcRenderer.invoke('monitoring:research',id,symbol),
   calendarSources: input => ipcRenderer.invoke('calendar:sources',input),
   refreshCalendar: input => ipcRenderer.invoke('calendar:refresh',input),
   calendarHistory: () => ipcRenderer.invoke('calendar:history'),
