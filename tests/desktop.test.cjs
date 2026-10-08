@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { waitForBackend, waitForResearchCollection } = require('./backend-ready.cjs');
+const { waitForBackend, waitForResearchCollection, waitForEvaluationCompletion } = require('./backend-ready.cjs');
 const { _electron: electron, expect } = require('@playwright/test');
 const { execFileSync } = require('node:child_process');
 const { resolve } = require('node:path');
@@ -21,7 +21,7 @@ test('Step22 evaluation window executes compares feedback and preserves restart 
     await expect(page.getByTestId('eval-score')).toContainText('无有效分数');
     assert.equal((await page.evaluate(()=>window.researchTrail.evaluationExperiments())).length,1);
     await page.getByRole('button',{name:'执行离线实验',exact:true}).click();
-    await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','passed');
+    await waitForEvaluationCompletion(page,'passed');
     await expect(page.getByTestId('eval-score')).toContainText('100.0%');
     await expect(page.getByTestId('eval-result')).toHaveCount(12);
     const unknown=page.getByTestId('eval-result').filter({hasText:'unknown-symbol'});
@@ -35,7 +35,7 @@ test('Step22 evaluation window executes compares feedback and preserves restart 
     await page.getByRole('button',{name:'创建未执行实验',exact:true}).click();
     await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','not_run');
     await page.getByRole('button',{name:'执行离线实验',exact:true}).click();
-    await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','quality_failed');
+    await waitForEvaluationCompletion(page,'quality_failed');
     await page.getByLabel('比较基线',{exact:true}).selectOption(baselineId);
     await expect(page.getByTestId('eval-comparison')).toContainText('分数变化 -');
     await expect(page.getByTestId('eval-comparison')).toContainText('quote-aapl');
@@ -77,7 +77,8 @@ test('Step22 invalid and cancelled window experiments have no score and offline 
     await page.getByRole('button',{name:'创建未执行实验',exact:true}).click();
     await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','not_run');
     await page.getByRole('button',{name:'执行离线实验',exact:true}).click();
-    await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','run_error');
+    await waitForEvaluationCompletion(page,'run_error');
+    await assert.rejects(waitForEvaluationCompletion(page,'passed'), /Expected values to be strictly equal/);
     await expect(page.getByTestId('eval-score')).toContainText('无有效分数');
     await expect(page.getByRole('button',{name:'保存通过的基线',exact:true})).toBeDisabled();
     await page.getByRole('button',{name:'创建未执行实验',exact:true}).click();

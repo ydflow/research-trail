@@ -1946,3 +1946,8 @@ PR #21在head 0ac56738a5fff9927abfe46e0513f374d439ed0f的push 37768720701与PR 3
 补修基于已合并main单独fix/step-22-publication-ci分支/PR，仍属第22步发布；只修上述验收同步和本步文档，不改变业务，不实现第23/24步，不重写已合并历史。后续复现实验、本机/CI及合并回执单独记录；不得以重跑隐藏上述失败。
 
 Temp可控延迟实验：Python真实子进程启动额外延迟6秒、研究start IPC真实结果返回额外延迟4秒；旧版本2项实际Electron均失败（取消前已collected、行情仍启动），补修后同一延迟2通过，保留真实工具迟到返回与行情新选择不被旧响应覆盖。日志research-trail-step22-boundaries-before.log/after.log仅Temp。新的完整干净验收和补修PR检查另行跟踪，未预先声称通过。
+
+
+补修PR #22的首个head 9c5dbc0ab159583c7b1c855aa9a50f3bd191315d：PR [37772119619](https://github.com/ydflow/research-trail/actions/runs/37772119619) success（623/12/52），push [37772108397](https://github.com/ydflow/research-trail/actions/runs/37772108397) failure（623 Python/12 Node通过，Electron51通过/1失败），未合并。
+新增阻塞在第22步运行错误实验：12案例按序执行，包含真实迁移的两个SQLite恢复/重放沙盒，5秒UI断言到期时仍running，不能把此中间状态当终态错误。补修同一PR/分支，tests/backend-ready.cjs增加waitForEvaluationCompletion：读取已保存实验，按3秒Agent案例预算×案例数加25秒沙盒/IPC调度测试预算等待非not_run/running终态，立即断言期望状态；渲染断言仍默认5秒。passed/quality_failed/run_error的三个执行断言使用该helper；额外验证run_error不能被当passed等待重试。
+Temp将两个真实SQLite恢复案例各额外延迟4秒，旧测试2失败（running），新测试在同一延迟2项实际Electron通过（无分数、取消、错误和恢复的原断言保留）。日志research-trail-step22-eval-wait-before.log/after.log仅Temp；不是改变结果或重跑隐藏失败。当前补修差异4文件（两个测试文件和两份本步文档），相对Step21总差异39文件；业务/案例/评估器/契约不改，完整新干净验收及新head CI按实际回执。

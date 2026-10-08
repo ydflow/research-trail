@@ -76,3 +76,6 @@ CI沿用现有Windows离线门禁，在全量pytest之后额外执行原创案�
 合并后main CI 37770288708失败（623 Python/12 Node通过，Electron 50通过/2失败），已合并PR #21的通过不代替该结果。第22步补修分支fix/step-22-publication-ci仅同步既有取消测试的实际夹具/物理退出预算，及行情测试的后端就绪等待；不改业务、不实现下一步。补修验证与PR/main CI按EVIDENCE第51节和根PROJECT_STATE实际回执记录。
 
 补修延迟复现：启动额外6秒、研究响应额外4秒，旧测试2失败，补修后同一延迟2项实际Electron通过（0失败/取消/跳过）。完整新验收与补修CI待实际结果。
+
+
+补修PR22首head的PR CI通过，push CI在第22步实验仍running时的5秒终态断言失败（51 Electron通过/1失败），未合并。同一PR增加Python实验终态等待helper，3秒×案例数+25秒沙盒/IPC测试预算，错误终态立即失败，UI仍5秒；真实SQLite恢复案例各延迟4秒，旧测试2失败、新测试同一延迟2通过。新增tests/backend-ready.cjs后补修4文件、全步39文件；业务与评测结果未改，新完整验收另行记录。
