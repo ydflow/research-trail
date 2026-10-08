@@ -9,6 +9,96 @@ const { tmpdir } = require('node:os');
 const { createRequire } = require('node:module');
 const { pathToFileURL } = require('node:url');
 
+test('Step22 evaluation window executes compares feedback and preserves restart without duplicate work', {timeout:120000},async()=>{
+  let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  const databasePath=instance.databasePath;const errors=[];let baselineId,candidateId;
+  try{
+    let page=instance.page;page.on('pageerror',e=>errors.push(e.message));await waitForBackend(page);
+    await page.getByRole('button',{name:'评测中心',exact:true}).click();
+    await expect(page.locator('.eval-cases input')).toHaveCount(12);
+    await page.getByRole('button',{name:'创建未执行实验',exact:true}).dblclick();
+    await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','not_run');
+    await expect(page.getByTestId('eval-score')).toContainText('无有效分数');
+    assert.equal((await page.evaluate(()=>window.researchTrail.evaluationExperiments())).length,1);
+    await page.getByRole('button',{name:'执行离线实验',exact:true}).click();
+    await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','passed');
+    await expect(page.getByTestId('eval-score')).toContainText('100.0%');
+    await expect(page.getByTestId('eval-result')).toHaveCount(12);
+    const unknown=page.getByTestId('eval-result').filter({hasText:'unknown-symbol'});
+    await unknown.locator('summary').click();
+    await expect(unknown).toContainText('UNKNOWN_SYMBOL');await expect(unknown).toContainText('tool_result');
+    await page.getByRole('button',{name:'保存通过的基线',exact:true}).click();
+    await expect(page.getByTestId('eval-comparison')).toContainText('退化案例 无');
+    baselineId=(await page.evaluate(()=>window.researchTrail.evaluationBaselines()))[0].id;
+    await page.getByLabel('离线候选配置',{exact:true}).selectOption('wrong-fact');
+    await page.getByLabel('实验名称',{exact:true}).fill('离线错误事实候选');
+    await page.getByRole('button',{name:'创建未执行实验',exact:true}).click();
+    await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','not_run');
+    await page.getByRole('button',{name:'执行离线实验',exact:true}).click();
+    await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','quality_failed');
+    await page.getByLabel('比较基线',{exact:true}).selectOption(baselineId);
+    await expect(page.getByTestId('eval-comparison')).toContainText('分数变化 -');
+    await expect(page.getByTestId('eval-comparison')).toContainText('quote-aapl');
+    candidateId=(await page.evaluate(()=>window.researchTrail.evaluationExperiments())).find(e=>e.name==='离线错误事实候选').id;
+    await page.getByLabel('反馈案例',{exact:true}).selectOption('quote-aapl');
+    await page.getByLabel('反馈理由',{exact:true}).fill('仅本机人工反馈标记 step22-local-private');
+    await page.getByRole('button',{name:'追加人工反馈',exact:true}).dblclick();
+    await expect(page.getByTestId('eval-feedback')).toContainText('step22-local-private');
+    assert.equal((await page.evaluate(id=>window.researchTrail.evaluationFeedback(id),candidateId)).length,1);
+    await page.getByText('外部追踪与脱敏预览',{exact:true}).click();
+    await expect(page.getByTestId('trace-state')).toContainText('已关闭');
+    await page.getByRole('button',{name:'生成脱敏预览',exact:true}).click();
+    await expect(page.getByTestId('trace-preview')).toContainText('minimal-allowlist-v1');
+    assert.doesNotMatch(await page.getByTestId('trace-preview').innerText(),/step22-local-private|189\.43|离线错误事实候选/);
+    await page.getByTestId('eval-experiment').scrollIntoViewIfNeeded();await screenshot(page,'step22-evaluation-wide.png');
+    await instance.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(600,700));
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await screenshot(page,'step22-evaluation-compact.png');
+    await instance.app.close();instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_DB_PATH:databasePath});
+    page=instance.page;page.on('pageerror',e=>errors.push(e.message));await waitForBackend(page);
+    await page.getByRole('button',{name:'评测中心',exact:true}).click();
+    await page.getByTestId('eval-history').getByRole('button',{name:/离线错误事实候选/}).click();
+    await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','quality_failed');
+    await expect(page.getByTestId('eval-feedback')).toContainText('step22-local-private');
+    assert.equal((await page.evaluate(()=>window.researchTrail.evaluationExperiments())).length,2);
+    assert.equal((await page.evaluate(()=>window.researchTrail.evaluationBaselines()))[0].id,baselineId);
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,0);
+    assert.equal((await page.evaluate(()=>window.researchTrail.evaluationTraceDeliveries())).length,0);
+    assert.deepEqual(errors,[]);
+  }finally{await instance.app.close();}
+});
+
+test('Step22 invalid and cancelled window experiments have no score and offline tracing stays blocked', {timeout:120000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  try{
+    const page=instance.page;await waitForBackend(page);await page.getByRole('button',{name:'评测中心',exact:true}).click();
+    await expect(page.locator('.eval-cases input')).toHaveCount(12);
+    await page.getByLabel('离线候选配置',{exact:true}).selectOption('provider-failure');
+    await page.getByRole('button',{name:'创建未执行实验',exact:true}).click();
+    await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','not_run');
+    await page.getByRole('button',{name:'执行离线实验',exact:true}).click();
+    await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','run_error');
+    await expect(page.getByTestId('eval-score')).toContainText('无有效分数');
+    await expect(page.getByRole('button',{name:'保存通过的基线',exact:true})).toBeDisabled();
+    await page.getByRole('button',{name:'创建未执行实验',exact:true}).click();
+    await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','not_run');
+    await page.getByRole('button',{name:'取消实验',exact:true}).click();
+    await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','cancelled');
+    await expect(page.getByTestId('eval-score')).toContainText('无有效分数');
+    await page.getByText('外部追踪与脱敏预览',{exact:true}).click();
+    await page.getByLabel('允许显式连接和上传',{exact:true}).check();
+    await page.getByLabel('追踪源站',{exact:true}).fill('https://trace.example');
+    await page.getByRole('button',{name:'保存追踪配置',exact:true}).click();
+    await expect(page.getByTestId('trace-state')).toContainText('已启用');
+    await page.getByRole('button',{name:'真实连接检查',exact:true}).click();
+    await expect(page.getByTestId('eval-tracing').getByRole('alert')).toContainText('OFFLINE_TRACING_BLOCKED');
+    await assert.rejects(page.evaluate(()=>window.researchTrail.probeTracing('../../private')),/平台|无效/);
+    await assert.rejects(page.evaluate(()=>window.researchTrail.evaluationExperiment('../../private')),/实验标识|标识|无效/);
+    assert.equal((await page.evaluate(()=>window.researchTrail.evaluationTraceDeliveries())).length,0);
+    await screenshot(page,'step22-invalid-tracing.png');
+  }finally{await instance.app.close();}
+});
+
 test('Step21 Today fixed-clock rules notification claims source links and restart do not repeat research', {timeout:120000},async()=>{
   let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'monitoring-clock'});
   const path=instance.databasePath;let snapshot,rule,run,action;
@@ -1552,6 +1642,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       'workspaceState', 'addWatch', 'removeWatch', 'selectSecurity', 'securityPage', 'openNewsSource',
       'screeningTasks', 'startScreening', 'screeningRuns', 'screeningRun', 'cancelScreening', 'screeningEvidence',
       'calendarSources','refreshCalendar','calendarHistory','calendarView','calendarOriginal',
+      'evaluationCases','evaluationExperiments','createExperiment','evaluationExperiment','startExperiment','cancelExperiment','evaluationBaselines','saveEvaluationBaseline','evaluationFeedback','addEvaluationFeedback','tracingConfigurations','saveTracingConfiguration','saveTracingCredential','deleteTracingCredential','probeTracing','previewEvaluationTrace','uploadEvaluationTrace','evaluationTraceDeliveries',
       'today','monitoringRules','createMonitoringRule','toggleMonitoringRule','monitoringRuns','monitoringResearch',
       'thesisList', 'createThesis', 'thesis', 'thesisVersion', 'editThesis', 'evaluateThesis', 'judgeThesis', 'thesisReview',
       'reportList', 'generateReport', 'report', 'cancelReport', 'reportEvidence', 'exportReport', 'reportDiff',

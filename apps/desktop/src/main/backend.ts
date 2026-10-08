@@ -203,6 +203,25 @@ export class BackendManager extends EventEmitter {
   }
 
   listSessions() { return this.business<SessionDTO[]>('/sessions'); }
+  private traceProvider(value: unknown) { if(value!=='langsmith' && value!=='langfuse') throw new Error('追踪提供商无效。'); return value; }
+  evaluationCases() { return this.business<import('../evaluation-types').EvaluationCase[]>('/evaluation/cases'); }
+  evaluationExperiments() { return this.business<import('../evaluation-types').ExperimentSummary[]>('/evaluation/experiments'); }
+  createExperiment(input: unknown) { return this.business<import('../evaluation-types').ExperimentView>('/evaluation/experiments','POST',this.thesisBody(input,['request_id','name','case_ids','profile'])); }
+  evaluationExperiment(id: unknown, baselineId?: unknown) { return this.business<import('../evaluation-types').ExperimentView>(`/evaluation/experiments/${this.id(id)}${baselineId===undefined?'':'?baseline_id='+this.id(baselineId)}`); }
+  startExperiment(id: unknown) { return this.business<import('../evaluation-types').ExperimentView>(`/evaluation/experiments/${this.id(id)}/start`,'POST'); }
+  cancelExperiment(id: unknown) { return this.business<import('../evaluation-types').ExperimentView>(`/evaluation/experiments/${this.id(id)}/cancel`,'POST'); }
+  evaluationBaselines() { return this.business<import('../evaluation-types').BaselineSummary[]>('/evaluation/baselines'); }
+  saveEvaluationBaseline(input: unknown) { return this.business<import('../evaluation-types').BaselineView>('/evaluation/baselines','POST',this.thesisBody(input,['request_id','name','experiment_id'])); }
+  evaluationFeedback(id: unknown) { return this.business<import('../evaluation-types').FeedbackView[]>(`/evaluation/experiments/${this.id(id)}/feedback`); }
+  addEvaluationFeedback(id: unknown, input: unknown) { return this.business<import('../evaluation-types').FeedbackView>(`/evaluation/experiments/${this.id(id)}/feedback`,'POST',this.thesisBody(input,['request_id','case_id','judgment','reason'])); }
+  tracingConfigurations() { return this.business<import('../evaluation-types').TraceConfigView[]>('/evaluation/tracing'); }
+  saveTracingConfiguration(provider: unknown, input: unknown) { return this.business<import('../evaluation-types').TraceConfigView>(`/evaluation/tracing/${this.traceProvider(provider)}`,'PUT',this.thesisBody(input,['enabled','endpoint','project'])); }
+  saveTracingCredential(provider: unknown, input: unknown) { return this.business<import('../evaluation-types').TraceConfigView>(`/evaluation/tracing/${this.traceProvider(provider)}/credential`,'PUT',this.thesisBody(input,['secret','public_key','workspace_id'])); }
+  deleteTracingCredential(provider: unknown) { return this.business<import('../evaluation-types').TraceConfigView>(`/evaluation/tracing/${this.traceProvider(provider)}/credential`,'DELETE'); }
+  probeTracing(provider: unknown) { return this.business<import('../evaluation-types').TraceConfigView>(`/evaluation/tracing/${this.traceProvider(provider)}/probe`,'POST',{confirm_connection:true},15000); }
+  previewEvaluationTrace(provider: unknown, id: unknown) { return this.business<import('../evaluation-types').TracePreview>(`/evaluation/experiments/${this.id(id)}/tracing/${this.traceProvider(provider)}/preview`); }
+  uploadEvaluationTrace(provider: unknown, id: unknown, input: unknown) { return this.business<import('../evaluation-types').TraceDelivery>(`/evaluation/experiments/${this.id(id)}/tracing/${this.traceProvider(provider)}/upload`,'POST',this.thesisBody(input,['request_id','digest','confirm_upload']),15000); }
+  evaluationTraceDeliveries() { return this.business<import('../evaluation-types').TraceDelivery[]>('/evaluation/tracing/deliveries'); }
   today(timezone: unknown) {
     if (typeof timezone !== 'string' || timezone.length > 100 || !/^[-+A-Za-z0-9_]+(?:\/[-+A-Za-z0-9_]+)*$/.test(timezone)) throw new Error('时区格式无效。');
     return this.business<import('../monitoring-types').TodayView>('/today','POST',{timezone});

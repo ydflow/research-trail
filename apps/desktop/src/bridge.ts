@@ -10,6 +10,24 @@ export interface BackendState {
   pythonVersion?: string;
 }
 export interface ResearchTrailBridge {
+  evaluationCases(): Promise<import('./evaluation-types').EvaluationCase[]>;
+  evaluationExperiments(): Promise<import('./evaluation-types').ExperimentSummary[]>;
+  createExperiment(input: import('./evaluation-types').ExperimentInput): Promise<import('./evaluation-types').ExperimentView>;
+  evaluationExperiment(id: string, baselineId?: string): Promise<import('./evaluation-types').ExperimentView>;
+  startExperiment(id: string): Promise<import('./evaluation-types').ExperimentView>;
+  cancelExperiment(id: string): Promise<import('./evaluation-types').ExperimentView>;
+  evaluationBaselines(): Promise<import('./evaluation-types').BaselineSummary[]>;
+  saveEvaluationBaseline(input: import('./evaluation-types').BaselineInput): Promise<import('./evaluation-types').BaselineView>;
+  evaluationFeedback(id: string): Promise<import('./evaluation-types').FeedbackView[]>;
+  addEvaluationFeedback(id: string, input: import('./evaluation-types').FeedbackInput): Promise<import('./evaluation-types').FeedbackView>;
+  tracingConfigurations(): Promise<import('./evaluation-types').TraceConfigView[]>;
+  saveTracingConfiguration(provider: import('./evaluation-types').TraceProvider, input: import('./evaluation-types').TraceConfig): Promise<import('./evaluation-types').TraceConfigView>;
+  saveTracingCredential(provider: import('./evaluation-types').TraceProvider, input: import('./evaluation-types').TraceCredential): Promise<import('./evaluation-types').TraceConfigView>;
+  deleteTracingCredential(provider: import('./evaluation-types').TraceProvider): Promise<import('./evaluation-types').TraceConfigView>;
+  probeTracing(provider: import('./evaluation-types').TraceProvider): Promise<import('./evaluation-types').TraceConfigView>;
+  previewEvaluationTrace(provider: import('./evaluation-types').TraceProvider, id: string): Promise<import('./evaluation-types').TracePreview>;
+  uploadEvaluationTrace(provider: import('./evaluation-types').TraceProvider, id: string, input: import('./evaluation-types').TraceUpload): Promise<import('./evaluation-types').TraceDelivery>;
+  evaluationTraceDeliveries(): Promise<import('./evaluation-types').TraceDelivery[]>;
   today(timezone: string): Promise<import('./monitoring-types').TodayView>;
   monitoringRules(): Promise<import('./monitoring-types').RuleView[]>;
   createMonitoringRule(input: import('./monitoring-types').RuleInput): Promise<import('./monitoring-types').RuleView>;
