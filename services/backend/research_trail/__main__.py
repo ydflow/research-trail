@@ -16,6 +16,8 @@ def main() -> None:
         raise RuntimeError("研迹后端需要 Python 3.12。请通过 start-dev.cmd 同步环境。")
     provider_options=None
     report_options=None
+    monitoring_options=None
+    calendar_options=None
     case=os.environ.get('RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE')
     if case in ('missing','failure','delayed','research-partial','research-delayed','report-updated','research-checkpoint') and os.environ.get('RESEARCH_TRAIL_OFFLINE')=='1':
         from .workspace_fixtures import fixture_executor
@@ -23,7 +25,13 @@ def main() -> None:
     if case=='report-checkpoint' and os.environ.get('RESEARCH_TRAIL_OFFLINE')=='1':
         from .workspace_fixtures import delayed_report_factory
         report_options={'fixed_factory':delayed_report_factory()}
-    app = create_app(os.environ.pop("RESEARCH_TRAIL_TOKEN", ""),provider_options=provider_options,report_options=report_options)
+    if case=='monitoring-clock' and os.environ.get('RESEARCH_TRAIL_OFFLINE')=='1':
+        from datetime import datetime, timezone
+        fixed=datetime(2024,1,16,21,0,tzinfo=timezone.utc)
+        monitoring_options={'clock':lambda:fixed,'interval_seconds':0.1}
+        calendar_options={'clock':lambda:fixed}
+    app = create_app(os.environ.pop("RESEARCH_TRAIL_TOKEN", ""),provider_options=provider_options,
+        report_options=report_options,monitoring_options=monitoring_options,calendar_options=calendar_options)
     # Bind once and pass the same socket to Uvicorn: no free-port reservation race.
     listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     listener.bind(("127.0.0.1", 0))

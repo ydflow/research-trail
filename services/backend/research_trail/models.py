@@ -251,6 +251,44 @@ class ScreeningRecord(Base):
     payload: Mapped[dict] = mapped_column(JSON)
 
 
+class MonitoringRuleRecord(Base):
+    __tablename__ = 'monitoring_rules'
+    id: Mapped[str] = mapped_column(String(36),primary_key=True)
+    request_id: Mapped[str] = mapped_column(String(36),unique=True)
+    request_hash: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[str] = mapped_column(String(40))
+    revision: Mapped[int] = mapped_column(Integer,default=0)
+    payload: Mapped[dict] = mapped_column(JSON)
+    state: Mapped[dict] = mapped_column(JSON)
+
+
+class MonitoringRunRecord(Base):
+    __tablename__ = 'monitoring_runs'
+    __table_args__ = (UniqueConstraint('rule_id','occurrence'),
+        CheckConstraint("status IN ('running','triggered','quiet','failed','interrupted','skipped')"))
+    id: Mapped[str] = mapped_column(String(36),primary_key=True)
+    rule_id: Mapped[str] = mapped_column(ForeignKey('monitoring_rules.id'))
+    occurrence: Mapped[str] = mapped_column(String(100))
+    started_at: Mapped[str] = mapped_column(String(40),index=True)
+    completed_at: Mapped[str | None] = mapped_column(String(40),nullable=True)
+    status: Mapped[str] = mapped_column(String(20))
+    code: Mapped[str | None] = mapped_column(String(80),nullable=True)
+    notified: Mapped[bool] = mapped_column(default=False)
+    notification_status: Mapped[str] = mapped_column(String(20),default='none')
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
+class MonitoringResearchRecord(Base):
+    __tablename__ = 'monitoring_research_actions'
+    __table_args__ = (UniqueConstraint('run_id','symbol'),)
+    id: Mapped[str] = mapped_column(String(36),primary_key=True)
+    run_id: Mapped[str] = mapped_column(ForeignKey('monitoring_runs.id'))
+    symbol: Mapped[str] = mapped_column(String(20))
+    status: Mapped[str] = mapped_column(String(20))
+    research_id: Mapped[str | None] = mapped_column(ForeignKey('research_runs.id'),nullable=True)
+    code: Mapped[str | None] = mapped_column(String(80),nullable=True)
+
+
 class CalendarSnapshotRecord(Base):
     __tablename__ = 'calendar_snapshots'
     id: Mapped[str] = mapped_column(String(36),primary_key=True)

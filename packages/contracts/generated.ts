@@ -171,6 +171,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/monitoring/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Monitoring Notifications */
+        get: operations["monitoring_notifications_monitoring_notifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/monitoring/notifications/{identity}/claim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Monitoring Claim */
+        post: operations["monitoring_claim_monitoring_notifications__identity__claim_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/monitoring/notifications/{identity}/result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Monitoring Delivery */
+        post: operations["monitoring_delivery_monitoring_notifications__identity__result_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/monitoring/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Monitoring Rules */
+        get: operations["monitoring_rules_monitoring_rules_get"];
+        put?: never;
+        /** Monitoring Create */
+        post: operations["monitoring_create_monitoring_rules_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/monitoring/rules/{identity}/enabled": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Monitoring Toggle */
+        put: operations["monitoring_toggle_monitoring_rules__identity__enabled_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/monitoring/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Monitoring Runs */
+        get: operations["monitoring_runs_monitoring_runs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/monitoring/runs/{identity}/research": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Monitoring Research */
+        post: operations["monitoring_research_monitoring_runs__identity__research_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portfolios": {
         parameters: {
             query?: never;
@@ -1170,6 +1290,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Today */
+        post: operations["today_today_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workspace": {
         parameters: {
             query?: never;
@@ -1881,6 +2018,22 @@ export interface components {
             /** Valued Count */
             valued_count: number;
         };
+        /** DailyBrief */
+        DailyBrief: {
+            /** Attention Count */
+            attention_count: number;
+            /** Date */
+            date: string;
+            /**
+             * Description
+             * @default 已有来源的确定性每日聚合；不消费模型，不给投资影响评分。
+             */
+            description: string;
+            /** Source Counts */
+            source_counts: {
+                [key: string]: number;
+            };
+        };
         /** DiagnosticConnection */
         DiagnosticConnection: {
             /** Checked At */
@@ -2355,6 +2508,67 @@ export interface components {
             /** Value */
             value?: number | string | null;
         };
+        /** MonitorResearchAction */
+        MonitorResearchAction: {
+            /** Code */
+            code?: string | null;
+            /** Id */
+            id: string;
+            /** Research Id */
+            research_id?: string | null;
+            /** Run Id */
+            run_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "claimed" | "dispatched" | "failed" | "uncertain";
+            /** Symbol */
+            symbol: string;
+        };
+        /** MonitorResearchInput */
+        MonitorResearchInput: {
+            /** Symbol */
+            symbol: string;
+        };
+        /** MonitorRun */
+        MonitorRun: {
+            /** Code */
+            code?: string | null;
+            /** Completed At */
+            completed_at?: string | null;
+            /** Id */
+            id: string;
+            /**
+             * Notification Status
+             * @default none
+             * @enum {string}
+             */
+            notification_status: "none" | "pending" | "claimed" | "shown" | "failed" | "unsupported" | "uncertain" | "suppressed";
+            /**
+             * Notified
+             * @default false
+             */
+            notified: boolean;
+            /** Occurrence */
+            occurrence: string;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /** Rule Id */
+            rule_id: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "running" | "triggered" | "quiet" | "failed" | "interrupted" | "skipped";
+        };
         /** News */
         News: {
             /** Id */
@@ -2369,6 +2583,14 @@ export interface components {
             title?: string | null;
             /** Url */
             url?: string | null;
+        };
+        /** NotificationResult */
+        NotificationResult: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "shown" | "failed" | "unsupported";
         };
         /** PartialText */
         PartialText: {
@@ -3437,6 +3659,108 @@ export interface components {
             kind: "risk";
             report: components["schemas"]["RiskReport"];
         };
+        /** RuleInput */
+        RuleInput: {
+            /**
+             * Auto Research
+             * @default false
+             */
+            auto_research: boolean;
+            /**
+             * Cooldown Minutes
+             * @default 60
+             */
+            cooldown_minutes: number;
+            /** Days */
+            days?: number[];
+            /**
+             * Enabled
+             * @default false
+             */
+            enabled: boolean;
+            /**
+             * Horizon Days
+             * @default 7
+             */
+            horizon_days: number;
+            /**
+             * Hour
+             * @default 16
+             */
+            hour: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "price_above" | "price_below" | "new_news" | "earnings" | "rating_change" | "dividend" | "position_weight" | "portfolio_drawdown" | "watchlist-daily-review" | "portfolio-daily-brief" | "weekly-thesis-review" | "pre-earnings-research" | "post-earnings-research";
+            /**
+             * Minute
+             * @default 30
+             */
+            minute: number;
+            /**
+             * Mode
+             * @default simulated
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /** Name */
+            name: string;
+            /**
+             * Notify
+             * @default material-only
+             * @enum {string}
+             */
+            notify: "material-only" | "all";
+            /** Portfolio Id */
+            portfolio_id?: string | null;
+            /**
+             * Provider
+             * @default longbridge
+             * @enum {string}
+             */
+            provider: "longbridge" | "massive";
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            /** Symbol */
+            symbol?: string | null;
+            /** Threshold */
+            threshold?: string | null;
+            /**
+             * Timezone
+             * @default Asia/Shanghai
+             */
+            timezone: string;
+        };
+        /** RuleToggle */
+        RuleToggle: {
+            /** Enabled */
+            enabled: boolean;
+        };
+        /** RuleView */
+        RuleView: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: string;
+            input: components["schemas"]["RuleInput"];
+            /** Last Checked At */
+            last_checked_at?: string | null;
+            /** Last Code */
+            last_code?: string | null;
+            /** Last Triggered At */
+            last_triggered_at?: string | null;
+            /** Next Due */
+            next_due?: string | null;
+            /** Revision */
+            revision: number;
+        };
         /** RunCompletedEvent */
         RunCompletedEvent: {
             payload: components["schemas"]["CompletedPayload"];
@@ -4309,6 +4633,67 @@ export interface components {
             /** Versions */
             versions: components["schemas"]["ThesisVersionSummary"][];
         };
+        /** TodayInput */
+        TodayInput: {
+            /**
+             * Timezone
+             * @default Asia/Shanghai
+             */
+            timezone: string;
+        };
+        /** TodayItem */
+        TodayItem: {
+            /** Mode */
+            mode?: string | null;
+            /** Provider */
+            provider?: string | null;
+            /** Reason */
+            reason: string;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "alert" | "automation" | "calendar" | "research" | "report" | "thesis" | "portfolio" | "watchlist";
+            /** Source Id */
+            source_id: string;
+            /** Status */
+            status: string;
+            /** Symbol */
+            symbol?: string | null;
+            /** Title */
+            title: string;
+        };
+        /** TodayView */
+        TodayView: {
+            /**
+             * Application Only
+             * @default true
+             */
+            application_only: boolean;
+            brief: components["schemas"]["DailyBrief"];
+            /**
+             * External Tracing
+             * @default false
+             */
+            external_tracing: boolean;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Items */
+            items: components["schemas"]["TodayItem"][];
+            /** Limitations */
+            limitations: string[];
+            /** Research Actions */
+            research_actions: components["schemas"]["MonitorResearchAction"][];
+            /** Rules */
+            rules: components["schemas"]["RuleView"][];
+            /** Runs */
+            runs: components["schemas"]["MonitorRun"][];
+            /** Timezone */
+            timezone: string;
+        };
         /** ToolArguments */
         ToolArguments: {
             /** Symbol */
@@ -4825,6 +5210,278 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MarketSymbol"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    monitoring_notifications_monitoring_notifications_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MonitorRun"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    monitoring_claim_monitoring_notifications__identity__claim_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MonitorRun"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    monitoring_delivery_monitoring_notifications__identity__result_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationResult"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MonitorRun"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    monitoring_rules_monitoring_rules_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleView"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    monitoring_create_monitoring_rules_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RuleInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    monitoring_toggle_monitoring_rules__identity__enabled_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RuleToggle"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    monitoring_runs_monitoring_runs_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MonitorRun"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    monitoring_research_monitoring_runs__identity__research_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MonitorResearchInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MonitorResearchAction"];
                 };
             };
             /** @description Validation Error */
@@ -7247,6 +7904,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ThesisVersion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    today_today_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TodayInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TodayView"];
                 };
             };
             /** @description Validation Error */

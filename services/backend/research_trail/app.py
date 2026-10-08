@@ -47,6 +47,9 @@ from .theses import ThesisService
 from .screening import ScreeningService, ScreeningError
 from .screening_contracts import ScreeningContext, ScreeningInput, ScreeningTask, ScreeningRun, ScreeningSummary, ScreeningEvidence
 from .calendar import CalendarService, CalendarError
+from .monitoring import MonitoringService, MonitoringError
+from .monitoring_contracts import (RuleInput, RuleToggle, RuleView, MonitorRun, TodayInput, TodayView,
+    NotificationResult, MonitorResearchInput, MonitorResearchAction)
 from .calendar_contracts import CalendarSelection, CalendarRefresh, CalendarViewInput, CalendarSource, CalendarPage, CalendarSummary, CalendarOriginal
 from uuid import UUID
 from .thesis_contracts import (ThesisCreate, ThesisEdit, ThesisEvaluate, ThesisJudge,
@@ -63,7 +66,7 @@ class Health(BaseModel):
 
 def create_app(token: str, market_provider: MarketProvider | None = None, *,
                database_path: Path | str | None = None, model_provider: ModelProvider | None = None,
-               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None, research_options=None, report_options=None, screening_options=None, calendar_options=None) -> FastAPI:
+               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None, research_options=None, report_options=None, screening_options=None, calendar_options=None, monitoring_options=None) -> FastAPI:
     if len(token) < 32:
         raise ValueError("启动令牌缺失或过短；请由 Electron 启动服务。")
     @asynccontextmanager
@@ -101,9 +104,14 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             app.state.recovery = ResearchRecovery(app.state.research,app.state.reports,app.state.settings)
             app.state.store.recover_interrupted()
             manager = app.state.manager = RunManager(app.state.store, runner, run_timings)
+            app.state.monitoring = MonitoringService(database,app.state.capabilities,app.state.providers,
+                app.state.calendar,app.state.watchlist,app.state.portfolios,app.state.research,app.state.reports,
+                app.state.theses,**(monitoring_options or {}))
             yield
         finally:
             try:
+                if hasattr(app.state,'monitoring'):
+                    app.state.monitoring.close()
                 if hasattr(app.state,'screening'):
                     app.state.screening.close()
                 if hasattr(app.state,'reports'):
@@ -143,6 +151,37 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
         return JSONResponse(status_code=409, content={"detail": str(error)})
 
     protected = [Depends(authorize)]
+
+    @app.exception_handler(MonitoringError)
+    async def monitoring_error(_request,error):
+        return JSONResponse(status_code=404 if error.code.endswith('NOT_FOUND') else 409,content={'detail':error.code})
+
+    @app.get('/monitoring/rules',response_model=list[RuleView],dependencies=protected)
+    def monitoring_rules(): return app.state.monitoring.rules()
+
+    @app.post('/monitoring/rules',response_model=RuleView,dependencies=protected)
+    def monitoring_create(body: RuleInput): return app.state.monitoring.create(body)
+
+    @app.put('/monitoring/rules/{identity}/enabled',response_model=RuleView,dependencies=protected)
+    def monitoring_toggle(identity: UUID,body: RuleToggle): return app.state.monitoring.toggle(identity,body.enabled)
+
+    @app.get('/monitoring/runs',response_model=list[MonitorRun],dependencies=protected)
+    def monitoring_runs(): return app.state.monitoring.history()
+
+    @app.get('/monitoring/notifications',response_model=list[MonitorRun],dependencies=protected)
+    def monitoring_notifications(): return app.state.monitoring.pending_notifications()
+
+    @app.post('/monitoring/notifications/{identity}/claim',response_model=MonitorRun | None,dependencies=protected)
+    def monitoring_claim(identity: UUID): return app.state.monitoring.claim_notification(identity)
+
+    @app.post('/monitoring/notifications/{identity}/result',response_model=MonitorRun,dependencies=protected)
+    def monitoring_delivery(identity: UUID,body: NotificationResult): return app.state.monitoring.finish_notification(identity,body.status)
+
+    @app.post('/monitoring/runs/{identity}/research',response_model=MonitorResearchAction,dependencies=protected)
+    def monitoring_research(identity: UUID,body: MonitorResearchInput): return app.state.monitoring.start_research(identity,body)
+
+    @app.post('/today',response_model=TodayView,dependencies=protected)
+    def today(body: TodayInput): return app.state.monitoring.today(body)
 
     @app.exception_handler(CalendarError)
     async def calendar_error(_request,error):
