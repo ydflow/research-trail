@@ -27,7 +27,7 @@
 - 第19步：验收通过（模拟/本机自动）；17个固定筛选任务、有界股票池和机会发现页已实现，定向33项Python及2项实际Electron通过，完整502 Python/8 Node/43实际Electron、契约/类型/构建和0014重复迁移检查通过。来源SOURCES-step19.json，范围ACCEPTANCE-step19.md及EVIDENCE第44节。开发轮未提交/发布；本次独立发布复核新增两项回归并修复，筛选35项通过，最终本机/独立干净源码504/8/43及根CMD重启历史通过，已创建[PR #18](https://github.com/ydflow/research-trail/pull/18)；CI/合并按EVIDENCE第45节、PR与根发布回执实际记录。
 - 第20步：验收通过（固定模拟/本机自动）；Python财报/宏观/央行固定日历、来源时间/时区/精度、稳定去重、不可变快照及事件研究上下文已实现。开发28 Python/3实际Electron及完整532/8/46见EVIDENCE第46节；独立发布复核修复溢出及超时边界，日历31项、发布首轮本机/干净源码535 Python/8 Node/46实际Electron、0015重复迁移及根CMD重启通过，来源SOURCES-step20.json，范围ACCEPTANCE-step20.md；已创建[PR #19](https://github.com/ydflow/research-trail/pull/19)，远程CI的采集等待阻塞已有真实修复、定向5项通过；新535/8/47全套与合并按EVIDENCE第47节、PR/根回执。真实来源/LLM与用户亲自记录未验证。
 - 第21步：验收通过（固定数据/本机自动）；八类提醒、五类固定自动化、来源简报及Today已接入Python持久状态和Electron通知；本机与独立干净源码577 Python/12 Node/50实际Electron、0016迁移及根CMD重启通过，另有原生通知show回执。范围见ACCEPTANCE-step21.md与EVIDENCE第48节；真实来源/用户亲自记录未验证。开发轮已停止；本次另获第21步发布授权，复核见EVIDENCE第49节，已创建[PR #20](https://github.com/ydflow/research-trail/pull/20)；最终CI/合并按PR及根PROJECT_STATE实际回执；第21步发布轮未实施22—24，当前第22步按新指令执行。
-- 第22步：验收通过（确定性离线/本机自动）；12原创案例、实验/基线/轨迹/反馈、无效实验无分数、0017持久化及18命名桥已实现；46项Python定向、2项新增实窗、最终独立干净源码623 Python/12 Node/52实际Electron、原创案例CLI、迁移/契约/类型/构建及根CMD重启历史通过，见ACCEPTANCE-step22.md与EVIDENCE第50节。真实追踪连接未执行，未提交或发布，已停止。
+- 第22步：验收通过（确定性离线/本机自动）；12原创案例、实验/基线/轨迹/反馈、无效实验无分数、0017持久化及18命名桥已实现；46项Python定向、2项新增实窗、最终独立干净源码623 Python/12 Node/52实际Electron、原创案例CLI、迁移/契约/类型/构建及根CMD重启历史通过，见ACCEPTANCE-step22.md与EVIDENCE第50节。真实追踪连接未执行；开发轮已停止，本次另获第22步发布授权并创建[PR #21](https://github.com/ydflow/research-trail/pull/21)，复核见EVIDENCE第51节，最终CI/合并按PR及根PROJECT_STATE回执。
 - 第23/24步：未开始；没有用户具体指令不继续。
 - 默认分支 `main`；第0/1步首次上传检查见EVIDENCE第7节，第2步发布检查见第9—10节，提交历史和远程状态以Git为准。
 - 状态取值：未开始 / 进行中 / 代码完成/待验收 / 验收通过 / 受阻。

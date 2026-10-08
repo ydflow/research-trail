@@ -1924,3 +1924,8 @@ MockTransport协议验收与真实连接严格区分；离线门禁只允许loop
 没有把重复执行不变测试记为新增成果；新提交远程Windows CI单独跟踪，尚不预先宣称通过或合并。早期并发作业如取消不能计为通过。
 密钥、私人账户/持仓、运行数据库、日志、缓存、依赖、构建和截图不在源码名单。真实LangSmith/Langfuse连接/上传/控制台、真实LLM质量/数据、长期压力、安装包和用户亲自操作仍未验证。
 本节在推送前记录，实际提交、PR、CI、普通merge及本地同步以后续Git/回执为准；失败先修复本步并复验，无法解决不合并。第23/24步、标签、Release和定时付费评测不在范围。
+
+已推送feat/step-22-evaluation并创建[PR #21](https://github.com/ydflow/research-trail/pull/21)，初始功能head a53aba58adcd1db719a9b1ffe35522b01d06d574。
+来源05c19ef1e843281c7164de8b13ac7ecc848e2102、Python ba2c2dab445821850965a6c768a09fd1c99cfe61、迁移测试修复a7ce6e66ff4096a3998037fdfdd37e6f712bcab4、桌面25f7d194d9eff248db6404fedf77bdcff99d84e2、文档a53aba58adcd1db719a9b1ffe35522b01d06d574使用实际ydflow/noreply作者及当次时间保留，未伪造上游导入或开发时间。
+推送前283个Git blob与工作区规范化LF一致；首轮push/PR Actions37766232480/37766245716已启动。本PR链接回执会形成新head，旧head若被并发机制取消不计为通过。
+最终检查、审查状态、普通merge SHA及main同步/CI按PR与根PROJECT_STATE实际回执记录，本行不预先宣称通过或合并。

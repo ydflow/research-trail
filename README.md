@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-第22步已实现并通过离线自动验收（2026-10-08）：最终独立干净源码623 Python/12 Node/52实际Electron、12原创案例CLI、0017重复迁移及根CMD重启历史通过。Python管理正常/错误/恢复/回归案例、实验、工具轨迹、不可变基线及人工反馈；取消/未执行/运行错误无有效分数，实现变化后旧未执行实验不能开始。评测中心经18新命名桥读取同一SQLite状态，重启不自动补跑。LangSmith/Langfuse追踪默认关闭，显式连接与脱敏预览/上传分开，真实连接未执行。范围、CMD操作和缺口见[第22步清单](docs/ACCEPTANCE-step22.md)，学习链见tutorial C15、练习见practice。本轮未提交或发布，已停止；第23/24步未开始。
+第22步已实现并通过离线自动验收（2026-10-08）：最终独立干净源码623 Python/12 Node/52实际Electron、12原创案例CLI、0017重复迁移及根CMD重启历史通过。Python管理正常/错误/恢复/回归案例、实验、工具轨迹、不可变基线及人工反馈；取消/未执行/运行错误无有效分数，实现变化后旧未执行实验不能开始。评测中心经18新命名桥读取同一SQLite状态，重启不自动补跑。LangSmith/Langfuse追踪默认关闭，显式连接与脱敏预览/上传分开，真实连接未执行。范围、CMD操作和缺口见[第22步清单](docs/ACCEPTANCE-step22.md)，学习链见tutorial C15、练习见practice。开发轮未提交/发布；本次另获第22步发布授权，已创建[PR #21](https://github.com/ydflow/research-trail/pull/21)，复核见EVIDENCE第51节。最终CI/合并按PR及根PROJECT_STATE实际回执；第23/24步未开始。
 
 第21步已实现并通过本机及干净源码自动验收（2026-10-08）：577 Python/12 Node/50实际Electron；另获本机原生通知show回执。Python持久化八类提醒、五类固定自动化、执行/证据游标/冷却及一次采集领取；Electron显示原生通知，Today保留组合、自选、提醒、事件、研究/报告和待复审论点的来源。首版只在应用运行时调度，关闭漏计划记未执行、不补跑；财报前后自动数据采集需额外开启默认关闭选项，不自动调用报告模型。范围见[第21步清单](docs/ACCEPTANCE-step21.md)与EVIDENCE第48节。开发轮未提交/发布；本次另获第21步发布授权，复核见EVIDENCE第49节，已创建[PR #20](https://github.com/ydflow/research-trail/pull/20)；最终CI/合并按PR及根PROJECT_STATE实际回执。第22步见当前记录，第23/24步未实施。
 
