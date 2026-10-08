@@ -9,6 +9,116 @@ const { tmpdir } = require('node:os');
 const { createRequire } = require('node:module');
 const { pathToFileURL } = require('node:url');
 
+test('Step21 Today fixed-clock rules notification claims source links and restart do not repeat research', {timeout:120000},async()=>{
+  let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'monitoring-clock'});
+  const path=instance.databasePath;let snapshot,rule,run,action;
+  try{
+    let page=instance.page;const errors=[];page.on('pageerror',e=>errors.push(e.message));await waitForBackend(page);
+    await instance.app.evaluate(({Notification})=>{
+      globalThis.__monitorNoticeCount=0;Notification.isSupported=()=>true;
+      Notification.prototype.show=function(){globalThis.__monitorNoticeCount++;this.emit('show');};
+    });
+    snapshot=await page.evaluate(()=>window.researchTrail.refreshCalendar({request_id:crypto.randomUUID()}));
+    await page.getByRole('button',{name:'Today与提醒',exact:true}).click();
+    await expect(page.getByTestId('daily-brief')).toContainText('每日简报');
+    await expect(page.getByTestId('today-panel')).toContainText('关闭期间的计划未执行');
+    await expect(page.locator('[data-source="watchlist"]')).toHaveCount(4);
+    await expect(page.locator('[data-source="portfolio"]')).toHaveCount(3);
+    await page.getByText('新增提醒或自动化规则',{exact:true}).click();
+    await page.getByLabel('规则类型',{exact:true}).selectOption('earnings');
+    await page.getByLabel('规则名称',{exact:true}).fill('固定财报提醒');
+    await page.getByLabel('创建后启用',{exact:true}).check();
+    await page.getByRole('button',{name:'保存规则',exact:true}).dblclick();
+    await expect(page.getByTestId('monitor-rules')).toContainText('固定财报提醒');
+    await expect(page.getByTestId('monitor-run')).toHaveAttribute('data-status','triggered');
+    await expect.poll(async()=>instance.app.evaluate(()=>globalThis.__monitorNoticeCount)).toBe(1);
+    await expect(page.getByTestId('monitor-run')).toContainText('系统已显示');
+    rule=(await page.evaluate(()=>window.researchTrail.monitoringRules()))[0];
+    assert.equal((await page.evaluate(()=>window.researchTrail.monitoringRules())).length,1);
+    run=(await page.evaluate(()=>window.researchTrail.monitoringRuns()))[0];
+    assert.equal(run.payload.snapshot_id,snapshot.id);assert.equal(run.payload.model_requests,0);
+    await page.getByRole('button',{name:'开始一次采集 AAPL.US',exact:true}).dblclick();
+    await expect(page.getByTestId('monitor-research-action')).toContainText('dispatched');
+    action=(await page.evaluate(()=>window.researchTrail.today('Asia/Shanghai'))).research_actions[0];
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,1);
+    const repeated=await page.evaluate(id=>window.researchTrail.monitoringResearch(id,'AAPL.US'),run.id);
+    assert.deepEqual(repeated,action);
+    await page.getByRole('button',{name:'刷新Today与简报',exact:true}).click();
+    assert.equal((await page.evaluate(()=>window.researchTrail.monitoringRuns())).length,1);
+    await page.getByText('新增提醒或自动化规则',{exact:true}).click();
+    await page.getByTestId('daily-brief').scrollIntoViewIfNeeded();
+    await screenshot(page,'step21-today-wide.png');
+    await instance.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(600,700));
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await screenshot(page,'step21-today-compact.png');
+    await instance.app.close();instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'monitoring-clock',RESEARCH_TRAIL_DB_PATH:path});
+    page=instance.page;await waitForBackend(page);
+    await page.getByRole('button',{name:'Today与提醒',exact:true}).click();
+    await expect(page.getByTestId('monitor-run')).toHaveAttribute('data-status','triggered');
+    await expect(page.getByTestId('monitor-run')).toContainText('系统已显示');
+    assert.equal((await page.evaluate(()=>window.researchTrail.monitoringRules()))[0].id,rule.id);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.monitoringResearch(id,'AAPL.US'),run.id),action);
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,1);
+    await assert.rejects(page.evaluate(()=>window.researchTrail.today('../../private')),/时区格式无效/);
+    await assert.rejects(page.evaluate(()=>window.researchTrail.createMonitoringRule({unexpected:true})),/字段无效/);
+    assert.deepEqual(errors,[]);
+  }finally{await instance.app.close();}
+});
+
+test('Step21 real unconfigured rules and default-disabled price rule remain honest', {timeout:90000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'monitoring-clock'});
+  try{
+    const page=instance.page;await waitForBackend(page);await page.getByRole('button',{name:'Today与提醒',exact:true}).click();
+    await page.getByText('新增提醒或自动化规则',{exact:true}).click();
+    await page.getByRole('button',{name:'保存规则',exact:true}).click();
+    await expect(page.getByTestId('monitor-rules')).toContainText('关闭 · simulated');
+    assert.equal((await page.evaluate(()=>window.researchTrail.monitoringRuns())).length,0);
+    await page.getByLabel('规则名称',{exact:true}).fill('真实未配置');
+    await page.getByLabel('提醒数据模式',{exact:true}).selectOption('real');
+    await page.getByLabel('创建后启用',{exact:true}).check();
+    await page.getByRole('button',{name:'保存规则',exact:true}).click();
+    await expect(page.getByTestId('monitor-run')).toHaveAttribute('data-status','failed');
+    await expect(page.getByTestId('monitor-run')).toContainText('UNCONFIGURED');
+    await expect(page.getByTestId('monitor-run')).toContainText('无需通知');
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,0);
+    await screenshot(page,'step21-real-unconfigured.png');
+  }finally{await instance.app.close();}
+});
+
+test('Step21 opt-in automatic earnings collection persists one action across polling and restart', {timeout:90000},async()=>{
+  let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'monitoring-clock'});
+  const path=instance.databasePath;let action,run;
+  try {
+    let page=instance.page;await waitForBackend(page);
+    await instance.app.evaluate(({Notification})=>{Notification.isSupported=()=>false;});
+    await page.evaluate(()=>window.researchTrail.refreshCalendar({request_id:crypto.randomUUID()}));
+    await page.getByRole('button',{name:'Today与提醒',exact:true}).click();
+    await page.getByText('新增提醒或自动化规则',{exact:true}).click();
+    await page.getByLabel('规则类型',{exact:true}).selectOption('pre-earnings-research');
+    await expect(page.getByLabel('触发后自动采集',{exact:true})).not.toBeChecked();
+    await page.getByLabel('规则名称',{exact:true}).fill('固定自动财报采集');
+    await page.getByLabel('触发后自动采集',{exact:true}).check();
+    await page.getByLabel('创建后启用',{exact:true}).check();
+    await page.getByRole('button',{name:'保存规则',exact:true}).dblclick();
+    await expect(page.getByTestId('monitor-research-action')).toContainText('dispatched');
+    action=(await page.evaluate(()=>window.researchTrail.today('Asia/Shanghai'))).research_actions[0];
+    run=(await page.evaluate(()=>window.researchTrail.monitoringRuns()))[0];
+    assert.equal(run.payload.auto_research,true);assert.equal(run.payload.model_requests,0);
+    assert.equal((await page.evaluate(()=>window.researchTrail.monitoringRules())).length,1);
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,1);
+    await expect(page.getByRole('button',{name:'开始一次采集 AAPL.US',exact:true})).toBeDisabled();
+    await page.getByRole('button',{name:'刷新Today与简报',exact:true}).click();
+    assert.deepEqual((await page.evaluate(()=>window.researchTrail.today('Asia/Shanghai'))).research_actions,[action]);
+    await screenshot(page,'step21-auto-earnings.png');
+    await instance.app.close();instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'monitoring-clock',RESEARCH_TRAIL_DB_PATH:path});
+    page=instance.page;await waitForBackend(page);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.monitoringResearch(id,'AAPL.US'),run.id),action);
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,1);
+    assert.equal((await page.evaluate(()=>window.researchTrail.monitoringRuns())).length,1);
+    assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,0);
+  }finally{await instance.app.close();}
+});
+
 test('Step20 publication collection readiness follows the plan without calling a model', {timeout:60000}, async()=>{
   const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'research-checkpoint'});
   try {
@@ -1442,6 +1552,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       'workspaceState', 'addWatch', 'removeWatch', 'selectSecurity', 'securityPage', 'openNewsSource',
       'screeningTasks', 'startScreening', 'screeningRuns', 'screeningRun', 'cancelScreening', 'screeningEvidence',
       'calendarSources','refreshCalendar','calendarHistory','calendarView','calendarOriginal',
+      'today','monitoringRules','createMonitoringRule','toggleMonitoringRule','monitoringRuns','monitoringResearch',
       'thesisList', 'createThesis', 'thesis', 'thesisVersion', 'editThesis', 'evaluateThesis', 'judgeThesis', 'thesisReview',
       'reportList', 'generateReport', 'report', 'cancelReport', 'reportEvidence', 'exportReport', 'reportDiff',
       'researchCheckpoint', 'resumeResearch', 'restartResearch', 'abandonResearch',

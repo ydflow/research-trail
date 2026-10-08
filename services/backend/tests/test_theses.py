@@ -158,15 +158,15 @@ def test_old_database_upgrade_preserves_reports_and_starts_without_auto_thesis(a
     from alembic.config import Config
     with api() as (c,app):
         job=source(c,strategy='value'); path=app.state.theses.database.path
-        # Remove only additive empty Step18 tables in an isolated test database.
+        # Remove additive empty tables after 0012 in an isolated test database.
         with app.state.theses.database.engine.begin() as db:
-            for name in ('calendar_snapshots','screening_runs','thesis_reviews','thesis_versions','investment_theses'): db.execute(text('DROP TABLE '+name))
+            for name in ('monitoring_research_actions','monitoring_runs','monitoring_rules','calendar_snapshots','screening_runs','thesis_reviews','thesis_versions','investment_theses'): db.execute(text('DROP TABLE '+name))
             db.execute(text("UPDATE alembic_version SET version_num='0012_checkpoints'"))
     with api(path=path) as (c,app):
         assert c.get('/theses').json()==[] and c.get('/research/reports/'+job['id']).json()==job
         assert thesis(c,job)['current_version']==1
         with app.state.theses.database.engine.connect() as db:
-            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0015_calendar'
+            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0016_monitoring'
             assert not db.execute(text('PRAGMA foreign_key_check')).all()
 
 @pytest.mark.parametrize('case',['cached','old-fetched'])

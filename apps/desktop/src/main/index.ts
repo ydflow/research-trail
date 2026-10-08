@@ -1,12 +1,25 @@
-import { app, BrowserWindow, dialog, ipcMain, shell, type IpcMainInvokeEvent, type IpcMainEvent } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, shell, Notification, type IpcMainInvokeEvent, type IpcMainEvent } from 'electron';
 import { writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { BackendManager } from './backend';
 import { originalNewsUrl } from './news-url';
+import { MonitorNotifications } from './monitor-notifications';
 
 const root = resolve(__dirname, '../../..');
 const backend = new BackendManager(root);
+const notifications = new MonitorNotifications(backend,run => {
+  if(!Notification.isSupported()) return Promise.resolve('unsupported');
+  return new Promise(resolveDelivery=>{
+    const notice=new Notification({title:'研迹 · '+String(run.payload.rule_name??'研究提醒').slice(0,60),
+      body:(run.payload.mode==='simulated'?'模拟来源 · ':'已保存来源 · ')+String(run.payload.reason??'请打开Today查看触发事实。').slice(0,200),silent:true});
+    const timer=setTimeout(()=>resolveDelivery('failed'),4000);
+    notice.once('show',()=>{clearTimeout(timer);resolveDelivery('shown');});
+    notice.once('failed',()=>{clearTimeout(timer);resolveDelivery('failed');});
+    notice.once('click',()=>{if(window && !window.isDestroyed()){window.show();window.focus();}});
+    try { notice.show(); } catch { clearTimeout(timer);resolveDelivery('failed'); }
+  });
+});
 let window: BrowserWindow | undefined;
 let closing = false;
 let mayQuit = false;
@@ -39,6 +52,12 @@ app.whenReady().then(async () => {
   ipcMain.handle('backend:check', (event) => { assertSender(event); return backend.check(); });
   ipcMain.handle('backend:retry', (event) => { assertSender(event); return backend.retry(); });
   ipcMain.handle('workspace:state', event => { assertSender(event); return backend.workspaceState(); });
+  ipcMain.handle('today:view',(event,timezone:unknown)=>{assertSender(event);return backend.today(timezone);});
+  ipcMain.handle('monitoring:rules',event=>{assertSender(event);return backend.monitoringRules();});
+  ipcMain.handle('monitoring:create',(event,input:unknown)=>{assertSender(event);return backend.createMonitoringRule(input);});
+  ipcMain.handle('monitoring:toggle',(event,id:unknown,enabled:unknown)=>{assertSender(event);return backend.toggleMonitoringRule(id,enabled);});
+  ipcMain.handle('monitoring:runs',event=>{assertSender(event);return backend.monitoringRuns();});
+  ipcMain.handle('monitoring:research',(event,id:unknown,symbol:unknown)=>{assertSender(event);return backend.monitoringResearch(id,symbol);});
   ipcMain.handle('calendar:sources',(event,input:unknown)=>{assertSender(event);return backend.calendarSources(input);});
   ipcMain.handle('calendar:refresh',(event,input:unknown)=>{assertSender(event);return backend.refreshCalendar(input);});
   ipcMain.handle('calendar:history',event=>{assertSender(event);return backend.calendarHistory();});
@@ -159,6 +178,7 @@ app.whenReady().then(async () => {
   window.webContents.on('did-start-navigation', (_event, _url, _inPlace, mainFrame) => { if (mainFrame) backend.stopSubscriptions(); });
   window.webContents.on('destroyed', () => backend.stopSubscriptions());
   backend.on('status', (state) => {
+    if(state.phase==='healthy') notifications.start(); else notifications.stop();
     if (window && !window.isDestroyed()) window.webContents.send('backend:changed', state);
   });
   if (devUrl) {
@@ -179,6 +199,7 @@ app.on('before-quit', (event) => {
   event.preventDefault();
   if (closing) return;
   closing = true;
+  notifications.stop();
   backend.dispose().catch((error) => console.error('清理失败：', error.message)).finally(() => { mayQuit = true; app.quit(); });
 });
 

@@ -1542,6 +1542,38 @@
         "title": "CurrencyValue",
         "type": "object"
       },
+      "DailyBrief": {
+        "additionalProperties": false,
+        "properties": {
+          "attention_count": {
+            "title": "Attention Count",
+            "type": "integer"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "description": {
+            "default": "已有来源的确定性每日聚合；不消费模型，不给投资影响评分。",
+            "title": "Description",
+            "type": "string"
+          },
+          "source_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Source Counts",
+            "type": "object"
+          }
+        },
+        "required": [
+          "date",
+          "source_counts",
+          "attention_count"
+        ],
+        "title": "DailyBrief",
+        "type": "object"
+      },
       "DiagnosticConnection": {
         "additionalProperties": false,
         "properties": {
@@ -2669,6 +2701,170 @@
         "title": "Metric",
         "type": "object"
       },
+      "MonitorResearchAction": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "research_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Research Id"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "claimed",
+              "dispatched",
+              "failed",
+              "uncertain"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "run_id",
+          "symbol",
+          "status"
+        ],
+        "title": "MonitorResearchAction",
+        "type": "object"
+      },
+      "MonitorResearchInput": {
+        "additionalProperties": false,
+        "properties": {
+          "symbol": {
+            "pattern": "^[A-Z0-9]{1,6}\\.(US|HK|SG|SH|SZ|HAS)$",
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "symbol"
+        ],
+        "title": "MonitorResearchInput",
+        "type": "object"
+      },
+      "MonitorRun": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "notification_status": {
+            "default": "none",
+            "enum": [
+              "none",
+              "pending",
+              "claimed",
+              "shown",
+              "failed",
+              "unsupported",
+              "uncertain",
+              "suppressed"
+            ],
+            "title": "Notification Status",
+            "type": "string"
+          },
+          "notified": {
+            "default": false,
+            "title": "Notified",
+            "type": "boolean"
+          },
+          "occurrence": {
+            "title": "Occurrence",
+            "type": "string"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "rule_id": {
+            "title": "Rule Id",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "running",
+              "triggered",
+              "quiet",
+              "failed",
+              "interrupted",
+              "skipped"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "rule_id",
+          "occurrence",
+          "started_at",
+          "status",
+          "payload"
+        ],
+        "title": "MonitorRun",
+        "type": "object"
+      },
       "News": {
         "additionalProperties": false,
         "properties": {
@@ -2737,6 +2933,25 @@
           "id"
         ],
         "title": "News",
+        "type": "object"
+      },
+      "NotificationResult": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "enum": [
+              "shown",
+              "failed",
+              "unsupported"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "NotificationResult",
         "type": "object"
       },
       "PartialText": {
@@ -5607,6 +5822,254 @@
         "title": "RiskToolData",
         "type": "object"
       },
+      "RuleInput": {
+        "additionalProperties": false,
+        "properties": {
+          "auto_research": {
+            "default": false,
+            "title": "Auto Research",
+            "type": "boolean"
+          },
+          "cooldown_minutes": {
+            "default": 60,
+            "maximum": 10080,
+            "minimum": 0,
+            "title": "Cooldown Minutes",
+            "type": "integer"
+          },
+          "days": {
+            "items": {
+              "maximum": 7,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "maxItems": 7,
+            "minItems": 1,
+            "title": "Days",
+            "type": "array"
+          },
+          "enabled": {
+            "default": false,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "horizon_days": {
+            "default": 7,
+            "maximum": 30,
+            "minimum": 1,
+            "title": "Horizon Days",
+            "type": "integer"
+          },
+          "hour": {
+            "default": 16,
+            "maximum": 23,
+            "minimum": 0,
+            "title": "Hour",
+            "type": "integer"
+          },
+          "kind": {
+            "enum": [
+              "price_above",
+              "price_below",
+              "new_news",
+              "earnings",
+              "rating_change",
+              "dividend",
+              "position_weight",
+              "portfolio_drawdown",
+              "watchlist-daily-review",
+              "portfolio-daily-brief",
+              "weekly-thesis-review",
+              "pre-earnings-research",
+              "post-earnings-research"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "minute": {
+            "default": 30,
+            "maximum": 59,
+            "minimum": 0,
+            "title": "Minute",
+            "type": "integer"
+          },
+          "mode": {
+            "default": "simulated",
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "notify": {
+            "default": "material-only",
+            "enum": [
+              "material-only",
+              "all"
+            ],
+            "title": "Notify",
+            "type": "string"
+          },
+          "portfolio_id": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portfolio Id"
+          },
+          "provider": {
+            "default": "longbridge",
+            "enum": [
+              "longbridge",
+              "massive"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z0-9]{1,6}\\.(US|HK|SG|SH|SZ|HAS)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          },
+          "timezone": {
+            "default": "Asia/Shanghai",
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "name",
+          "kind"
+        ],
+        "title": "RuleInput",
+        "type": "object"
+      },
+      "RuleToggle": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "title": "RuleToggle",
+        "type": "object"
+      },
+      "RuleView": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "input": {
+            "$ref": "#/components/schemas/RuleInput"
+          },
+          "last_checked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Checked At"
+          },
+          "last_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Code"
+          },
+          "last_triggered_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Triggered At"
+          },
+          "next_due": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Due"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "revision",
+          "input"
+        ],
+        "title": "RuleView",
+        "type": "object"
+      },
       "RunCompletedEvent": {
         "additionalProperties": false,
         "properties": {
@@ -8011,6 +8474,169 @@
         "title": "ThesisView",
         "type": "object"
       },
+      "TodayInput": {
+        "additionalProperties": false,
+        "properties": {
+          "timezone": {
+            "default": "Asia/Shanghai",
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "title": "TodayInput",
+        "type": "object"
+      },
+      "TodayItem": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mode"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "alert",
+              "automation",
+              "calendar",
+              "research",
+              "report",
+              "thesis",
+              "portfolio",
+              "watchlist"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "source_id",
+          "title",
+          "status",
+          "reason"
+        ],
+        "title": "TodayItem",
+        "type": "object"
+      },
+      "TodayView": {
+        "additionalProperties": false,
+        "properties": {
+          "application_only": {
+            "default": true,
+            "title": "Application Only",
+            "type": "boolean"
+          },
+          "brief": {
+            "$ref": "#/components/schemas/DailyBrief"
+          },
+          "external_tracing": {
+            "default": false,
+            "title": "External Tracing",
+            "type": "boolean"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TodayItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "research_actions": {
+            "items": {
+              "$ref": "#/components/schemas/MonitorResearchAction"
+            },
+            "title": "Research Actions",
+            "type": "array"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/RuleView"
+            },
+            "title": "Rules",
+            "type": "array"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/MonitorRun"
+            },
+            "title": "Runs",
+            "type": "array"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "generated_at",
+          "timezone",
+          "items",
+          "runs",
+          "rules",
+          "research_actions",
+          "brief",
+          "limitations"
+        ],
+        "title": "TodayView",
+        "type": "object"
+      },
       "ToolArguments": {
         "additionalProperties": false,
         "properties": {
@@ -9043,6 +9669,472 @@
           }
         },
         "summary": "Symbols"
+      }
+    },
+    "/monitoring/notifications": {
+      "get": {
+        "operationId": "monitoring_notifications_monitoring_notifications_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MonitorRun"
+                  },
+                  "title": "Response Monitoring Notifications Monitoring Notifications Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Monitoring Notifications"
+      }
+    },
+    "/monitoring/notifications/{identity}/claim": {
+      "post": {
+        "operationId": "monitoring_claim_monitoring_notifications__identity__claim_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/MonitorRun"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Monitoring Claim Monitoring Notifications  Identity  Claim Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Monitoring Claim"
+      }
+    },
+    "/monitoring/notifications/{identity}/result": {
+      "post": {
+        "operationId": "monitoring_delivery_monitoring_notifications__identity__result_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationResult"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitorRun"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Monitoring Delivery"
+      }
+    },
+    "/monitoring/rules": {
+      "get": {
+        "operationId": "monitoring_rules_monitoring_rules_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RuleView"
+                  },
+                  "title": "Response Monitoring Rules Monitoring Rules Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Monitoring Rules"
+      },
+      "post": {
+        "operationId": "monitoring_create_monitoring_rules_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuleInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Monitoring Create"
+      }
+    },
+    "/monitoring/rules/{identity}/enabled": {
+      "put": {
+        "operationId": "monitoring_toggle_monitoring_rules__identity__enabled_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuleToggle"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Monitoring Toggle"
+      }
+    },
+    "/monitoring/runs": {
+      "get": {
+        "operationId": "monitoring_runs_monitoring_runs_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MonitorRun"
+                  },
+                  "title": "Response Monitoring Runs Monitoring Runs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Monitoring Runs"
+      }
+    },
+    "/monitoring/runs/{identity}/research": {
+      "post": {
+        "operationId": "monitoring_research_monitoring_runs__identity__research_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MonitorResearchInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitorResearchAction"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Monitoring Research"
       }
     },
     "/portfolios": {
@@ -13268,6 +14360,62 @@
           }
         },
         "summary": "Thesis Version"
+      }
+    },
+    "/today": {
+      "post": {
+        "operationId": "today_today_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TodayInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodayView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Today"
       }
     },
     "/workspace": {

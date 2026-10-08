@@ -16,6 +16,46 @@ function load(relative) {
 }
 const { FrameDecoder, decodeEvent, RunSubscription } = load('apps/desktop/src/main/run-stream.ts');
 const { applySessionEvent, toolViews } = load('apps/desktop/src/renderer/session-adapter.ts');
+const { MonitorNotifications } = load('apps/desktop/src/main/monitor-notifications.ts');
+
+test('notification polling requires durable claim and sends one native notice',async()=>{
+  const run={id:'notice',status:'triggered',notification_status:'pending',payload:{}};
+  let claimed=false,shows=0;const receipts=[];
+  const port={pendingNotifications:async()=>[run],claimNotification:async()=>{
+    if(claimed)return null;claimed=true;return run;
+  },finishNotification:async(id,status)=>{receipts.push({id,status});return run;}};
+  const worker=new MonitorNotifications(port,async()=>{shows++;return 'shown';});worker.start();
+  try{await worker.poll();await worker.poll();assert.equal(shows,1);assert.deepEqual(receipts,[{id:'notice',status:'shown'}]);}
+  finally{worker.stop();}
+});
+
+test('notification receipt error does not cause replay and concurrent polls serialize',async()=>{
+  const run={id:'notice',payload:{}};let claimed=false,shows=0;let release;
+  const wait=new Promise(resolve=>{release=resolve;});
+  const worker=new MonitorNotifications({pendingNotifications:async()=>[run],claimNotification:async()=>{
+    if(claimed)return null;claimed=true;return run;
+  },finishNotification:async()=>{throw new Error('receipt unavailable');}},async()=>{shows++;await wait;return 'shown';});
+  worker.start();try{const first=worker.poll();await new Promise(resolve=>setImmediate(resolve));await worker.poll();
+    release();await first;await worker.poll();assert.equal(shows,1);
+  }finally{release();worker.stop();}
+});
+
+test('notification native failure persists safe failure and never repeats',async()=>{
+  let claimed=false;const statuses=[];
+  const worker=new MonitorNotifications({pendingNotifications:async()=>[{id:'notice'}],claimNotification:async()=>{
+    if(claimed)return null;claimed=true;return {id:'notice'};
+  },finishNotification:async(_id,status)=>{statuses.push(status);return {id:'notice'};}},async()=>{throw new Error('native exception');});
+  worker.start();try{await worker.poll();await worker.poll();assert.deepEqual(statuses,['failed']);}finally{worker.stop();}
+});
+
+test('notification stop during claim prevents late native show',async()=>{
+  let release;const wait=new Promise(resolve=>{release=resolve;});let shows=0;
+  const worker=new MonitorNotifications({pendingNotifications:async()=>[{id:'notice'}],claimNotification:async()=>{
+    await wait;return {id:'notice'};
+  },finishNotification:async()=>{throw new Error('must not settle stopped claim');}},async()=>{shows++;return 'shown';});
+  worker.start();const poll=worker.poll();await new Promise(resolve=>setImmediate(resolve));worker.stop();release();await poll;
+  assert.equal(shows,0);
+});
 const sid = '11111111-1111-1111-1111-111111111111', rid = '22222222-2222-2222-2222-222222222222';
 const event = (sequence, type = 'text_delta') => ({ protocol_version: 1, session_id: sid, run_id: rid, sequence,
   timestamp: '2026-10-04T00:00:00Z', type, message_id: 'reply', payload: type === 'run_completed' ? { stop_reason: 'completed' } : { text: '研迹' } });

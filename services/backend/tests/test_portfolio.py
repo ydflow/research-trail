@@ -231,6 +231,6 @@ def test_old_database_upgrade_preserves_history_and_model_schema(tmp_path):
     db.migrate(); db.migrate()
     with db.engine.connect() as conn:
         assert conn.scalar(text('SELECT display_name FROM profile'))=='旧资料'
-        assert conn.scalar(text('SELECT version_num FROM alembic_version'))=='0015_calendar'
+        assert conn.scalar(text('SELECT version_num FROM alembic_version'))=='0016_monitoring'
     with db.engine.connect() as conn: db.migration_transaction(conn,lambda:command.check(cfg),cfg)
     db.close()
