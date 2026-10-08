@@ -417,7 +417,7 @@ app/bridge/RecoveryPanel；实际中断用例见test_recovery.py、tests/desktop
 
 ## C13：发现候选与事件如何进入研究？
 
-状态：第19步筛选与第20步事件日历真实主链已展开。自动提醒仍由未实现的第21步承担。
+状态：第19步筛选与第20步事件日历真实主链已展开。自动提醒由第21步应用运行时MonitoringService承担，边界见C14。
 
 - 主链：用户筛选任务/事件 → 有界筛选或事件列表 → 带依据候选 → 自选/对比/研究上下文。
 - 必读1：`packages/core/src/screening.ts`，`packages/shared/src/screening/service.ts` / `ScreeningService.runScreening`：任务/有界池到候选。
@@ -456,14 +456,35 @@ app/bridge/RecoveryPanel；实际中断用例见test_recovery.py、tests/desktop
 
 ## C14：提醒与简报何时触发？
 
-状态：大纲。关联步骤21。
+状态：第21步真实主链已展开；固定数据和本机验收，真实服务/长期监控另记。
 
 - 主链：规则/固定时钟 → 触发计算 → 执行记录/通知 → buildBrief → Today聚合。
 - 必读1：`packages/shared/src/alerts/engine.ts` / `AlertEngine` 与 `evaluators.ts`：规则和事实到触发状态。
 - 必读2：`packages/shared/src/automation/scheduler.ts` / `runDue`、`nextRunAt`，`runner.ts`：计算到期与执行分别追踪。
 - 必读3：`packages/shared/src/automation/brief.ts` / `buildBrief` 与 `packages/ui/src/components/today/TodayView.tsx`：聚合输入和页面输出。
 - 验证选读：`packages/shared/src/automation/scheduler.test.ts`、`brief.test.ts`、`alerts/engine.test.ts`。
-- 暂缓：研迹仅计划应用运行时调度，后台常驻未实现；评测由C15。
+- 研迹仅应用运行时调度；关闭漏执行保存为skipped，不补跑。后台常驻未实现；评测由未实施的C15承担。
+
+### 研迹第21步真实调用链
+
+1. `TodayPanel.create` → preload `monitoring:create` → `BackendManager.createMonitoringRule` → Python `/monitoring/rules`。
+   `RuleInput`验证来源、十进制阈值和IANA时区；`MonitoringService.create`保存UUID和规则，默认关闭。
+2. `app.py/lifespan`构造同一数据库/能力/提供商/各业务服务，再启动`MonitoringService._loop`。
+   `tick`先持久化执行领取 → `occurrence/next_due`按固定时钟计算 → `evaluate/read`调用同一`ProviderService`或保存快照。
+   冷却、同分钟/计划唯一键与证据游标共同防重；失败逐项保留，不编造成功。
+   日计划也遵守持久冷却；财报前/后可额外开启默认关闭的自动数据采集，仍不生成模型报告。
+3. Python `/monitoring/notifications` → Electron `MonitorNotifications.poll` → Python事务`claim_notification` →
+   原生`Notification.show` → 原生show/failed回执 → `finish_notification`。
+   数据库与操作系统不是一个事务；先领取保证最多一次展示尝试，崩溃可能失通知，不能承诺恰好一次交付。
+4. `TodayPanel.refresh` → `/today` → `MonitoringService.today` → 日历/研究/报告/组合/自选/论点原服务 →
+   带日期/来源计数的`DailyBrief`和Today条目；读取与切时区不发模型或采集请求。
+5. 触发详情“开始一次采集” → `/monitoring/runs/{id}/research` → 持久化动作领取 → 原`ResearchService.start`。
+   开启财报前/后自动采集时，`tick`直接调用同一`start_research`及领取链，并再次检查启用状态。
+   同触发/股票重放同一研究ID；没有自动报告合成。重启的未确认动作保留uncertain，不重调用。
+
+阅读入口：`monitoring_contracts.py`、`monitoring_schedule.py`、`monitoring.py`、`0016_monitoring.py`、
+`main/monitor-notifications.ts`、`renderer/today/TodayPanel.tsx`；验证入口`test_monitoring.py`和Step21桌面用例。
+来源与操作边界见[第21步验收](docs/ACCEPTANCE-step21.md)。
 
 ## C15：Agent实验怎样被判定有效？
 

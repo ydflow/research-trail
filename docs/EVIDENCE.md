@@ -1804,3 +1804,75 @@ attempt2在旧Step15部分失败采集的同类断言失败，均535 Python/8 No
 变更新增tests/backend-ready.cjs相对基线的实际修复，发布差异现48份（1来源/28 Python与契约/13桌面与验收/6文档），258源码与来源范围不变。
 本节、PR与根PROJECT_STATE保留首轮535/8/46含义；新head完整本机、干净源码与两项CI全部通过且无阻塞前不合并。
 日志仅Temp/research-trail-step20-ci-push-attempt1-failed.log、ci-push-attempt2.log、ci-readiness-{before,after}.log，均不上传。
+
+
+## 48. 第21步应用运行时提醒、自动化、简报与Today（2026-10-08）
+
+用户本轮明确仅执行第21步、交付后停止。基线main 0b85708e2fe3760de089ec942495ccad3a622258；
+交接后暂停的四份未验收草稿重读并继续完成，不把草稿视为已交付。未实施22—24，未提交/推送/PR/标签/Release。
+读取AGENTS、路线、既有证据和实际Python能力/服务/存储及Electron桥；遵守React规则及frontend-testing-debugging备用harness流程。
+当前插件没有Browser能力，实际窗口验收用已有Playwright/Electron，不将构建代替实窗。
+固定上游ba5dcdfd31b162f5edb8b908f7f099a560389326只读参考7文件SHA256见SOURCES-step21.json；
+八类提醒及五类固定自动化为Python新实现，无TS业务内核或原样导入；原30技能/许可资源保留，局部MIT不扩为全仓。
+
+同一Database/CapabilityRegistry/ProviderService及已有日历、自选、组合、研究、报告、论点服务；
+0016迁移新增规则、执行、一次采集动作三表。默认60秒轮询、规则关闭，日期/星期/IANA时区和DST纯计算。
+原始Decimal阈值、严格价格边界、市场关闭不触发；组合分币种权重/观测资产峰值回撤，非调整资金流投资表现。
+新闻成功游标、评级基线、股息/财报明确时间、来源身份、持久冷却及计划/分钟唯一约束共同防重。
+定时自选复查/组合简报/每周复审保存事实入口；财报前后可额外开启默认关闭的自动数据采集，限定指定股票。
+自动/手动共用先领取后调用原ResearchService，失败/并发/重启不重复派发，不自动调用报告模型。
+原研究服务仅允许一个活动任务，忙碌时动作失败记录保留，不暗中重试；未配置/不支持真实来源不回退模拟。
+Today按时区读已有组合、自选、提醒、事件、研究/报告和待复审版本，保留来源身份/模式/提供商/理由；
+每日简报为确定性来源计数/待关注事实。刷新仅读取，不隐式采集；历史展示有界，去重身份不因展示上限淘汰。
+
+退出停止Python调度、Electron通知轮询及来源读取；重开记关闭漏计划skipped/APPLICATION_CLOSED及区间、不补跑。
+进程中断执行记interrupted，领取中通知/研究记uncertain；旧pending通知抑制。无系统服务或关闭后的常驻承诺。
+Electron先通过Python事务领取再Notification.show；show回执才标shown/notified，不支持/失败/超时明确可见。
+首版最多一次展示/派发尝试，领取后异常及触发提交到动作领取前退出可能丢失交付，不宣称跨SQLite/系统恰好一次。
+一次本机实际原生通知QA未替换Notification：shown、notified=true、执行1、模型请求0，日志仅Temp/research-trail-step21-native-notice.log。
+自动桌面用例明确替身原生展示；系统回执不等同用户亲自或独立Windows验证。
+
+定向初轮35 Python通过；扩展四项边界在原代码均失败，修复200事件身份淘汰、HAS统一CN市场映射及财报自动采集缺口；
+严格自动采集参数与跨日计划冷却再补回归，最终模块42通过，假模型无调用。边界失败日志Temp/research-trail-step21-edge-before.log。
+Today已有报告消费端曾把字符串时间当datetime，回归34通过1失败，显式解析后修复；失败日志step21-today-report-before.log保留。
+旧库升级初次完整568通过2失败，旧夹具保留新表但把迁移版本退回旧值；按真实旧库结构移除新增空表，两项升级回归通过。
+后发事件夹具初次UTC时间配New York时区被正确拒绝，修正夹具时区；没有放宽断言或用模拟掩盖真实错误。
+中间全套570 Python/12 Node通过，实际Electron48/49通过；1失败为旧精确桥白名单缺新增六个操作。
+仅补正确白名单，保留Node隔离、来源校验及通知投递端口不能由renderer直接调用的约束；
+三项Step21与旧桥隔离用例共4定向通过，失败日志step21-check-intermediate-failed.log保留。
+最终本机check.cmd通过577 Python/12 Node/50实际Electron，零失败/取消/跳过；
+契约/类型、Electron主进程/preload/renderer构建、0016重复升级/current/check及模型无迁移差异通过。
+日志Temp/research-trail-step21-check.log，隔离迁移库research-trail-verify-iQuDkg，不进入业务Git。
+独立干净源码验收通过同一577 Python/12 Node/50实际Electron，零失败/取消/跳过；
+269份源码导出到含空格目录，新装71前端/30 Python锁定包及Electron，未复制Git/已装依赖/构建/运行数据。
+同一契约/类型/构建、0016重复迁移/current/check通过；根CMD实际启动/关闭/重开历史一致、无新运行，所属进程剩余0。
+日志Temp/research-trail-step21-clean.log；导出C:\Users\38905\AppData\Local\Temp\research-trail-clean-8n9ovj\clean source；
+第二隔离迁移库C:\Users\38905\AppData\Local\Temp\research-trail-verify-A0jVXu，根CMD证据C:\Users\38905\AppData\Local\Temp\research-trail-cmd-qa-VWFD20。
+269份UTF-8源码/113个本地链接、7参考SHA256、30原技能/许可、8忽略探针检查通过；原4处技能资料断链保留。
+OpenAPI只新增8路径/9操作/11模型，旧路径和旧模型语义不变；99命名桥实窗精确核对，通知投递端口不能由renderer直接调用。
+229份运行/测试/技能资源与通过的干净导出逐字节一致；最终进度文档在验收后更新。
+截图、运行数据、日志都在Temp，不进入Git；TestClient弃用及既有Vite主chunk提示保留。
+main HEAD不变，暂存区空，35份文件改动本机未提交（git status折叠目录显示34项）；第21步交付后停止，等待用户下一条提示词。
+真实行情/账户/提供商字段全覆盖、付费模型、长期运行压力、独立Windows、安装包及用户亲自操作未验证。
+课程/练习C14已写真实链、一个操作练习和三题，原用户记录保留、待用户回答；交付范围见ACCEPTANCE-step21.md。
+
+
+## 49. 第21步独立发布复核（2026-10-08）
+
+用户另发明确发布授权：仅当前已验收第21步，按真实改动提交功能分支/PR；检查通过且没有未解决阻塞后普通合并保留提交并同步main。
+第48节是开发验收历史，不改写为此前已发布；第22—24步、标签、Release、定时付费评测及外部追踪上传不在本轮范围。
+现场gh api user为ydflow；origin fetch/push均https://github.com/ydflow/research-trail.git。
+目标PUBLIC非fork非归档、本项目既有仓库、默认main，远程和本地基线均0b85708e2fe3760de089ec942495ccad3a622258。
+没有同名远程功能分支或打开的PR；已创建本地feat/step-21-monitoring，不覆盖无关仓库或分支。
+实际待提交35文件（git status未展开目录显示34项）：1来源、17 Python/迁移/契约与测试、11桌面/通知/实窗回归、6文档。
+原来源声明及第9—11节用户确认的原作者复用授权保留；原授权文本未独立取得，不把skills MIT扩为全仓。
+本步概念参考7固定Folio文件SHA256，无原样导入上游代码/资源；不制造虚假的导入提交或开发作者/时间。
+
+269份UTF-8源码清单、7参考SHA256、30原技能/许可字节及Git blob、8忽略探针、全部新增文档本地链接通过；原4资料断链保留。
+运行库只读核对系统凭据引用，秘密原文源码匹配0，未打印或上传秘密；密钥、账户/持仓、数据库、日志、缓存、依赖、构建和截图不在源码清单。
+初次发布审计把git status目录项数34误当文件数，按实际展开35文件修正审计及开发记录，不改变验收代码。
+229份运行/测试/技能资源逐字节等于本会话刚通过的干净副本；复用同一源码的本机/干净源码577 Python/12 Node/50实际Electron验收。
+根CMD重启历史一致、无新运行、所属进程0，0016重复升级/current/check、契约/类型/构建均通过；另一次原生show回执不冒称用户亲自操作。
+本轮没有新增运行代码或依赖；按源码一致性复核验证，不把重复执行无关测试当新增成果。新提交的远程Windows CI另行跟踪，尚不宣称CI通过。
+本节在推送前生成，实际功能head、PR、CI、合并与同步回执以后续记录为准；无法解决检查失败则不合并。
+真实行情/账户/全提供商覆盖、长期监控压力、独立Windows/安装包和用户亲自操作仍未验证。
