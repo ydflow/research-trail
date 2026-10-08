@@ -34,4 +34,25 @@ async function waitForResearchCollection(page, { panel = page, status = 'collect
   return run;
 }
 
-module.exports = { waitForBackend, waitForResearchCollection };
+async function waitForEvaluationCompletion(page, status) {
+  const experiment = await page.evaluate(async () => {
+    const [latest] = await window.researchTrail.evaluationExperiments();
+    if (!latest) throw new Error('Expected a saved evaluation experiment');
+    return window.researchTrail.evaluationExperiment(latest.id);
+  });
+  let saved = experiment;
+  // A suite runs cases sequentially, including two real migrated SQLite
+  // sandboxes. Allow the 3s Agent budget per case plus sandbox/IPC scheduling;
+  // UI assertions retain 5s and a wrong terminal status fails without retries.
+  await expect.poll(async () => {
+    saved = await page.evaluate(id => window.researchTrail.evaluationExperiment(id), experiment.id);
+    return saved.status;
+  }, { timeout: experiment.cases.length * 3000 + 25000, intervals: [100, 250, 500] })
+    .not.toMatch(/^(not_run|running)$/);
+  assert.equal(saved.id, experiment.id);
+  assert.equal(saved.status, status);
+  await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status', status);
+  return saved;
+}
+
+module.exports = { waitForBackend, waitForResearchCollection, waitForEvaluationCompletion };

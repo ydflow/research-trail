@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { waitForBackend, waitForResearchCollection } = require('./backend-ready.cjs');
+const { waitForBackend, waitForResearchCollection, waitForEvaluationCompletion } = require('./backend-ready.cjs');
 const { _electron: electron, expect } = require('@playwright/test');
 const { execFileSync } = require('node:child_process');
 const { resolve } = require('node:path');
@@ -21,7 +21,7 @@ test('Step22 evaluation window executes compares feedback and preserves restart 
     await expect(page.getByTestId('eval-score')).toContainText('无有效分数');
     assert.equal((await page.evaluate(()=>window.researchTrail.evaluationExperiments())).length,1);
     await page.getByRole('button',{name:'执行离线实验',exact:true}).click();
-    await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','passed');
+    await waitForEvaluationCompletion(page,'passed');
     await expect(page.getByTestId('eval-score')).toContainText('100.0%');
     await expect(page.getByTestId('eval-result')).toHaveCount(12);
     const unknown=page.getByTestId('eval-result').filter({hasText:'unknown-symbol'});
@@ -35,7 +35,7 @@ test('Step22 evaluation window executes compares feedback and preserves restart 
     await page.getByRole('button',{name:'创建未执行实验',exact:true}).click();
     await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','not_run');
     await page.getByRole('button',{name:'执行离线实验',exact:true}).click();
-    await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','quality_failed');
+    await waitForEvaluationCompletion(page,'quality_failed');
     await page.getByLabel('比较基线',{exact:true}).selectOption(baselineId);
     await expect(page.getByTestId('eval-comparison')).toContainText('分数变化 -');
     await expect(page.getByTestId('eval-comparison')).toContainText('quote-aapl');
@@ -77,7 +77,8 @@ test('Step22 invalid and cancelled window experiments have no score and offline 
     await page.getByRole('button',{name:'创建未执行实验',exact:true}).click();
     await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','not_run');
     await page.getByRole('button',{name:'执行离线实验',exact:true}).click();
-    await expect(page.getByTestId('eval-experiment')).toHaveAttribute('data-status','run_error');
+    await waitForEvaluationCompletion(page,'run_error');
+    await assert.rejects(waitForEvaluationCompletion(page,'passed'), /Expected values to be strictly equal/);
     await expect(page.getByTestId('eval-score')).toContainText('无有效分数');
     await expect(page.getByRole('button',{name:'保存通过的基线',exact:true})).toBeDisabled();
     await page.getByRole('button',{name:'创建未执行实验',exact:true}).click();
@@ -805,7 +806,9 @@ for(const scenario of ['research-partial','failure']) test(`Step15 ${scenario} k
 });
 
 test('Step15 whole cancellation retains three successes and discards real late fixture return',{timeout:45000},async()=>{
-  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'research-delayed'});
+  // The 2s fixture can finish before a loaded runner renders partial progress.
+  // Use the existing 15s checkpoint, still inside the real 20s collection plan.
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'research-checkpoint'});
   try {
     const page=instance.page; await waitForBackend(page);
     await page.getByRole('button',{name:'研究采集',exact:true}).click();
@@ -827,7 +830,7 @@ test('Step15 whole cancellation retains three successes and discards real late f
       if(window.step15Followup)return 'started';
       try{window.step15Followup=await window.researchTrail.startResearch({symbol:'AAPL.US',strategy:'growth'});return 'started';}
       catch(e){return e.message;}
-    }),{timeout:8000}).toBe('started');
+    }),{timeout:cancelled.plan.timeout_seconds*1000+6000}).toBe('started');
     assert.deepEqual(await page.evaluate(id=>window.researchTrail.researchRun(id),id),cancelled);
     await expect(panel.getByTestId('research-run')).toHaveAttribute('data-run-id',id);
     assert.equal(await page.evaluate(async()=>{const rows=await window.researchTrail.researchRuns();return rows.length;}),2);
@@ -1817,6 +1820,7 @@ test('four fixture stocks, actual canvas loader, unknown symbol, repeat provenan
 test('late earlier response cannot overwrite the latest stock selection', { timeout: 45000 }, async () => {
   const instance = await launch();
   try {
+    await waitForBackend(instance.page);
     await expect(instance.page.getByTestId('quote-price')).toHaveText('189.43');
     const samples = await instance.page.evaluate(async () => ({
       aapl: await window.researchTrail.marketSnapshot('AAPL.US'),

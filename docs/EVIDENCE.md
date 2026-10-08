@@ -1936,3 +1936,23 @@ MockTransport协议验收与真实连接严格区分；离线门禁只允许loop
 最终回执head d3f18a20f4c12e22c325cfef464d3afeb76fdd35的push CI [37766332829](https://github.com/ydflow/research-trail/actions/runs/37766332829)通过623 Python/12 Node/52 Electron；PR CI [37766338266](https://github.com/ydflow/research-trail/actions/runs/37766338266)为失败：623 Python/12 Node及12案例CLI、0017、契约/类型/构建通过，Electron 51通过/1失败。没有将该PR失败计作通过或合并。
 失败在既有第17步采集中断测试：Windows CIM查找子进程放在15秒夹具窗口内，慢查询后研究已完成，重启不会自动恢复已完成任务，因此卡片不存在。修复仅tests/desktop.test.cjs：开始采集前查找所属Python进程，同一renderer读取原数据与最新状态，并断言fetching/3成功后再kill。不改业务逻辑、不增加超时、不重试错误终态。
 Temp注入16秒CIM查询延迟，旧测试在同一行527复现相同失败；修复后相同注入实际Electron测试1通过，原证据/恢复/重新发起断言保留。日志research-trail-step22-cim-before.log与research-trail-step22-cim-after.log仅Temp，不上传。此前244文件等于旧干净副本为初始推送事实；当前测试已修复，后续以新干净源码完整验收为准，不能继续复用旧字节一致性主张。
+
+
+### 第22步合并后CI时序补修
+
+PR #21在head 0ac56738a5fff9927abfe46e0513f374d439ed0f的push 37768720701与PR 37768726489均success（各623/12/52、12案例CLI/0017通过）且无未解决讨论后，于2026-10-08T11:28:35Z普通merge为8af2af836ceb6f91ea6c1aea041df5a64b7504a7，保留7真实提交并ff-only同步main。
+合并后main [37770288708](https://github.com/ydflow/research-trail/actions/runs/37770288708)为failure：623 Python、12 Node、12案例CLI、0017迁移及契约/类型/构建通过；实际Electron 50通过/2失败。原PR通过与已合并是历史事实，不能据此把合并后失败改写为通过。
+既有Step15取消测试使用2秒research-delayed，慢runner采集展示由2/4直接进入4/4，错过3成功的取消条件；改用已有15秒research-checkpoint，仍在实际20秒plan内，取消后等待真实延迟调用物理退出采用plan预算+6秒调度余量，保留3成功/1取消、迟到结果不改历史与新任务准入断言。既有行情选择测试启动后直接在5秒内断言价格，失败快照明确后端仍在启动；增加既有waitForBackend等待（25秒真实启动预算），价格与迟到响应断言仍默认5秒。
+补修基于已合并main单独fix/step-22-publication-ci分支/PR，仍属第22步发布；只修上述验收同步和本步文档，不改变业务，不实现第23/24步，不重写已合并历史。后续复现实验、本机/CI及合并回执单独记录；不得以重跑隐藏上述失败。
+
+Temp可控延迟实验：Python真实子进程启动额外延迟6秒、研究start IPC真实结果返回额外延迟4秒；旧版本2项实际Electron均失败（取消前已collected、行情仍启动），补修后同一延迟2通过，保留真实工具迟到返回与行情新选择不被旧响应覆盖。日志research-trail-step22-boundaries-before.log/after.log仅Temp。新的完整干净验收和补修PR检查另行跟踪，未预先声称通过。
+
+
+补修PR #22的首个head 9c5dbc0ab159583c7b1c855aa9a50f3bd191315d：PR [37772119619](https://github.com/ydflow/research-trail/actions/runs/37772119619) success（623/12/52），push [37772108397](https://github.com/ydflow/research-trail/actions/runs/37772108397) failure（623 Python/12 Node通过，Electron51通过/1失败），未合并。
+新增阻塞在第22步运行错误实验：12案例按序执行，包含真实迁移的两个SQLite恢复/重放沙盒，5秒UI断言到期时仍running，不能把此中间状态当终态错误。补修同一PR/分支，tests/backend-ready.cjs增加waitForEvaluationCompletion：读取已保存实验，按3秒Agent案例预算×案例数加25秒沙盒/IPC调度测试预算等待非not_run/running终态，立即断言期望状态；渲染断言仍默认5秒。passed/quality_failed/run_error的三个执行断言使用该helper；额外验证run_error不能被当passed等待重试。
+Temp将两个真实SQLite恢复案例各额外延迟4秒，旧测试2失败（running），新测试在同一延迟2项实际Electron通过（无分数、取消、错误和恢复的原断言保留）。日志research-trail-step22-eval-wait-before.log/after.log仅Temp；不是改变结果或重跑隐藏失败。当前补修差异4文件（两个测试文件和两份本步文档），相对Step21总差异39文件；业务/案例/评估器/契约不改，完整新干净验收及新head CI按实际回执。
+
+
+补修head b3a9e1b的push [37774187242](https://github.com/ydflow/research-trail/actions/runs/37774187242) success（623/12/52），PR [37774195101](https://github.com/ydflow/research-trail/actions/runs/37774195101) failure（622 Python通过/1失败，后续CLI/Node/Electron未执行）。失败在既有test_run_lifecycle.py的respond超时探针：100毫秒总预算早于目标模型阶段耗尽，entered尚未设置。
+同一补修PR只调整该测试：在充足的夹具启动预算内等待明确plan/respond gate，推迟注册整体计时器，再调用原RunManager.timer(...,0,"RUN_TIMEOUT")实际线程回调触发超时；原工具计时器不改。保留RUN_TIMEOUT、已保存tool_result、实际提供商调用、唯一终态及释放迟到模型后事件完全不变的断言。Temp注入提供商0.25秒延迟：旧版plan通过/respond失败；修复版相同延迟2通过；整份生命周期测试13通过。不是改变生产超时配置或以重跑隐藏失败。
+补修现在5文件（3测试/2本步文档），全步相对Step21共40文件；最新完整新验收、PR和main CI另行记录。用户在等待发布期间已明确发送第23步并要求继续；先收尾第22步发布阻塞，再按该新授权实现第23步，第24步仍未授权。
