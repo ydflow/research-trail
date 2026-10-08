@@ -57,6 +57,7 @@ export function EvaluationPanel({available}:{available:boolean}) {
   return <section className="evaluation-panel" data-testid="evaluation-panel">
     <h2>评测中心</h2>
     <p>确定性离线工程评测 · 研迹自有案例 · 假模型与固定2024年示例 · 模型请求0。</p>
+    <p>此处评估 Agent 的工具和运行环节。工具正确率不代表盈利能力；后续行情观察在独立的“投资结果”页面。</p>
     <p>分数仅表示本套工具、证据和来源断言的通过率。未执行、取消或运行错误保留诊断，实验总分为空。</p>
     {error?<p role="alert">{error}</p>:null}
     <details open><summary>案例与实验</summary>

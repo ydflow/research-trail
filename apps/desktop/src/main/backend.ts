@@ -204,6 +204,14 @@ export class BackendManager extends EventEmitter {
 
   listSessions() { return this.business<SessionDTO[]>('/sessions'); }
   private traceProvider(value: unknown) { if(value!=='langsmith' && value!=='langfuse') throw new Error('追踪提供商无效。'); return value; }
+  outcomeOpinions() { return this.business<import('../outcome-types').OutcomeOpinion[]>('/outcomes/opinions'); }
+  captureOutcome(input: unknown) { return this.business<import('../outcome-types').OutcomeOpinion>('/outcomes/opinions','POST',this.thesisBody(input,['report_id','horizon'])); }
+  outcomeOpinion(id: unknown) { return this.business<import('../outcome-types').OutcomeView>(`/outcomes/opinions/${this.id(id)}`); }
+  evaluateOutcome(id: unknown, requestId: unknown) { return this.business<import('../outcome-types').OutcomeAttempt>(`/outcomes/opinions/${this.id(id)}/evaluate`,'POST',{request_id:this.id(requestId)},25000); }
+  outcomePolicies() { return this.business<import('../outcome-types').WeightHistory>('/outcomes/policies'); }
+  changeOutcomePolicy(input: unknown) { return this.business<import('../outcome-types').WeightVersion>('/outcomes/policies','POST',this.thesisBody(input,['request_id','expected_version','reason','parameters','rollback_version'])); }
+  outcomePerformance(input: unknown) { return this.business<import('../outcome-types').PerformanceSnapshot>('/outcomes/performance','POST',this.thesisBody(input,['horizon','source_mode','analysis_mode','origin','as_of'])); }
+  outcomeSnapshot(id: unknown) { return this.business<import('../outcome-types').PerformanceSnapshot>(`/outcomes/performance/${this.id(id)}`); }
   evaluationCases() { return this.business<import('../evaluation-types').EvaluationCase[]>('/evaluation/cases'); }
   evaluationExperiments() { return this.business<import('../evaluation-types').ExperimentSummary[]>('/evaluation/experiments'); }
   createExperiment(input: unknown) { return this.business<import('../evaluation-types').ExperimentView>('/evaluation/experiments','POST',this.thesisBody(input,['request_id','name','case_ids','profile'])); }
