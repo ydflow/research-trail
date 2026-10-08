@@ -1876,3 +1876,9 @@ main HEAD不变，暂存区空，35份文件改动本机未提交（git status�
 本轮没有新增运行代码或依赖；按源码一致性复核验证，不把重复执行无关测试当新增成果。新提交的远程Windows CI另行跟踪，尚不宣称CI通过。
 本节在推送前生成，实际功能head、PR、CI、合并与同步回执以后续记录为准；无法解决检查失败则不合并。
 真实行情/账户/全提供商覆盖、长期监控压力、独立Windows/安装包和用户亲自操作仍未验证。
+
+已推送feat/step-21-monitoring并创建[PR #20](https://github.com/ydflow/research-trail/pull/20)，初次head c46881476d627dfce84fb9fb670ccfe813465142。
+来源99291d864d41dedfd486a6680ef6829f8979dd4a、Python45ff0f09139bca893f2287503b5462a309f91c65、
+桌面5132453031e8931136d7831409bc2e3eefdec7d4、验收文档c46881476d627dfce84fb9fb670ccfe813465142按实际作者及提交时间保留。
+首轮push/PR分别触发Actions37732326163/37732369029；此PR回执文档会形成新的head，较早并发作业如被取消不得计为通过。
+最终检查、审查状态、普通merge SHA、本地/远程main一致性与main CI按PR/Actions及根PROJECT_STATE完成回执记录，本行不预先宣称通过或合并。
