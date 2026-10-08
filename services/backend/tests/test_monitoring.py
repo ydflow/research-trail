@@ -217,7 +217,7 @@ def test_uuid_idempotency_toggle_preserves_cooldown_and_migration(api):
         tick(app);assert len(calls)==before
         app.state.store.database.migrate()
         with app.state.store.database.sessions() as db:
-            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0016_monitoring'
+            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0017_evaluation'
 
 @pytest.mark.parametrize('stamp,hour,expected',[
     ('2024-03-10T05:00:00+00:00',2,'2024-03-11T06:30:00+00:00'),

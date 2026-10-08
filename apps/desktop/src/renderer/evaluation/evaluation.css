@@ -1,0 +1,12 @@
+.evaluation-panel {margin-top:24px;border-top:1px solid #d6ddd9;padding-top:16px;min-width:0;}
+.evaluation-panel p,.evaluation-panel small,.evaluation-panel summary {overflow-wrap:anywhere;}
+.evaluation-panel label {display:flex;gap:8px;align-items:flex-start;margin:9px 0;flex-wrap:wrap;}
+.evaluation-panel input:not([type=checkbox]),.evaluation-panel select,.evaluation-panel textarea {max-width:100%;box-sizing:border-box;padding:7px;border:1px solid #b8c5be;border-radius:4px;background:#fff;color:#20392e;}
+.evaluation-panel textarea {width:100%;min-height:70px;}
+.evaluation-panel details {padding:10px;border:1px solid #cbd5ce;border-radius:5px;margin:10px 0;}
+.eval-cases {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:4px 16px;}
+.eval-cases small {display:block;color:#526359;margin-top:4px;}
+.evaluation-panel button {margin:6px 8px 6px 0;max-width:100%;white-space:normal;overflow-wrap:anywhere;}
+.eval-history {display:flex;flex-wrap:wrap;}
+.evaluation-panel pre {white-space:pre-wrap;overflow-wrap:anywhere;max-height:320px;overflow:auto;padding:10px;background:#eef2ef;font-size:12px;}
+.eval-results summary {cursor:pointer;font-weight:600;}

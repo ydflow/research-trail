@@ -48,6 +48,12 @@ from .screening import ScreeningService, ScreeningError
 from .screening_contracts import ScreeningContext, ScreeningInput, ScreeningTask, ScreeningRun, ScreeningSummary, ScreeningEvidence
 from .calendar import CalendarService, CalendarError
 from .monitoring import MonitoringService, MonitoringError
+from .evaluation import EvaluationService, EvaluationError
+from .evaluation_cases import CASES
+from .evaluation_trace import EvaluationTracing
+from .evaluation_contracts import (EvaluationCase, ExperimentInput, ExperimentView, ExperimentSummary, BaselineInput, BaselineView, BaselineSummary,
+    FeedbackInput, FeedbackView, TraceProvider, TraceConfig, TraceConfigView, TraceCredential,
+    TracePreview, TraceUpload, TraceDelivery, TraceProbe)
 from .monitoring_contracts import (RuleInput, RuleToggle, RuleView, MonitorRun, TodayInput, TodayView,
     NotificationResult, MonitorResearchInput, MonitorResearchAction)
 from .calendar_contracts import CalendarSelection, CalendarRefresh, CalendarViewInput, CalendarSource, CalendarPage, CalendarSummary, CalendarOriginal
@@ -66,7 +72,7 @@ class Health(BaseModel):
 
 def create_app(token: str, market_provider: MarketProvider | None = None, *,
                database_path: Path | str | None = None, model_provider: ModelProvider | None = None,
-               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None, research_options=None, report_options=None, screening_options=None, calendar_options=None, monitoring_options=None) -> FastAPI:
+               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None, research_options=None, report_options=None, screening_options=None, calendar_options=None, monitoring_options=None, evaluation_options=None, trace_options=None) -> FastAPI:
     if len(token) < 32:
         raise ValueError("启动令牌缺失或过短；请由 Electron 启动服务。")
     @asynccontextmanager
@@ -79,6 +85,8 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             database.migrate()
             app.state.store = Store(database)
             app.state.settings = SettingsService(database, credential_vault)
+            app.state.evaluation = EvaluationService(database,**(evaluation_options or {}))
+            app.state.evaluation_tracing = EvaluationTracing(database,app.state.settings,app.state.evaluation,**(trace_options or {}))
             app.state.provider_settings = ProviderSettings(app.state.settings)
             app.state.providers = ProviderService(app.state.provider_settings, registry=runner.tools.capabilities, **(provider_options or {}))
             app.state.capabilities = runner.tools.capabilities
@@ -110,6 +118,8 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             yield
         finally:
             try:
+                if hasattr(app.state,'evaluation'):
+                    app.state.evaluation.close()
                 if hasattr(app.state,'monitoring'):
                     app.state.monitoring.close()
                 if hasattr(app.state,'screening'):
@@ -151,6 +161,48 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
         return JSONResponse(status_code=409, content={"detail": str(error)})
 
     protected = [Depends(authorize)]
+
+    @app.exception_handler(EvaluationError)
+    async def evaluation_error(_request,error):
+        return JSONResponse(status_code=404 if error.code.endswith('NOT_FOUND') else 409,content={'detail':error.code})
+
+    @app.get('/evaluation/cases',response_model=list[EvaluationCase],dependencies=protected)
+    def evaluation_cases():return CASES
+    @app.get('/evaluation/experiments',response_model=list[ExperimentSummary],dependencies=protected)
+    def evaluation_experiments():return app.state.evaluation.history()
+    @app.post('/evaluation/experiments',response_model=ExperimentView,dependencies=protected)
+    def evaluation_create(body:ExperimentInput):return app.state.evaluation.create(body)
+    @app.get('/evaluation/experiments/{identity}',response_model=ExperimentView,dependencies=protected)
+    def evaluation_experiment(identity:UUID,baseline_id:UUID|None=None):
+        return app.state.evaluation.compare(identity,baseline_id) if baseline_id else app.state.evaluation.get(identity)
+    @app.post('/evaluation/experiments/{identity}/start',response_model=ExperimentView,dependencies=protected)
+    def evaluation_start(identity:UUID):return app.state.evaluation.start(identity)
+    @app.post('/evaluation/experiments/{identity}/cancel',response_model=ExperimentView,dependencies=protected)
+    def evaluation_cancel(identity:UUID):return app.state.evaluation.cancel(identity)
+    @app.get('/evaluation/baselines',response_model=list[BaselineSummary],dependencies=protected)
+    def evaluation_baselines():return app.state.evaluation.baselines()
+    @app.post('/evaluation/baselines',response_model=BaselineView,dependencies=protected)
+    def evaluation_baseline(body:BaselineInput):return app.state.evaluation.baseline(body)
+    @app.get('/evaluation/experiments/{identity}/feedback',response_model=list[FeedbackView],dependencies=protected)
+    def evaluation_feedback_list(identity:UUID):return app.state.evaluation.feedback_list(identity)
+    @app.post('/evaluation/experiments/{identity}/feedback',response_model=FeedbackView,dependencies=protected)
+    def evaluation_feedback(identity:UUID,body:FeedbackInput):return app.state.evaluation.feedback(identity,body)
+    @app.get('/evaluation/tracing',response_model=list[TraceConfigView],dependencies=protected)
+    def evaluation_tracing():return app.state.evaluation_tracing.configurations()
+    @app.put('/evaluation/tracing/{provider}',response_model=TraceConfigView,dependencies=protected)
+    def evaluation_trace_config(provider:TraceProvider,body:TraceConfig):return app.state.evaluation_tracing.configure(provider,body)
+    @app.put('/evaluation/tracing/{provider}/credential',response_model=TraceConfigView,dependencies=protected)
+    def evaluation_trace_credential(provider:TraceProvider,body:TraceCredential):return app.state.evaluation_tracing.credential(provider,body)
+    @app.delete('/evaluation/tracing/{provider}/credential',response_model=TraceConfigView,dependencies=protected)
+    def evaluation_trace_delete(provider:TraceProvider):return app.state.evaluation_tracing.delete_credential(provider)
+    @app.post('/evaluation/tracing/{provider}/probe',response_model=TraceConfigView,dependencies=protected)
+    def evaluation_trace_probe(provider:TraceProvider,body:TraceProbe):return app.state.evaluation_tracing.probe(provider)
+    @app.get('/evaluation/experiments/{identity}/tracing/{provider}/preview',response_model=TracePreview,dependencies=protected)
+    def evaluation_trace_preview(identity:UUID,provider:TraceProvider):return app.state.evaluation_tracing.preview(provider,identity)
+    @app.post('/evaluation/experiments/{identity}/tracing/{provider}/upload',response_model=TraceDelivery,dependencies=protected)
+    def evaluation_trace_upload(identity:UUID,provider:TraceProvider,body:TraceUpload):return app.state.evaluation_tracing.upload(provider,identity,body)
+    @app.get('/evaluation/tracing/deliveries',response_model=list[TraceDelivery],dependencies=protected)
+    def evaluation_trace_deliveries():return app.state.evaluation_tracing.deliveries()
 
     @app.exception_handler(MonitoringError)
     async def monitoring_error(_request,error):

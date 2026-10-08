@@ -108,6 +108,170 @@
         "title": "AnalysisRead",
         "type": "object"
       },
+      "Assertion": {
+        "additionalProperties": false,
+        "properties": {
+          "metric": {
+            "title": "Metric",
+            "type": "string"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "sequence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sequence"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "metric",
+          "passed",
+          "reason",
+          "stage"
+        ],
+        "title": "Assertion",
+        "type": "object"
+      },
+      "BaselineInput": {
+        "additionalProperties": false,
+        "properties": {
+          "experiment_id": {
+            "format": "uuid",
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "name",
+          "experiment_id"
+        ],
+        "title": "BaselineInput",
+        "type": "object"
+      },
+      "BaselineSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "evaluator_version": {
+            "title": "Evaluator Version",
+            "type": "string"
+          },
+          "experiment_id": {
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          },
+          "suite_hash": {
+            "title": "Suite Hash",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "experiment_id",
+          "created_at",
+          "suite_hash",
+          "evaluator_version",
+          "score"
+        ],
+        "title": "BaselineSummary",
+        "type": "object"
+      },
+      "BaselineView": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "evaluator_version": {
+            "title": "Evaluator Version",
+            "type": "string"
+          },
+          "experiment_id": {
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/CaseResult"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          },
+          "suite_hash": {
+            "title": "Suite Hash",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "experiment_id",
+          "created_at",
+          "suite_hash",
+          "evaluator_version",
+          "results",
+          "score"
+        ],
+        "title": "BaselineView",
+        "type": "object"
+      },
       "CalendarEventView": {
         "additionalProperties": false,
         "properties": {
@@ -908,6 +1072,114 @@
           "transport"
         ],
         "title": "CapabilityView",
+        "type": "object"
+      },
+      "CaseResult": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "assertions": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Assertion"
+            },
+            "title": "Assertions",
+            "type": "array"
+          },
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "failure_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Stage"
+          },
+          "observed_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observed Status"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "maximum": 1,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "status": {
+            "default": "not_run",
+            "enum": [
+              "not_run",
+              "running",
+              "cancelled",
+              "run_error",
+              "quality_failed",
+              "passed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tool_calls": {
+            "default": 0,
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Tool Calls",
+            "type": "integer"
+          },
+          "trace": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Trace",
+            "type": "array"
+          }
+        },
+        "required": [
+          "case_id"
+        ],
+        "title": "CaseResult",
         "type": "object"
       },
       "CashInput": {
@@ -1764,6 +2036,123 @@
         "title": "ErrorPayload",
         "type": "object"
       },
+      "EvaluationCase": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "enum": [
+              "normal",
+              "error",
+              "recovery",
+              "regression"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "expected_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Code"
+          },
+          "expected_tool": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Tool"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "origin": {
+            "const": "research-trail",
+            "default": "research-trail",
+            "title": "Origin",
+            "type": "string"
+          },
+          "prompt": {
+            "title": "Prompt",
+            "type": "string"
+          },
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "const": 1,
+            "default": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "category",
+          "prompt",
+          "purpose"
+        ],
+        "title": "EvaluationCase",
+        "type": "object"
+      },
+      "EvaluationComparison": {
+        "additionalProperties": false,
+        "properties": {
+          "baseline_id": {
+            "title": "Baseline Id",
+            "type": "string"
+          },
+          "comparable": {
+            "title": "Comparable",
+            "type": "boolean"
+          },
+          "delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delta"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "regressed_cases": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Regressed Cases",
+            "type": "array"
+          }
+        },
+        "required": [
+          "baseline_id",
+          "comparable",
+          "reason"
+        ],
+        "title": "EvaluationComparison",
+        "type": "object"
+      },
       "EventPage": {
         "additionalProperties": false,
         "properties": {
@@ -1924,6 +2313,361 @@
           "event_id"
         ],
         "title": "EventResearchRef",
+        "type": "object"
+      },
+      "ExperimentInput": {
+        "additionalProperties": false,
+        "properties": {
+          "case_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Case Ids",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "profile": {
+            "default": "baseline",
+            "enum": [
+              "baseline",
+              "missing-disclosure",
+              "wrong-fact",
+              "missing-tool",
+              "provider-failure"
+            ],
+            "title": "Profile",
+            "type": "string"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "name",
+          "case_ids"
+        ],
+        "title": "ExperimentInput",
+        "type": "object"
+      },
+      "ExperimentSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Counts",
+            "type": "object"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "profile": {
+            "enum": [
+              "baseline",
+              "missing-disclosure",
+              "wrong-fact",
+              "missing-tool",
+              "provider-failure"
+            ],
+            "title": "Profile",
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "status": {
+            "enum": [
+              "not_run",
+              "running",
+              "cancelled",
+              "run_error",
+              "quality_failed",
+              "passed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "validity": {
+            "title": "Validity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "profile",
+          "created_at",
+          "status",
+          "validity",
+          "score",
+          "counts"
+        ],
+        "title": "ExperimentSummary",
+        "type": "object"
+      },
+      "ExperimentView": {
+        "additionalProperties": false,
+        "properties": {
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/EvaluationCase"
+            },
+            "title": "Cases",
+            "type": "array"
+          },
+          "comparison": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvaluationComparison"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "default": {},
+            "title": "Counts",
+            "type": "object"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "evaluator_version": {
+            "const": "rt-engineering-v1",
+            "default": "rt-engineering-v1",
+            "title": "Evaluator Version",
+            "type": "string"
+          },
+          "failure_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "default": {},
+            "title": "Failure Counts",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "input": {
+            "$ref": "#/components/schemas/ExperimentInput"
+          },
+          "mode": {
+            "const": "deterministic-offline",
+            "default": "deterministic-offline",
+            "title": "Mode",
+            "type": "string"
+          },
+          "model_requests": {
+            "const": 0,
+            "default": 0,
+            "title": "Model Requests",
+            "type": "integer"
+          },
+          "origin_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "default": {},
+            "title": "Origin Counts",
+            "type": "object"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/CaseResult"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "status": {
+            "default": "not_run",
+            "enum": [
+              "not_run",
+              "running",
+              "cancelled",
+              "run_error",
+              "quality_failed",
+              "passed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "suite_hash": {
+            "title": "Suite Hash",
+            "type": "string"
+          },
+          "validity": {
+            "default": "not_executed",
+            "enum": [
+              "not_executed",
+              "inconclusive",
+              "invalid",
+              "valid"
+            ],
+            "title": "Validity",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "input",
+          "created_at",
+          "suite_hash",
+          "cases",
+          "results"
+        ],
+        "title": "ExperimentView",
+        "type": "object"
+      },
+      "FeedbackInput": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "judgment": {
+            "enum": [
+              "agree",
+              "disagree",
+              "needs-review"
+            ],
+            "title": "Judgment",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "case_id",
+          "judgment",
+          "reason"
+        ],
+        "title": "FeedbackInput",
+        "type": "object"
+      },
+      "FeedbackView": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "experiment_id": {
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "judgment": {
+            "enum": [
+              "agree",
+              "disagree",
+              "needs-review"
+            ],
+            "title": "Judgment",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "source": {
+            "const": "human",
+            "default": "human",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "case_id",
+          "judgment",
+          "reason",
+          "id",
+          "experiment_id",
+          "created_at"
+        ],
+        "title": "FeedbackView",
         "type": "object"
       },
       "FinancialRow": {
@@ -8884,6 +9628,295 @@
         "title": "ToolSuccess",
         "type": "object"
       },
+      "TraceConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "default": false,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "endpoint": {
+            "default": "",
+            "maxLength": 240,
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "project": {
+            "default": "research-trail",
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_.-]+$",
+            "title": "Project",
+            "type": "string"
+          }
+        },
+        "title": "TraceConfig",
+        "type": "object"
+      },
+      "TraceConfigView": {
+        "additionalProperties": false,
+        "properties": {
+          "checked_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked At"
+          },
+          "code": {
+            "default": "TRACING_DISABLED",
+            "title": "Code",
+            "type": "string"
+          },
+          "credential_present": {
+            "title": "Credential Present",
+            "type": "boolean"
+          },
+          "enabled": {
+            "default": false,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "endpoint": {
+            "default": "",
+            "maxLength": 240,
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "privacy": {
+            "const": "minimal-allowlist-v1",
+            "default": "minimal-allowlist-v1",
+            "title": "Privacy",
+            "type": "string"
+          },
+          "project": {
+            "default": "research-trail",
+            "maxLength": 80,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9_.-]+$",
+            "title": "Project",
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "langsmith",
+              "langfuse"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "revision": {
+            "default": 0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "status": {
+            "default": "disabled",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "credential_present"
+        ],
+        "title": "TraceConfigView",
+        "type": "object"
+      },
+      "TraceCredential": {
+        "additionalProperties": false,
+        "properties": {
+          "public_key": {
+            "anyOf": [
+              {
+                "format": "password",
+                "type": "string",
+                "writeOnly": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Public Key"
+          },
+          "secret": {
+            "format": "password",
+            "title": "Secret",
+            "type": "string",
+            "writeOnly": true
+          },
+          "workspace_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workspace Id"
+          }
+        },
+        "required": [
+          "secret"
+        ],
+        "title": "TraceCredential",
+        "type": "object"
+      },
+      "TraceDelivery": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "experiment_id": {
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "langsmith",
+              "langfuse"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "claimed",
+              "uploaded",
+              "failed",
+              "uncertain"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "provider",
+          "experiment_id",
+          "status",
+          "code",
+          "created_at"
+        ],
+        "title": "TraceDelivery",
+        "type": "object"
+      },
+      "TracePreview": {
+        "additionalProperties": false,
+        "properties": {
+          "digest": {
+            "title": "Digest",
+            "type": "string"
+          },
+          "excluded": {
+            "default": [
+              "prompt",
+              "answer",
+              "tool-input",
+              "tool-output",
+              "feedback",
+              "names",
+              "account",
+              "portfolio",
+              "credentials"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Excluded",
+            "type": "array"
+          },
+          "experiment_id": {
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "provider": {
+            "enum": [
+              "langsmith",
+              "langfuse"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "experiment_id",
+          "provider",
+          "revision",
+          "digest",
+          "payload"
+        ],
+        "title": "TracePreview",
+        "type": "object"
+      },
+      "TraceProbe": {
+        "additionalProperties": false,
+        "properties": {
+          "confirm_connection": {
+            "const": true,
+            "title": "Confirm Connection",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "confirm_connection"
+        ],
+        "title": "TraceProbe",
+        "type": "object"
+      },
+      "TraceUpload": {
+        "additionalProperties": false,
+        "properties": {
+          "confirm_upload": {
+            "const": true,
+            "title": "Confirm Upload",
+            "type": "boolean"
+          },
+          "digest": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Digest",
+            "type": "string"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "digest",
+          "confirm_upload"
+        ],
+        "title": "TraceUpload",
+        "type": "object"
+      },
       "TradingStatus": {
         "additionalProperties": false,
         "properties": {
@@ -9508,6 +10541,1085 @@
           }
         },
         "summary": "Capabilities"
+      }
+    },
+    "/evaluation/baselines": {
+      "get": {
+        "operationId": "evaluation_baselines_evaluation_baselines_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BaselineSummary"
+                  },
+                  "title": "Response Evaluation Baselines Evaluation Baselines Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Baselines"
+      },
+      "post": {
+        "operationId": "evaluation_baseline_evaluation_baselines_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BaselineInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaselineView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Baseline"
+      }
+    },
+    "/evaluation/cases": {
+      "get": {
+        "operationId": "evaluation_cases_evaluation_cases_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EvaluationCase"
+                  },
+                  "title": "Response Evaluation Cases Evaluation Cases Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Cases"
+      }
+    },
+    "/evaluation/experiments": {
+      "get": {
+        "operationId": "evaluation_experiments_evaluation_experiments_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExperimentSummary"
+                  },
+                  "title": "Response Evaluation Experiments Evaluation Experiments Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Experiments"
+      },
+      "post": {
+        "operationId": "evaluation_create_evaluation_experiments_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Create"
+      }
+    },
+    "/evaluation/experiments/{identity}": {
+      "get": {
+        "operationId": "evaluation_experiment_evaluation_experiments__identity__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "baseline_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Baseline Id"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Experiment"
+      }
+    },
+    "/evaluation/experiments/{identity}/cancel": {
+      "post": {
+        "operationId": "evaluation_cancel_evaluation_experiments__identity__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Cancel"
+      }
+    },
+    "/evaluation/experiments/{identity}/feedback": {
+      "get": {
+        "operationId": "evaluation_feedback_list_evaluation_experiments__identity__feedback_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FeedbackView"
+                  },
+                  "title": "Response Evaluation Feedback List Evaluation Experiments  Identity  Feedback Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Feedback List"
+      },
+      "post": {
+        "operationId": "evaluation_feedback_evaluation_experiments__identity__feedback_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Feedback"
+      }
+    },
+    "/evaluation/experiments/{identity}/start": {
+      "post": {
+        "operationId": "evaluation_start_evaluation_experiments__identity__start_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Start"
+      }
+    },
+    "/evaluation/experiments/{identity}/tracing/{provider}/preview": {
+      "get": {
+        "operationId": "evaluation_trace_preview_evaluation_experiments__identity__tracing__provider__preview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "enum": [
+                "langsmith",
+                "langfuse"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TracePreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Trace Preview"
+      }
+    },
+    "/evaluation/experiments/{identity}/tracing/{provider}/upload": {
+      "post": {
+        "operationId": "evaluation_trace_upload_evaluation_experiments__identity__tracing__provider__upload_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "enum": [
+                "langsmith",
+                "langfuse"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TraceUpload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceDelivery"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Trace Upload"
+      }
+    },
+    "/evaluation/tracing": {
+      "get": {
+        "operationId": "evaluation_tracing_evaluation_tracing_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TraceConfigView"
+                  },
+                  "title": "Response Evaluation Tracing Evaluation Tracing Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Tracing"
+      }
+    },
+    "/evaluation/tracing/deliveries": {
+      "get": {
+        "operationId": "evaluation_trace_deliveries_evaluation_tracing_deliveries_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TraceDelivery"
+                  },
+                  "title": "Response Evaluation Trace Deliveries Evaluation Tracing Deliveries Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Trace Deliveries"
+      }
+    },
+    "/evaluation/tracing/{provider}": {
+      "put": {
+        "operationId": "evaluation_trace_config_evaluation_tracing__provider__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "enum": [
+                "langsmith",
+                "langfuse"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TraceConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceConfigView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Trace Config"
+      }
+    },
+    "/evaluation/tracing/{provider}/credential": {
+      "delete": {
+        "operationId": "evaluation_trace_delete_evaluation_tracing__provider__credential_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "enum": [
+                "langsmith",
+                "langfuse"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceConfigView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Trace Delete"
+      },
+      "put": {
+        "operationId": "evaluation_trace_credential_evaluation_tracing__provider__credential_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "enum": [
+                "langsmith",
+                "langfuse"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TraceCredential"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceConfigView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Trace Credential"
+      }
+    },
+    "/evaluation/tracing/{provider}/probe": {
+      "post": {
+        "operationId": "evaluation_trace_probe_evaluation_tracing__provider__probe_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "enum": [
+                "langsmith",
+                "langfuse"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TraceProbe"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceConfigView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluation Trace Probe"
       }
     },
     "/health": {

@@ -463,7 +463,7 @@ app/bridge/RecoveryPanel；实际中断用例见test_recovery.py、tests/desktop
 - 必读2：`packages/shared/src/automation/scheduler.ts` / `runDue`、`nextRunAt`，`runner.ts`：计算到期与执行分别追踪。
 - 必读3：`packages/shared/src/automation/brief.ts` / `buildBrief` 与 `packages/ui/src/components/today/TodayView.tsx`：聚合输入和页面输出。
 - 验证选读：`packages/shared/src/automation/scheduler.test.ts`、`brief.test.ts`、`alerts/engine.test.ts`。
-- 研迹仅应用运行时调度；关闭漏执行保存为skipped，不补跑。后台常驻未实现；评测由未实施的C15承担。
+- 研迹仅应用运行时调度；关闭漏执行保存为skipped，不补跑。后台常驻未实现；离线工程评测见C15。
 
 ### 研迹第21步真实调用链
 
@@ -488,14 +488,18 @@ app/bridge/RecoveryPanel；实际中断用例见test_recovery.py、tests/desktop
 
 ## C15：Agent实验怎样被判定有效？
 
-状态：大纲。关联步骤22。
+状态：第22步已实现，自动验收回执见[第22步清单](docs/ACCEPTANCE-step22.md)。用户学习记录待填写。
 
-- 主链：案例/配置 → ExperimentService.runExperiment → 执行trace/评估 → 有效性和结果 → 基线/页面。
-- 必读1：`packages/shared/src/evaluation/experiment-service.ts` / `ExperimentService.runExperiment`：任务是否实际执行。
-- 必读2：`packages/shared/src/evaluation/evaluators/deterministic.ts`、`packages/shared/src/evaluation/aggregate.ts`：指标和聚合，区分跳过与失败。
-- 必读3：`packages/shared/src/evaluation/redactor.ts`、`langfuse/backend.ts`及`docs/EVALUATION-CI.md`：隐私和本地/外部后端绑定。
-- 验证选读：`packages/shared/src/evaluation/experiment-service.test.ts`、`redactor.test.ts`。
-- 暂缓：投资结果与工程分数不是同一件事，由C16。
+场景：先创建实验，页面显示未执行且无分；执行12个原创案例后，错误案例若正确拒绝非法工具可以断言通过，但详情仍保留failed/错误码。故意错误价格候选是质量不达标；提供商意外失败是运行错误，不能生成总分。
+
+1. `renderer/evaluation/EvaluationPanel.tsx`选择案例和假候选配置，经18个命名preload桥→main校验→带令牌API→Python `EvaluationService.create/start`。创建不执行，页面轮询只回读；数据库限制一个活动实验，重复开始不重复调用。
+2. `evaluation_cases.py`定义12个带来源/版本的研迹自有案例。`evaluation_engine.execute_case`实际复用`AgentRunner`、`market_tools`和固定提供商；trace包含tool_started、tool_result、error及run_finished，序号能指向工具结果或模型/预算环节。恢复案例调用原Store，但隔离在临时库；不增加用户会话或研究。
+3. `evaluation_contracts.CaseResult.evidence_before_score`验证通过有全通过断言、质量失败有失败断言；其他状态禁止数值。`evaluation.summarize`遇未执行、取消或运行错误留空总分，即使部分案例已通过也不把无效实验包装成低/高质量分数。
+4. `EvaluationService`冻结案例/评估器/夹具/实现hash；`baseline`只接受全部通过的有效实验，`compare`只比较同套，缺口不给delta。反馈`FeedbackInput`追加保存，不改原断言或分数。重启读取已保存实验，遗留running记APPLICATION_RESTARTED，不自动重新执行。
+5. `evaluation_trace.minimal_result/wire_payload`重新投影固定安全字段，不转发完整trace或反馈。`TracingPanel`先生成本地预览，再分别确认连接/上传；凭证存Windows系统凭证管理器，SQLite只有引用。上传先落领取记录，重复内容回读；断线不自动重传。
+6. LangSmith REST、Langfuse OTLP仅导出实验根及脱敏案例/工具摘要，当前真实连接未执行。测试中MockTransport证明协议边界；`verify_evaluations`和CI网络门禁证明离线工程基线，不证明真实模型质量、生产追踪或投资表现。
+
+阅读顺序：`evaluation_contracts.py`→`evaluation_cases.py`→`evaluation_engine.py`→`evaluation.py`→`evaluation_trace.py`→`tests/test_evaluation.py`；跟踪quote-aapl与provider-failure的同一工具链，复述为什么一个可评分、另一个无分。上游设计参考及固定SHA见[SOURCES-step22](docs/SOURCES-step22.json)，不是研迹自己的执行证据。投资结果/校准留给未实施的C16。
 
 ## C16：研究表现与置信度如何校准？
 

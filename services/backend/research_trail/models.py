@@ -6,6 +6,63 @@ class Base(DeclarativeBase):
     pass
 
 
+class EvaluationExperimentRecord(Base):
+    __tablename__ = 'evaluation_experiments'
+    __table_args__ = (Index('ix_evaluation_one_active','status',unique=True,sqlite_where=text("status = 'running'")),)
+    id: Mapped[str] = mapped_column(String(36),primary_key=True)
+    request_id: Mapped[str] = mapped_column(String(36),unique=True)
+    request_hash: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[str] = mapped_column(String(40),index=True)
+    status: Mapped[str] = mapped_column(String(20))
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
+class EvaluationBaselineRecord(Base):
+    __tablename__ = 'evaluation_baselines'
+    id: Mapped[str] = mapped_column(String(36),primary_key=True)
+    request_id: Mapped[str] = mapped_column(String(36),unique=True)
+    request_hash: Mapped[str] = mapped_column(String(64))
+    experiment_id: Mapped[str] = mapped_column(ForeignKey('evaluation_experiments.id'))
+    created_at: Mapped[str] = mapped_column(String(40))
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
+class EvaluationFeedbackRecord(Base):
+    __tablename__ = 'evaluation_feedback'
+    id: Mapped[str] = mapped_column(String(36),primary_key=True)
+    request_id: Mapped[str] = mapped_column(String(36),unique=True)
+    request_hash: Mapped[str] = mapped_column(String(64))
+    experiment_id: Mapped[str] = mapped_column(ForeignKey('evaluation_experiments.id'))
+    created_at: Mapped[str] = mapped_column(String(40))
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
+class EvaluationTraceConfigRecord(Base):
+    __tablename__ = 'evaluation_trace_config'
+    provider: Mapped[str] = mapped_column(String(12),primary_key=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+    credential_ref: Mapped[str | None] = mapped_column(String(36),nullable=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(20))
+    code: Mapped[str] = mapped_column(String(80))
+    checked_at: Mapped[str | None] = mapped_column(String(40),nullable=True)
+
+
+class EvaluationTraceDeliveryRecord(Base):
+    __tablename__ = 'evaluation_trace_deliveries'
+    __table_args__ = (UniqueConstraint('provider','experiment_id','revision','digest'),)
+    id: Mapped[str] = mapped_column(String(36),primary_key=True)
+    request_id: Mapped[str] = mapped_column(String(36),unique=True)
+    request_hash: Mapped[str] = mapped_column(String(64))
+    provider: Mapped[str] = mapped_column(String(12))
+    experiment_id: Mapped[str] = mapped_column(ForeignKey('evaluation_experiments.id'))
+    revision: Mapped[int] = mapped_column(Integer)
+    digest: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(20))
+    code: Mapped[str] = mapped_column(String(80))
+
+
 class ResearchRecord(Base):
     __tablename__ = 'research_runs'
     __table_args__ = (
