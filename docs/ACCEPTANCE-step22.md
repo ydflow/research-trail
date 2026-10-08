@@ -79,3 +79,6 @@ CI沿用现有Windows离线门禁，在全量pytest之后额外执行原创案�
 
 
 补修PR22首head的PR CI通过，push CI在第22步实验仍running时的5秒终态断言失败（51 Electron通过/1失败），未合并。同一PR增加Python实验终态等待helper，3秒×案例数+25秒沙盒/IPC测试预算，错误终态立即失败，UI仍5秒；真实SQLite恢复案例各延迟4秒，旧测试2失败、新测试同一延迟2通过。新增tests/backend-ready.cjs后补修4文件、全步39文件；业务与评测结果未改，新完整验收另行记录。
+
+
+b3a9e1b的push通过，PR在旧生命周期respond超时探针失败（622 Python通过/1失败，后续未执行）。修复测试阶段控制，先到plan/respond gate后以原timer真实回调触发RUN_TIMEOUT；注入0.25秒提供商延迟旧respond失败，新2参数通过，整份生命周期13通过。补修5文件/全步40文件，生产业务和超时设置不改；最新完整验收及PR/main CI按真实回执。

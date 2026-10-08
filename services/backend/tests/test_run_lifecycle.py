@@ -182,27 +182,42 @@ def test_terminal_three_way_race_is_guarded_by_database(tmp_path):
 
 
 @pytest.mark.parametrize("phase", ["plan", "respond"])
-def test_overall_timeout_stops_late_model_and_preserves_saved_tools(tmp_path, phase):
+def test_overall_timeout_stops_late_model_and_preserves_saved_tools(tmp_path, phase, monkeypatch):
     entered, release = threading.Event(), threading.Event()
 
     class GateModel(FakeModelProvider):
         def plan(self, prompt):
             if phase == "plan":
-                entered.set(); assert release.wait(3)
+                entered.set(); assert release.wait(10)
             return super().plan(prompt)
 
         def respond(self, data):
-            entered.set(); assert release.wait(3)
+            entered.set(); assert release.wait(10)
             return super().respond(data)
 
     provider = Provider()
     app = create_app(TOKEN, provider, model_provider=GateModel(), database_path=tmp_path / "model-timeout.sqlite3",
-                     run_timings={"normal": Timing(run_timeout=0.1)})
+                     run_timings={"normal": Timing(run_timeout=30)})
     try:
         with TestClient(app, headers=HEADERS) as c:
+            manager = app.state.manager
+            real_timer = manager.timer
+            deferred = []
+
+            def phase_timer(work, seconds, code):
+                if code == "RUN_TIMEOUT":
+                    deferred.append(work)
+                    return None
+                return real_timer(work, seconds, code)
+
+            # Test the timeout in the requested model phase, rather than race
+            # the preceding tool/SQLite writes against a 100ms wall clock.
+            monkeypatch.setattr(manager, "timer", phase_timer)
             sid = session(c); record = start(c, sid, "normal")
-            assert entered.wait(2)
+            assert entered.wait(5)
             work = app.state.manager.work[record["id"]]
+            assert deferred == [work]
+            real_timer(work, 0, "RUN_TIMEOUT")
             result = terminal(c, sid, record["id"])
             assert result["status"] == "timed_out" and result["error"]["code"] == "RUN_TIMEOUT"
             trace = proof(c, sid, result)

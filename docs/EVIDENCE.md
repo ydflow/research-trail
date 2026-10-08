@@ -1951,3 +1951,8 @@ Temp可控延迟实验：Python真实子进程启动额外延迟6秒、研究sta
 补修PR #22的首个head 9c5dbc0ab159583c7b1c855aa9a50f3bd191315d：PR [37772119619](https://github.com/ydflow/research-trail/actions/runs/37772119619) success（623/12/52），push [37772108397](https://github.com/ydflow/research-trail/actions/runs/37772108397) failure（623 Python/12 Node通过，Electron51通过/1失败），未合并。
 新增阻塞在第22步运行错误实验：12案例按序执行，包含真实迁移的两个SQLite恢复/重放沙盒，5秒UI断言到期时仍running，不能把此中间状态当终态错误。补修同一PR/分支，tests/backend-ready.cjs增加waitForEvaluationCompletion：读取已保存实验，按3秒Agent案例预算×案例数加25秒沙盒/IPC调度测试预算等待非not_run/running终态，立即断言期望状态；渲染断言仍默认5秒。passed/quality_failed/run_error的三个执行断言使用该helper；额外验证run_error不能被当passed等待重试。
 Temp将两个真实SQLite恢复案例各额外延迟4秒，旧测试2失败（running），新测试在同一延迟2项实际Electron通过（无分数、取消、错误和恢复的原断言保留）。日志research-trail-step22-eval-wait-before.log/after.log仅Temp；不是改变结果或重跑隐藏失败。当前补修差异4文件（两个测试文件和两份本步文档），相对Step21总差异39文件；业务/案例/评估器/契约不改，完整新干净验收及新head CI按实际回执。
+
+
+补修head b3a9e1b的push [37774187242](https://github.com/ydflow/research-trail/actions/runs/37774187242) success（623/12/52），PR [37774195101](https://github.com/ydflow/research-trail/actions/runs/37774195101) failure（622 Python通过/1失败，后续CLI/Node/Electron未执行）。失败在既有test_run_lifecycle.py的respond超时探针：100毫秒总预算早于目标模型阶段耗尽，entered尚未设置。
+同一补修PR只调整该测试：在充足的夹具启动预算内等待明确plan/respond gate，推迟注册整体计时器，再调用原RunManager.timer(...,0,"RUN_TIMEOUT")实际线程回调触发超时；原工具计时器不改。保留RUN_TIMEOUT、已保存tool_result、实际提供商调用、唯一终态及释放迟到模型后事件完全不变的断言。Temp注入提供商0.25秒延迟：旧版plan通过/respond失败；修复版相同延迟2通过；整份生命周期测试13通过。不是改变生产超时配置或以重跑隐藏失败。
+补修现在5文件（3测试/2本步文档），全步相对Step21共40文件；最新完整新验收、PR和main CI另行记录。用户在等待发布期间已明确发送第23步并要求继续；先收尾第22步发布阻塞，再按该新授权实现第23步，第24步仍未授权。
