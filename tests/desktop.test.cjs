@@ -805,7 +805,9 @@ for(const scenario of ['research-partial','failure']) test(`Step15 ${scenario} k
 });
 
 test('Step15 whole cancellation retains three successes and discards real late fixture return',{timeout:45000},async()=>{
-  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'research-delayed'});
+  // The 2s fixture can finish before a loaded runner renders partial progress.
+  // Use the existing 15s checkpoint, still inside the real 20s collection plan.
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'research-checkpoint'});
   try {
     const page=instance.page; await waitForBackend(page);
     await page.getByRole('button',{name:'研究采集',exact:true}).click();
@@ -827,7 +829,7 @@ test('Step15 whole cancellation retains three successes and discards real late f
       if(window.step15Followup)return 'started';
       try{window.step15Followup=await window.researchTrail.startResearch({symbol:'AAPL.US',strategy:'growth'});return 'started';}
       catch(e){return e.message;}
-    }),{timeout:8000}).toBe('started');
+    }),{timeout:cancelled.plan.timeout_seconds*1000+6000}).toBe('started');
     assert.deepEqual(await page.evaluate(id=>window.researchTrail.researchRun(id),id),cancelled);
     await expect(panel.getByTestId('research-run')).toHaveAttribute('data-run-id',id);
     assert.equal(await page.evaluate(async()=>{const rows=await window.researchTrail.researchRuns();return rows.length;}),2);
@@ -1817,6 +1819,7 @@ test('four fixture stocks, actual canvas loader, unknown symbol, repeat provenan
 test('late earlier response cannot overwrite the latest stock selection', { timeout: 45000 }, async () => {
   const instance = await launch();
   try {
+    await waitForBackend(instance.page);
     await expect(instance.page.getByTestId('quote-price')).toHaveText('189.43');
     const samples = await instance.page.evaluate(async () => ({
       aapl: await window.researchTrail.marketSnapshot('AAPL.US'),
