@@ -120,6 +120,248 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/evaluation/baselines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Evaluation Baselines */
+        get: operations["evaluation_baselines_evaluation_baselines_get"];
+        put?: never;
+        /** Evaluation Baseline */
+        post: operations["evaluation_baseline_evaluation_baselines_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Evaluation Cases */
+        get: operations["evaluation_cases_evaluation_cases_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/experiments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Evaluation Experiments */
+        get: operations["evaluation_experiments_evaluation_experiments_get"];
+        put?: never;
+        /** Evaluation Create */
+        post: operations["evaluation_create_evaluation_experiments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/experiments/{identity}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Evaluation Experiment */
+        get: operations["evaluation_experiment_evaluation_experiments__identity__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/experiments/{identity}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Evaluation Cancel */
+        post: operations["evaluation_cancel_evaluation_experiments__identity__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/experiments/{identity}/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Evaluation Feedback List */
+        get: operations["evaluation_feedback_list_evaluation_experiments__identity__feedback_get"];
+        put?: never;
+        /** Evaluation Feedback */
+        post: operations["evaluation_feedback_evaluation_experiments__identity__feedback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/experiments/{identity}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Evaluation Start */
+        post: operations["evaluation_start_evaluation_experiments__identity__start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/experiments/{identity}/tracing/{provider}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Evaluation Trace Preview */
+        get: operations["evaluation_trace_preview_evaluation_experiments__identity__tracing__provider__preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/experiments/{identity}/tracing/{provider}/upload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Evaluation Trace Upload */
+        post: operations["evaluation_trace_upload_evaluation_experiments__identity__tracing__provider__upload_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/tracing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Evaluation Tracing */
+        get: operations["evaluation_tracing_evaluation_tracing_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/tracing/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Evaluation Trace Deliveries */
+        get: operations["evaluation_trace_deliveries_evaluation_tracing_deliveries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/tracing/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Evaluation Trace Config */
+        put: operations["evaluation_trace_config_evaluation_tracing__provider__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/tracing/{provider}/credential": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Evaluation Trace Credential */
+        put: operations["evaluation_trace_credential_evaluation_tracing__provider__credential_put"];
+        post?: never;
+        /** Evaluation Trace Delete */
+        delete: operations["evaluation_trace_delete_evaluation_tracing__provider__credential_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/tracing/{provider}/probe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Evaluation Trace Probe */
+        post: operations["evaluation_trace_probe_evaluation_tracing__provider__probe_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -1421,6 +1663,70 @@ export interface components {
             /** Symbol */
             symbol: string | null;
         };
+        /** Assertion */
+        Assertion: {
+            /** Metric */
+            metric: string;
+            /** Passed */
+            passed: boolean;
+            /** Reason */
+            reason: string;
+            /** Sequence */
+            sequence?: number | null;
+            /** Stage */
+            stage: string;
+        };
+        /** BaselineInput */
+        BaselineInput: {
+            /**
+             * Experiment Id
+             * Format: uuid
+             */
+            experiment_id: string;
+            /** Name */
+            name: string;
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+        };
+        /** BaselineSummary */
+        BaselineSummary: {
+            /** Created At */
+            created_at: string;
+            /** Evaluator Version */
+            evaluator_version: string;
+            /** Experiment Id */
+            experiment_id: string;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Score */
+            score: number;
+            /** Suite Hash */
+            suite_hash: string;
+        };
+        /** BaselineView */
+        BaselineView: {
+            /** Created At */
+            created_at: string;
+            /** Evaluator Version */
+            evaluator_version: string;
+            /** Experiment Id */
+            experiment_id: string;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Results */
+            results: components["schemas"]["CaseResult"][];
+            /** Score */
+            score: number;
+            /** Suite Hash */
+            suite_hash: string;
+        };
         /** CalendarEventView */
         CalendarEventView: {
             /**
@@ -1741,6 +2047,44 @@ export interface components {
              * @enum {string}
              */
             validation: "unverified" | "simulated" | "real" | "restricted" | "failed";
+        };
+        /** CaseResult */
+        CaseResult: {
+            /** Answer */
+            answer?: string | null;
+            /**
+             * Assertions
+             * @default []
+             */
+            assertions: components["schemas"]["Assertion"][];
+            /** Case Id */
+            case_id: string;
+            /** Code */
+            code?: string | null;
+            /** Failure Stage */
+            failure_stage?: string | null;
+            /** Observed Status */
+            observed_status?: string | null;
+            /** Score */
+            score?: number | null;
+            /**
+             * Status
+             * @default not_run
+             * @enum {string}
+             */
+            status: "not_run" | "running" | "cancelled" | "run_error" | "quality_failed" | "passed";
+            /**
+             * Tool Calls
+             * @default 0
+             */
+            tool_calls: number;
+            /**
+             * Trace
+             * @default []
+             */
+            trace: {
+                [key: string]: unknown;
+            }[];
         };
         /** CashInput */
         CashInput: {
@@ -2132,6 +2476,54 @@ export interface components {
              */
             retryable: boolean;
         };
+        /** EvaluationCase */
+        EvaluationCase: {
+            /**
+             * Category
+             * @enum {string}
+             */
+            category: "normal" | "error" | "recovery" | "regression";
+            /** Expected Code */
+            expected_code?: string | null;
+            /** Expected Tool */
+            expected_tool?: string | null;
+            /** Id */
+            id: string;
+            /**
+             * Origin
+             * @default research-trail
+             * @constant
+             */
+            origin: "research-trail";
+            /** Prompt */
+            prompt: string;
+            /** Purpose */
+            purpose: string;
+            /** Title */
+            title: string;
+            /**
+             * Version
+             * @default 1
+             * @constant
+             */
+            version: 1;
+        };
+        /** EvaluationComparison */
+        EvaluationComparison: {
+            /** Baseline Id */
+            baseline_id: string;
+            /** Comparable */
+            comparable: boolean;
+            /** Delta */
+            delta?: number | null;
+            /** Reason */
+            reason: string;
+            /**
+             * Regressed Cases
+             * @default []
+             */
+            regressed_cases: string[];
+        };
         /** EventPage */
         EventPage: {
             /** Events */
@@ -2182,6 +2574,167 @@ export interface components {
             snapshot_id: string;
             /** Timezone */
             timezone?: string | null;
+        };
+        /** ExperimentInput */
+        ExperimentInput: {
+            /** Case Ids */
+            case_ids: string[];
+            /** Name */
+            name: string;
+            /**
+             * Profile
+             * @default baseline
+             * @enum {string}
+             */
+            profile: "baseline" | "missing-disclosure" | "wrong-fact" | "missing-tool" | "provider-failure";
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+        };
+        /** ExperimentSummary */
+        ExperimentSummary: {
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
+            /** Created At */
+            created_at: string;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Profile
+             * @enum {string}
+             */
+            profile: "baseline" | "missing-disclosure" | "wrong-fact" | "missing-tool" | "provider-failure";
+            /** Score */
+            score: number | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "not_run" | "running" | "cancelled" | "run_error" | "quality_failed" | "passed";
+            /** Validity */
+            validity: string;
+        };
+        /** ExperimentView */
+        ExperimentView: {
+            /** Cases */
+            cases: components["schemas"]["EvaluationCase"][];
+            comparison?: components["schemas"]["EvaluationComparison"] | null;
+            /** Completed At */
+            completed_at?: string | null;
+            /**
+             * Counts
+             * @default {}
+             */
+            counts: {
+                [key: string]: number;
+            };
+            /** Created At */
+            created_at: string;
+            /**
+             * Evaluator Version
+             * @default rt-engineering-v1
+             * @constant
+             */
+            evaluator_version: "rt-engineering-v1";
+            /**
+             * Failure Counts
+             * @default {}
+             */
+            failure_counts: {
+                [key: string]: number;
+            };
+            /** Id */
+            id: string;
+            input: components["schemas"]["ExperimentInput"];
+            /**
+             * Mode
+             * @default deterministic-offline
+             * @constant
+             */
+            mode: "deterministic-offline";
+            /**
+             * Model Requests
+             * @default 0
+             * @constant
+             */
+            model_requests: 0;
+            /**
+             * Origin Counts
+             * @default {}
+             */
+            origin_counts: {
+                [key: string]: number;
+            };
+            /** Results */
+            results: components["schemas"]["CaseResult"][];
+            /** Score */
+            score?: number | null;
+            /**
+             * Status
+             * @default not_run
+             * @enum {string}
+             */
+            status: "not_run" | "running" | "cancelled" | "run_error" | "quality_failed" | "passed";
+            /** Suite Hash */
+            suite_hash: string;
+            /**
+             * Validity
+             * @default not_executed
+             * @enum {string}
+             */
+            validity: "not_executed" | "inconclusive" | "invalid" | "valid";
+        };
+        /** FeedbackInput */
+        FeedbackInput: {
+            /** Case Id */
+            case_id: string;
+            /**
+             * Judgment
+             * @enum {string}
+             */
+            judgment: "agree" | "disagree" | "needs-review";
+            /** Reason */
+            reason: string;
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+        };
+        /** FeedbackView */
+        FeedbackView: {
+            /** Case Id */
+            case_id: string;
+            /** Created At */
+            created_at: string;
+            /** Experiment Id */
+            experiment_id: string;
+            /** Id */
+            id: string;
+            /**
+             * Judgment
+             * @enum {string}
+             */
+            judgment: "agree" | "disagree" | "needs-review";
+            /** Reason */
+            reason: string;
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            /**
+             * Source
+             * @default human
+             * @constant
+             */
+            source: "human";
         };
         /** FinancialRow */
         FinancialRow: {
@@ -4796,6 +5349,161 @@ export interface components {
              */
             ok: true;
         };
+        /** TraceConfig */
+        TraceConfig: {
+            /**
+             * Enabled
+             * @default false
+             */
+            enabled: boolean;
+            /**
+             * Endpoint
+             * @default
+             */
+            endpoint: string;
+            /**
+             * Project
+             * @default research-trail
+             */
+            project: string;
+        };
+        /** TraceConfigView */
+        TraceConfigView: {
+            /** Checked At */
+            checked_at?: string | null;
+            /**
+             * Code
+             * @default TRACING_DISABLED
+             */
+            code: string;
+            /** Credential Present */
+            credential_present: boolean;
+            /**
+             * Enabled
+             * @default false
+             */
+            enabled: boolean;
+            /**
+             * Endpoint
+             * @default
+             */
+            endpoint: string;
+            /**
+             * Privacy
+             * @default minimal-allowlist-v1
+             * @constant
+             */
+            privacy: "minimal-allowlist-v1";
+            /**
+             * Project
+             * @default research-trail
+             */
+            project: string;
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "langsmith" | "langfuse";
+            /**
+             * Revision
+             * @default 0
+             */
+            revision: number;
+            /**
+             * Status
+             * @default disabled
+             */
+            status: string;
+        };
+        /** TraceCredential */
+        TraceCredential: {
+            /** Public Key */
+            public_key?: string | null;
+            /**
+             * Secret
+             * Format: password
+             */
+            secret: string;
+            /** Workspace Id */
+            workspace_id?: string | null;
+        };
+        /** TraceDelivery */
+        TraceDelivery: {
+            /** Code */
+            code: string;
+            /** Created At */
+            created_at: string;
+            /** Experiment Id */
+            experiment_id: string;
+            /** Id */
+            id: string;
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "langsmith" | "langfuse";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "claimed" | "uploaded" | "failed" | "uncertain";
+        };
+        /** TracePreview */
+        TracePreview: {
+            /** Digest */
+            digest: string;
+            /**
+             * Excluded
+             * @default [
+             *       "prompt",
+             *       "answer",
+             *       "tool-input",
+             *       "tool-output",
+             *       "feedback",
+             *       "names",
+             *       "account",
+             *       "portfolio",
+             *       "credentials"
+             *     ]
+             */
+            excluded: string[];
+            /** Experiment Id */
+            experiment_id: string;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /**
+             * Provider
+             * @enum {string}
+             */
+            provider: "langsmith" | "langfuse";
+            /** Revision */
+            revision: number;
+        };
+        /** TraceProbe */
+        TraceProbe: {
+            /**
+             * Confirm Connection
+             * @constant
+             */
+            confirm_connection: true;
+        };
+        /** TraceUpload */
+        TraceUpload: {
+            /**
+             * Confirm Upload
+             * @constant
+             */
+            confirm_upload: true;
+            /** Digest */
+            digest: string;
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+        };
         /** TradingStatus */
         TradingStatus: {
             /** Market */
@@ -5106,6 +5814,618 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CapabilityState"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_baselines_evaluation_baselines_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BaselineSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_baseline_evaluation_baselines_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BaselineInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BaselineView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_cases_evaluation_cases_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvaluationCase"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_experiments_evaluation_experiments_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_create_evaluation_experiments_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExperimentInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_experiment_evaluation_experiments__identity__get: {
+        parameters: {
+            query?: {
+                baseline_id?: string | null;
+            };
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_cancel_evaluation_experiments__identity__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_feedback_list_evaluation_experiments__identity__feedback_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackView"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_feedback_evaluation_experiments__identity__feedback_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FeedbackInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_start_evaluation_experiments__identity__start_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExperimentView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_trace_preview_evaluation_experiments__identity__tracing__provider__preview_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+                provider: "langsmith" | "langfuse";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TracePreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_trace_upload_evaluation_experiments__identity__tracing__provider__upload_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+                provider: "langsmith" | "langfuse";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TraceUpload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraceDelivery"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_tracing_evaluation_tracing_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraceConfigView"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_trace_deliveries_evaluation_tracing_deliveries_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraceDelivery"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_trace_config_evaluation_tracing__provider__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                provider: "langsmith" | "langfuse";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TraceConfig"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraceConfigView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_trace_credential_evaluation_tracing__provider__credential_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                provider: "langsmith" | "langfuse";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TraceCredential"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraceConfigView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_trace_delete_evaluation_tracing__provider__credential_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                provider: "langsmith" | "langfuse";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraceConfigView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluation_trace_probe_evaluation_tracing__provider__probe_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                provider: "langsmith" | "langfuse";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TraceProbe"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraceConfigView"];
                 };
             };
             /** @description Validation Error */
