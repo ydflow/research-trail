@@ -1520,6 +1520,18 @@
             "title": "Model",
             "type": "string"
           },
+          "reasoning_effort": {
+            "default": "default",
+            "enum": [
+              "default",
+              "none",
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Reasoning Effort",
+            "type": "string"
+          },
           "request_timeout_seconds": {
             "default": 30,
             "maximum": 120,
@@ -1617,6 +1629,18 @@
           },
           "reason": {
             "title": "Reason",
+            "type": "string"
+          },
+          "reasoning_effort": {
+            "default": "default",
+            "enum": [
+              "default",
+              "none",
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Reasoning Effort",
             "type": "string"
           },
           "request_timeout_seconds": {

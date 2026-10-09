@@ -199,6 +199,7 @@ class ConnectionRecord(Base):
     max_tool_rounds: Mapped[int] = mapped_column(Integer, default=8)
     run_timeout_seconds: Mapped[int] = mapped_column(Integer, default=120)
     request_timeout_seconds: Mapped[int] = mapped_column(Integer, default=30)
+    reasoning_effort: Mapped[str] = mapped_column(String(12), default='default', server_default=text("'default'"))
 
 
 class DataProviderRecord(Base):

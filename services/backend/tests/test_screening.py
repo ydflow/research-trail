@@ -277,12 +277,13 @@ def test_additive_upgrade_from_0013_preserves_existing_workspace(api,tmp_path):
     try:
         with legacy.write() as db:
             for name in ('outcome_performance_snapshots','outcome_policy_state','outcome_policy_versions','outcome_attempts','outcome_opinions','evaluation_trace_deliveries','evaluation_trace_config','evaluation_feedback','evaluation_baselines','evaluation_experiments','monitoring_research_actions','monitoring_runs','monitoring_rules','calendar_snapshots','screening_runs'): db.execute(text('DROP TABLE '+name))
+            db.execute(text('ALTER TABLE connections DROP COLUMN reasoning_effort'))
             db.execute(text("UPDATE alembic_version SET version_num='0013_theses'"))
     finally:legacy.close()
     with api(path=path) as (c,app):
         assert c.get('/workspace').json()==old and c.get('/screening/runs').json()==[]
         with app.state.screening.database.sessions() as db:
-            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0018_outcomes'
+            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0019_model_reasoning'
             assert not db.execute(text('PRAGMA foreign_key_check')).all()
 
 def test_explicit_nonbuy_and_empty_lists_are_excluded_not_capability_failures(api):

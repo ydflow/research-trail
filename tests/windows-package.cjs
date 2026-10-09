@@ -135,7 +135,7 @@ async function main() {
     const sessions=await instance.page.evaluate(()=>window.researchTrail.listSessions());assert.ok(sessions.some(s=>s.title==='原创旧库升级验收'));
   }finally{await close(instance);}
   const upgraded=spawnSync(join(root,'services/backend/.venv/Scripts/python.exe'),['-c',"import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); print(c.execute('select version_num from alembic_version').fetchone()[0]); assert c.execute('PRAGMA foreign_key_check').fetchone() is None",oldDB],{encoding:'utf8',windowsHide:true});
-  assert.equal(upgraded.status,0,upgraded.stderr);assert.equal(upgraded.stdout.trim(),'0018_outcomes');
+  assert.equal(upgraded.status,0,upgraded.stderr);assert.equal(upgraded.stdout.trim(),'0019_model_reasoning');
   check('installed frozen backend migrates synthetic 0017 to 0018 preserving original session',upgraded.stdout.trim());
   const database=join(data,'data/research-trail.sqlite3');const before=createHash('sha256').update(readFileSync(database)).digest('hex');
   const uninstall=readdirSync(install).find(f=>/^Uninstall.*\.exe$/i.test(f));assert.ok(uninstall);
