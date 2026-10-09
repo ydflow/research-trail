@@ -1,5 +1,6 @@
 """Python read-only provider boundary, checked against Folio ba5dcdfd (not imported)."""
 from datetime import date, datetime
+import json
 from typing import Annotated, Literal
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, JsonValue, SecretStr, field_validator, model_validator
 
@@ -45,7 +46,7 @@ class ProviderCredentials(Boundary):
     def safe_secret(cls, value):
         if value is not None:
             text = value.get_secret_value()
-            if not text.strip() or any(c in text for c in '\x00\r\n') or len(text.encode()) > 700:
+            if not text.strip() or any(c in text for c in '\x00\r\n') or len(text.encode()) > 2048:
                 raise ValueError('凭证长度或格式不符合要求。')
         return value
 
@@ -54,6 +55,11 @@ class ProviderCredentials(Boundary):
         native = (self.app_key, self.app_secret, self.access_token)
         if not ((self.api_key is not None and not any(native)) or (self.api_key is None and all(native))):
             raise ValueError('保存Massive单项Key或Longbridge三项凭证。')
+        values = {key: value.get_secret_value() for key, value in self if value is not None}
+        # Windows generic credentials hold at most 2560 bytes. Check the actual
+        # UTF-8 JSON blob, including escaping, before attempting a vault write.
+        if len(json.dumps(values, ensure_ascii=False).encode('utf-8')) > 2560:
+            raise ValueError('凭证组合超过系统凭证存储大小限制。')
         return self
 
 class ProviderProfile(ProviderConfiguration):

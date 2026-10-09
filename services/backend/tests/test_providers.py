@@ -1,6 +1,6 @@
 """Offline vendor contract, isolated credentials, provenance and owned-process regressions."""
 from contextlib import contextmanager
-from datetime import date
+from datetime import date, datetime, timezone
 import json
 from pathlib import Path
 import socket
@@ -101,6 +101,33 @@ def test_vault_failure_rollback_and_validation_redaction(api,monkeypatch):
     monkeypatch.setattr(app.state.provider_settings.database,'write',fail_write)
     assert client.put('/settings/providers/massive/credential',json={'api_key':SENTINEL}).status_code==409
     assert vault.values=={}
+
+
+def test_long_access_token_roundtrip_reopen_and_total_blob_limit(api):
+    client,vault,app,*_=api
+    save(client)
+    body={'app_key':'synthetic-app','app_secret':'synthetic-secret','access_token':'synthetic-long-token-'+'x'*1200}
+    response=client.put('/settings/providers/longbridge/credential',json=body)
+    assert response.status_code==200 and response.json()['credential_present']
+    snapshot=app.state.provider_settings.snapshot('longbridge')
+    assert snapshot.credentials==body
+    assert body['access_token'] not in response.text
+    from research_trail.provider_settings import ProviderSettings
+    reopened=ProviderSettings(app.state.settings)
+    assert reopened.snapshot('longbridge').credentials==body
+    original=dict(vault.values)
+    for invalid in (
+        {**body,'access_token':'z'*2049},
+        {'app_key':'a'*1000,'app_secret':'b'*1000,'access_token':'c'*1000},
+        {'app_key':'a','app_secret':'b','access_token':'"'*1300},
+        {'app_key':'a','app_secret':'b','access_token':'\u6a21'*900},
+    ):
+        rejected=client.put('/settings/providers/longbridge/credential',json=invalid)
+        assert rejected.status_code==422
+        assert invalid['access_token'] not in rejected.text
+        assert vault.values==original
+    with sqlite3.connect(app.state.provider_settings.database.path) as db:
+        assert body['access_token'] not in '\n'.join(db.iterdump())
 
 @pytest.mark.parametrize('provider,cap',[(p,c) for p,cs in SUPPORTED.items() for c in cs])
 def test_all_baseline_simulations_need_no_credentials_or_transport(api,provider,cap,monkeypatch):
@@ -314,6 +341,25 @@ def test_secret_redaction_in_keys_values_and_foreign_objects():
     assert public_json({'opaque-123':'opaque-123','access_token':SENTINEL},('opaque-123',SENTINEL))=={'[已脱敏]':'[已脱敏]'}
     with pytest.raises(ProviderFault): public_json(SimpleNamespace(api_key=SENTINEL))
     with pytest.raises(ProviderFault): public_json(float('nan'))
+
+def test_sdk_local_timestamps_preserve_instant_and_other_naive_data_is_rejected():
+    epoch=1705438800
+    local=datetime.fromtimestamp(epoch)
+    expected=datetime.fromtimestamp(epoch,timezone.utc).isoformat()
+    with pytest.raises(ProviderFault): public_json({'timestamp':local})
+    assert public_json([{'timestamp':local}],sdk_local_datetime=True)==[{'timestamp':expected}]
+    assert public_json(datetime.fromtimestamp(epoch,timezone.utc))==expected
+
+def test_sdk_quote_boundary_accepts_native_local_timestamp():
+    import longbridge.openapi as sdk
+    epoch=1705438800
+    class Context:
+        def quote(self,symbols):
+            return [{'symbol':symbols[0],'last_done':'10','prev_close':'9',
+                     'timestamp':datetime.fromtimestamp(epoch)}]
+    result=execute_sdk(snap(),query(),sdk=sdk,context_factory=lambda *args:Context())
+    assert result['timestamp']==datetime.fromtimestamp(epoch,timezone.utc).isoformat()
+    assert result['last_price']==10
 
 @pytest.mark.parametrize('scenario',['timeout','cancel','overflow','badjson'])
 def test_owned_process_deadline_cancel_size_and_reaping(monkeypatch,scenario):

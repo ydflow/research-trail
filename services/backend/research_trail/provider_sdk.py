@@ -70,7 +70,7 @@ def execute_sdk(snapshot, query, *, sdk=None, context_factory=None):
     elif cap == 'account.cashFlow':
         data = ctx.cash_flow(datetime.combine(start,datetime.min.time(),tzinfo=timezone.utc),
             datetime.combine(end,datetime.max.time(),tzinfo=timezone.utc),symbol=symbol,page=1,size=query.count)
-    raw = public_json(data,tuple(credentials.values()))
+    raw = public_json(data,tuple(credentials.values()),sdk_local_datetime=True)
     if cap in ('market.quote','company.profile','company.valuation'):
         if not isinstance(raw,list) or len(raw)!=1 or not isinstance(raw[0],dict) or raw[0].get('symbol')!=symbol: raise ProviderFault('INVALID_RESPONSE')
         raw=raw[0]
