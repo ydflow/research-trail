@@ -4,20 +4,30 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { collectUiNotices } from './ui-notices.mjs';
+import { auditNative } from './native-audit.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const stage = mkdtempSync(join(root, 'build/windows/app-'));
 const notices = join(root, 'build/windows/notices');
-const output = join(root, 'release/windows-internal');
 const desktopRequire = createRequire(join(root, 'apps/desktop/package.json'));
-const version = '1.0.0-internal.24';
+const version = process.argv[2] ?? '1.0.0-internal.24';
+if (!/^1\.0\.0(?:-[a-z0-9.]+)?$/.test(version)) throw new Error('Expected explicit reviewed 1.0.0 version');
+const output = version==='1.0.0-internal.24' ? join(root,'release/windows-internal') : join(root,'release/windows',version);
+function git(args) { const r=spawnSync('git',args,{cwd:root,encoding:'utf8',windowsHide:true});if(r.status!==0)throw new Error('Cannot record source identity');return r.stdout.trim(); }
+const sourceCommit=git(['rev-parse','HEAD']);const sourceTree=git(['rev-parse','HEAD^{tree}']);
+const dirty=git(['status','--porcelain'])!=='';
+if(version==='1.0.0' && dirty) throw new Error('Commit reviewed sources before building the formal candidate');
 if (process.platform !== 'win32' || process.arch !== 'x64') throw new Error('Windows x64 build required');
 if (!existsSync(join(root,'build/windows/python/backend/research-trail-backend.exe'))) throw new Error('Build Python backend first');
+auditNative(root,join(root,'build/windows/python/backend/_internal'));
+const backendIdentity=JSON.parse(readFileSync(join(root,'build/windows/backend-source.json'),'utf8'));
+if(version==='1.0.0' && (backendIdentity.source_commit!==sourceCommit || backendIdentity.source_tree!==sourceTree || backendIdentity.source_dirty))throw new Error('Python build does not match the clean reviewed source');
 mkdirSync(stage, {recursive:true}); mkdirSync(output, {recursive:true});
 cpSync(join(root,'apps/desktop/dist'), join(stage,'dist'), {recursive:true});
 writeFileSync(join(stage,'package.json'), JSON.stringify({name:'research-trail-desktop',version,
-  description:'ResearchTrail Windows internal acceptance candidate',author:'ResearchTrail contributors',
+  description:'ResearchTrail local investment research workbench',author:'ResearchTrail contributors',
   main:'dist/main.cjs',private:true},null,2)+'\n');
 // The renderer and main/preload are already bundled. No repository/node_modules
 // directory is included, and no broad project copy can collect private runtime state.
@@ -54,5 +64,6 @@ function walk(folder) {for(const name of readdirSync(folder)) {const path=join(f
     sha256:createHash('sha256').update(readFileSync(path)).digest('hex')});}}
 walk(join(output,'win-unpacked'));
 if(manifest.some(f=>f.path !== 'resources/backend/_internal/certifi/cacert.pem' && /(^|\/)(runtime|user-data|\.env|\.git|node_modules)(\/|$)|\.(sqlite3?|db|log|csv|pem|key)$/i.test(f.path))) throw new Error('Disallowed runtime/private file in bundle');
-writeFileSync(join(output,'bundle-manifest.json'),JSON.stringify({version,installer,sha256:sha,files:manifest},null,2)+'\n');
-console.log(`[package] ${installer}\nSHA256 ${sha}\nInternal candidate only; clean Windows acceptance pending.`);
+writeFileSync(join(output,'bundle-manifest.json'),JSON.stringify({version,installer,sha256:sha,source_commit:sourceCommit,
+  source_tree:sourceTree,source_dirty:dirty,built_at:new Date().toISOString(),files:manifest},null,2)+'\n');
+console.log(`[package] ${installer}\nSHA256 ${sha}\nSource ${sourceCommit}; candidate pending explicit installer acceptance; no publication.`);

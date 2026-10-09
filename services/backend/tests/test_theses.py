@@ -164,7 +164,7 @@ def test_old_database_upgrade_preserves_reports_and_starts_without_auto_thesis(a
     legacy=Database(path)
     try:
         with legacy.engine.begin() as db:
-            for name in ('outcome_performance_snapshots','outcome_policy_state','outcome_policy_versions','outcome_attempts','outcome_opinions','evaluation_trace_deliveries','evaluation_trace_config','evaluation_feedback','evaluation_baselines','evaluation_experiments','monitoring_research_actions','monitoring_runs','monitoring_rules','calendar_snapshots','screening_runs','thesis_reviews','thesis_versions','investment_theses'): db.execute(text('DROP TABLE '+name))
+            for name in ('research_comparisons','outcome_performance_snapshots','outcome_policy_state','outcome_policy_versions','outcome_attempts','outcome_opinions','evaluation_trace_deliveries','evaluation_trace_config','evaluation_feedback','evaluation_baselines','evaluation_experiments','monitoring_research_actions','monitoring_runs','monitoring_rules','calendar_snapshots','screening_runs','thesis_reviews','thesis_versions','investment_theses'): db.execute(text('DROP TABLE '+name))
             db.execute(text('ALTER TABLE connections DROP COLUMN reasoning_effort'))
             db.execute(text("UPDATE alembic_version SET version_num='0012_checkpoints'"))
     finally:legacy.close()
@@ -172,7 +172,7 @@ def test_old_database_upgrade_preserves_reports_and_starts_without_auto_thesis(a
         assert c.get('/theses').json()==[] and c.get('/research/reports/'+job['id']).json()==job
         assert thesis(c,job)['current_version']==1
         with app.state.theses.database.engine.connect() as db:
-            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0019_model_reasoning'
+            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0020_research_quality'
             assert not db.execute(text('PRAGMA foreign_key_check')).all()
 
 @pytest.mark.parametrize('case',['cached','old-fetched'])

@@ -16,7 +16,7 @@ concurrency:
 jobs:
   windows-fixture:
     runs-on: windows-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     defaults:
       run:
         shell: cmd

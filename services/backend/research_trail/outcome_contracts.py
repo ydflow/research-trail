@@ -36,7 +36,8 @@ class OutcomeOpinion(Boundary):
     provider_revision: int
     provider_identity: str | None
     evidence_ids: list[str]
-    confidence: None = None
+    confidence: Decimal | None = Field(default=None, ge=0, le=1)
+    probability_event: Literal['stance-match-v1'] | None = None
     capture_version: str = 'research-trail-capture-v1'
 
 class OutcomeRequest(Boundary):
@@ -140,6 +141,10 @@ class PerformanceRow(Boundary):
     sample_confidence: str | None
     adaptive_weight: str | None
     evaluation_ids: list[str]
+    probability_samples: int = 0
+    probability_insufficient: bool = True
+    brier_score: str | None = None
+    calibration_bins: list[dict] = Field(default_factory=list)
 
 class PerformanceSnapshot(Boundary):
     id: str
@@ -147,6 +152,7 @@ class PerformanceSnapshot(Boundary):
     filter: PerformanceQuery
     policy_version: int
     calculation_version: str = 'research-trail-calibration-v1'
+    probability_calculation_version: str = 'research-trail-probability-v1'
     rows: list[PerformanceRow]
     input_hash: str
     opinion_ids: list[str] = Field(default_factory=list)

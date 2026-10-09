@@ -16,6 +16,11 @@ def markdown(job):
         f'采集任务：{doc.source_run_id} · 采集状态：{doc.collection_status} · 策略：{escape(doc.strategy)}',
         '',escape(doc.disclaimer), '',f'分析立场：{syn.stance}（未核实判断）']
     facts={f.id:f for f in doc.evidence}
+    if syn.forecast:
+        f=syn.forecast
+        lines.extend(['', '## 预测概率（未经校准）', '', escape(f.label),
+            f'窗口：{f.horizon} · 事件：{f.event} · 主观概率：{f.probability}', escape(f.basis),
+            '证据：'+' '.join(f'[{i}](#{i})' for i in f.evidence_ids)])
     if doc.event_context:
         ctx=doc.event_context; event=ctx.event
         lines.extend(['','## 事件研究上下文','',escape(event.title),escape(event.display_time),
@@ -73,6 +78,11 @@ def diff(before,after):
         for s in syn.sections: out['section:'+s.key]=canonical(dict(title=s.title,claims=group(s.claims)))
         return out
     la,ra=normalized(a),normalized(b)
+    def forecast(doc):
+        f=doc.synthesis.forecast
+        return canonical(dict(horizon=f.horizon,event=f.event,probability=f.probability,stance=doc.synthesis.stance)) if f else None
+    if forecast(a)!=forecast(b):
+        changes.append(ReportChange(kind='confidence',key='forecast',before=forecast(a),after=forecast(b)))
     for key in sorted(la.keys()|ra.keys()):
         if la.get(key)!=ra.get(key): changes.append(ReportChange(kind='analysis',key=key,before=la.get(key),after=ra.get(key)))
     return ReportDiff(before_id=before.id,after_id=after.id,symbol=a.symbol,source_changed=a.provider!=b.provider or before.mode!=after.mode or a.strategy!=b.strategy,changes=changes)

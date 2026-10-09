@@ -215,6 +215,13 @@ export class BackendManager extends EventEmitter {
   outcomePerformance(input: unknown) { return this.business<import('../outcome-types').PerformanceSnapshot>('/outcomes/performance','POST',this.thesisBody(input,['horizon','source_mode','analysis_mode','origin','as_of'])); }
   outcomeSnapshot(id: unknown) { return this.business<import('../outcome-types').PerformanceSnapshot>(`/outcomes/performance/${this.id(id)}`); }
   evaluationCases() { return this.business<import('../evaluation-types').EvaluationCase[]>('/evaluation/cases'); }
+  researchQualityRubric() { return this.business<import('../evaluation-types').ResearchRubric>('/evaluation/research/rubric'); }
+  researchComparisons() { return this.business<import('../evaluation-types').ResearchComparisonView[]>('/evaluation/research'); }
+  createResearchComparison(input: unknown) { return this.business<import('../evaluation-types').ResearchComparisonView>('/evaluation/research','POST',this.thesisBody(input,['request_id','run_id','mode','models','consent','reasoning_effort'])); }
+  researchComparison(id: unknown) { return this.business<import('../evaluation-types').ResearchComparisonView>(`/evaluation/research/${this.id(id)}`); }
+  startResearchComparison(id: unknown) { return this.business<import('../evaluation-types').ResearchComparisonView>(`/evaluation/research/${this.id(id)}/start`,'POST'); }
+  cancelResearchComparison(id: unknown) { return this.business<import('../evaluation-types').ResearchComparisonView>(`/evaluation/research/${this.id(id)}/cancel`,'POST'); }
+  reviewResearchComparison(id: unknown,input: unknown) { return this.business<import('../evaluation-types').ResearchComparisonView>(`/evaluation/research/${this.id(id)}/reviews`,'POST',this.thesisBody(input,['request_id','candidate','expected_version','ratings'])); }
   evaluationExperiments() { return this.business<import('../evaluation-types').ExperimentSummary[]>('/evaluation/experiments'); }
   createExperiment(input: unknown) { return this.business<import('../evaluation-types').ExperimentView>('/evaluation/experiments','POST',this.thesisBody(input,['request_id','name','case_ids','profile'])); }
   evaluationExperiment(id: unknown, baselineId?: unknown) { return this.business<import('../evaluation-types').ExperimentView>(`/evaluation/experiments/${this.id(id)}${baselineId===undefined?'':'?baseline_id='+this.id(baselineId)}`); }

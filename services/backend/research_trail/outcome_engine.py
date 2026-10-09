@@ -88,5 +88,21 @@ def aggregate(group, parameters):
                 average_return=sum(Decimal(a.return_percent) for a in evaluated)/n, unable_rate=rate,
                 historical_reliability=hit, sample_confidence=strength,
                 adaptive_weight=max(Decimal('0.75'), min(Decimal('1.25'), weight))).items()}
+    probabilistic=[(o,a) for o,a in group if a and a.status=='evaluated' and o.confidence is not None and o.probability_event=='stance-match-v1']
+    pn=len(probabilistic); bins=[]; brier=None
+    if pn>=parameters.min_samples:
+        with localcontext() as ctx:
+            ctx.prec=40
+            brier=decimal_text(sum((o.confidence-Decimal(int(a.direction_correct)))**2 for o,a in probabilistic)/pn)
+            for index in range(5):
+                bucket=[(o,a) for o,a in probabilistic if min(4,int(o.confidence*5))==index]
+                count=len(bucket)
+                # Small bins retain counts only; no apparent calibration from a tiny sample.
+                reliable=count>=parameters.min_samples
+                bins.append(dict(lower=decimal_text(Decimal(index)/5),upper=decimal_text(Decimal(index+1)/5),samples=count,
+                    insufficient_data=not reliable,
+                    mean_probability=decimal_text(sum(o.confidence for o,_ in bucket)/count) if reliable else None,
+                    observed_frequency=decimal_text(Decimal(sum(a.direction_correct is True for _,a in bucket))/count) if reliable else None))
     return dict(samples=n, unable=unable, pending=pending, insufficient_data=insufficient,
-        evaluation_ids=[a.id for a in evaluated], **values)
+        evaluation_ids=[a.id for a in evaluated], probability_samples=pn, probability_insufficient=pn<parameters.min_samples,
+        brier_score=brier,calibration_bins=bins, **values)

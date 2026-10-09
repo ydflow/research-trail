@@ -190,7 +190,7 @@ def test_restart_keeps_snapshot_without_fetch_and_tamper_detected(api,tmp_path):
         assert c.post(f"/calendar/snapshots/{page['id']}/view",json={'timezone':'Asia/Shanghai'}).json()==page
         spy.assert_not_called()
         with app.state.store.database.engine.begin() as db:
-            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0019_model_reasoning'
+            assert db.scalar(text('SELECT version_num FROM alembic_version'))=='0020_research_quality'
             db.execute(text("UPDATE calendar_snapshots SET checksum=:checksum"),{'checksum':'0'*64})
         assert c.post(f"/calendar/snapshots/{page['id']}/view",json={'timezone':'UTC'}).status_code==409
 

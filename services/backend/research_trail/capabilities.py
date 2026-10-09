@@ -30,6 +30,7 @@ class CapabilityState(BaseModel):
     provider: str
     code: str
     tool_exposed: bool = False
+    can_attempt: bool = False
 
 class CapabilityRegistry:
     def __init__(self):
@@ -54,7 +55,7 @@ class CapabilityRegistry:
             # Calendar coverage derives from the same provider health, never another health table.
             base=self.state('research.events',mode,provider).model_copy(update={'id':name,'tool_exposed':False})
             if name=='calendar.central-bank' and mode=='real':
-                return base.model_copy(update={'implemented':False,'available':False,'code':'NOT_IMPLEMENTED'})
+                return base.model_copy(update={'implemented':False,'available':False,'can_attempt':False,'code':'NOT_IMPLEMENTED'})
             return base
         is_tool = name in self.handlers
         data = name in set(c for cs in SUPPORTED.values() for c in cs)
@@ -83,7 +84,8 @@ class CapabilityRegistry:
         # Legacy market tools always read the fixture; never expose them as real tools.
         exposed = is_tool and (name not in ('market.quote', 'market.kline') or mode == 'simulated')
         return CapabilityState(id=name, implemented=implemented, available=available, mode=mode,
-                               provider=provider, code=code, tool_exposed=exposed and available)
+                               provider=provider, code=code, tool_exposed=exposed and available,
+                               can_attempt=available or code=='REAL_UNVERIFIED')
 
     def list(self, mode='simulated', provider='longbridge'):
         names = sorted(set(TOOL_SPECS) | {c for cs in SUPPORTED.values() for c in cs} | {'calendar.earnings','calendar.macro','calendar.central-bank'})

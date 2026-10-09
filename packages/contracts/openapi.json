@@ -936,6 +936,11 @@
             "title": "Available",
             "type": "boolean"
           },
+          "can_attempt": {
+            "default": false,
+            "title": "Can Attempt",
+            "type": "boolean"
+          },
           "code": {
             "title": "Code",
             "type": "string"
@@ -3983,8 +3988,16 @@
             "type": "string"
           },
           "confidence": {
-            "title": "Confidence",
-            "type": "null"
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
           },
           "due_at": {
             "format": "date-time",
@@ -4065,6 +4078,18 @@
             ],
             "title": "Origin",
             "type": "string"
+          },
+          "probability_event": {
+            "anyOf": [
+              {
+                "const": "stance-match-v1",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Probability Event"
           },
           "provider": {
             "enum": [
@@ -4315,6 +4340,25 @@
             ],
             "title": "Average Return"
           },
+          "brier_score": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brier Score"
+          },
+          "calibration_bins": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Calibration Bins",
+            "type": "array"
+          },
           "direction_hit_rate": {
             "anyOf": [
               {
@@ -4366,6 +4410,16 @@
           },
           "pending": {
             "title": "Pending",
+            "type": "integer"
+          },
+          "probability_insufficient": {
+            "default": true,
+            "title": "Probability Insufficient",
+            "type": "boolean"
+          },
+          "probability_samples": {
+            "default": 0,
+            "title": "Probability Samples",
             "type": "integer"
           },
           "sample_confidence": {
@@ -4463,6 +4517,11 @@
           "policy_version": {
             "title": "Policy Version",
             "type": "integer"
+          },
+          "probability_calculation_version": {
+            "default": "research-trail-probability-v1",
+            "title": "Probability Calculation Version",
+            "type": "string"
           },
           "rows": {
             "items": {
@@ -5751,7 +5810,8 @@
             "enum": [
               "fact",
               "gap",
-              "analysis"
+              "analysis",
+              "confidence"
             ],
             "title": "Kind",
             "type": "string"
@@ -6014,6 +6074,61 @@
           "fetched_at"
         ],
         "title": "ReportEvidence",
+        "type": "object"
+      },
+      "ReportForecast": {
+        "additionalProperties": false,
+        "properties": {
+          "basis": {
+            "maxLength": 480,
+            "minLength": 1,
+            "title": "Basis",
+            "type": "string"
+          },
+          "event": {
+            "const": "stance-match-v1",
+            "default": "stance-match-v1",
+            "title": "Event",
+            "type": "string"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "horizon": {
+            "default": "1m",
+            "enum": [
+              "1w",
+              "1m",
+              "3m"
+            ],
+            "title": "Horizon",
+            "type": "string"
+          },
+          "label": {
+            "const": "模型主观概率，未经校准；偏多为窗口价格上涨，偏空为下跌，中性为变化绝对值不超过2%。不代表盈利概率。",
+            "default": "模型主观概率，未经校准；偏多为窗口价格上涨，偏空为下跌，中性为变化绝对值不超过2%。不代表盈利概率。",
+            "title": "Label",
+            "type": "string"
+          },
+          "probability": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Probability",
+            "type": "number"
+          }
+        },
+        "required": [
+          "probability",
+          "evidence_ids",
+          "basis"
+        ],
+        "title": "ReportForecast",
         "type": "object"
       },
       "ReportGap": {
@@ -6371,6 +6486,16 @@
             "title": "Catalysts",
             "type": "array"
           },
+          "forecast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportForecast"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "risks": {
             "items": {
               "$ref": "#/components/schemas/ReportClaim"
@@ -6418,6 +6543,276 @@
           "bear_case"
         ],
         "title": "ReportSynthesis",
+        "type": "object"
+      },
+      "ResearchCandidate": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code"
+          },
+          "document": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportDocument"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "engineering_checks": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Engineering Checks",
+            "type": "array"
+          },
+          "failure_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Stage"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "request_uncertain": {
+            "default": false,
+            "title": "Request Uncertain",
+            "type": "boolean"
+          },
+          "requests_started": {
+            "default": 0,
+            "title": "Requests Started",
+            "type": "integer"
+          },
+          "response_diagnostics": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Diagnostics"
+          },
+          "reviews": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchQualityReview"
+            },
+            "title": "Reviews",
+            "type": "array"
+          },
+          "status": {
+            "default": "not_run",
+            "enum": [
+              "not_run",
+              "running",
+              "cancelled",
+              "run_error",
+              "completed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model"
+        ],
+        "title": "ResearchCandidate",
+        "type": "object"
+      },
+      "ResearchComparisonInput": {
+        "additionalProperties": false,
+        "properties": {
+          "consent": {
+            "default": false,
+            "title": "Consent",
+            "type": "boolean"
+          },
+          "mode": {
+            "default": "offline",
+            "enum": [
+              "offline",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "models": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "title": "Models",
+            "type": "array"
+          },
+          "reasoning_effort": {
+            "default": "default",
+            "enum": [
+              "default",
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Reasoning Effort",
+            "type": "string"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "run_id",
+          "models"
+        ],
+        "title": "ResearchComparisonInput",
+        "type": "object"
+      },
+      "ResearchComparisonView": {
+        "additionalProperties": false,
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchCandidate"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "configuration_identity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Configuration Identity"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "input": {
+            "$ref": "#/components/schemas/ResearchComparisonInput"
+          },
+          "label": {
+            "default": "同一冻结数据的模型报告对比；工程断言不等于事实正确。质量评分需八项人工评审，未评审/错误/取消无比较分数；不评盈利能力。",
+            "title": "Label",
+            "type": "string"
+          },
+          "quality_delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality Delta"
+          },
+          "quality_status": {
+            "default": "not_reviewed",
+            "enum": [
+              "not_reviewed",
+              "invalid",
+              "passed",
+              "quality_failed"
+            ],
+            "title": "Quality Status",
+            "type": "string"
+          },
+          "rubric_version": {
+            "default": "research-trail-research-quality-v1",
+            "title": "Rubric Version",
+            "type": "string"
+          },
+          "source_hash": {
+            "title": "Source Hash",
+            "type": "string"
+          },
+          "source_mode": {
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Source Mode",
+            "type": "string"
+          },
+          "status": {
+            "default": "not_run",
+            "enum": [
+              "not_run",
+              "running",
+              "cancelled",
+              "run_error",
+              "completed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "input",
+          "created_at",
+          "source_hash",
+          "source_mode",
+          "candidates"
+        ],
+        "title": "ResearchComparisonView",
         "type": "object"
       },
       "ResearchData": {
@@ -6576,6 +6971,173 @@
           "reads"
         ],
         "title": "ResearchPlan",
+        "type": "object"
+      },
+      "ResearchQualityInput": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Candidate",
+            "type": "integer"
+          },
+          "expected_version": {
+            "minimum": 0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "ratings": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ResearchRating"
+            },
+            "title": "Ratings",
+            "type": "object"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "candidate",
+          "expected_version",
+          "ratings"
+        ],
+        "title": "ResearchQualityInput",
+        "type": "object"
+      },
+      "ResearchQualityReview": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Candidate",
+            "type": "integer"
+          },
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "expected_version": {
+            "minimum": 0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "ratings": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ResearchRating"
+            },
+            "title": "Ratings",
+            "type": "object"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "reviewer": {
+            "const": "human",
+            "default": "human",
+            "title": "Reviewer",
+            "type": "string"
+          },
+          "rubric_version": {
+            "default": "research-trail-research-quality-v1",
+            "title": "Rubric Version",
+            "type": "string"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          },
+          "status": {
+            "enum": [
+              "passed",
+              "quality_failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "request_id",
+          "candidate",
+          "expected_version",
+          "ratings",
+          "version",
+          "created_at",
+          "score",
+          "status"
+        ],
+        "title": "ResearchQualityReview",
+        "type": "object"
+      },
+      "ResearchRating": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "reason": {
+            "maxLength": 600,
+            "minLength": 10,
+            "title": "Reason",
+            "type": "string"
+          },
+          "score": {
+            "maximum": 5,
+            "minimum": 1,
+            "title": "Score",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "score",
+          "reason",
+          "evidence_ids"
+        ],
+        "title": "ResearchRating",
+        "type": "object"
+      },
+      "ResearchRubric": {
+        "additionalProperties": false,
+        "properties": {
+          "dimensions": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Dimensions",
+            "type": "object"
+          },
+          "scale": {
+            "default": "1=关键缺陷，2=明显不足，3=基本可用，4=较完整，5=充分且可复核；每项需证据与理由。全部维度至少3分才通过。",
+            "title": "Scale",
+            "type": "string"
+          },
+          "version": {
+            "default": "research-trail-research-quality-v1",
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dimensions"
+        ],
+        "title": "ResearchRubric",
         "type": "object"
       },
       "ResearchRun": {
@@ -12241,6 +12803,390 @@
           }
         },
         "summary": "Evaluation Trace Upload"
+      }
+    },
+    "/evaluation/research": {
+      "get": {
+        "operationId": "research_comparisons_evaluation_research_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ResearchComparisonView"
+                  },
+                  "title": "Response Research Comparisons Evaluation Research Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Research Comparisons"
+      },
+      "post": {
+        "operationId": "research_comparison_create_evaluation_research_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResearchComparisonInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchComparisonView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Research Comparison Create"
+      }
+    },
+    "/evaluation/research/rubric": {
+      "get": {
+        "operationId": "research_quality_rubric_evaluation_research_rubric_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchRubric"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Research Quality Rubric"
+      }
+    },
+    "/evaluation/research/{identity}": {
+      "get": {
+        "operationId": "research_comparison_view_evaluation_research__identity__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchComparisonView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Research Comparison View"
+      }
+    },
+    "/evaluation/research/{identity}/cancel": {
+      "post": {
+        "operationId": "research_comparison_cancel_evaluation_research__identity__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchComparisonView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Research Comparison Cancel"
+      }
+    },
+    "/evaluation/research/{identity}/reviews": {
+      "post": {
+        "operationId": "research_comparison_review_evaluation_research__identity__reviews_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResearchQualityInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchComparisonView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Research Comparison Review"
+      }
+    },
+    "/evaluation/research/{identity}/start": {
+      "post": {
+        "operationId": "research_comparison_start_evaluation_research__identity__start_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identity",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Identity",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchComparisonView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Research Comparison Start"
       }
     },
     "/evaluation/tracing": {

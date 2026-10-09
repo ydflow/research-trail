@@ -32,10 +32,11 @@ class ModelConfiguration:
 class OpenAIModelProvider:
     label = LIVE_MODEL_LABEL
 
-    def __init__(self, configuration, *, transport=None):
+    def __init__(self, configuration, *, transport=None, on_request_started=None):
         self.configuration = configuration  # callable: snapshot once, inside owned worker
         self._snapshot = None
         self.transport = transport
+        self.on_request_started = on_request_started
         self.requests_started = 0  # Internal accounting only; no request bodies/headers are logged.
         self.last_response_info = None  # Bounded protocol diagnostics, never content or credentials.
 
@@ -99,6 +100,8 @@ class OpenAIModelProvider:
                 async with httpx.AsyncClient(timeout=remaining, trust_env=False, follow_redirects=False,
                                              transport=self.transport) as client:
                     self.requests_started += 1
+                    if self.on_request_started is not None:
+                        self.on_request_started(self.requests_started)
                     async with client.stream("POST", config.base_url.rstrip("/") + "/chat/completions",
                                              headers={"Authorization": "Bearer " + config.api_key}, json=payload) as response:
                         if response.status_code in (401, 403):

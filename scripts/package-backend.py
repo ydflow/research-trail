@@ -67,6 +67,10 @@ def main():
         raise SystemExit('Windows x64 / Python 3.12 required')
     BUILD.mkdir(parents=True, exist_ok=True)
     notices()
+    def git(*args):
+        return subprocess.check_output(['git', *args],cwd=ROOT,text=True).strip()
+    identity=dict(source_commit=git('rev-parse','HEAD'),source_tree=git('rev-parse','HEAD^{tree}'),
+                  source_dirty=bool(git('status','--porcelain')))
     # These ten exact source files are also used by the existing experiment
     # implementation hash. The rest of the Python application is in PYZ.
     hash_files = ('evaluation.py', 'evaluation_contracts.py', 'evaluation_engine.py', 'evaluation_cases.py',
@@ -92,6 +96,10 @@ coll = COLLECT(exe, a.binaries, a.datas, name='backend', upx=False)
     subprocess.run([sys.executable, '-m', 'PyInstaller', '--noconfirm', '--distpath', str(BUILD/'python'),
                     '--workpath', str(BUILD/'pyinstaller'), str(target)], cwd=BACKEND, check=True)
     notices()
+    if identity != dict(source_commit=git('rev-parse','HEAD'),source_tree=git('rev-parse','HEAD^{tree}'),
+                        source_dirty=bool(git('status','--porcelain'))):
+        raise RuntimeError('Source changed during Python build; rebuild from reviewed sources')
+    (BUILD/'backend-source.json').write_text(json.dumps(identity,indent=2)+'\n',encoding='utf-8')
 
 
 if __name__ == '__main__': main()

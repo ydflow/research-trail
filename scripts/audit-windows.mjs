@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync, lstatSync, existsSync, writeFileSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
 import { createHash } from 'node:crypto';
+import { auditNative } from './native-audit.mjs';
 const root=resolve(import.meta.dirname,'..');
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const listing=spawnSync('git',['ls-files','--cached','--others','--exclude-standard','-z'],{cwd:root,encoding:'utf8',windowsHide:true});
@@ -14,17 +15,27 @@ for(const name of files){
   const path=resolve(root,name);
   if(!path.startsWith(root+sep) || !lstatSync(path).isFile() || lstatSync(path).isSymbolicLink())throw new Error('Unsafe source candidate');
   const text=new TextDecoder('utf-8',{fatal:true}).decode(readFileSync(path));
-  if(/sk-[A-Za-z0-9]{24,}|gh[pousr]_[A-Za-z0-9]{30,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/.test(text))throw new Error(`Review possible secret signature in ${name}`);
+  if(/sk-[A-Za-z0-9]{24,}|gh[pousr]_[A-Za-z0-9]{30,}|hk_m_[A-Za-z0-9_.-]{80,}|hk_[a-f0-9]{32}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/.test(text))throw new Error(`Review possible secret signature in ${name}`);
 }
 const probes=['.env','runtime/private.sqlite3','logs/private.log','account-data/private.json','private-data/private.png','release/installer.exe','build/private.txt','services/backend/.venv/private.txt'];
 const ignored=spawnSync('git',['check-ignore','--stdin'],{cwd:root,input:probes.join('\n')+'\n',encoding:'utf8',windowsHide:true});
 if(ignored.stdout.trim().split(/\r?\n/).length!==probes.length)throw new Error('Sensitive files are not all ignored');
 const sources=JSON.parse(readFileSync(join(root,'docs/SOURCES-step14.json'),'utf8')).files;
 for(const entry of sources)if(sha(readFileSync(join(root,entry.path)))!==entry.sha256)throw new Error('Original skill/license changed');
-const out=join(root,'release/windows-internal');
+if(process.argv.includes('--source-only')) {
+  console.log(JSON.stringify({source_files:files.length,original_skill_license_files:sources.length,ignore_probes:probes.length,native:auditNative(root)},null,2));
+  process.exit(0);
+}
+const out=resolve(root,process.argv[2]??'release/windows-internal');
+if(!out.startsWith(join(root,'release')+sep))throw new Error('Bundle must stay under project release directory');
 const manifest=JSON.parse(readFileSync(join(out,'bundle-manifest.json'),'utf8'));
 if(sha(readFileSync(join(out,manifest.installer)))!==manifest.sha256)throw new Error('Installer SHA mismatch');
 const bundle=join(out,'win-unpacked');
+const native=auditNative(root,join(bundle,'resources/backend/_internal'));
+for(const f of manifest.files.filter(f=>f.path.startsWith('resources/notices/third-party/longbridge/native/'))) {
+  const original=join(root,'docs',f.path.slice('resources/notices/'.length));
+  if(sha(readFileSync(original))!==f.sha256)throw new Error('Bundled native notice differs from reviewed source');
+}
 for(const entry of manifest.files){
   if(entry.path!=='resources/backend/_internal/certifi/cacert.pem' && forbidden.test(entry.path))throw new Error('Unexpected private/generated payload');
   if(sha(readFileSync(join(bundle,entry.path)))!==entry.sha256)throw new Error('Bundle file differs from manifest');
@@ -46,6 +57,7 @@ for(const path of ['third-party/longbridge/LICENSE-MIT','third-party/longbridge/
 }
 const python=JSON.parse(readFileSync(join(bundle,'resources/notices/python-dependencies.json'),'utf8'));
 const receipt={source_files:files.length,bundle_files:manifest.files.length,original_skill_license_files:sources.length,
+  native,
   hash_source_files:hashFiles.length,ignore_probes:probes.length,installer:manifest.installer,sha256:manifest.sha256,
   runtime_python_dependencies:python.filter(p=>p.role==='runtime').length,
   missing_wheel_license_files:python.filter(p=>p.role==='runtime' && !p.license_files.length).map(p=>p.name),

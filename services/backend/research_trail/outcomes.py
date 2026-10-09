@@ -96,6 +96,8 @@ class OutcomeService:
                 else: entry = format(price, 'f'); code = None
                 evidence_ids = [fact['id']]
             except (ValueError, TypeError, KeyError, InvalidOperation): code = 'ENTRY_INVALID'
+        forecast=doc['synthesis'].get('forecast')
+        probability=forecast['probability'] if forecast and forecast['horizon']==horizon and entry is not None else None
         opinion = OutcomeOpinion(id=str(uuid4()), report_id=report.id, report_version=report.version,
             report_hash=result_hash(dict(document=doc, version=report.version, completed_at=report.completed_at)),
             run_id=report.run_id, symbol=report.symbol, strategy=doc['strategy'],
@@ -104,7 +106,8 @@ class OutcomeService:
             origin=origin, horizon=horizon, research_at=research_at, captured_at=captured, window_end=end, due_at=due,
             entry_price=entry, entry_market_at=market_at, entry_fetched_at=fetched_at, entry_code=code,
             provider=doc['provider'], provider_revision=run.plan['provider_revision'],
-            provider_identity=run.plan.get('provider_identity'), evidence_ids=evidence_ids)
+            provider_identity=run.plan.get('provider_identity'), evidence_ids=evidence_ids,
+            confidence=probability, probability_event='stance-match-v1' if probability is not None else None)
         db.add(OutcomeOpinionRecord(id=opinion.id, report_id=report.id, horizon=horizon, payload=opinion.model_dump(mode='json')))
         return opinion
 

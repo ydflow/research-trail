@@ -1,3 +1,5 @@
 # Generated contract checks compare exact bytes; Windows checkout must keep LF.
 /packages/contracts/openapi.json text eol=lf
 /packages/contracts/generated.ts text eol=lf
+# Imported dependency notices are verified against original byte hashes.
+/docs/third-party/longbridge/native/** -text -whitespace

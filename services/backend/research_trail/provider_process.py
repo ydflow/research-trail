@@ -19,12 +19,12 @@ def safe_environment():
         if os.environ.get('RESEARCH_TRAIL_OFFLINE')=='1' and key in os.environ: env[key]=os.environ[key]
     return env
 
-def run_process(argv, *, payload=None, timeout=15, stop=None, env=None):
+def run_process(argv, *, payload=None, timeout=15, stop=None, env=None, cwd=None):
     stop = stop or threading.Event()
     if stop.is_set(): raise ProviderFault('CANCELLED','cancelled')
     try:
         process = subprocess.Popen(argv, stdin=subprocess.PIPE if payload is not None else subprocess.DEVNULL,
-            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, shell=False, env=env or safe_environment(),
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, shell=False, env=env or safe_environment(), cwd=cwd,
             creationflags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0)
     except OSError: raise ProviderFault('CLI_UNAVAILABLE' if argv[0]!=sys.executable else 'SDK_UNAVAILABLE') from None
     try: job=OwnedJob(process)
@@ -73,8 +73,9 @@ def worker_command():
     return [sys.executable, '--provider-worker'] if getattr(sys, 'frozen', False) else [sys.executable, '-m', 'research_trail.provider_worker']
 
 def sdk_process(snapshot,query,stop=None):
+    from .runtime_paths import backend_resources
     result=run_process(worker_command(),timeout=snapshot.configuration.timeout_seconds,
-        stop=stop,payload={'provider':snapshot.provider,'configuration':snapshot.configuration.model_dump(),
+        stop=stop,cwd=backend_resources(),payload={'provider':snapshot.provider,'configuration':snapshot.configuration.model_dump(),
                           'credentials':snapshot.credentials,'query':query.model_dump(mode='json')})
     if not isinstance(result,dict) or not isinstance(result.get('ok'),bool): raise ProviderFault('INVALID_RESPONSE')
     if not result['ok']:

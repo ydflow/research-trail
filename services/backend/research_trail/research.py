@@ -147,7 +147,7 @@ class ResearchService:
     def launch(self, work, read):
         state = self.registry.state(read.capability,work.plan.input.mode,work.plan.input.provider)
         continuing_verified_plan = work.generation>0 and read.availability.available and state.code=='REAL_UNVERIFIED'
-        if not state.available and not continuing_verified_plan:
+        if not state.can_attempt and not continuing_verified_plan:
             self.store.step(work.identity,read.capability,'unavailable',state.code,generation=work.generation); return
         if self.providers.settings.profile(work.plan.input.provider).revision != work.plan.provider_revision:
             self.store.step(work.identity,read.capability,'failed','CONFIG_CHANGED',generation=work.generation); return

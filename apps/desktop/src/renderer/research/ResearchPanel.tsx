@@ -139,7 +139,7 @@ export function ResearchPanel({ available, initialSymbol, initialMode, initialPr
     </div>
     <StrategyPicker strategies={presets} value={strategy} disabled={disabled} onChange={v => { clearDisplay(); setStrategy(v); }} />
     {plan && <details data-testid="research-plan" data-strategy={plan.input.strategy}><summary>采集计划 · {plan.reads.length} 项 · 可用 {plan.reads.filter(r => r.availability.available).length} 项</summary>
-      <p>{plan.label}</p><ul>{plan.reads.map(r => <li key={r.capability}>{r.capability} · {r.availability.available ? '可采集' : '不可用'} · {r.availability.code}</li>)}</ul>
+      <p>{plan.label}</p><ul>{plan.reads.map(r => <li key={r.capability}>{r.capability} · {r.availability.available ? '已验证可采集' : r.availability.can_attempt ? '已配置，启动时尝试真实查询' : '不可用'} · {r.availability.code}</li>)}</ul>
       <p>选择的技能资料（不执行指令）：</p><ul>{plan.skills.map(s => <li key={s.id}>{s.id} · {s.status} · {s.code}</li>)}</ul>
     </details>}
     <div className="research-toolbar"><button disabled={disabled || planning || !plan} onClick={() => void begin()}>开始采集</button>

@@ -1811,6 +1811,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       'today','monitoringRules','createMonitoringRule','toggleMonitoringRule','monitoringRuns','monitoringResearch',
       'thesisList', 'createThesis', 'thesis', 'thesisVersion', 'editThesis', 'evaluateThesis', 'judgeThesis', 'thesisReview',
       'reportList', 'generateReport', 'report', 'cancelReport', 'reportEvidence', 'exportReport', 'reportDiff',
+      'researchComparisons','createResearchComparison','researchComparison','startResearchComparison','cancelResearchComparison','reviewResearchComparison','researchQualityRubric',
       'researchCheckpoint', 'resumeResearch', 'restartResearch', 'abandonResearch',
       'capabilities', 'skills', 'setSkillEnabled', 'readSkillResource', 'researchStrategies', 'researchPlan', 'researchRuns', 'startResearch', 'researchRun', 'cancelResearch', 'researchData', 'portfolioRisk', 'compareStocks', 'portfolioList', 'createPortfolio', 'portfolioView', 'previewPortfolio', 'confirmPortfolio', 'undoPortfolio', 'refreshPortfolio'].sort(), node: 'undefined', process: 'undefined' });
     assert.deepEqual(await first.app.evaluate(({ BrowserWindow }) => {
@@ -2417,4 +2418,40 @@ test('late earlier session snapshot cannot overwrite selected session', { timeou
     await expect(instance.page.getByTestId('message-history')).not.toContainText('只属于慢甲');
     await expect(instance.page.getByTestId('event-list').locator('li')).toHaveCount(7);
   } finally { await instance.app.close(); }
+});
+
+test('release research A/B stays unscored until a complete rubric and survives restart without requests', {timeout:90000}, async()=>{
+  let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  const errors=[];
+  try {
+    let page=instance.page;page.on('pageerror',e=>errors.push(e.message));await waitForBackend(page);
+    const run=await page.evaluate(()=>window.researchTrail.startResearch({symbol:'AAPL.US',strategy:'value',mode:'simulated',provider:'longbridge'}));
+    await expect.poll(()=>page.evaluate(id=>window.researchTrail.researchRun(id).then(r=>r.status),run.id)).not.toBe('fetching');
+    await page.getByRole('button',{name:'评测中心',exact:true}).click();
+    let panel=page.getByTestId('research-comparison-panel');
+    await panel.getByLabel('研究对比来源',{exact:true}).selectOption(run.id);
+    await panel.getByLabel('模型 A ID',{exact:true}).fill('offline-a');await panel.getByLabel('模型 B ID',{exact:true}).fill('offline-b');
+    await panel.getByRole('button',{name:'保存研究对比实验',exact:true}).click();
+    await expect(panel.getByTestId('research-comparison')).toHaveAttribute('data-status','not_run');
+    await panel.getByRole('button',{name:'启动研究对比',exact:true}).click();
+    await expect(panel.getByTestId('research-comparison')).toHaveAttribute('data-status','completed');
+    await expect(panel).toContainText('尚无有效比较');
+    await expect(panel.getByRole('button',{name:'追加完整人工评审版本',exact:true})).toBeDisabled();
+    const rubric=await page.evaluate(()=>window.researchTrail.researchQualityRubric());
+    for(const key of Object.keys(rubric.dimensions)) {
+      await panel.getByLabel('评分 '+key,{exact:true}).selectOption('3');
+      await panel.getByLabel('理由 '+key,{exact:true}).fill('原创离线界面验收输入，不代表真实报告质量。');
+      const evidence=panel.getByLabel('证据 '+key,{exact:true});const value=await evidence.locator('option').nth(1).getAttribute('value');await evidence.selectOption(value);
+    }
+    await panel.getByRole('button',{name:'追加完整人工评审版本',exact:true}).click();
+    await expect(panel).toContainText('人工评审版本 1');await expect(panel).toContainText('尚无有效比较');
+    await page.setViewportSize({width:620,height:760});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+    await screenshot(page,'v1-research-comparison-offline.png');
+    const saved=(await page.evaluate(()=>window.researchTrail.researchComparisons()))[0];const databasePath=instance.databasePath;
+    assert.equal(saved.candidates.reduce((n,c)=>n+c.requests_started,0),0);
+    await instance.app.close();instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_DB_PATH:databasePath});page=instance.page;await waitForBackend(page);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.researchComparison(id),saved.id),saved);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.startResearchComparison(id),saved.id),saved);
+    assert.deepEqual(errors,[]);
+  }finally{await instance.app.close();}
 });

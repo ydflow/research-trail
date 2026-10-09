@@ -46,7 +46,9 @@ def finished(c,identity):
 
 def collected(c,**values):
     identity=start(c,**values)
-    settled(c,identity)
+    # A hosted Windows runner can take longer than five seconds to persist a
+    # comprehensive collection. Retain the same bounded research timeout.
+    settled(c,identity,timeout=20)
     return identity
 
 def configure(c):
@@ -101,7 +103,7 @@ def test_versions_survive_restart_and_actual_diff_uses_changed_collected_values(
             assert c.get(f"/research/reports/{rid}/evidence/{change[key]}").status_code==200
         assert c.get('/research/reports/'+first['id']).json()==first
         assert c.post('/research/report-diff',json={'before_id':first['id'],'after_id':first['id']}).json()['detail']=='DIFF_REQUIRES_TWO_REPORTS'
-        other=finished(c,report(c,collected(c,symbol='MSFT.US')))
+        other=finished(c,report(c,collected(c,symbol='MSFT.US',strategy='value')))
         assert c.post('/research/report-diff',json={'before_id':first['id'],'after_id':other['id']}).json()['detail']=='DIFF_INCOMPATIBLE_SOURCES'
         with app.state.store.database.engine.connect() as db:
             assert db.scalar(text('SELECT count(*) FROM research_reports'))==4

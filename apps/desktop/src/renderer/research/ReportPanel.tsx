@@ -125,6 +125,7 @@ export function ReportPanel({ runId, symbol, succeeded, available, generateAllow
       {doc.event_context&&<EventContextCard context={doc.event_context} available={available}/>}
       <h3>{doc.symbol} · {doc.synthesis.stance === 'bullish' ? '偏多' : doc.synthesis.stance === 'bearish' ? '偏空' : '中性'}（分析判断）</h3>
       <p>{doc.disclaimer}</p><p>{doc.source_mode === 'simulated' ? '模拟数据，不代表真实行情' : '真实提供商数据'} · {doc.provider} · 采集 {doc.collection_status} · 任务 {doc.source_run_id}</p>
+      <section data-testid="report-forecast"><h4>预测概率</h4>{doc.synthesis.forecast?<><p>{doc.synthesis.forecast.label}</p><p>{(doc.synthesis.forecast.probability*100).toFixed(1)}% · {doc.synthesis.forecast.horizon} · {doc.synthesis.forecast.event}</p><p>{doc.synthesis.forecast.basis}</p></>:<p>未提供概率，不从文字立场推测。</p>}</section>
       <button disabled={blocked} onClick={() => void exportMarkdown()}>导出 Markdown</button>
       <button disabled={blocked || job?.status !== 'completed'} onClick={() => void formThesis()}>将报告形成投资论点</button>
       {groups.map(([title, items], index) => <Claims key={index} title={title} items={items} document={doc} disabled={blocked} onRead={reference => void read(job!.id, reference)} />)}
@@ -136,7 +137,7 @@ export function ReportPanel({ runId, symbol, succeeded, available, generateAllow
         <button disabled={blocked || !beforeId || !afterId || beforeId === afterId} onClick={() => void compare()}>比较两份报告</button>
       </div>
       {difference && <section data-testid="report-diff"><p>{difference.label}</p><p>{difference.before_id} → {difference.after_id}</p>{difference.source_changed && <p>提供商、策略或合成器已变化，请结合来源解释差异。</p>}
-        {!difference.changes.length ? <p>两份报告无内容差异。</p> : <ul>{difference.changes.map((c, index) => <li key={index}>【{c.kind === 'fact' ? '事实变化' : c.kind === 'gap' ? '缺口变化' : '分析文字变化'}】{c.key}<pre>{c.before ?? '缺失'} → {c.after ?? '缺失'}</pre>
+        {!difference.changes.length ? <p>两份报告无内容差异。</p> : <ul>{difference.changes.map((c, index) => <li key={index}>【{c.kind === 'fact' ? '事实变化' : c.kind === 'gap' ? '缺口变化' : c.kind === 'confidence' ? '预测概率变化' : '分析文字变化'}】{c.key}<pre>{c.before ?? '缺失'} → {c.after ?? '缺失'}</pre>
           {c.before_evidence && <button disabled={blocked} onClick={() => void read(difference.before_id, c.before_evidence!)}>查看旧原始事实</button>}
           {c.after_evidence && <button disabled={blocked} onClick={() => void read(difference.after_id, c.after_evidence!)}>查看新原始事实</button>}
         </li>)}</ul>}</section>}
