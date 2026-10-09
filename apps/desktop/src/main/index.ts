@@ -1,13 +1,24 @@
 import { app, BrowserWindow, dialog, ipcMain, shell, Notification, type IpcMainInvokeEvent, type IpcMainEvent } from 'electron';
 import { writeFile } from 'node:fs/promises';
-import { resolve, join } from 'node:path';
+import { mkdirSync } from 'node:fs';
+import { resolve, join, isAbsolute } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { BackendManager } from './backend';
 import { originalNewsUrl } from './news-url';
 import { MonitorNotifications } from './monitor-notifications';
+import { packagedLaunch } from './packaged-launch';
 
 const root = resolve(__dirname, '../../..');
-const backend = new BackendManager(root);
+if (app.isPackaged) {
+  app.setAppUserModelId('io.github.ydflow.researchtrail');
+  const custom = process.argv.find(arg => arg.startsWith('--research-trail-data-dir='))?.split('=').slice(1).join('=');
+  if (custom && !isAbsolute(custom)) throw new Error('用户数据目录必须是绝对路径。');
+  const userData = custom || join(app.getPath('appData'), 'ResearchTrail');
+  mkdirSync(userData, { recursive: true });
+  app.setPath('userData', userData);
+  if (!app.requestSingleInstanceLock()) app.exit(0);
+}
+const backend = new BackendManager(root, app.isPackaged ? packagedLaunch(process.resourcesPath, app.getPath('userData'), process.env) : undefined);
 const notifications = new MonitorNotifications(backend,run => {
   if(!Notification.isSupported()) return Promise.resolve('unsupported');
   return new Promise(resolveDelivery=>{
@@ -21,9 +32,12 @@ const notifications = new MonitorNotifications(backend,run => {
   });
 });
 let window: BrowserWindow | undefined;
+app.on('second-instance', () => {
+  if (window && !window.isDestroyed()) { if (window.isMinimized()) window.restore(); window.show(); window.focus(); }
+});
 let closing = false;
 let mayQuit = false;
-const devUrl = process.env.RESEARCH_TRAIL_RENDERER_URL;
+const devUrl = app.isPackaged ? undefined : process.env.RESEARCH_TRAIL_RENDERER_URL;
 if (devUrl && (new URL(devUrl).hostname !== '127.0.0.1' || new URL(devUrl).protocol !== 'http:')) throw new Error('开发页面必须来自本机 Vite。');
 const rendererUrl = devUrl || pathToFileURL(join(__dirname, 'renderer/index.html')).href;
 
@@ -40,7 +54,7 @@ app.whenReady().then(async () => {
     webPreferences: {
       preload: join(__dirname, 'preload.cjs'),
       contextIsolation: true, nodeIntegration: false, sandbox: true,
-      partition: `research-trail-${process.pid}`,
+      partition: app.isPackaged ? 'persist:research-trail' : `research-trail-${process.pid}`,
     },
   });
   const session = window.webContents.session;
@@ -230,7 +244,7 @@ app.on('before-quit', (event) => {
 });
 
 // Windows GUI Electron cannot reliably read redirected stdin. Watch the exact launcher PID.
-const launcherPid = Number(process.env.RESEARCH_TRAIL_LAUNCHER_PID);
+const launcherPid = app.isPackaged ? NaN : Number(process.env.RESEARCH_TRAIL_LAUNCHER_PID);
 if (Number.isInteger(launcherPid) && launcherPid > 0) {
   const ownerMonitor = setInterval(() => {
     try { process.kill(launcherPid, 0); } catch { app.quit(); }

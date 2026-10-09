@@ -8,6 +8,7 @@ import type { BackendState, RunStreamUpdate } from '../bridge';
 import type { MarketError, MarketResult, MarketSnapshot, MarketSymbol } from '../market-types';
 import type { SessionDTO, MessageDTO, RunDTO, StreamEvent, SessionSnapshot } from '../conversation-types';
 import { RunSubscription } from './run-stream';
+import type { PackagedLaunch } from './packaged-launch';
 
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -24,7 +25,7 @@ export class BackendManager extends EventEmitter {
   // Health traffic must stay on loopback even when dependency downloads use a proxy.
   private readonly localAgent = new Agent({ keepAlive: true, proxyEnv: {} });
 
-  constructor(private readonly root: string) { super(); }
+  constructor(private readonly root: string, private readonly packaged?: PackagedLaunch) { super(); }
   snapshot(): BackendState { return { ...this.state }; }
   private update(state: BackendState) {
     this.state = state;
@@ -50,10 +51,10 @@ export class BackendManager extends EventEmitter {
     if (this.quitting) return this.snapshot();
     this.update({ phase: 'starting', detail: '正在启动本地服务并检查连接…' });
     this.token = randomBytes(32).toString('hex');
-    const python = process.env.RESEARCH_TRAIL_PYTHON || join(this.root, 'services/backend/.venv/Scripts/python.exe');
-    const child = spawn(python, ['-m', 'research_trail'], {
-      cwd: join(this.root, 'services/backend'),
-      env: { ...process.env, PYTHONUNBUFFERED: '1', PYTHONUTF8: '1', RESEARCH_TRAIL_TOKEN: this.token },
+    const python = this.packaged?.executable || process.env.RESEARCH_TRAIL_PYTHON || join(this.root, 'services/backend/.venv/Scripts/python.exe');
+    const child = spawn(python, this.packaged ? [] : ['-m', 'research_trail'], {
+      cwd: this.packaged?.cwd || join(this.root, 'services/backend'),
+      env: { ...(this.packaged?.env || process.env), PYTHONUNBUFFERED: '1', PYTHONUTF8: '1', RESEARCH_TRAIL_TOKEN: this.token },
       stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true,
     });
     this.child = child;
@@ -69,11 +70,12 @@ export class BackendManager extends EventEmitter {
     try {
       this.port = await new Promise<number>((resolve, reject) => {
         const lines = createInterface({ input: child.stdout });
-        const timer = setTimeout(() => finish(new Error('本地服务启动超过 15 秒。')), 15000);
+        const startupMs = this.packaged ? 30000 : 15000;
+        const timer = setTimeout(() => finish(new Error(`本地服务启动超过 ${startupMs / 1000} 秒。`)), startupMs);
         const onError = (error: NodeJS.ErrnoException) => finish(new Error(
-          error.code === 'ENOENT' ? '未找到 Python 可执行文件。请重新运行 start-dev.cmd 同步环境，或检查 RESEARCH_TRAIL_PYTHON。' : `无法启动 Python（${error.code || error.message}）。`,
+          error.code === 'ENOENT' ? (this.packaged ? '安装包内的 Python 服务缺失。请重新安装研迹。' : '未找到 Python 可执行文件。请重新运行 start-dev.cmd 同步环境，或检查 RESEARCH_TRAIL_PYTHON。') : `无法启动 Python（${error.code || error.message}）。`,
         ));
-        const onExit = () => finish(new Error(`Python 在就绪前退出。${stderr || '请重新运行 start-dev.cmd 检查环境。'}`));
+        const onExit = () => finish(new Error(`Python 在就绪前退出。${stderr || (this.packaged ? '请检查用户数据目录或重新安装。' : '请重新运行 start-dev.cmd 检查环境。')}`));
         const finish = (error?: Error, port?: number) => {
           clearTimeout(timer); lines.close();
           child.off('error', onError); child.off('exit', onExit);
