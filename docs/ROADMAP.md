@@ -29,7 +29,7 @@
 - 第21步：验收通过（固定数据/本机自动）；八类提醒、五类固定自动化、来源简报及Today已接入Python持久状态和Electron通知；本机与独立干净源码577 Python/12 Node/50实际Electron、0016迁移及根CMD重启通过，另有原生通知show回执。范围见ACCEPTANCE-step21.md与EVIDENCE第48节；真实来源/用户亲自记录未验证。开发轮已停止；本次另获第21步发布授权，复核见EVIDENCE第49节，已创建[PR #20](https://github.com/ydflow/research-trail/pull/20)；最终CI/合并按PR及根PROJECT_STATE实际回执；第21步发布轮未实施22—24，第22步执行记录保留，第23步见当前记录。
 - 第22步：验收通过（确定性离线/本机自动）；12原创案例、实验/基线/轨迹/反馈、无效实验无分数、0017持久化及18命名桥已实现；46项Python定向、2项新增实窗、最终独立干净源码623 Python/12 Node/52实际Electron、原创案例CLI、迁移/契约/类型/构建及根CMD重启历史通过，见ACCEPTANCE-step22.md与EVIDENCE第50节。真实追踪连接未执行；开发轮已停止，本次另获第22步发布授权并创建[PR #21](https://github.com/ydflow/research-trail/pull/21)，复核见EVIDENCE第51节，最终CI/合并按PR及根PROJECT_STATE回执。
 - 第23步：验收通过（确定性历史样例／本机自动）；Python结果追踪／表现／有界参考权重／版本回滚及投资结果页已实现。本机与独立干净源码均672 Python／12 Node／55实际Electron、历史CLI、0018重复迁移、契约／类型／构建及根CMD重启历史通过；真实历史行情及概率校准／盈利未验证。见ACCEPTANCE-step23.md与EVIDENCE第52节；开发轮已停止，本次另获发布授权，复核见第53节，最终状态按PR及根回执。
-- 第24步：代码完成/待验收。用户重新明确授权本步后，完成固定功能逐项核对、PyInstaller/Electron Builder内部候选及本机实际安装生命周期；完整基线缺项、干净Windows/签名/真实服务/二进制许可待验证，见ACCEPTANCE-step24、FEATURE-AUDIT-step24和RELEASE-NOTES-step24。没有本步Git/GitHub写入。
+- 第24步：进行中（源码合并不代表完整功能及安装包验收通过）。用户于2026-10-09明确要求跳过干净Windows验收并合并PR #24，本次仅交付源码；该项保留“用户要求跳过／未验证”。后续补齐三栏/常驻资产、GFM会话、思考控件/0019迁移、设置空白及Longbridge长凭证/SDK时间修复；单标的报价/K线/新闻真实查询通过。新源码未重新打包，原SHA不适用；剩余基线功能、真实模型质量、其他真实服务及原生许可缺口详见ACCEPTANCE-step24、FEATURE-AUDIT-step24。本轮不创建标签或Release，最终合并及CI按实际回执记录。
 - 默认分支 `main`；第0/1步首次上传检查见EVIDENCE第7节，第2步发布检查见第9—10节，提交历史和远程状态以Git为准。
 - 状态取值：未开始 / 进行中 / 代码完成/待验收 / 验收通过 / 受阻。
 - 来源：固定 ZIP commit `ba5dcdfd31b162f5edb8b908f7f099a560389326`，本地只读路径 `D:\folio\主分支和简历skill\folio-main`。

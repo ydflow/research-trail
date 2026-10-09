@@ -2024,3 +2024,25 @@ Windows11 Home中文x64/10.0.26100，未发现WindowsSandbox.exe/已配置VM工�
 发布定向复核：首次误用uv run pytest入口不能导入本地research_trail，收集失败，不计通过；改用项目uv run --frozen python -m pytest，新增2项冻结路径/worker测试全部通过，产品代码未改。独立Node安装环境隔离1项通过，无失败/取消/跳过。远程完整离线检查仍待实际运行。
 
 运行库/账户/凭证、日志、缓存、安装器/包内二进制、截图均不入提交。公开范围沿用第9—11节用户复用确认，原授权文件未独立取得，仅skills/LICENSE独立确认MIT，不扩大为全仓许可；Longbridge精确wheel/native许可尚不足以公开分发二进制。CI只执行确定性离线源码检查，不调用真实服务或付费评测，也不能替代干净Windows安装。PR/提交SHA和远程CI在实际发生后记入仓库外PROJECT_STATE及PR，不预写成功。
+
+## 56. 第24步继续补齐与当前配置核验（2026-10-09）
+
+用户授权解决阻塞/合并/发布后，本轮补齐源码三栏与常驻资产、GFM会话、Python思考控制及0019持久化迁移，修复设置读取失败后提示被清除的空白问题。既有310余份来源与用户授权保持；新增实现为个人Python及前端修复，SDK未导入二进制或源码。原始MIT/Apache文件不改；精确SDK标签/许可证hash与未验证原生闭包见third-party/longbridge/NOTICE。
+
+完整本机680 Python/15 Node通过；Electron56项55通过1定位冲突，已限定设置区并专项复验，新增故障恢复与Markdown实际loopback验证通过。完整数量、失败原因、专项和构建警告按ACCEPTANCE-step24新增节保留，不能称最新57项完整单轮全绿。当前源码、8忽略探针及30原技能/许可字节单独审核通过，旧安装器未重建/未重验。
+
+用户应用启动发生在0019写入前：运行库仍0018，当前ORM读取设置复现字段缺失，未清空数据。已作ignored本机一致性备份；等待用户正常关闭/重启以应用迁移。行情配置已保存且启用，未关联保存凭证；真实quote校验入口CREDENTIAL_MISSING，0服务商业务请求，K线/新闻未验。私人运行库/备份、密钥及账户内容不上传。配置流程见CONFIGURATION.md。
+
+第24步仍进行中、源码差异未提交，PR #24草稿和main尚未更新；不存在v1.0.0标签或Release。后续原始用户授权继续有效，但关键缺口未验不能合并/发布，当前用户配置请求不等于放宽完整验收要求。
+
+用户随后授权直接保存Longbridge凭证，已使用既有Python设置事务/Windows凭证管理器保存并读回一致，无明文文件、源码/测试或密钥日志。修正700字节过小上限及SDK 5.2.0本地naive时间兼容（官方固定源码依据在ACCEPTANCE-step24），98提供商离线回归/契约/类型检查通过。全球端点本机连接10054重置，中国端点可用；保存region=cn/revision6后正式ProviderService链路AAPL.US报价/5条K线/5条新闻均ready/real/sdk/cached=false。仅此三项真实能力通过，不代表完整行情/账户/模型/追踪/干净安装验收。旧进程须重启，安装包未重建；其他阻塞与未提交状态保持，不合并/发布。
+
+最终补验：完整Python回归通过683项，启用RESEARCH_TRAIL_OFFLINE与scripts/offline网络护栏，1项既有Starlette/httpx弃用警告；真实服务验证与离线回归分开执行。契约再生成/一致性、TypeScript和git diff --check通过。未把本轮Python成功称为最新完整Electron或安装包验收。
+
+## 57. 第24步源码合并授权与独立验收边界（2026-10-09）
+
+用户明确要求跳过独立干净Windows验收并合并第24步。本轮仅提交/推送本步骤后续Python实现与提供商修复、前端工作台与设置修复、许可收集/测试和真实边界文档，更新现有PR #24。干净Windows记“用户要求跳过／未验证”，完整功能与正式v1.0.0仍有FEATURE-AUDIT-step24所列缺口，不创建标签/Release或上传二进制。沿用第9—11节公开来源授权，原技能/声明保留；没有新上游原样导入，不伪造作者或时间。当前账号ydflow、目标公开非归档ydflow/research-trail、精确origin及PR head/base已现场核对。实际测试与最终提交/远程回执随后记录，不预写成功。
+
+本次源码合并复核：Python完整离线683项已在同一代码上通过；本轮再运行15项Node、Electron/main及renderer构建、完整57项真实Electron，全部通过，Electron失败/取消/跳过0。独立网络护栏与沙箱数据库启用，不调用真实模型/行情/账户/追踪。完整Electron实际409秒，未把开发机窗口测试称为干净Windows或安装包验收。契约/类型/diff检查通过；保留Starlette/httpx弃用及Vite大chunk警告。
+
+后续源码分类提交：6d8ff90 Python思考配置/0019迁移，bd6b36a提供商长凭证/时间修复，d33f12c桌面工作台/设置修复，bc5cf18打包UI许可收集，89db6c2精确SDK来源核实，最终文档另一个真实提交。只有源码及来源/验收文档，安装包/敏感截图/运行库/密钥/日志/缓存均排除。最终文档head与远程push/PR/main检查、合并SHA按实际GitHub与仓库外PROJECT_STATE记录，不预写成功。

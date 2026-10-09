@@ -1,6 +1,6 @@
 # 研迹 · ResearchTrail
 
-第24步已生成 Windows **内部候选 `1.0.0-internal.24`**，状态为代码完成/待验收。PyInstaller 后端与 Electron Builder/NSIS 安装链已接入；本机实际安装/关闭重启/旧库升级/卸载保留/重装验证见[本步验收](docs/ACCEPTANCE-step24.md)，逐项基线与缺口见[功能核对](docs/FEATURE-AUDIT-step24.md)。独立干净 Windows、完整基线差异、真实服务与二进制许可核对仍待完成，当前不宣称正式 v1.0.0 就绪。安装包/SHA/清单在被 Git 忽略的 `release/windows-internal`；[安装和数据说明](docs/WINDOWS-INSTALL.md)、[内部发布说明](docs/RELEASE-NOTES-step24.md)、[来源声明](docs/BUNDLE-NOTICE.md)。本步不提交/推送/上传 Release。
+第24步提供 Windows **内部候选 `1.0.0-internal.24`** 及后续源码修复。用户于2026-10-09明确要求跳过独立干净 Windows 验收并合并[PR #24](https://github.com/ydflow/research-trail/pull/24)；本次只合并源码，干净 Windows 标为“用户要求跳过／未验证”，不变成安装成功证明。常驻三栏/资产、GFM会话、模型思考配置/0019迁移、设置空白与Longbridge长凭证/时间兼容已补齐源码；Longbridge单标的报价/K线/新闻真实验证通过。原内部安装包尚未包含这些后续修复，旧SHA不能代表当前源码。真实模型质量、部分固定基线功能和原生分发许可等缺口继续保留，**不宣称正式v1.0.0就绪，不创建标签或Release、不上传安装包**。实际检查与合并回执见[本步验收](docs/ACCEPTANCE-step24.md)，逐项边界见[功能核对](docs/FEATURE-AUDIT-step24.md)，[安装和数据说明](docs/WINDOWS-INSTALL.md)、[内部发布说明](docs/RELEASE-NOTES-step24.md)、[来源声明](docs/BUNDLE-NOTICE.md)。
 
 将行情、持仓与 AI 分析串联起来，让每次研究都有据可查。
 

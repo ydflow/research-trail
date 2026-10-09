@@ -75,3 +75,39 @@ certutil -hashfile release\windows-internal\ResearchTrail-1.0.0-internal.24-wind
 用户随后单独授权本步骤提交/功能分支/PR。发布前32份差异、312份源码与上方内部候选交付清单逐字节一致，重新资源/来源/秘密签名及私有文件排除审核、契约/类型检查通过；只追加发布记录，不改变运行代码。按EVIDENCE第55节分组提交源码并创建草稿PR，不上传安装器、日志、运行数据库、账户或截图。上方未提交状态保留为开发交付时事实。
 
 第24步完整验收仍待完成，草稿PR即使离线源码CI通过也不合并，干净Windows/完整固定功能/真实服务/许可缺口未被CI消除。最终PR/提交与CI回执在仓库外PROJECT_STATE及PR按实际结果记录；本步不创建标签或Release，不实施下一步。
+
+## 本轮阻塞补齐与设置空白修复（2026-10-09）
+
+用户追加授权解决阻塞、合并第24步并发布v1.0.0，随后请求配置指导及模型空白/行情校验。本轮新增Python思考参数持久化、模型配置身份失效及0019迁移；前端新增三栏/常驻资产、按需GFM Markdown，原始HTML/自动外链图片/危险URL不执行。前端许可脚本遍历生产传递依赖及精确版本。SDK精确v5.2.0标签许可文本与保留文件一致，PyPI公开wheel摘要/发布声明已读取，未作密码学验证或原生依赖全闭包认证。
+
+运行中的用户应用在0019文件落盘前启动，数据库停0018而源码ORM已有新字段；只读诊断复现OperationalError。页面读取失败后切换设置页签原本清掉错误，表现空白；现保留错误并显示重读/重启指引。迁移前使用SQLite在线backup创建本机一致性备份，integrity_check=ok，位于ignored runtime/backups，不上传；没有清空/自动迁移运行中用户库或重启用户窗口。用户须正常退出后重新start-dev.cmd应用迁移。
+
+本机完整离线重跑：680 Python、15 Node、原创12案例/两库历史CLI、0019重复迁移/模型检查、契约/类型/构建通过；Electron56项中55通过、1失败，原因是常驻助手增加status元素后既有设置测试使用全页严格定位。已将其定位限定设置区。随后真实Electron专项：三栏/资产/跨页精确快照、设置读失败/页签保留/恢复、设置/凭证/资料/诊断重启共3项通过；再次三项包含三栏、设置故障及更新的OpenAI兼容loopback Markdown/限制/取消/持久化协议通过。窄屏和助手行情卡片布局修正后再测三栏1440/620px1项通过。未把跨轮专项回执冒称新57项完整单轮成功；远程尚未验证本轮未提交代码。构建有大于500kB主chunk警告，构建成功不隐去该警告。
+
+Browser插件未提供，使用既有Playwright Electron；page title/文件URL、非白屏、无框架overlay、页面/console错误、实际控件状态及1440/620px截图核对，截图只含原创模拟数据，在Temp/research-trail-step24-completion-qa，不上传。原内部安装包未重建，旧SHA/14阶段安装证据不覆盖本轮代码。
+
+行情用户配置只读诊断：Longbridge已配置/启用但credential_present=false，真实quote入口返回CREDENTIAL_MISSING，未发起服务商请求；K线/新闻未验，不记录权限受限或真实连接通过。仅使用Python既有服务链与只读数据库会话，未启动第二业务后端、未读取/展示账户或持仓、未输出密钥。用户需另行保存三项提供商凭证后才能真实验收；指引见CONFIGURATION.md。
+
+当前源码差异仍在本地；PR #24仍草稿、head2856974、main8c0e807。账号ydflow/目标origin重新确认；本轮未合并、未创建标签或Release。状态进行中，剩余基线功能、重新打包、干净Windows/签名/原生许可及真实服务边界见FEATURE-AUDIT-step24。
+
+用户重启并称完成设置后的复核：运行库已升级0019，模型已启用、地址/模型标识/凭证均存在，思考为default；这里只证明本机配置可读，未调用真实模型。Longbridge配置仍revision2、启用且凭证未关联（credential_present=false），行情尚未完成。遵照用户最新“未完成停止并告知补齐”指令，在配置检查处停止，不继续外部模型/行情请求或GitHub写入；用户需在数据与只读账户另行保存三项提供商凭证，真实查询仍待复核。
+
+### Longbridge本机保存与真实三项补验（2026-10-09）
+
+用户随后明确授权直接设置三项凭证。发现每项700字节上限无法容纳合法较长Access Token，修正为单项2048字节、准确JSON编码后组合2560字节；沿用Windows Credential Manager原子保存，虚构长Token/重开读取/转义及UTF-8总量超限回归通过。真实凭证经隐藏输入传递，保存与逐项读回一致，未进入源码/命令参数/明文环境文件/测试/验收记录，未调用交易或私人账户接口。
+
+最初全球端点三项PROVIDER_ERROR，窄化诊断为SDK初始化IO/Windows10054，独立TLS握手复现`.com`HTTP/quote双端点重置、`.cn`双端点成功；不是服务返回认证拒绝。临时中国端点SDK取得数据但正常化拒绝naive时间。固定v5.2.0官方python/src/time.rs第45—51行使用PyDateTime::from_timestamp(...,None)，是本地时间；仅SDK边界允许该格式，转换UTC时保留真实瞬间，其他无时区提供商数据仍拒绝。不得直接给naive时间贴UTC。来源：https://github.com/longbridge/openapi/blob/v5.2.0/python/src/time.rs 。
+
+修复后隔离worker三项真实请求成功，再保存region=cn、其余配置保留、revision6并通过ProviderService正式查询链路各复验一次：AAPL.US报价、5条K线、5条新闻，均ready、real/sdk、cached=false、有数据、SDK时间转UTC。没有模拟fallback，不上传实际行情/新闻正文或私人配置。98项提供商离线回归、契约再生成与TypeScript检查通过，保留Starlette/httpx弃用警告。本轮未验其他股票/市场/深度/私人账户/真实模型质量/追踪，不声称全部连接或完整第24步通过。旧运行进程需正常退出重开加载修复，安装器未重建，旧包/SHA不覆盖新源码。PR未更新/合并、标签与Release未创建。
+
+最终补验：完整Python回归通过683项，启用RESEARCH_TRAIL_OFFLINE与scripts/offline网络护栏，1项既有Starlette/httpx弃用警告；真实服务验证与离线回归分开执行。契约再生成/一致性、TypeScript和git diff --check通过。未把本轮Python成功称为最新完整Electron或安装包验收。
+
+## 用户要求跳过干净Windows验收并合并源码（2026-10-09）
+
+用户明确表示没有干净Windows电脑或虚拟机，要求直接跳过这一验收并合并第24步。本轮按最新授权处理现有PR #24及本步骤后续源码修复，不开发下一步。独立干净Windows首次安装/无开发环境验证记为“用户要求跳过／未验证”，开发机安装结果仍不能替代这项证明。
+
+本次交付范围是源码合并。真实模型A/B与完整质量量表、报告概率及Diff/真实校准、高思考工具协议、其他服务/权限、原生二进制分发许可等未完成事实继续保留，不将其标为完成。原内部安装包没有本轮修复，尚未重建，不上传安装器或SHA附件；本轮不创建v1.0.0标签/Release。此前“保持草稿、不合并”是当时授权与门槛下的历史事实，本次源码合并以当前指令替代，完整v1.0.0发布标准未放宽。检查失败则修复并重验，不绕过GitHub检查或保护。
+
+本次源码合并复核：Python完整离线683项已在同一代码上通过；本轮再运行15项Node、Electron/main及renderer构建、完整57项真实Electron，全部通过，Electron失败/取消/跳过0。独立网络护栏与沙箱数据库启用，不调用真实模型/行情/账户/追踪。完整Electron实际409秒，未把开发机窗口测试称为干净Windows或安装包验收。契约/类型/diff检查通过；保留Starlette/httpx弃用及Vite大chunk警告。
+
+后续源码分类提交：6d8ff90 Python思考配置/0019迁移，bd6b36a提供商长凭证/时间修复，d33f12c桌面工作台/设置修复，bc5cf18打包UI许可收集，89db6c2精确SDK来源核实，最终文档另一个真实提交。只有源码及来源/验收文档，安装包/敏感截图/运行库/密钥/日志/缓存均排除。最终文档head与远程push/PR/main检查、合并SHA按实际GitHub与仓库外PROJECT_STATE记录，不预写成功。
