@@ -80,7 +80,7 @@ class ResearchStore:
                 db.add(row)
                 db.flush()
                 for ordinal,read in enumerate(plan.reads,1):
-                    available = read.availability.available
+                    available = read.availability.available or read.availability.can_attempt
                     db.add(ResearchStepRecord(run_id=identity,capability=read.capability,ordinal=ordinal,
                         status='queued' if available else 'unavailable',code=None if available else read.availability.code,
                         completed_at=None if available else started))

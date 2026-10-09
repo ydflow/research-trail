@@ -240,6 +240,12 @@ def test_sdk_dates_financial_period_and_native_missing_no_network():
     assert hasattr(sdk.FinancialReportPeriod,'QuarterlyFull') and hasattr(sdk.CalendarCategory,'MacroData')
     assert 'Config' not in sdk_fields()
 
+def test_sdk_worker_from_non_backend_directory_rejects_before_network(tmp_path,monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    snapshot=ProviderSnapshot('longbridge',ProviderConfiguration(),1,{})
+    with pytest.raises(ProviderFault) as error:sdk_process(snapshot,query(mode='real'))
+    assert error.value.code=='CREDENTIAL_MISSING'
+
 def test_cli_exact_readonly_arrays_and_bounded_projection(tmp_path,monkeypatch):
     assert arguments(query('account.accounts'))==['auth','status','--format','json']
     assert arguments(query('account.portfolio'))==['portfolio','--format','json']
