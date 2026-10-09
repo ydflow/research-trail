@@ -30,7 +30,9 @@ def start(c, **values):
     assert response.status_code==200,response.text
     return response.json()['id']
 
-def settled(c, identity, timeout=5):
+def settled(c, identity, timeout=20):
+    # Serial comprehensive collection performs 16 persisted reads. Poll within
+    # the fixture's task budget; five seconds is not a completion SLA on CI.
     deadline=time.monotonic()+timeout
     while time.monotonic()<deadline:
         result=c.get('/research/runs/'+identity).json()
