@@ -3,3 +3,6 @@
 /packages/contracts/generated.ts text eol=lf
 # Imported dependency notices are verified against original byte hashes.
 /docs/third-party/longbridge/native/** -text -whitespace
+apps/desktop/public/brand/research-trail.png -text
+apps/desktop/assets/research-trail.ico -text
+docs/assets/features/*.png -text
