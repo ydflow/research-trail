@@ -111,3 +111,7 @@ Browser插件未提供，使用既有Playwright Electron；page title/文件URL�
 本次源码合并复核：Python完整离线683项已在同一代码上通过；本轮再运行15项Node、Electron/main及renderer构建、完整57项真实Electron，全部通过，Electron失败/取消/跳过0。独立网络护栏与沙箱数据库启用，不调用真实模型/行情/账户/追踪。完整Electron实际409秒，未把开发机窗口测试称为干净Windows或安装包验收。契约/类型/diff检查通过；保留Starlette/httpx弃用及Vite大chunk警告。
 
 后续源码分类提交：6d8ff90 Python思考配置/0019迁移，bd6b36a提供商长凭证/时间修复，d33f12c桌面工作台/设置修复，bc5cf18打包UI许可收集，89db6c2精确SDK来源核实，最终文档另一个真实提交。只有源码及来源/验收文档，安装包/敏感截图/运行库/密钥/日志/缓存均排除。最终文档head与远程push/PR/main检查、合并SHA按实际GitHub与仓库外PROJECT_STATE记录，不预写成功。
+
+## 后续正式交付
+
+上述内部候选/缺口是对应时点历史。第24步PR #24与补齐PR #25已普通合并，v1.0.0已发布安装器与SHA256；最新实施/验收和仍未验证边界见[版本验收](ACCEPTANCE-v1.0.0.md)与[Release](https://github.com/ydflow/research-trail/releases/tag/v1.0.0)。独立干净Windows仍为用户要求跳过／未验证，不将本机成功记作独立OS通过。
