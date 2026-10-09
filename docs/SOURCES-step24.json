@@ -1,0 +1,28 @@
+{
+  "repository": "https://github.com/helsome/folio",
+  "commit": "ba5dcdfd31b162f5edb8b908f7f099a560389326",
+  "files": [
+    {
+      "upstream": "README.md",
+      "sha256": "83198ecee8160edb8c199c65df5a8c91cd6b8ea26e6ada4dfec93f3eeb38eaf4"
+    },
+    {
+      "upstream": "docs/release-gates.md",
+      "sha256": "d312f30b64fea63022276ddec578e4b0deba04ef754b6df73e2f51ebae967e48"
+    },
+    {
+      "upstream": "docs/release-gates.zh-CN.md",
+      "sha256": "87011efee218113e30a457486faf8e6b0c289b9b96c9b7d8393fdf19699a068a"
+    },
+    {
+      "upstream": "apps/electron/package.json",
+      "sha256": "6b498374dec022ef1224e05fac8e6042bd92c573df631e735d05aa9b1aab2a2c"
+    },
+    {
+      "upstream": "apps/electron/e2e/package-smoke.mjs",
+      "sha256": "d2487de42682df74a273deba43b19251e860371711846071d34a1f3ee057f54b"
+    }
+  ],
+  "scope": "Read-only feature and delivery audit. Original Python Windows packaging and Electron adapters; no upstream build code, scores, screenshots or authorship imported. Existing skills provenance and permission records retained. Internal candidate only.",
+  "authorization": "Only skills/LICENSE independently confirmed MIT; project reuse confirmation retained in EVIDENCE 9-11; do not broaden to whole-repository MIT or public binary release."
+}
