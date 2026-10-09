@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { EvaluationCase, ExperimentView, ExperimentSummary, ExperimentInput, BaselineSummary, FeedbackView } from '../../evaluation-types';
 import { TracingPanel } from './TracingPanel';
+import { ResearchComparisonPanel } from './ResearchComparisonPanel';
 import './evaluation.css';
 
 export const statusLabels: Record<string,string> = {not_run:'未执行',running:'运行中',cancelled:'已取消',run_error:'运行错误',quality_failed:'质量不达标',passed:'通过'};
@@ -92,6 +93,7 @@ export function EvaluationPanel({available}:{available:boolean}) {
       <button disabled={locked||!reason.trim()} onClick={()=>void act(async()=>{await window.researchTrail!.addEvaluationFeedback(current.id,{request_id:crypto.randomUUID(),case_id:feedbackCase,judgment,reason});await load(current.id);if(alive.current)setReason('');})}>追加人工反馈</button>
       <div data-testid="eval-feedback">{feedback.map(f=><p key={f.id}>{f.case_id} · {f.judgment} · 人工 · {f.reason}</p>)}</div>
     </article>:<p>先创建实验，或选择已保存实验。</p>}
+    <ResearchComparisonPanel available={available}/>
     <TracingPanel available={available} experiment={current}/>
   </section>;
 }

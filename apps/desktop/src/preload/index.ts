@@ -2,6 +2,13 @@ import { contextBridge, ipcRenderer } from 'electron';
 import type { BackendState, ResearchTrailBridge, RunStreamUpdate } from '../bridge';
 
 const bridge: ResearchTrailBridge = {
+  researchQualityRubric: () => ipcRenderer.invoke('evaluation:researchQualityRubric'),
+  researchComparisons: () => ipcRenderer.invoke('evaluation:researchComparisons'),
+  createResearchComparison: input => ipcRenderer.invoke('evaluation:createResearchComparison',input),
+  researchComparison: id => ipcRenderer.invoke('evaluation:researchComparison',id),
+  startResearchComparison: id => ipcRenderer.invoke('evaluation:startResearchComparison',id),
+  cancelResearchComparison: id => ipcRenderer.invoke('evaluation:cancelResearchComparison',id),
+  reviewResearchComparison: (id,input) => ipcRenderer.invoke('evaluation:reviewResearchComparison',id,input),
   outcomeOpinions: () => ipcRenderer.invoke('outcomes:opinions'),
   captureOutcome: input => ipcRenderer.invoke('outcomes:capture',input),
   outcomeOpinion: id => ipcRenderer.invoke('outcomes:opinion',id),

@@ -10,6 +10,13 @@ export interface BackendState {
   pythonVersion?: string;
 }
 export interface ResearchTrailBridge {
+  researchQualityRubric(): Promise<import('./evaluation-types').ResearchRubric>;
+  researchComparisons(): Promise<import('./evaluation-types').ResearchComparisonView[]>;
+  createResearchComparison(input: import('./evaluation-types').ResearchComparisonInput): Promise<import('./evaluation-types').ResearchComparisonView>;
+  researchComparison(id: string): Promise<import('./evaluation-types').ResearchComparisonView>;
+  startResearchComparison(id: string): Promise<import('./evaluation-types').ResearchComparisonView>;
+  cancelResearchComparison(id: string): Promise<import('./evaluation-types').ResearchComparisonView>;
+  reviewResearchComparison(id: string, input: import('./evaluation-types').ResearchQualityInput): Promise<import('./evaluation-types').ResearchComparisonView>;
   outcomeOpinions(): Promise<import('./outcome-types').OutcomeOpinion[]>;
   captureOutcome(input: import('./outcome-types').OutcomeCapture): Promise<import('./outcome-types').OutcomeOpinion>;
   outcomeOpinion(id: string): Promise<import('./outcome-types').OutcomeView>;

@@ -1,5 +1,9 @@
 import type { components } from '../../../packages/contracts/generated';
 export type EvaluationCase = components['schemas']['EvaluationCase'];
+export type ResearchComparisonInput = components['schemas']['ResearchComparisonInput'];
+export type ResearchComparisonView = components['schemas']['ResearchComparisonView'];
+export type ResearchQualityInput = components['schemas']['ResearchQualityInput'];
+export type ResearchRubric = components['schemas']['ResearchRubric'];
 export type ExperimentInput = components['schemas']['ExperimentInput'];
 export type ExperimentView = components['schemas']['ExperimentView'];
 export type ExperimentSummary = components['schemas']['ExperimentSummary'];
