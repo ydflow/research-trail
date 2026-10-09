@@ -57,7 +57,7 @@ export function App() {
   const pending = busy || state.phase === 'starting' || state.phase === 'stopping';
   return (
     <div className="shell">
-      <header><span className="brand">研迹</span><span className="english">ResearchTrail</span></header>
+      <header><img className="brand-icon" src="./brand/research-trail.png" alt="研迹图标" width="44" height="44" /><span className="brand">研迹</span><span className="english">ResearchTrail</span></header>
       <div className="workbench">
       <aside className="workbench-navigation" aria-label="工作台导航">
       <section className="connection" aria-live="polite" aria-busy={pending}>

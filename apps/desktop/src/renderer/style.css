@@ -2,7 +2,8 @@
 * { box-sizing: border-box; }
 body { margin: 0; }
 .shell { min-height: 100vh; display: flex; flex-direction: column; }
-header { display: flex; align-items: baseline; gap: 12px; margin: 0 24px; padding: 38px 36px 24px; border-bottom: 1px solid var(--border); }
+header { display: flex; align-items: center; gap: 12px; margin: 0 24px; padding: 38px 36px 24px; border-bottom: 1px solid var(--border); }
+.brand-icon { width: 44px; height: 44px; flex-shrink: 0; }
 .brand { font-size: 26px; font-weight: 700; letter-spacing: -.8px; }
 .english { color: var(--muted); font-size: 15px; }
 main { width: min(980px, calc(100% - 96px)); margin: 36px auto 48px; }

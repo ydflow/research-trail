@@ -50,6 +50,7 @@ app.whenReady().then(async () => {
   window = new BrowserWindow({
     width: 1100, height: 800, minWidth: 560, minHeight: 540,
     title: '研迹 · ResearchTrail', backgroundColor: '#ffffff', autoHideMenuBar: true,
+    icon: join(__dirname, 'renderer/brand/research-trail.png'),
     show: false,
     webPreferences: {
       preload: join(__dirname, 'preload.cjs'),

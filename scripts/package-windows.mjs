@@ -48,9 +48,10 @@ await build({projectDir:root,targets:Platform.WINDOWS.createTarget(['nsis'],Arch
   extraResources:[{from:join(root,'build/windows/python/backend'),to:'backend',filter:['**/*']},
     {from:join(root,'skills'),to:'skills',filter:['**/*.md','LICENSE','catalog.json']},
     {from:notices,to:'notices',filter:['**/*']}],
-  win:{target:[{target:'nsis',arch:['x64']}],signExecutable:false,
+  win:{target:[{target:'nsis',arch:['x64']}],signExecutable:false,icon:join(root,'apps/desktop/assets/research-trail.ico'),
     artifactName:'ResearchTrail-${version}-windows-x64-setup.${ext}'},
   nsis:{oneClick:false,perMachine:false,allowElevation:false,allowToChangeInstallationDirectory:true,
+    installerIcon:join(root,'apps/desktop/assets/research-trail.ico'),uninstallerIcon:join(root,'apps/desktop/assets/research-trail.ico'),
     runAfterFinish:false,deleteAppDataOnUninstall:false,createDesktopShortcut:false,createStartMenuShortcut:true},
   publish:null
 }});
