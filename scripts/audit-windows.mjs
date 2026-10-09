@@ -4,6 +4,7 @@ import { readFileSync, lstatSync, existsSync, writeFileSync } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import { auditNative } from './native-audit.mjs';
+import { sameAuthoredNotice } from './authored-notice.mjs';
 const root=resolve(import.meta.dirname,'..');
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const listing=spawnSync('git',['ls-files','--cached','--others','--exclude-standard','-z'],{cwd:root,encoding:'utf8',windowsHide:true});
@@ -46,17 +47,19 @@ const hashFiles=['evaluation.py','evaluation_contracts.py','evaluation_engine.py
 for(const file of hashFiles){
   if(sha(readFileSync(join(root,'services/backend/research_trail',file)))!==sha(readFileSync(join(bundle,'resources/backend/_internal/research_trail',file))))throw new Error('Experiment hash source is not the delivered source');
 }
-for(const file of ['BUNDLE-NOTICE.md','WINDOWS-INSTALL.md']){
-  if(sha(readFileSync(join(root,'docs',file)))!==sha(readFileSync(join(bundle,'resources/notices',file))))throw new Error('Bundled notice is stale');
+// These three files are ResearchTrail-authored prose, not upstream originals.
+for(const file of ['BUNDLE-NOTICE.md','WINDOWS-INSTALL.md','third-party/longbridge/NOTICE']){
+  if(!sameAuthoredNotice(readFileSync(join(root,'docs',file)),readFileSync(join(bundle,'resources/notices',file))))throw new Error('Bundled notice is stale');
 }
 const source24=readFileSync(join(root,'docs/SOURCES-step24.json'));
 if(sha(source24)!==sha(readFileSync(join(bundle,'resources/notices/sources/SOURCES-step24.json'))))throw new Error('Missing current source record');
-for(const path of ['third-party/longbridge/LICENSE-MIT','third-party/longbridge/LICENSE-APACHE','third-party/longbridge/NOTICE',
+for(const path of ['third-party/longbridge/LICENSE-MIT','third-party/longbridge/LICENSE-APACHE',
   'third-party/klinecharts/LICENSE','third-party/klinecharts/LICENSE-lightweight-charts','third-party/klinecharts/NOTICE']){
   if(sha(readFileSync(join(root,'docs',path)))!==sha(readFileSync(join(bundle,'resources/notices',path))))throw new Error('Dependency notice changed');
 }
 const python=JSON.parse(readFileSync(join(bundle,'resources/notices/python-dependencies.json'),'utf8'));
 const receipt={source_files:files.length,bundle_files:manifest.files.length,original_skill_license_files:sources.length,
+  authored_notice_eol_normalized:3,
   native,
   hash_source_files:hashFiles.length,ignore_probes:probes.length,installer:manifest.installer,sha256:manifest.sha256,
   runtime_python_dependencies:python.filter(p=>p.role==='runtime').length,
