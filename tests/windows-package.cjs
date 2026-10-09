@@ -7,8 +7,9 @@ const { mkdtempSync, mkdirSync, existsSync, readFileSync, writeFileSync, readdir
 const { tmpdir } = require('node:os');
 const { createHash } = require('node:crypto');
 const root = resolve(__dirname, '..');
-const out = join(root, 'release/windows-internal');
-const installer = join(out, 'ResearchTrail-1.0.0-internal.24-windows-x64-setup.exe');
+const out = resolve(root,process.argv[2]??'release/windows-internal');
+assert.ok(out.startsWith(join(root,'release')+require('node:path').sep));
+const installer = join(out, JSON.parse(readFileSync(join(out,'bundle-manifest.json'),'utf8')).installer);
 const qa = mkdtempSync(join(tmpdir(), 'research-trail package QA-'));
 const install = join(qa, 'installed app');
 const data = join(qa, 'user data');
@@ -66,7 +67,7 @@ async function main() {
   const worker=spawnSync(backendExe,['--provider-worker'],{env,input:JSON.stringify({provider:'longbridge',configuration:{},credentials:{},query:{capability:'market.quote',symbol:'AAPL.US',mode:'real'}}),encoding:'utf8',timeout:15000,windowsHide:true});
   assert.equal(worker.status,0,worker.stderr);assert.equal(JSON.parse(worker.stdout).code,'CREDENTIAL_MISSING');
   check('frozen SDK worker rejects missing credentials without starting HTTP server or connecting',JSON.parse(worker.stdout));
-  let instance=await launch();let snapshot,session,research,report,experiment;
+  let instance=await launch();let snapshot,session,research,report,experiment,comparison;
   try {
     const page=instance.page;
     const second=spawnSync(exe,[`--research-trail-data-dir=${data}`],{cwd:qa,env,encoding:'utf8',windowsHide:true,timeout:15000});
@@ -98,6 +99,18 @@ async function main() {
     await page.evaluate(id=>window.researchTrail.startExperiment(id),experiment.id);
     await expect.poll(()=>page.evaluate(id=>window.researchTrail.evaluationExperiment(id).then(v=>v.status),experiment.id),{timeout:45000}).toBe('passed');
     check('packaged business interfaces: skill text, Agent, research/report, evaluation migration sandbox',{session:session.id,research:research.id,report:report.id,experiment:experiment.id});
+    comparison=await page.evaluate(run_id=>window.researchTrail.createResearchComparison({request_id:crypto.randomUUID(),run_id,mode:'offline',models:['offline-a','offline-b'],consent:false}),research.id);
+    await page.evaluate(id=>window.researchTrail.startResearchComparison(id),comparison.id);
+    await expect.poll(()=>page.evaluate(id=>window.researchTrail.researchComparison(id).then(v=>v.status),comparison.id)).toBe('completed');
+    comparison=await page.evaluate(id=>window.researchTrail.researchComparison(id),comparison.id);
+    assert.equal(comparison.quality_delta,null);assert.equal(comparison.quality_status,'not_reviewed');
+    assert.ok(comparison.candidates.every(c=>c.requests_started===0));
+    assert.deepEqual(comparison.candidates[0].document,comparison.candidates[1].document);
+    await page.getByRole('button',{name:'评测中心',exact:true}).click();
+    await page.getByTestId('research-comparison-panel').getByRole('button',{name:/offline-a \/ offline-b/}).click();
+    await expect(page.getByTestId('research-comparison')).toHaveAttribute('data-status','completed');
+    await page.screenshot({path:join(qa,'installed-research-comparison.png'),fullPage:false});
+    check('packaged frozen A/B reports preserve no-score and zero-request offline boundary',comparison.source_hash);
     await page.getByRole('button',{name:'会话与事件',exact:true}).click();await expect(page.getByTestId('message-history')).toContainText('AAPL.US');
     await page.screenshot({path:join(qa,'installed-session-wide.png'),fullPage:true});
     await page.getByRole('button',{name:'投资结果',exact:true}).click();await expect(page.getByTestId('outcome-panel')).toContainText('工具正确率不代表盈利能力');
@@ -125,6 +138,8 @@ async function main() {
     assert.equal((await instance.page.evaluate(()=>window.researchTrail.researchRuns())).length,1);
     assert.equal((await instance.page.evaluate(()=>window.researchTrail.evaluationExperiments())).length,1);
     assert.equal((await instance.page.evaluate(()=>window.researchTrail.outcomeOpinions())).length,1);
+    assert.deepEqual(await instance.page.evaluate(id=>window.researchTrail.researchComparison(id),comparison.id),comparison);
+    assert.deepEqual(await instance.page.evaluate(id=>window.researchTrail.startResearchComparison(id),comparison.id),comparison);
     check('restart preserves exact history and does not duplicate research/report/evaluation');
   }finally {await close(instance,true);}
   check('abnormal main exit stops owned backend via parent pipe');
@@ -135,8 +150,8 @@ async function main() {
     const sessions=await instance.page.evaluate(()=>window.researchTrail.listSessions());assert.ok(sessions.some(s=>s.title==='原创旧库升级验收'));
   }finally{await close(instance);}
   const upgraded=spawnSync(join(root,'services/backend/.venv/Scripts/python.exe'),['-c',"import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); print(c.execute('select version_num from alembic_version').fetchone()[0]); assert c.execute('PRAGMA foreign_key_check').fetchone() is None",oldDB],{encoding:'utf8',windowsHide:true});
-  assert.equal(upgraded.status,0,upgraded.stderr);assert.equal(upgraded.stdout.trim(),'0019_model_reasoning');
-  check('installed frozen backend migrates synthetic 0017 to 0018 preserving original session',upgraded.stdout.trim());
+  assert.equal(upgraded.status,0,upgraded.stderr);assert.equal(upgraded.stdout.trim(),'0020_research_quality');
+  check('installed frozen backend migrates synthetic 0017 to 0020 preserving original session',upgraded.stdout.trim());
   const database=join(data,'data/research-trail.sqlite3');const before=createHash('sha256').update(readFileSync(database)).digest('hex');
   const uninstall=readdirSync(install).find(f=>/^Uninstall.*\.exe$/i.test(f));assert.ok(uninstall);
   runInstaller(join(install,uninstall),'/S');await expect.poll(()=>existsSync(exe),{timeout:15000}).toBe(false);
@@ -150,7 +165,7 @@ async function main() {
   const leftover=ps("@(Get-ChildItem HKCU:/Software/Microsoft/Windows/CurrentVersion/Uninstall | ForEach-Object {Get-ItemProperty $_.PSPath} | Where-Object {$_.DisplayName -match '^ResearchTrail(?: |$)'}) | ConvertTo-Json -Compress");
   assert.ok(!leftover || leftover==='[]');
   assert.deepEqual(errors,[]);check('page and console errors',errors);
-  writeFileSync(join(qa,'acceptance.json'),JSON.stringify({time:new Date().toISOString(),installer,sha256:manifest.sha256,host:'development Windows; NOT clean Windows',browser:'Browser plugin not available; existing Playwright Electron',qa,checks,errors,warnings,cleanWindows:'pending',realConnections:'not executed'},null,2)+'\n');
+  writeFileSync(join(qa,'acceptance.json'),JSON.stringify({time:new Date().toISOString(),installer,sha256:manifest.sha256,host:'development Windows; NOT clean Windows',browser:'existing Playwright Electron',qa,checks,errors,warnings,cleanWindows:'user explicitly waived; unverified',realConnections:'not executed in this installer run'},null,2)+'\n');
   console.log('PASS local installer acceptance. Evidence: '+qa);
 }
 main().catch(error=>{writeFileSync(join(qa,'failure.json'),JSON.stringify({checks,errors,warnings,error:String(error),stack:error.stack},null,2));console.error(error);console.error('Evidence: '+qa);process.exitCode=1;});

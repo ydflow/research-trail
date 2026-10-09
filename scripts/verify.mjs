@@ -41,6 +41,7 @@ function run(label, command, args, cwd = root) {
 run('Python version', python, ['-c', 'import sys; assert sys.version_info[:2] == (3, 12); print(sys.version)']);
 run('OpenAPI / TypeScript consistency', process.execPath, ['scripts/contracts.mjs', '--check']);
 run('Frontend type check', process.execPath, [require.resolve('typescript/bin/tsc'), '--noEmit'], resolve(root, 'apps/desktop'));
+run('Collected native dependency notices (offline)',process.execPath,['scripts/native-audit.mjs']);
 run('Python fixture / lifecycle / snapshot tests', python, ['-m', 'pytest', '-q'], resolve(root, 'services/backend'));
 run('ResearchTrail original deterministic offline evaluation', python, ['-m', 'research_trail.verify_evaluations'], resolve(root, 'services/backend'));
 run('ResearchTrail original deterministic historical observations', python, ['-m', 'research_trail.verify_outcomes'], resolve(root, 'services/backend'));
