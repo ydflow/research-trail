@@ -5,7 +5,7 @@ import time
 from .report_store import ReportStore
 from .report_contracts import ReportDocument, ReportOriginal
 from .report_facts import packet, original
-from .report_synthesis import FixedReportSynthesizer, LiveReportSynthesizer, validate
+from .report_synthesis import FixedReportSynthesizer, LiveReportSynthesizer, validate, validate_forecast_time
 from .research_store import ResearchError
 from .openai_provider import ModelError
 
@@ -86,6 +86,7 @@ class ReportService:
                     uncertain=None if work.code in ('MODEL_TIMEOUT','MODEL_NETWORK_ERROR') else False
                     self.store.finish(work.identity,'failed',work.code,requests_started=self.requests(work),request_uncertain=uncertain); return
                 synthesis=validate(work.output,work.bundle['evidence'])
+                validate_forecast_time(synthesis,work.bundle,self.store.get(work.identity).started_at)
                 document=ReportDocument(**work.bundle,synthesis=synthesis)
                 self.research.validate_checkpoint(work.bundle['source_run_id'])
                 self.store.finish(work.identity,'completed',document=document,requests_started=self.requests(work),request_uncertain=False)

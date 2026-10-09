@@ -276,6 +276,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/evaluation/research": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Research Comparisons */
+        get: operations["research_comparisons_evaluation_research_get"];
+        put?: never;
+        /** Research Comparison Create */
+        post: operations["research_comparison_create_evaluation_research_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/research/rubric": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Research Quality Rubric */
+        get: operations["research_quality_rubric_evaluation_research_rubric_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/research/{identity}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Research Comparison View */
+        get: operations["research_comparison_view_evaluation_research__identity__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/research/{identity}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Research Comparison Cancel */
+        post: operations["research_comparison_cancel_evaluation_research__identity__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/research/{identity}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Research Comparison Review */
+        post: operations["research_comparison_review_evaluation_research__identity__reviews_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evaluation/research/{identity}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Research Comparison Start */
+        post: operations["research_comparison_start_evaluation_research__identity__start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/evaluation/tracing": {
         parameters: {
             query?: never;
@@ -2100,6 +2203,11 @@ export interface components {
         CapabilityState: {
             /** Available */
             available: boolean;
+            /**
+             * Can Attempt
+             * @default false
+             */
+            can_attempt: boolean;
             /** Code */
             code: string;
             /** Id */
@@ -3353,7 +3461,7 @@ export interface components {
              */
             captured_at: string;
             /** Confidence */
-            confidence?: null;
+            confidence?: string | null;
             /**
              * Due At
              * Format: date-time
@@ -3381,6 +3489,8 @@ export interface components {
              * @enum {string}
              */
             origin: "prospective" | "retrospective" | "authored-history";
+            /** Probability Event */
+            probability_event?: "stance-match-v1" | null;
             /**
              * Provider
              * @enum {string}
@@ -3481,6 +3591,12 @@ export interface components {
             adaptive_weight: string | null;
             /** Average Return */
             average_return: string | null;
+            /** Brier Score */
+            brier_score?: string | null;
+            /** Calibration Bins */
+            calibration_bins?: {
+                [key: string]: unknown;
+            }[];
             /** Direction Hit Rate */
             direction_hit_rate: string | null;
             /** Evaluation Ids */
@@ -3500,6 +3616,16 @@ export interface components {
             median_excess_return?: null;
             /** Pending */
             pending: number;
+            /**
+             * Probability Insufficient
+             * @default true
+             */
+            probability_insufficient: boolean;
+            /**
+             * Probability Samples
+             * @default 0
+             */
+            probability_samples: number;
             /** Sample Confidence */
             sample_confidence: string | null;
             /** Samples */
@@ -3537,6 +3663,11 @@ export interface components {
             opinion_ids?: string[];
             /** Policy Version */
             policy_version: number;
+            /**
+             * Probability Calculation Version
+             * @default research-trail-probability-v1
+             */
+            probability_calculation_version: string;
             /** Rows */
             rows: components["schemas"]["PerformanceRow"][];
         };
@@ -4060,7 +4191,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "fact" | "gap" | "analysis";
+            kind: "fact" | "gap" | "analysis" | "confidence";
         };
         /** ReportClaim */
         ReportClaim: {
@@ -4156,6 +4287,33 @@ export interface components {
             source_mode: "simulated" | "real";
             /** Value */
             value: boolean | number | string;
+        };
+        /** ReportForecast */
+        ReportForecast: {
+            /** Basis */
+            basis: string;
+            /**
+             * Event
+             * @default stance-match-v1
+             * @constant
+             */
+            event: "stance-match-v1";
+            /** Evidence Ids */
+            evidence_ids: string[];
+            /**
+             * Horizon
+             * @default 1m
+             * @enum {string}
+             */
+            horizon: "1w" | "1m" | "3m";
+            /**
+             * Label
+             * @default 模型主观概率，未经校准；偏多为窗口价格上涨，偏空为下跌，中性为变化绝对值不超过2%。不代表盈利概率。
+             * @constant
+             */
+            label: "模型主观概率，未经校准；偏多为窗口价格上涨，偏空为下跌，中性为变化绝对值不超过2%。不代表盈利概率。";
+            /** Probability */
+            probability: number;
         };
         /** ReportGap */
         ReportGap: {
@@ -4276,6 +4434,7 @@ export interface components {
             bull_case: components["schemas"]["ReportClaim"][];
             /** Catalysts */
             catalysts: components["schemas"]["ReportClaim"][];
+            forecast?: components["schemas"]["ReportForecast"] | null;
             /** Risks */
             risks: components["schemas"]["ReportClaim"][];
             /** Sections */
@@ -4287,6 +4446,117 @@ export interface components {
             stance: "bullish" | "bearish" | "neutral";
             /** Summary */
             summary: components["schemas"]["ReportClaim"][];
+        };
+        /** ResearchCandidate */
+        ResearchCandidate: {
+            /** Code */
+            code?: string | null;
+            document?: components["schemas"]["ReportDocument"] | null;
+            /** Engineering Checks */
+            engineering_checks?: string[];
+            /** Failure Stage */
+            failure_stage?: string | null;
+            /** Model */
+            model: string;
+            /**
+             * Request Uncertain
+             * @default false
+             */
+            request_uncertain: boolean;
+            /**
+             * Requests Started
+             * @default 0
+             */
+            requests_started: number;
+            /** Response Diagnostics */
+            response_diagnostics?: {
+                [key: string]: string | boolean;
+            } | null;
+            /** Reviews */
+            reviews?: components["schemas"]["ResearchQualityReview"][];
+            /**
+             * Status
+             * @default not_run
+             * @enum {string}
+             */
+            status: "not_run" | "running" | "cancelled" | "run_error" | "completed";
+        };
+        /** ResearchComparisonInput */
+        ResearchComparisonInput: {
+            /**
+             * Consent
+             * @default false
+             */
+            consent: boolean;
+            /**
+             * Mode
+             * @default offline
+             * @enum {string}
+             */
+            mode: "offline" | "real";
+            /** Models */
+            models: string[];
+            /**
+             * Reasoning Effort
+             * @default default
+             * @enum {string}
+             */
+            reasoning_effort: "default" | "low" | "medium" | "high";
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+        };
+        /** ResearchComparisonView */
+        ResearchComparisonView: {
+            /** Candidates */
+            candidates: components["schemas"]["ResearchCandidate"][];
+            /** Completed At */
+            completed_at?: string | null;
+            /** Configuration Identity */
+            configuration_identity?: string | null;
+            /** Created At */
+            created_at: string;
+            /** Id */
+            id: string;
+            input: components["schemas"]["ResearchComparisonInput"];
+            /**
+             * Label
+             * @default 同一冻结数据的模型报告对比；工程断言不等于事实正确。质量评分需八项人工评审，未评审/错误/取消无比较分数；不评盈利能力。
+             */
+            label: string;
+            /** Quality Delta */
+            quality_delta?: number | null;
+            /**
+             * Quality Status
+             * @default not_reviewed
+             * @enum {string}
+             */
+            quality_status: "not_reviewed" | "invalid" | "passed" | "quality_failed";
+            /**
+             * Rubric Version
+             * @default research-trail-research-quality-v1
+             */
+            rubric_version: string;
+            /** Source Hash */
+            source_hash: string;
+            /**
+             * Source Mode
+             * @enum {string}
+             */
+            source_mode: "simulated" | "real";
+            /**
+             * Status
+             * @default not_run
+             * @enum {string}
+             */
+            status: "not_run" | "running" | "cancelled" | "run_error" | "completed";
         };
         /** ResearchData */
         ResearchData: {
@@ -4346,6 +4616,86 @@ export interface components {
             source: string;
             /** Timeout Seconds */
             timeout_seconds: number;
+        };
+        /** ResearchQualityInput */
+        ResearchQualityInput: {
+            /** Candidate */
+            candidate: number;
+            /** Expected Version */
+            expected_version: number;
+            /** Ratings */
+            ratings: {
+                [key: string]: components["schemas"]["ResearchRating"];
+            };
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+        };
+        /** ResearchQualityReview */
+        ResearchQualityReview: {
+            /** Candidate */
+            candidate: number;
+            /** Created At */
+            created_at: string;
+            /** Expected Version */
+            expected_version: number;
+            /** Ratings */
+            ratings: {
+                [key: string]: components["schemas"]["ResearchRating"];
+            };
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            /**
+             * Reviewer
+             * @default human
+             * @constant
+             */
+            reviewer: "human";
+            /**
+             * Rubric Version
+             * @default research-trail-research-quality-v1
+             */
+            rubric_version: string;
+            /** Score */
+            score: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "passed" | "quality_failed";
+            /** Version */
+            version: number;
+        };
+        /** ResearchRating */
+        ResearchRating: {
+            /** Evidence Ids */
+            evidence_ids: string[];
+            /** Reason */
+            reason: string;
+            /** Score */
+            score: number;
+        };
+        /** ResearchRubric */
+        ResearchRubric: {
+            /** Dimensions */
+            dimensions: {
+                [key: string]: string;
+            };
+            /**
+             * Scale
+             * @default 1=关键缺陷，2=明显不足，3=基本可用，4=较完整，5=充分且可复核；每项需证据与理由。全部维度至少3分才通过。
+             */
+            scale: string;
+            /**
+             * Version
+             * @default research-trail-research-quality-v1
+             */
+            version: string;
         };
         /** ResearchRun */
         ResearchRun: {
@@ -6697,6 +7047,239 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TraceDelivery"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    research_comparisons_evaluation_research_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchComparisonView"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    research_comparison_create_evaluation_research_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResearchComparisonInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchComparisonView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    research_quality_rubric_evaluation_research_rubric_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchRubric"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    research_comparison_view_evaluation_research__identity__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchComparisonView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    research_comparison_cancel_evaluation_research__identity__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchComparisonView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    research_comparison_review_evaluation_research__identity__reviews_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResearchQualityInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchComparisonView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    research_comparison_start_evaluation_research__identity__start_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                identity: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchComparisonView"];
                 };
             };
             /** @description Validation Error */

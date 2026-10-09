@@ -332,6 +332,16 @@ class ReportRecord(Base):
     request_uncertain: Mapped[bool] = mapped_column(default=False, server_default=text('0'))
 
 
+class ResearchComparisonRecord(Base):
+    __tablename__ = 'research_comparisons'
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    request_id: Mapped[str] = mapped_column(String(36), unique=True)
+    request_hash: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[str] = mapped_column(String(40), index=True)
+    status: Mapped[str] = mapped_column(String(20))
+    payload: Mapped[dict] = mapped_column(JSON)
+    bundle: Mapped[dict] = mapped_column(JSON)
+
 class ThesisRecord(Base):
     __tablename__ = 'investment_theses'
     __table_args__ = (CheckConstraint('current_version >= 1'),)

@@ -18,6 +18,14 @@ class ReportSection(Boundary):
     title: str = Field(min_length=1, max_length=60)
     claims: list[ReportClaim] = Field(min_length=1, max_length=8)
 
+class ReportForecast(Boundary):
+    horizon: Literal['1w', '1m', '3m'] = '1m'
+    event: Literal['stance-match-v1'] = 'stance-match-v1'
+    probability: StrictFloat = Field(ge=0, le=1)
+    evidence_ids: list[str] = Field(min_length=1, max_length=8)
+    basis: str = Field(min_length=1, max_length=480)
+    label: Literal['模型主观概率，未经校准；偏多为窗口价格上涨，偏空为下跌，中性为变化绝对值不超过2%。不代表盈利概率。'] = '模型主观概率，未经校准；偏多为窗口价格上涨，偏空为下跌，中性为变化绝对值不超过2%。不代表盈利概率。'
+
 class ReportSynthesis(Boundary):
     stance: Literal['bullish', 'bearish', 'neutral']
     summary: list[ReportClaim] = Field(min_length=1, max_length=4)
@@ -26,6 +34,7 @@ class ReportSynthesis(Boundary):
     catalysts: list[ReportClaim] = Field(min_length=1, max_length=4)
     bull_case: list[ReportClaim] = Field(min_length=1, max_length=4)
     bear_case: list[ReportClaim] = Field(min_length=1, max_length=4)
+    forecast: ReportForecast | None = None
 
 class ReportEvidence(Boundary):
     id: str
@@ -88,7 +97,7 @@ class ReportDiffInput(Boundary):
     after_id: str
 
 class ReportChange(Boundary):
-    kind: Literal['fact', 'gap', 'analysis']
+    kind: Literal['fact', 'gap', 'analysis', 'confidence']
     key: str
     before: str | None
     after: str | None

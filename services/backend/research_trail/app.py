@@ -49,6 +49,9 @@ from .screening_contracts import ScreeningContext, ScreeningInput, ScreeningTask
 from .calendar import CalendarService, CalendarError
 from .monitoring import MonitoringService, MonitoringError
 from .evaluation import EvaluationService, EvaluationError
+from .research_evaluation import ResearchEvaluationService, RUBRIC
+from .research_evaluation_contracts import (ResearchComparisonInput, ResearchComparisonView,
+    ResearchQualityInput, ResearchRubric)
 from .evaluation_cases import CASES
 from .outcomes import OutcomeService, OutcomeError
 from .outcome_contracts import (OutcomeCapture, OutcomeOpinion, OutcomeRequest, OutcomeAttempt,
@@ -111,6 +114,8 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
                     model.settings_identity=app.state.settings.model_identity()
                     return model
             app.state.reports = ReportService(database,app.state.research.store,report_model,**(report_options or {}))
+            app.state.research_evaluation = ResearchEvaluationService(database,app.state.research.store,
+                app.state.settings,transport=openai_transport)
             app.state.outcomes = OutcomeService(database,app.state.providers,app.state.reports,**(outcome_options or {}))
             app.state.theses = ThesisService(database, app.state.reports)
             app.state.recovery = ResearchRecovery(app.state.research,app.state.reports,app.state.settings)
@@ -124,6 +129,8 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             try:
                 if hasattr(app.state,'outcomes'):
                     app.state.outcomes.close()
+                if hasattr(app.state,'research_evaluation'):
+                    app.state.research_evaluation.close()
                 if hasattr(app.state,'evaluation'):
                     app.state.evaluation.close()
                 if hasattr(app.state,'monitoring'):
@@ -194,6 +201,24 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
 
     @app.get('/evaluation/cases',response_model=list[EvaluationCase],dependencies=protected)
     def evaluation_cases():return CASES
+    @app.get('/evaluation/research/rubric',response_model=ResearchRubric,dependencies=protected)
+    def research_quality_rubric():return RUBRIC
+    @app.get('/evaluation/research',response_model=list[ResearchComparisonView],dependencies=protected)
+    def research_comparisons():return app.state.research_evaluation.history()
+    @app.post('/evaluation/research',response_model=ResearchComparisonView,dependencies=protected)
+    def research_comparison_create(body:ResearchComparisonInput):
+        try:return app.state.research_evaluation.create(body)
+        except ModelError as error:raise HTTPException(status_code=409,detail=error.error.code) from None
+    @app.get('/evaluation/research/{identity}',response_model=ResearchComparisonView,dependencies=protected)
+    def research_comparison_view(identity:UUID):return app.state.research_evaluation.get(identity)
+    @app.post('/evaluation/research/{identity}/start',response_model=ResearchComparisonView,dependencies=protected)
+    def research_comparison_start(identity:UUID):
+        try:return app.state.research_evaluation.start(identity)
+        except ModelError as error:raise HTTPException(status_code=409,detail=error.error.code) from None
+    @app.post('/evaluation/research/{identity}/cancel',response_model=ResearchComparisonView,dependencies=protected)
+    def research_comparison_cancel(identity:UUID):return app.state.research_evaluation.cancel(identity)
+    @app.post('/evaluation/research/{identity}/reviews',response_model=ResearchComparisonView,dependencies=protected)
+    def research_comparison_review(identity:UUID,body:ResearchQualityInput):return app.state.research_evaluation.review(identity,body)
     @app.get('/evaluation/experiments',response_model=list[ExperimentSummary],dependencies=protected)
     def evaluation_experiments():return app.state.evaluation.history()
     @app.post('/evaluation/experiments',response_model=ExperimentView,dependencies=protected)
