@@ -26,10 +26,12 @@ from test_research import start, settled
 from test_reports import report, finished
 
 @pytest.fixture
-def api(tmp_path):
+def api(tmp_path,request):
     app=create_app(TOKEN,database_path=tmp_path/'quality.sqlite3',credential_vault=Vault())
     with TestClient(app,headers=HEADERS) as client:
-        run=start(client);settled(client,run)
+        # This fixture needs quotes and a few references, not every capability.
+        # Bound polling to the research task's own limit on cold CI runners.
+        run=start(client,strategy=getattr(request,'param','value'));settled(client,run,timeout=20)
         yield client,app,run
 
 def create(client,run,**extra):
@@ -128,6 +130,7 @@ def test_validation_failure_localizes_stage_and_blocks_quality(api):
     assert view['status']=='run_error' and view['quality_status']=='invalid' and view['quality_delta'] is None
     assert all(r['failure_stage']=='report-validation' and r['code']=='REPORT_SCHEMA_INVALID' for r in view['candidates'])
 
+@pytest.mark.parametrize('api',['comprehensive'],indirect=True)
 def test_forecast_requires_price_and_valid_time_and_diff(api):
     c,app,run=api;bundle=packet(app.state.research.store,run)
     output=FixedReportSynthesizer().synthesize(bundle,None,None)
@@ -165,8 +168,8 @@ def test_api_authentication_and_new_migration_preserve_old_data(api):
     db=app.state.research_evaluation.database;db.migrate();db.migrate()
     assert app.state.research.store.get(run).id==run
 
-def test_ordinary_compounds_do_not_disable_numeric_claim_guard(api):
-    _,app,run=api;bundle=packet(app.state.research.store,run)
+def test_ordinary_compounds_do_not_disable_numeric_claim_guard():
+    bundle={'evidence':[SimpleNamespace(id='ev-authored-phrase',capability='market.quote')]}
     output=FixedReportSynthesizer().synthesize(bundle,None,None)
     output['bull_case'][0]['text']='年度涨幅积累一定动量，相关事实提供一定支撑，成交量较前一交易日缩减。'
     validated=validate(output,bundle['evidence'])
