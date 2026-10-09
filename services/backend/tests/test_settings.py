@@ -227,7 +227,42 @@ def test_migrate_old_conversation_and_repeat(tmp_path):
     database.migrate(); database.migrate()
     assert store.snapshot(session.id).model_dump() == before
     with database.engine.connect() as connection:
-        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0018_outcomes"
+        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "0019_model_reasoning"
+    database.close()
+
+
+def test_reasoning_setting_invalidates_identity_and_survives_restart(settings):
+    client, vault, path, app = settings
+    save(client, endpoint="https://example.com/v1", model="synthetic-model")
+    client.put("/settings/connections/model/credential", json={"secret": SENTINEL})
+    service = app.state.settings
+    before = service.model_identity()
+    changed = save(client, endpoint="https://example.com/v1", model="synthetic-model", reasoning_effort="none")
+    assert changed["reasoning_effort"] == "none"
+    assert service.model_identity() != before
+    reopened = SettingsService(service.database, vault)
+    assert reopened.model_configuration().reasoning_effort == "none"
+    rejected = client.put("/settings/connections/model", json={"reasoning_effort": "invented"})
+    assert rejected.status_code == 422
+    assert reopened.model_configuration().reasoning_effort == "none"
+
+
+def test_0018_settings_upgrade_preserves_configuration(tmp_path):
+    from alembic import command
+    from alembic.config import Config
+    from pathlib import Path
+    database = Database(tmp_path / "old-settings.sqlite3")
+    cfg = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
+    with database.engine.connect() as connection:
+        database.migration_transaction(connection, lambda: command.upgrade(cfg, "0018_outcomes"), cfg)
+        columns = {row[1] for row in connection.execute(text('PRAGMA table_info(connections)'))}
+        assert "reasoning_effort" not in columns
+        connection.execute(text("INSERT INTO connections (kind, endpoint, model, enabled, requires_credential, fake_result, revision, status, reason) VALUES ('model', 'https://example.com/v1', 'synthetic-model', 1, 0, 'ok', 3, 'unconfigured', 'not-tested')"))
+        connection.commit()
+    database.migrate(); database.migrate()
+    with database.engine.connect() as connection:
+        row = connection.execute(text('SELECT endpoint, model, revision, reasoning_effort FROM connections WHERE kind=\'model\'')).one()
+        assert tuple(row) == ('https://example.com/v1', 'synthetic-model', 3, 'default')
     database.close()
 
 

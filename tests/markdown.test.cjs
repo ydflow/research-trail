@@ -1,0 +1,21 @@
+const {test} = require('node:test');
+const assert = require('node:assert/strict');
+const {resolve, dirname} = require('node:path');
+const Module = require('node:module');
+const {buildSync} = require('esbuild');
+const entry = resolve(__dirname, '../apps/desktop/src/renderer/MarkdownContent.tsx');
+const compiled = buildSync({entryPoints:[entry], bundle:true, write:false, platform:'node', format:'cjs', jsx:'automatic', external:['react','react-dom','react/jsx-runtime']});
+const mod = new Module(entry); mod.paths = Module._nodeModulePaths(dirname(entry));
+mod._compile(compiled.outputFiles[0].text, entry+'.cjs');
+const desktopRequire = Module.createRequire(resolve(__dirname,'../apps/desktop/package.json'));
+const React = desktopRequire('react');
+const {renderToStaticMarkup} = desktopRequire('react-dom/server');
+const {MarkdownContent, sourceUrl} = mod.exports;
+test('conversation Markdown renders structure but cannot execute HTML or fetch model images',()=>{
+  const text = '# Heading\n\n| Name | Value |\n| --- | --- |\n| price | 42 |\n\n```python\nprint(42)\n```\n\n<script>window.injected=1</script>\n\n![private](https://evil.example/collect)\n\n[unsafe](javascript:alert(1))';
+  const html = renderToStaticMarkup(React.createElement(MarkdownContent,{content:text}));
+  assert.match(html, /<h1>Heading<\/h1>/); assert.match(html, /<table>/); assert.match(html, /<pre><code/);
+  assert.doesNotMatch(html, /<script|<img|javascript:/i);
+  for(const value of ['javascript:alert(1)','file:///C:/secret','https://user:pass@example.com','/relative']) assert.equal(sourceUrl(value),'');
+  assert.equal(sourceUrl('https://example.com/source'),'https://example.com/source');
+});

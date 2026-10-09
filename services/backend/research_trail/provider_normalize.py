@@ -20,7 +20,7 @@ def sdk_fields():
     result['NewsItem'] = ['id','title','description','url','published_at','comments_count','likes_count','shares_count']
     return result
 
-def public_json(value, secrets=(), depth=0):
+def public_json(value, secrets=(), depth=0, *, sdk_local_datetime=False):
     if depth > 16: raise ProviderFault('INVALID_RESPONSE')
     if value is None or isinstance(value, (bool, int)): return value
     if isinstance(value, (float, Decimal)):
@@ -29,7 +29,10 @@ def public_json(value, secrets=(), depth=0):
         return number
     if isinstance(value, (datetime, date)):
         if isinstance(value, datetime):
-            if value.tzinfo is None: raise ProviderFault('INVALID_RESPONSE')
+            # Longbridge 5.2.0 python/src/time.rs uses datetime.fromtimestamp(...,
+            # None): a naive *local* time, not naive UTC. Only the SDK boundary
+            # enables this conversion; other unzoned provider data stays invalid.
+            if value.tzinfo is None and not sdk_local_datetime: raise ProviderFault('INVALID_RESPONSE')
             value = value.astimezone(timezone.utc)
         return value.isoformat()
     if isinstance(value, str):
@@ -39,15 +42,15 @@ def public_json(value, secrets=(), depth=0):
         return value
     if isinstance(value, (list, tuple)):
         if len(value) > 1000: raise ProviderFault('RESPONSE_LIMIT')
-        return [public_json(v, secrets, depth+1) for v in value]
+        return [public_json(v, secrets, depth+1, sdk_local_datetime=sdk_local_datetime) for v in value]
     if isinstance(value, dict):
         if len(value) > 200: raise ProviderFault('RESPONSE_LIMIT')
-        return {public_json(k, secrets, depth+1): public_json(v, secrets, depth+1) for k,v in value.items()
+        return {public_json(k, secrets, depth+1, sdk_local_datetime=sdk_local_datetime): public_json(v, secrets, depth+1, sdk_local_datetime=sdk_local_datetime) for k,v in value.items()
                 if isinstance(k,str) and not any(s in k.lower() for s in ('key','token','secret','password','authorization','credential'))}
     names = sdk_fields().get(type(value).__name__)
     if names:
-        return public_json({name: getattr(value,name) for name in names}, secrets, depth+1)
-    if names == []: return public_json(str(value), secrets, depth+1)  # SDK enum value
+        return public_json({name: getattr(value,name) for name in names}, secrets, depth+1, sdk_local_datetime=sdk_local_datetime)
+    if names == []: return public_json(str(value), secrets, depth+1, sdk_local_datetime=sdk_local_datetime)  # SDK enum value
     raise ProviderFault('INVALID_RESPONSE')
 
 def number(value):

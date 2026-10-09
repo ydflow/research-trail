@@ -2335,6 +2335,12 @@ export interface components {
              */
             model: string;
             /**
+             * Reasoning Effort
+             * @default default
+             * @enum {string}
+             */
+            reasoning_effort: "default" | "none" | "low" | "medium" | "high";
+            /**
              * Request Timeout Seconds
              * @default 30
              */
@@ -2393,6 +2399,12 @@ export interface components {
             model: string;
             /** Reason */
             reason: string;
+            /**
+             * Reasoning Effort
+             * @default default
+             * @enum {string}
+             */
+            reasoning_effort: "default" | "none" | "low" | "medium" | "high";
             /**
              * Request Timeout Seconds
              * @default 30

@@ -26,6 +26,7 @@ class ModelConfiguration:
     model: str
     api_key: str = field(repr=False)
     request_timeout: float = 30
+    reasoning_effort: str = 'default'
 
 
 class OpenAIModelProvider:
@@ -46,6 +47,15 @@ class OpenAIModelProvider:
             self._snapshot = self.configuration() if callable(self.configuration) else self.configuration
         config = self._snapshot
         payload = {"model": config.model, "messages": messages, "stream": False, "max_tokens": max_output_tokens}
+        if config.reasoning_effort != 'default':
+            from urllib.parse import urlsplit
+            if urlsplit(config.base_url).hostname == 'api.deepseek.com':
+                if config.reasoning_effort not in ('none', 'high'):
+                    raise ModelError('MODEL_REASONING_UNSUPPORTED', '此服务仅映射关闭思考或高思考强度；请选择默认、关闭或高。')
+                payload['thinking'] = {'type': 'disabled' if config.reasoning_effort == 'none' else 'enabled'}
+                if config.reasoning_effort == 'high': payload['reasoning_effort'] = 'high'
+            else:
+                payload['reasoning_effort'] = config.reasoning_effort
         if json_output: payload['response_format']={'type':'json_object'}
         if tools:
             payload.update(tools=tools, tool_choice="auto", parallel_tool_calls=False)

@@ -517,14 +517,18 @@ app/bridge/RecoveryPanel；实际中断用例见test_recovery.py、tests/desktop
 
 ## C17：开发窗口与Windows安装包为什么要分别验收？
 
-状态：大纲。关联步骤24。
+状态：第24步已展开，代码完成/待验收；本机安装证据与干净Windows分开。
 
 - 主链：源码构建 → 打包资源与运行时 → 安装/启动 → 迁移/退出/卸载验收。
 - 必读1：`apps/electron/package.json` / `build`配置：参考mac目标、资源位置、主进程产物。
 - 必读2：`scripts/release-package.mjs`、`scripts/release-check.mjs`：实际发布脚本与门槛，核对平台假设。
 - 必读3：`docs/release-gates.zh-CN.md`：与脚本交叉检查，不把文档声称当运行证据。
 - 验证选读：`apps/electron/e2e/package-smoke.mjs`。参考mac硬编码不能直接作为Windows验收。
-- 暂缓：研迹PyInstaller/Electron Builder路径、无Python干净机和升级行为留到步骤24，尚无对应源码。
+- 研迹主链：`package-windows.cmd` → `scripts/package-backend.py` 的 Analysis/PYZ/EXE/COLLECT → `scripts/package-windows.mjs` 的 build/extraResources/NSIS → 安装版 main 的 app.isPackaged → packagedLaunch → BackendManager → frozen_entry → runtime_paths/Database.migrate/SkillCatalog → 本机令牌API及页面。
+- SDK冻结子进程：sys.executable已是backend.exe，`provider_process.worker_command`必须选择`--provider-worker`，不能再传`-m`。凭证仅stdin，worker受OwnedJob约束。
+- 评测初始化按十份源码计算implementation_hash，所以这些字节也是必要资源；Alembic/时区/原生SDK/公开CA同样不能漏。包内清单不允许个人DB/日志/.env；公开certifi根证书路径不是私钥。
+- `tests/windows-package.cjs`从实际NSIS安装开始：无开发工具PATH→15导航→固定研究/报告/评测→关闭/重启→原创0017升级→卸载保留SHA→重装历史。使用独立Temp数据，不碰个人库；截图/日志与最终SHA一一对应。`--research-trail-data-dir`为显式自定义目录，默认APPDATA/ResearchTrail。
+- 阅读[本步验收](docs/ACCEPTANCE-step24.md)与[功能逐项核对](docs/FEATURE-AUDIT-step24.md)。复述：为什么PyInstaller成功、开发机安装成功、干净OS成功、真实服务成功是四条不同证据？无干净环境时不称正式v1.0.0就绪。
 
 ## 学习记录维护
 

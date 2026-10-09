@@ -12,6 +12,7 @@ import threading
 from sqlalchemy import select
 from .models import SkillPreference
 from .skill_contracts import SkillView, SkillResource
+from .runtime_paths import bundled_skills
 
 ID = re.compile(r'[a-z][a-z0-9-]{0,79}')
 CAP = re.compile(r'(?=.{1,80}$)[a-z]+\.[a-zA-Z]+')
@@ -122,7 +123,7 @@ def parse_skill(markdown):
 class SkillCatalog:
     def __init__(self, database, registry, root=None):
         self.database, self.registry = database, registry
-        self.root = Path(root) if root is not None else Path(__file__).resolve().parents[3] / 'skills'
+        self.root = Path(root) if root is not None else bundled_skills()
         self.lock = threading.RLock()
 
     def _entries(self):

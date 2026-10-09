@@ -69,8 +69,11 @@ def run_process(argv, *, payload=None, timeout=15, stop=None, env=None):
         process.stdout.close()
         if process.stdin and not process.stdin.closed: process.stdin.close()
 
+def worker_command():
+    return [sys.executable, '--provider-worker'] if getattr(sys, 'frozen', False) else [sys.executable, '-m', 'research_trail.provider_worker']
+
 def sdk_process(snapshot,query,stop=None):
-    result=run_process([sys.executable,'-m','research_trail.provider_worker'],timeout=snapshot.configuration.timeout_seconds,
+    result=run_process(worker_command(),timeout=snapshot.configuration.timeout_seconds,
         stop=stop,payload={'provider':snapshot.provider,'configuration':snapshot.configuration.model_dump(),
                           'credentials':snapshot.credentials,'query':query.model_dump(mode='json')})
     if not isinstance(result,dict) or not isinstance(result.get('ok'),bool): raise ProviderFault('INVALID_RESPONSE')

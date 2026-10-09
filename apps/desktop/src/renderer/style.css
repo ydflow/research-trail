@@ -22,10 +22,57 @@ button:hover:not(:disabled) { background: #105347; }
 button:disabled { opacity: .65; cursor: wait; }
 button:focus-visible { outline: 3px solid #89bdaf; outline-offset: 4px; }
 footer { color: var(--muted); font-size: 15px; margin-top: auto; padding: 20px 60px 44px; }
+.workbench { display: grid; grid-template-columns: 170px minmax(0, 1fr) 330px; gap: 20px; padding: 24px; align-items: start; }
+.workbench-content { width: auto; min-width: 0; margin: 0; }
+.workbench-navigation { min-width: 0; }
+.workbench-navigation .connection { padding-bottom: 12px; }
+.workbench-navigation h1 { font-size: 18px; }
+.workbench-navigation .health-row { font-size: 12px; gap: 8px; padding-bottom: 10px; }
+.workbench-navigation .health-name { gap: 6px; }
+.workbench-navigation .detail, .workbench-navigation .timestamp { font-size: 11px; line-height: 1.5; margin-bottom: 8px; }
+.workbench-navigation .view-tabs { display: grid; gap: 6px; }
+.workbench-navigation .view-tabs button { min-width: 0; width: 100%; text-align: left; padding: 8px; font-size: 13px; }
+.workbench-copilot { min-width: 0; border-left: 1px solid var(--border); padding-left: 16px; }
+.compact-session .session-layout { grid-template-columns: minmax(0, 1fr); }
+.compact-session .session-form, .compact-session .run-form { display: grid; grid-template-columns: minmax(0, 1fr); }
+.compact-session .session-list { display: flex; overflow-x: auto; gap: 6px; }
+.compact-session .session-list button { flex: 0 0 140px; }
+.compact-session h2 { font-size: 18px; }
+.compact-session button { min-width: 0; padding: 7px 10px; font-size: 12px; }
+.compact-session .market-heading { flex-wrap: wrap; }
+.compact-session input, .compact-session select, .compact-session textarea { min-width: 0; width: 100%; }
+.compact-session .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.compact-session .price-line strong { font-size: 28px; }
+.asset-strip { min-width: 0; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
+.asset-strip nav { display: flex; gap: 6px; overflow-x: auto; }
+.asset-strip button { flex: 0 0 auto; min-width: 100px; padding: 6px 10px; background: white; color: var(--accent); font-size: 12px; }
+.asset-strip button[aria-pressed="true"] { background: var(--accent); color: white; }
+.asset-strip small { display: block; margin-top: 3px; }
+.asset-strip p { color: var(--muted); font-size: 12px; }
+.message .message-markdown { display: block; color: inherit; overflow-wrap: anywhere; font-size: 13px; }
+.message-markdown pre { overflow-x: auto; padding: 12px; background: #edf3ef; }
+.message-markdown table { display: block; overflow-x: auto; max-width: 100%; border-collapse: collapse; }
+.message-markdown td, .message-markdown th { padding: 6px; border: 1px solid var(--border); }
+.message-markdown h1 { font-size: 20px; }
+.message-markdown h2 { font-size: 18px; }
+.message-markdown h3 { font-size: 16px; }
+.message-markdown .markdown-source { min-width: 0; min-height: 0; padding: 0; border: 0; background: none; color: var(--accent); text-decoration: underline; font: inherit; }
+@media (max-width: 1000px) {
+  .workbench { grid-template-columns: 150px minmax(0, 1fr); gap: 16px; padding: 16px; }
+  .workbench-copilot { grid-column: 2; border-left: 0; border-top: 1px solid var(--border); padding: 16px 0 0; }
+}
+@media (max-width: 700px) {
+  .workbench { display: block; padding: 12px; }
+  .workbench-navigation .view-tabs { display: flex; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 8px; }
+  .workbench-navigation .view-tabs button { flex: 0 0 auto; width: auto; }
+  .workbench-navigation .connection { margin-bottom: 12px; }
+  .workbench-copilot { margin-top: 20px; }
+}
 .connection { padding-bottom: 28px; border-bottom: 1px solid var(--border); }
 .settings-panel { padding-top: 24px; }
 .settings-tabs { flex-wrap: wrap; }
 .settings-grid { display: grid; gap: 18px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.settings-grid.model-settings-grid { grid-template-columns: minmax(0, 1fr); }
 .settings-card { min-width: 0; border: 1px solid var(--border); border-radius: 10px; padding: 22px; }
 .settings-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .settings-status { font-size: 13px; padding: 5px 8px; border-radius: 5px; background: #edf2ef; white-space: nowrap; }

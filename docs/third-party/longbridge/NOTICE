@@ -14,3 +14,24 @@ this step. Future packaging must check the exact distributed dependency files.
 These dependency notices do not license Folio or the ResearchTrail repository.
 The existing Folio reuse record and third-party notices remain applicable to
 their respective files. No upstream author or source history is rewritten.
+
+Step 24 follow-up source verification (2026-10-09):
+The official v5.2.0 tag resolves to
+b2f749a3c68cc4f05642b37fc790fb711d2dfb13. At that exact revision,
+python/Cargo.toml declares MIT OR Apache-2.0 and the two retained license
+texts match byte for byte:
+LICENSE-MIT SHA256 30fefc3a7d6a0041541858293bcbea2dde4caa4c0a5802f996a7f7e8c0085652
+LICENSE-APACHE SHA256 769f80b5bcb42ed0af4e4d2fd74e1ac9bf843cb80c5a29219d1ef3544428a6bb
+Source: https://github.com/longbridge/openapi/tree/b2f749a3c68cc4f05642b37fc790fb711d2dfb13
+
+PyPI's public 5.2.0 metadata identifies the CPython 3.12 Windows x64 wheel
+longbridge-5.2.0-cp312-cp312-win_amd64.whl with SHA256
+0912d400b4c3941aee4cf97dc754273f6b62420de97ca6c0b2e121dcd648d609.
+Its public provenance endpoint supplies a publish statement for that digest
+and publisher longbridge/openapi, workflow release.yml. This follow-up read
+the statement; it did not cryptographically verify the attestation or
+establish the native binary's complete transitive dependency/license closure.
+Metadata: https://pypi.org/pypi/longbridge/5.2.0/json
+Provenance: https://pypi.org/integrity/longbridge/5.2.0/longbridge-5.2.0-cp312-cp312-win_amd64.whl/provenance
+Exact source license correspondence is now checked; full public binary
+distribution acceptance remains pending. No wheel or SDK source is imported.

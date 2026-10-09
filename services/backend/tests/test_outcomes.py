@@ -272,7 +272,7 @@ def test_0017_upgrade_keeps_actual_evaluation_and_session_records(tmp_path):
         assert Store(db).sessions()[0].id==session.id
         with db.engine.connect() as con:
             assert con.execute(text('SELECT * FROM evaluation_experiments')).all()==before
-            assert con.scalar(text('SELECT version_num FROM alembic_version'))=='0018_outcomes'
+            assert con.scalar(text('SELECT version_num FROM alembic_version'))=='0019_model_reasoning'
             assert not con.exec_driver_sql('PRAGMA foreign_key_check').all()
     finally:db.close()
 

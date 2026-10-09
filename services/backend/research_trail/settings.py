@@ -45,6 +45,7 @@ class ConnectionInput(StrictModel):
     max_tool_rounds: int = Field(default=8, ge=1, le=32, strict=True)
     run_timeout_seconds: int = Field(default=120, ge=1, le=600, strict=True)
     request_timeout_seconds: int = Field(default=30, ge=1, le=120, strict=True)
+    reasoning_effort: Literal['default', 'none', 'low', 'medium', 'high'] = 'default'
 
     @field_validator("endpoint")
     @classmethod
@@ -146,7 +147,8 @@ class SettingsService:
                               requires_credential=row.requires_credential, fake_result=row.fake_result,
                               credential_present=present, status=status, reason=reason, detail=REASONS[reason],
                               revision=row.revision, checked_at=row.checked_at, max_tool_rounds=row.max_tool_rounds,
-                              run_timeout_seconds=row.run_timeout_seconds, request_timeout_seconds=row.request_timeout_seconds)
+                              run_timeout_seconds=row.run_timeout_seconds, request_timeout_seconds=row.request_timeout_seconds,
+                              reasoning_effort=row.reasoning_effort)
 
     def connections(self):
         with self.lock, self.database.sessions() as db:
@@ -204,14 +206,14 @@ class SettingsService:
                 raise ModelError("MODEL_VAULT_UNAVAILABLE", "系统凭证存储不可用。") from None
             if not secret:
                 raise ModelError("MODEL_CREDENTIAL_MISSING", "模型API Key未配置，请仅在本机设置页保存。")
-            return ModelConfiguration(row.endpoint, row.model, secret, row.request_timeout_seconds)
+            return ModelConfiguration(row.endpoint, row.model, secret, row.request_timeout_seconds, row.reasoning_effort)
 
     def model_identity(self):
         """Opaque recovery identity, including credential reference but never key bytes."""
         import json
         with self.lock,self.database.sessions() as db:
             row=db.get(ConnectionRecord,'model')
-            fields=('enabled','endpoint','model','requires_credential','credential_ref','revision','request_timeout_seconds')
+            fields=('enabled','endpoint','model','requires_credential','credential_ref','revision','request_timeout_seconds','reasoning_effort')
             value={k:getattr(row,k) for k in fields} if row else None
             return sha256(json.dumps(value,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 

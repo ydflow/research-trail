@@ -6,11 +6,11 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import URL, create_engine, event
 from sqlalchemy.orm import sessionmaker
+from .runtime_paths import backend_resources, database_path
 
 
 def default_database_path() -> Path:
-    override = os.environ.get("RESEARCH_TRAIL_DB_PATH")
-    return Path(override).resolve() if override else Path(__file__).resolve().parents[3] / "runtime" / "research-trail.sqlite3"
+    return database_path()
 
 
 class Database:
@@ -31,7 +31,7 @@ class Database:
         self.sessions = sessionmaker(self.engine, expire_on_commit=False)
 
     def migrate(self):
-        cfg = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
+        cfg = Config(str(backend_resources() / "alembic.ini"))
         # The write lock also serializes version-table creation across two app instances.
         with self.engine.connect() as connection:
             self.migration_transaction(connection, lambda: command.upgrade(cfg, "head"), cfg)

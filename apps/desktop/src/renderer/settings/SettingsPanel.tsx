@@ -16,7 +16,7 @@ function ConnectionCard({ connection, available, onChange }: { connection: Conne
   const [form, setForm] = useState<ConnectionInput>({ enabled: connection.enabled, endpoint: connection.endpoint,
     model: connection.model, requires_credential: connection.requires_credential, fake_result: connection.fake_result,
     max_tool_rounds: connection.max_tool_rounds, run_timeout_seconds: connection.run_timeout_seconds,
-    request_timeout_seconds: connection.request_timeout_seconds });
+    request_timeout_seconds: connection.request_timeout_seconds, reasoning_effort: connection.reasoning_effort });
   const [secret, setSecret] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -35,7 +35,7 @@ function ConnectionCard({ connection, available, onChange }: { connection: Conne
   const dirty = form.enabled !== connection.enabled || form.endpoint !== connection.endpoint || form.model !== connection.model ||
     form.requires_credential !== connection.requires_credential || form.fake_result !== connection.fake_result ||
     form.max_tool_rounds !== connection.max_tool_rounds || form.run_timeout_seconds !== connection.run_timeout_seconds ||
-    form.request_timeout_seconds !== connection.request_timeout_seconds;
+    form.request_timeout_seconds !== connection.request_timeout_seconds || form.reasoning_effort !== connection.reasoning_effort;
   return <section className="settings-card" aria-label={`${titles[connection.kind]}连接`} data-testid={`connection-${connection.kind}`}>
     <div className="settings-card-heading"><h3>{titles[connection.kind]}</h3><span className={`settings-status ${connection.status}`} data-testid="connection-status">{statuses[connection.status]}</span></div>
     {connection.kind === 'skills' && <p>此处保留历史配置的假连接测试，不表示技能就绪。实际目录、开关和依赖状态请在“能力与技能”查看。</p>}
@@ -49,6 +49,10 @@ function ConnectionCard({ connection, available, onChange }: { connection: Conne
         <label className="settings-check"><input type="checkbox" checked={form.requires_credential} onChange={e => setForm({ ...form, requires_credential: e.target.checked })} />测试前要求已保存凭证</label>
       </> : null}
       {connection.kind === 'model' ? <>
+        <label>思考强度<select value={form.reasoning_effort} onChange={e => setForm({ ...form, reasoning_effort: e.target.value as ConnectionInput['reasoning_effort'] })}>
+          <option value="default">服务商默认（不附加参数）</option><option value="none">关闭思考</option>
+          <option value="low">低</option><option value="medium">中</option><option value="high">高</option>
+        </select></label><p className="detail">仅适用于支持相应参数的模型；默认不附加思考参数。DeepSeek映射关闭/高，低/中会明确拒绝。开启思考的多轮工具协议仍需单独真实验证，不把回复中的推理元数据当作公开答案。</p>
         <label>工具轮数及累计调用上限<input type="number" min={1} max={32} value={form.max_tool_rounds} onChange={e => setForm({ ...form, max_tool_rounds: Number(e.target.value) })} /></label>
         <label>整体超时（秒）<input type="number" min={1} max={600} value={form.run_timeout_seconds} onChange={e => setForm({ ...form, run_timeout_seconds: Number(e.target.value) })} /></label>
         <label>单次模型请求超时（秒）<input type="number" min={1} max={120} value={form.request_timeout_seconds} onChange={e => setForm({ ...form, request_timeout_seconds: Number(e.target.value) })} /></label>
@@ -119,12 +123,13 @@ export function SettingsPanel({ available }: { available: boolean }) {
     <div className="settings-actions"><button disabled={!available || busy || !bridge} onClick={() => void work(async current => {
       const values = await bridge!.connections(); if (current()) { setConnections(values); setReport(undefined); setNotice('已重新读取各连接状态。'); }
     })}>重新读取状态</button></div>
-    <nav className="view-tabs settings-tabs" aria-label="设置分区">{tabs.map(([id, label]) => <button key={id} aria-pressed={tab === id} onClick={() => { setTab(id); setError(''); setNotice(''); }}>{label}</button>)}</nav>
+    <nav className="view-tabs settings-tabs" aria-label="设置分区">{tabs.map(([id, label]) => <button key={id} aria-pressed={tab === id} onClick={() => { setTab(id); setNotice(''); }}>{label}</button>)}</nav>
     {!available ? <p role="status">后端未连接，设置操作暂不可用。</p> : null}
     {error ? <p role="alert" className="settings-error">{error}</p> : null}
     {notice ? <p role="status">{notice}</p> : null}
     {busy ? <p role="status">正在处理…</p> : null}
-    {tab === 'model' || tab === 'connections' ? <div className="settings-grid">{connections.filter(row => tab === 'model' ? row.kind === 'model' : row.kind !== 'model').map(row =>
+    {available && !busy && (tab === 'model' || tab === 'connections') && !connections.length ? <p role="alert">设置尚未读取。请点击“重新读取状态”；若仍失败，请退出并重新打开研迹以加载当前后端及数据库迁移。</p> : null}
+    {tab === 'model' || tab === 'connections' ? <div className={`settings-grid${tab === 'model' ? ' model-settings-grid' : ''}`}>{connections.filter(row => tab === 'model' ? row.kind === 'model' : row.kind !== 'model').map(row =>
       <ConnectionCard key={`${row.kind}:${row.revision}:${available}`} connection={row} available={available && !busy} onChange={change} />)}</div> : null}
     {tab === 'profile' ? <section className="settings-card" aria-label="个人资料">
       <h3>本机研究资料</h3><p className="detail">本步保存显示名称和研究偏好，不创建云端账户或交易账户。</p>
