@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import type { SessionDTO, SessionSnapshot } from '../conversation-types';
 import { applySessionEvent, eventDetail, messageView, runStatus, toolViews } from './session-adapter';
 import { ToolResultCards } from './ToolResultCards';
 import { ToolActivity } from './ToolActivity';
 
-export function SessionPanel({ available }: { available: boolean }) {
+const MarkdownContent = lazy(() => import('./MarkdownContent').then(m => ({ default: m.MarkdownContent })));
+
+export function SessionPanel({ available, compact = false }: { available: boolean; compact?: boolean }) {
   const [sessions, setSessions] = useState<SessionDTO[]>([]);
   const [initialSelection] = useState(() => sessionStorage.getItem('research-trail.session') || '');
   const [selected, setSelected] = useState('');
@@ -81,7 +83,7 @@ export function SessionPanel({ available }: { available: boolean }) {
     setInput(''); setRunId(record.id); setSessions(await bridge.listSessions()); setRevision((value) => value + 1);
   });
 
-  return <section className="session-panel" aria-label="持久化会话">
+  return <section className={`session-panel${compact ? ' compact-session' : ''}`} aria-label="持久化会话">
     <div className="market-heading"><h2>研究会话</h2><span className="mock-badge">{modelKind === 'fake_agent' ? '规则演示／假模型' : 'OpenAI兼容／真实模型'}</span></div>
     <p className="market-note">模型共用Python只读工具，行情仍为模拟数据。先读数据库快照，再订阅事件；查看历史不会重新执行。</p>
     <p className="stream-state" role="status" data-testid="stream-state">事件连接：{stream}</p>
@@ -120,7 +122,9 @@ export function SessionPanel({ available }: { available: boolean }) {
             {messages.length === 0 && <p className="market-note">暂无消息。试试“查询AAPL.US行情”或“查看NVDA.US的K线”。</p>}
             {messages.map(messageView).map((message) => <article key={message.id} className={`message ${message.role}`} data-message-id={message.id}>
               <div>{message.label}<time>{new Date(message.timestamp).toLocaleString('zh-CN', { hour12: false })}</time></div>
-              <p>{message.content || '等待运行结果…'}</p>
+              {message.role === 'assistant' && message.content ? <Suspense fallback={<p>{message.content}</p>}>
+                <MarkdownContent content={message.content} />
+              </Suspense> : <p>{message.content || '等待运行结果…'}</p>}
             </article>)}
           </div>
           <form className="run-form" onSubmit={(e) => { e.preventDefault(); execute(true); }}>

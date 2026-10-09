@@ -6,8 +6,75 @@ const { execFileSync } = require('node:child_process');
 const { resolve } = require('node:path');
 const { mkdirSync, mkdtempSync, readFileSync } = require('node:fs');
 const { tmpdir } = require('node:os');
+
+test('Step24 persistent assistant asset tabs and saved model controls work across views', {timeout:90000}, async () => {
+  const instance = await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  const errors = [];
+  try {
+    const page = instance.page;
+    page.on('pageerror', e => errors.push(e.message));
+    page.on('console', message => { if (['error','warning'].includes(message.type())) errors.push(message.text()); });
+    await waitForBackend(page);
+    await page.setViewportSize({width:1440,height:900});
+    assert.equal(await page.title(), '研迹 · ResearchTrail');
+    assert.match(page.url(), /dist\/renderer\/index\.html$/);
+    const assistant = page.getByLabel('常驻研究助手',{exact:true});
+    await assistant.getByLabel('会话标题',{exact:true}).fill('跨页面助手');
+    await assistant.getByRole('button',{name:'创建会话',exact:true}).click();
+    await expect(assistant.getByTestId('current-session')).toHaveText('跨页面助手');
+    await assistant.getByLabel('测试输入',{exact:true}).fill('查询AAPL.US行情');
+    await assistant.getByRole('button',{name:'运行规则演示',exact:true}).click();
+    await expect(assistant.getByTestId('run-state')).toContainText('已完成');
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1),false);
+    const original = await page.evaluate(async () => { const b=window.researchTrail; const sessions=await b.listSessions(); return b.sessionSnapshot(sessions[0].id); });
+    await page.evaluate(() => window.researchTrail.addWatch('AAPL.US'));
+    await page.getByRole('button',{name:'设置与诊断',exact:true}).click();
+    await expect(assistant.getByTestId('current-session')).toHaveText('跨页面助手');
+    const model = page.getByTestId('connection-model');
+    await model.getByLabel('思考强度').selectOption('none');
+    await model.getByRole('button',{name:'保存配置',exact:true}).click();
+    await expect(model.getByLabel('思考强度')).toHaveValue('none');
+    await expect(page.getByLabel('常驻资产页签',{exact:true}).getByRole('button',{name:/AAPL.US/})).toBeVisible();
+    await page.evaluate(()=>window.scrollTo(0,0));
+    await screenshot(page,'step24-workbench-wide.png');
+    await page.getByLabel('常驻资产页签',{exact:true}).getByRole('button',{name:/AAPL.US/}).click();
+    await expect(page.getByLabel('工作区',{exact:true}).getByRole('button',{name:'证券工作台',exact:true})).toHaveAttribute('aria-pressed','true');
+    await expect(assistant.getByTestId('current-session')).toHaveText('跨页面助手');
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.sessionSnapshot(id),original.session.id), original);
+    await page.setViewportSize({width:620,height:760});
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1),false);
+    await screenshot(page,'step24-workbench-compact.png');
+    assert.deepEqual(errors,[]);
+  } finally { await instance.app.close(); }
+});
 const { createRequire } = require('node:module');
 const { pathToFileURL } = require('node:url');
+
+test('Step24 settings read failure stays visible across tabs and can recover', {timeout:60000}, async () => {
+  const instance = await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  const python = resolve(root, 'services/backend/.venv/Scripts/python.exe');
+  const rename = (direction) => execFileSync(python, ['-c', 'import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); c.execute("ALTER TABLE "+sys.argv[2]+" RENAME TO "+sys.argv[3]); c.commit(); c.close()',instance.databasePath,...direction],{env,cwd:root,windowsHide:true});
+  let renamed = false;
+  try {
+    const page = instance.page;
+    await waitForBackend(page);
+    rename(['connections','connections_test_unavailable']); renamed = true;
+    await page.getByRole('button',{name:'设置与诊断',exact:true}).click();
+    const panel = page.getByLabel('设置与诊断',{exact:true});
+    await expect(panel.getByRole('alert').first()).toContainText('设置读取失败');
+    await page.getByRole('button',{name:'连接设置',exact:true}).click();
+    await expect(panel.getByRole('alert').first()).toContainText('设置读取失败');
+    await expect(panel).toContainText('设置尚未读取');
+    rename(['connections_test_unavailable','connections']); renamed = false;
+    await panel.getByRole('button',{name:'重新读取状态',exact:true}).click();
+    await page.getByRole('button',{name:'模型设置',exact:true}).click();
+    await expect(page.getByTestId('connection-model')).toBeVisible();
+    await expect(panel.getByRole('alert')).toHaveCount(0);
+  } finally {
+    if (renamed) rename(['connections_test_unavailable','connections']);
+    await instance.app.close();
+  }
+});
 
 test('Step23 report snapshot pending window policy rollback and restart in real Electron', {timeout:90000},async()=>{
   let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});const databasePath=instance.databasePath;const errors=[];let original,record;
@@ -1474,7 +1541,7 @@ test('OpenAI compatible UI: simulated HTTP tool loop, limits, cancel and persist
       const calls = mode === 'limit' || !tool;
       const message = calls ? { role: 'assistant', content: null, tool_calls: [{ id: `call_${requests.length}`, type: 'function',
         function: { name: 'market_quote', arguments: '{"symbol":"AAPL.US"}' } }] } :
-        { role: 'assistant', content: '模型协议模拟响应：AAPL.US 189.43 USD，模拟数据，非实时行情。' };
+        { role: 'assistant', content: '# 模型协议模拟响应\n\nAAPL.US 189.43 USD，模拟数据，非实时行情。\n\n| 标的 | 价格 |\n| --- | --- |\n| AAPL.US | 189.43 USD |\n\n```python\nprint("fixture only")\n```\n\n<script>window.markdownInjected=true</script>\n\n![不会请求](https://example.com/private-image)' };
       res.writeHead(200, { 'content-type': 'application/json' });
       res.end(JSON.stringify({ choices: [{ finish_reason: calls ? 'tool_calls' : 'stop', message }] }));
     } catch (error) { serverErrors.push(error.message); res.writeHead(500); res.end('Fixture protocol failed'); }
@@ -1522,6 +1589,11 @@ test('OpenAI compatible UI: simulated HTTP tool loop, limits, cancel and persist
     await execute();
     await expect(instance.page.getByTestId('run-state')).toContainText('OpenAI兼容／真实模型 · 已完成');
     await expect(instance.page.getByTestId('message-history')).toContainText('模型协议模拟响应');
+    await expect(instance.page.getByTestId('message-history').getByRole('heading',{name:'模型协议模拟响应',exact:true})).toBeVisible();
+    await expect(instance.page.getByTestId('message-history').locator('table')).toHaveCount(1);
+    await expect(instance.page.getByTestId('message-history').locator('pre code')).toContainText('fixture only');
+    await expect(instance.page.getByTestId('message-history').locator('script,img')).toHaveCount(0);
+    assert.equal(await instance.page.evaluate(()=>window.markdownInjected),undefined);
     await expect(instance.page.getByTestId('tool-result')).toContainText('189.43');
     assert.equal(requests.length, 2);
     await instance.page.getByTestId('run-state').scrollIntoViewIfNeeded();
@@ -1630,7 +1702,7 @@ test('settings: independent fake health, native credentials, profile, redacted e
     await instance.page.getByLabel('显示名称').fill('第8步研究者');
     await instance.page.getByLabel('研究偏好').selectOption('cautious');
     await instance.page.getByRole('button', { name: '保存资料', exact: true }).click();
-    await expect(instance.page.getByRole('status')).toContainText('个人资料已保存');
+    await expect(instance.page.getByLabel('设置与诊断',{exact:true}).getByRole('status')).toContainText('个人资料已保存');
     await instance.page.getByRole('button', { name: '诊断', exact: true }).click();
     await instance.page.getByRole('button', { name: '读取诊断', exact: true }).click();
     await expect(instance.page.getByTestId('diagnostics-json')).toContainText('DEMO_FAILED');
@@ -1641,7 +1713,7 @@ test('settings: independent fake health, native credentials, profile, redacted e
       dialog.showSaveDialog = async () => ({ canceled: false, filePath: path });
     }, reportPath);
     await instance.page.getByRole('button', { name: '导出脱敏诊断', exact: true }).click();
-    await expect(instance.page.getByRole('status')).toContainText('脱敏诊断已保存');
+    await expect(instance.page.getByLabel('设置与诊断',{exact:true}).getByRole('status')).toContainText('脱敏诊断已保存');
     const file = readFileSync(reportPath, 'utf8');
     assert.equal(JSON.parse(file).real_requests_sent, false);
     for (const value of [sentinel, '203.0.113.1', '第8步研究者', databasePath]) assert.equal(file.includes(value), false);
