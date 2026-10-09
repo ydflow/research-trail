@@ -1,0 +1,148 @@
+{
+  "schema": 1,
+  "baseline_commit": "734ce01adab3b71c899e57a2ae80b182b3e2d117",
+  "captured_at": "2026-10-09T14:01:26.293Z",
+  "capture_source": [
+    {
+      "path": "apps/desktop/src/renderer/App.tsx",
+      "sha256": "7c011312ea11725341c8ce254badfe8b408160bf0d8ca8e08ffa985da56e9607"
+    },
+    {
+      "path": "apps/desktop/src/renderer/style.css",
+      "sha256": "a7f9ca6bb1cd83a1f3d13e49aef7c2ac11f6eb9f7c7ffa791df46cdb35a574a8"
+    },
+    {
+      "path": "apps/desktop/src/main/index.ts",
+      "sha256": "7c55850a28eaec15178181b6eebe275001f39dde57613f0ee1917d6a9ca1ab0d"
+    },
+    {
+      "path": "apps/desktop/index.html",
+      "sha256": "ae4f345e12c85a8bb1f8884314c894f9a328197f8cb607be2e94e4600c9c1ebf"
+    },
+    {
+      "path": "scripts/capture-public-gallery.cjs",
+      "sha256": "6496d66c559bbd935329a9a0b5dbdce95e6b4fe0a17758d2d8c86bbd3e451714"
+    }
+  ],
+  "source_mode": "current-source Electron build; authored fixtures; isolated temporary database",
+  "fixture_clock": "2024-01-16T21:00:00Z for Today/calendar only",
+  "external_service_calls": 0,
+  "private_user_data_read": false,
+  "assets": [
+    {
+      "path": "apps/desktop/public/brand/research-trail.png",
+      "bytes": 2039789,
+      "sha256": "526969074c795d7eb5172df0597162e894725242b7624ae5f79b3a342bbc7025",
+      "origin": "imagegen-original",
+      "review": "isolated public artwork, no private data",
+      "width": 1254,
+      "height": 1254,
+      "format_conversion": "unmodified generated PNG"
+    },
+    {
+      "path": "apps/desktop/assets/research-trail.ico",
+      "bytes": 129452,
+      "sha256": "28b3a48f518548ad97257b4c3f2aaacd0b5c990651ff1f7a2815115e42d6582b",
+      "origin": "imagegen-original",
+      "review": "isolated public artwork, no private data",
+      "frames": [
+        16,
+        24,
+        32,
+        48,
+        64,
+        128,
+        256
+      ],
+      "format_conversion": "Electron nativeImage; PNG encoded ICO frames"
+    },
+    {
+      "path": "docs/assets/features/workbench.png",
+      "bytes": 156245,
+      "sha256": "3a75f35dad406d2a1ae3625955af5b241ffb882e6486f248e5f03ffa82e8fd71",
+      "origin": "actual-electron-simulated",
+      "review": "isolated public artwork, no private data",
+      "width": 1600,
+      "height": 1000,
+      "feature": "证券 K 线与常驻研究助手",
+      "mode": "isolated authored simulation / offline"
+    },
+    {
+      "path": "docs/assets/features/portfolio-risk.png",
+      "bytes": 85432,
+      "sha256": "0d972699f3e11a1018a627d3ee05047b15536b286fd68da301b3211a905c803a",
+      "origin": "actual-electron-simulated",
+      "review": "isolated public artwork, no private data",
+      "width": 996,
+      "height": 960,
+      "feature": "组合集中度、历史风险和明确的缺失状态",
+      "mode": "isolated authored simulation / offline"
+    },
+    {
+      "path": "docs/assets/features/research-report.png",
+      "bytes": 95829,
+      "sha256": "77b0a8adfc00848797ae36e144fab4095d3989be4a48f9c033a43d08a286c942",
+      "origin": "actual-electron-simulated",
+      "review": "isolated public artwork, no private data",
+      "width": 996,
+      "height": 960,
+      "feature": "事实、分析、预测分层与证据引用",
+      "mode": "isolated authored simulation / offline"
+    },
+    {
+      "path": "docs/assets/features/today.png",
+      "bytes": 189796,
+      "sha256": "6a6e22816f0f7ceb4178ce836eefbd4f18372f424683f38edfabfe3b6535999d",
+      "origin": "actual-electron-simulated",
+      "review": "isolated public artwork, no private data",
+      "width": 1600,
+      "height": 1000,
+      "feature": "Today 有来源的每日简报与提醒",
+      "mode": "isolated authored simulation / offline"
+    },
+    {
+      "path": "docs/assets/features/calendar.png",
+      "bytes": 181551,
+      "sha256": "7569d0143a09fc13413fac1427362134071727bed507f209bc99185ad9d3a739",
+      "origin": "actual-electron-simulated",
+      "review": "isolated public artwork, no private data",
+      "width": 1600,
+      "height": 1000,
+      "feature": "财报、股息与宏观事件来源",
+      "mode": "isolated authored simulation / offline"
+    },
+    {
+      "path": "docs/assets/features/thesis-review.png",
+      "bytes": 56775,
+      "sha256": "537e38bb3eaeea97c90ff590a2b200dee8779b8315ea663d58dc5f8e6c6d369a",
+      "origin": "actual-electron-simulated",
+      "review": "isolated public artwork, no private data",
+      "width": 996,
+      "height": 912,
+      "feature": "投资论点、反证和复审版本",
+      "mode": "isolated authored simulation / offline"
+    },
+    {
+      "path": "docs/assets/features/opportunities.png",
+      "bytes": 46150,
+      "sha256": "00bd3bdb3dfa5c5ee3c529079380ee3ce38abb85606edb4579ce2bf0c9b0d758",
+      "origin": "actual-electron-simulated",
+      "review": "isolated public artwork, no private data",
+      "width": 996,
+      "height": 497,
+      "feature": "可解释的机会筛选与研究入口",
+      "mode": "isolated authored simulation / offline"
+    },
+    {
+      "path": "docs/assets/features/evaluation.png",
+      "bytes": 73453,
+      "sha256": "eb5f0fc542b55f5e9841f20d1eb08210ddb53c18af377641dd82eae00f754269",
+      "origin": "actual-electron-simulated",
+      "review": "isolated public artwork, no private data",
+      "width": 996,
+      "height": 960,
+      "feature": "错误案例的断言、工具轨迹与失败环节",
+      "mode": "isolated authored simulation / offline"
+    }
+  ]
+}
