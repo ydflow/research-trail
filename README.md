@@ -151,4 +151,4 @@ v1.0.0 的范围以[完整验收记录](docs/ACCEPTANCE-v1.0.0.md)和 Release �
 
 [功能逐项核对](docs/FEATURE-AUDIT-step24.md) · [证据账本](docs/EVIDENCE.md) · [配置指引](docs/CONFIGURATION.md) · [源码导读](tutorial.md) · [视觉资产](docs/BRAND.md)
 
-研迹的 Python 业务内核、持久化、桌面适配与上述工程验收在本仓库分阶段实现。产品功能参考固定 Folio 版本；复用技能与资源、原作者声明及依赖许可保留在[来源声明](docs/BUNDLE-NOTICE.md)和 `docs/SOURCES*.json`，不将参考项目的代码、案例或测试成绩计为本项目成果，也不把整个仓库统一标为 MIT。
+研迹的 Python 业务内核、持久化、桌面适配与上述工程验收在本仓库分阶段实现。声明及依赖许可保留在[来源声明](docs/BUNDLE-NOTICE.md)和 `docs/SOURCES*.json`不将参考项目的代码、案例或测试成绩计为本项目成果，也不把整个仓库统一标为 MIT。
