@@ -35,3 +35,18 @@ Metadata: https://pypi.org/pypi/longbridge/5.2.0/json
 Provenance: https://pypi.org/integrity/longbridge/5.2.0/longbridge-5.2.0-cp312-cp312-win_amd64.whl/provenance
 Exact source license correspondence is now checked; full public binary
 distribution acceptance remains pending. No wheel or SDK source is imported.
+
+Release acceptance follow-up (2026-10-09):
+The official Windows CPython 3.12 build job recorded the compiled crate versions:
+https://github.com/longbridge/openapi/actions/runs/36694316549/job/109855292957
+The native/manifest.json now retains all 263 external compiled crates plus
+9 local SDK crates, artifact digests and 471 license/notice texts, conservatively
+including build-only dependencies. This does not assert every crate is linked.
+MPL-2.0 source offers point to exact unmodified official crate archives.
+Two dual-licensed crates contain no original LICENSE file; Apache-2.0 is elected
+from their declarations, supplied canonical terms are explicitly distinguished
+from original crate files. Rust 1.98.1 runtime notices are retained as well.
+The installed extension matches the official wheel byte-for-byte; identity is in
+native/wheel-identity.json. Offline packaging checks fail on stale binary or
+changed/missing notices. This supersedes the native-notice collection gap above,
+not the unverified attestation or independent clean-Windows installation boundary.

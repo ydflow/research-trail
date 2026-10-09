@@ -1,0 +1,10 @@
+{
+  "wheel": "longbridge-5.2.0-cp312-cp312-win_amd64.whl",
+  "wheel_sha256": "0912d400b4c3941aee4cf97dc754273f6b62420de97ca6c0b2e121dcd648d609",
+  "binary_matches": [
+    {
+      "path": "longbridge/longbridge.cp312-win_amd64.pyd",
+      "sha256": "fb54501879a04c7b08674100ee244f9560067fa9efd21e1b5b7fc35c1acb9846"
+    }
+  ]
+}
