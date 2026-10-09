@@ -4,6 +4,7 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { collectUiNotices } from './ui-notices.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const stage = mkdtempSync(join(root, 'build/windows/app-'));
@@ -20,16 +21,7 @@ writeFileSync(join(stage,'package.json'), JSON.stringify({name:'research-trail-d
   main:'dist/main.cjs',private:true},null,2)+'\n');
 // The renderer and main/preload are already bundled. No repository/node_modules
 // directory is included, and no broad project copy can collect private runtime state.
-const ui = [];
-for (const name of ['react','react-dom','scheduler','klinecharts']) {
-  const resolver = name === 'scheduler' ? createRequire(desktopRequire.resolve('react-dom/package.json')) : desktopRequire;
-  const pkgPath = resolver.resolve(name + '/package.json');
-  const pkg = JSON.parse(readFileSync(pkgPath,'utf8'));
-  const files = readdirSync(dirname(pkgPath)).filter(f=>/^(license|copying|notice)/i.test(f));
-  const dest = join(notices, 'ui', name);mkdirSync(dest,{recursive:true});
-  for (const f of files) if(statSync(join(dirname(pkgPath),f)).isFile()) cpSync(join(dirname(pkgPath),f),join(dest,f));
-  ui.push({name,version:pkg.version,license:pkg.license,license_files:files});
-}
+const ui = collectUiNotices(join(root,'apps/desktop/package.json'), join(notices, 'ui'));
 writeFileSync(join(notices,'ui-dependencies.json'),JSON.stringify(ui,null,2)+'\n');
 const sourceDocs = readdirSync(join(root,'docs')).filter(f=>/^SOURCES.*\.json$/.test(f));
 mkdirSync(join(notices,'sources'),{recursive:true});
