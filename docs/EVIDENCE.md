@@ -2130,3 +2130,15 @@ proxy-agent-negotiate@1.1.0 官方匹配目录只有 MIT 元数据，没有完�
 本机日志 `%TEMP%\research-trail-phase2-pr-verify.log` 留在仓库外，不提交。1项 Starlette/httpx 弃用与 Vite510.24kB chunk 警告保留。独立CLI首次从根目录误调用出现 ModuleNotFoundError，按 backend cwd 复验通过；不是业务测试失败。最后证据/标题更新只改文档，完整复验的可执行代码/依赖树保持相同。正式 pi API/UI 链路、独立干净Windows、Node分发/ASAR/PyInstaller闭包、通用进程树清理与安装器仍未执行。
 
 Draft PR 的 [GitHub Actions](https://github.com/ydflow/research-trail/actions?query=branch%3Afeat%2Fphase2-pi-bridge) 单独核验，不把本机通过预写为远程通过；实际最终结果随本轮交付回执报告。回滚可撤销本PR代码/依赖/验证钩子，无业务数据库迁移或默认引擎变更；不得将失败运行中已执行工具静默重试。完成后停止，不自动转Ready、合并或发布。
+
+## 63. P2-01/P2-02 最终合并阶段记录（2026-10-10）
+
+本节在 main 上随 [PR #29](https://github.com/ydflow/research-trail/pull/29) 的实际普通 Merge Commit 合并后生效；PR未合并时不是已合并回执。用户另行明确授权转Ready、核对最终Head/所有Actions/审查线程、普通合并并安全同步本地main。最终 mergedAt、Merge SHA 与 main HEAD 以该PR和GitHub分支实际回执为准，不预造SHA。
+
+阶段状态：P2-01（工程基线/pi架构）与P2-02（真实固定pi离线工具桥）已合并。默认Python AgentRunner未切换；真实模型桥接、Node运行时分发、Windows新安装包仍未验收；proxy-agent-negotiate@1.1.0 完整版权/许可声明缺口仍是未来含Worker安装器的分发阻塞，不能因为合并而认定许可齐全。P2-03未开始；未创建Release、修改业务代码、安装依赖或请求真实模型/金融服务。
+
+合并轮起点：本地功能分支/远程PR Head均为 `23ab9625f57295606bba54a276a3f1d43f55ae24`，工作区和索引干净，base为 `56b64a5b3041df97362e62d92f46b0dbf0eef909`；GitHub活跃身份ydflow、目标ydflow/research-trail。重新读取AGENTS/阶段记录/许可，核对23文件/+4464/-6；没有范围外修改。GraphQL完整查询无review、review thread或issue comment，未见阻塞意见；PR为CLEAN/MERGEABLE。
+
+起点Head的全部两次Windows Actions：[PR 38057065854](https://github.com/ydflow/research-trail/actions/runs/38057065854) 与 [push 38057043841](https://github.com/ydflow/research-trail/actions/runs/38057043841) 均SUCCESS。两日志实际确认736 Python/16 Worker Node+19旧Node/58 Electron，失败/取消/跳过0；这是PR发布轮重新查询的远程证据，不是本轮新执行本机全套。既有Starlette/httpx、Vite chunk、Actions Node20/punycode以及uv准备提示保留。
+
+本次合并前仅补充ROADMAP/EVIDENCE阶段记录；git diff --check及仅文档范围检查通过。文档提交形成新Head后，仍需核对该Head的全部Actions成功、无冲突和阻塞审查，再转Ready/普通合并。其结果以PR最终检查和合并回执为准；合并后的main CI单独报告，不能拿合并前CI代替。同步使用fetch和本地main fast-forward，保留功能分支，不reset/clean/force-push或删除其他分支。完成时确认本地main与origin/main相同、工作区干净，停止等待下一步。

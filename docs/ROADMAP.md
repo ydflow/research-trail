@@ -6,7 +6,7 @@
 
 - 第二阶段 P2-01：验收通过（本机离线工程基线与架构文档范围）。main `7d12da5204d7119dbd71818bbeaa8207b6aeb731`，当轮696 Python / 19 Node / 58实际Electron通过；见 [工程基线](PHASE2-BASELINE.md)、[pi架构决策](PHASE2-PI-ARCHITECTURE.md) 与 EVIDENCE 第60节。公开审查仅移除新文档中的本机目录，保留历史检查与架构结论。
 - 第二阶段 P2-02：验收通过（本机离线开发桥范围）。真实固定 pi-agent-core/ai 1.1.0、独立Node Worker、Python整批许可/顺序工具桥已实现；开发轮736 Python/34 Node/58实际Electron通过，详见 [PI-BRIDGE](PHASE2-PI-BRIDGE.md)、EVIDENCE第61节。默认Python AgentRunner/正式API/UI/业务数据库不切换；Windows新安装包、真实模型均未执行。P2-03未开始。
-- P2-01/P2-02 独立发布审查：验收通过（本机离线）；最终736 Python/35 Node/58实际Electron通过，失败/跳过0。分支 `feat/phase2-pi-bridge` 用于 Draft PR 评审；新增溢出数值拒绝测试、补齐5项官方许可文本，1项版权声明仍未解决。见 EVIDENCE 第62节；远程状态以 GitHub 检查为准，不合并或发布安装器。
+- P2-01/P2-02 合并阶段记录（在 main 上随 [PR #29](https://github.com/ydflow/research-trail/pull/29) 普通 Merge Commit 合并后生效）：两阶段已合并。审查验收736 Python/35 Node/58实际Electron通过，失败/跳过0；默认Python AgentRunner未切换。真实模型桥接、Node运行时分发、Windows新安装包均未验收；proxy-agent-negotiate@1.1.0 完整版权声明缺口仍是分发阻塞。合并核对与回执见 EVIDENCE 第63节；P2-03未开始，不创建Release。
 - 第 0 步：验收通过，七份材料与本地 Git 已核对，证据见 EVIDENCE.md。
 - 第 1 步：代码完成/待验收；类型、构建、后端与实窗自动化已通过，用户手动验收未完成。
 - 第2步：验收通过；固定模拟行情、契约生成和局部组件适配已实现，自动化复验通过，用户本轮明确按已验收步骤发布；逐项手动记录和练习待补。
