@@ -214,7 +214,7 @@ SPDX 元数据：MIT40、Apache-2.0 34、BSD-3-Clause11、0BSD1、Unlicense1。�
 
 验收：固定pi真实调用链及本轮非法批次零执行全部复验；模型消息与toolResult映射无损、原OpenAI传输的headers/凭证只能在Python出现；失败/取消/超时/重复/迟到响应唯一终态，无新增工具或静默回退；默认AgentRunner及完整离线回归仍通过。真实模型费用/账户验证和Windows打包需用户另行明确授权。
 
-## 11. CMD复核与学习
+## 12. CMD复核与学习
 
 ```bat
 cd /d "<你的研迹目录>"

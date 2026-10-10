@@ -2101,3 +2101,32 @@ Python概率/校准/A-B及人工量表、提供商首次尝试/worker修复、�
 依赖/分发风险：完整87包约70789644已安装bytes（67.51MiB，含11共享旧包/peer，不是安装器净增），MIT40/Apache2.0 34/BSD3 11/0BSD1/Unlicense1；逐包依赖边、锁SRI、SPDX和可得LICENSE/NOTICE哈希在 `packages/pi-worker/dependency-audit.json`。9包缺独立许可文本，其中pi3包上游MIT已保留；其余6包版权/NOTICE收集、Node二进制分发/第三方声明、ESM资源路径/ASAR/PyInstaller闭包/体积、无系统Node/独立干净Windows/进程树强杀均尚待未来打包专项，当前不能声称安装器可用或授权声明已齐全。未做在线漏洞扫描、新远程CI或安装器测试；verify:clean未执行；全程没有真实模型/行情/账户/收费API/追踪上传。
 
 新增PI-BRIDGE、Worker六文件、Python桥/独立CLI/测试、pi-audit脚本，更新根workspace/bun.lock/verify/路线/证据。无add/commit/push/PR/Release。P2-02仅本机离线开发桥验收通过；P2-03建议为Python持有凭证的独立模型传输桥及离线消息/失败语义验收，未实施。完成后停止等待下一步授权。
+
+## 62. P2-01/P2-02 独立 PR 发布审查（2026-10-10）
+
+本轮单独授权复核、最小修正、独立分支/真实提交、fetch/安全更新 main、push 与 Draft PR；不授权合并、Release、安装器或 P2-03。起点为 main `7d12da5204d7119dbd71818bbeaa8207b6aeb731`，索引空，P2-01/P2-02 全部未提交文件逐一核对，无无关改动；两份 P2-01 文档均纳入。GitHub 实际登录 ydflow，origin 与目标均 ydflow/research-trail。
+
+创建 `feat/phase2-pi-bridge`，实现提交 `b5675ab`；fetch 后确认唯一远程新增提交为 `56b64a5b3041df97362e62d92f46b0dbf0eef909`（README 一行修改），普通 merge 至 `d9b4ecdabdb8ddd2ce94db40709c2a43b766bfb4`，无冲突。未覆盖该 README，未 reset/clean/force-push 或直接提交 main。只暂存23项阶段交付/审查文件，无数据库、日志、凭证或配置。最终提交 SHA 和远程检查以 [功能分支](https://github.com/ydflow/research-trail/tree/feat/phase2-pi-bridge) 与 Draft PR 的实际 GitHub 回执为准。
+
+源码审查确认：真实 pi Agent/streamFn；完整 assistant message_end 的 await 屏障先于顺序工具执行；Python 整批工具/参数/ID/预算/状态检查，实际 handler 唯一来自原 ToolRegistry；重复请求消费、迟到结果隔离、唯一终态和历史重放测试齐备。默认 app/AgentRunner/注册表、正式API/UI/模型提供商/数据库迁移/金融公式无 diff。128KiB/4KiB/深度32/256消息边界、stdout/stderr 与环境白名单均复核。网络护栏仍是回归 tripwire，不是 OS 沙箱。
+
+最小修正：Node strict JSON 原会把 1e999 解析为 Infinity；新增有限数值拒绝与1项回归，未删旧断言/放宽超时。许可方面从固定官方提交收集5项版本匹配文本（AWS三项 Apache-2.0、data-uri-to-buffer README 内 MIT、standardwebhooks libraries/LICENSE 的 MIT），来源/manifest/文本 SHA256 在 upstream-notices.json，离线审计核对原始字节，gitattributes 禁止声明文本行尾变换。standardwebhooks 根 Apache 与 libraries MIT 的层级区别明确保留；nested-clients 的发布路径元数据过时，实际匹配目录为 packages-internal。
+
+proxy-agent-negotiate@1.1.0 官方匹配目录只有 MIT 元数据，没有完整版权文本；不借用同仓其他包声明，仍未解决，阻止未来含 Worker 的安装器分发。已收集5项不等于完整法律/供应链许可；Node二进制及各包版权/NOTICE义务仍须未来打包专项核对。本轮不做安装包/真实模型/行情/账户调用或在线漏洞扫描。
+
+最终功能分支实际复验：
+
+| 检查 | 结果 |
+| --- | --- |
+| git diff --check / staged check / scope与新增内容扫描 | 通过；扫描全部新文件及新增行，无私钥/token/个人目录；新文档本机目录换为占位路径，历史事实未改 |
+| 三份已安装 pi source map 对比固定官方提交 | Agent/agent-loop/types 全部逐字符相同；一次公开源码 TLS ECONNRESET 重读后通过 |
+| 原 main 对比 bun.lock | 459个原外部版本/SRI全部保留，新增76个必要版本 |
+| node scripts/pi-audit.mjs | 87包/70789644已安装bytes离线快照通过；5项补充文本哈希通过，明确输出 negotiate 未解决 |
+| Node Worker 专项 | 16 passed，fail/cancel/skip/todo 0；真 Agent 屏障、非法消息、溢出数值覆盖 |
+| backend verify_pi --node（已有绝对Node） | completed；AAPL.US 189.43 USD、fixture；handler=1、stream_calls=2、results_seen=1、工具start/end各1 |
+| bun.cmd run verify | 退出0；736 Python（233.24秒）、16新增+19原Node、58实际Electron（407.45秒）；合计829项，旧773项/新增56项通过，失败/取消/跳过0 |
+| 其余验收 | 12原创工程案例、30原创历史样例、契约/类型/native声明、0020重复迁移/模型一致性、main/preload/renderer构建全部通过 |
+
+本机日志 `%TEMP%\research-trail-phase2-pr-verify.log` 留在仓库外，不提交。1项 Starlette/httpx 弃用与 Vite510.24kB chunk 警告保留。独立CLI首次从根目录误调用出现 ModuleNotFoundError，按 backend cwd 复验通过；不是业务测试失败。最后证据/标题更新只改文档，完整复验的可执行代码/依赖树保持相同。正式 pi API/UI 链路、独立干净Windows、Node分发/ASAR/PyInstaller闭包、通用进程树清理与安装器仍未执行。
+
+Draft PR 的 [GitHub Actions](https://github.com/ydflow/research-trail/actions?query=branch%3Afeat%2Fphase2-pi-bridge) 单独核验，不把本机通过预写为远程通过；实际最终结果随本轮交付回执报告。回滚可撤销本PR代码/依赖/验证钩子，无业务数据库迁移或默认引擎变更；不得将失败运行中已执行工具静默重试。完成后停止，不自动转Ready、合并或发布。
