@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "bun@1.4.2",
   "trustedDependencies": ["electron", "esbuild"],
-  "workspaces": ["apps/desktop"],
+  "workspaces": ["apps/desktop", "packages/pi-worker"],
   "scripts": {
     "dev": "node scripts/contracts.mjs && node scripts/dev.mjs",
     "build": "node scripts/build.mjs && bun run --cwd apps/desktop build",

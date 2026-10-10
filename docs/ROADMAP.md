@@ -1,9 +1,12 @@
 # 研迹：路线、功能对照与当前进度
 
-更新时间：2026-10-09（Asia/Shanghai）。本文件记录计划与阶段状态，不代表未来步骤已经获得执行或发布授权。
+更新时间：2026-10-10（Asia/Shanghai）。本文件记录计划与阶段状态，不代表未来步骤已经获得执行或发布授权。
 
 ## 当前执行边界
 
+- 第二阶段 P2-01：验收通过（本机离线工程基线与架构文档范围）。main `7d12da5204d7119dbd71818bbeaa8207b6aeb731`，当轮696 Python / 19 Node / 58实际Electron通过；见 [工程基线](PHASE2-BASELINE.md)、[pi架构决策](PHASE2-PI-ARCHITECTURE.md) 与 EVIDENCE 第60节。公开审查仅移除新文档中的本机目录，保留历史检查与架构结论。
+- 第二阶段 P2-02：验收通过（本机离线开发桥范围）。真实固定 pi-agent-core/ai 1.1.0、独立Node Worker、Python整批许可/顺序工具桥已实现；开发轮736 Python/34 Node/58实际Electron通过，详见 [PI-BRIDGE](PHASE2-PI-BRIDGE.md)、EVIDENCE第61节。默认Python AgentRunner/正式API/UI/业务数据库不切换；Windows新安装包、真实模型均未执行。P2-03未开始。
+- P2-01/P2-02 独立发布审查：进行中，仅获功能分支、提交与 Draft PR 授权；新增 Node 溢出数值拒绝用例、补齐5项官方许可文本，1项版权声明仍未解决。最新复验和远程状态见 EVIDENCE 第62节，不合并或发布安装器。
 - 第 0 步：验收通过，七份材料与本地 Git 已核对，证据见 EVIDENCE.md。
 - 第 1 步：代码完成/待验收；类型、构建、后端与实窗自动化已通过，用户手动验收未完成。
 - 第2步：验收通过；固定模拟行情、契约生成和局部组件适配已实现，自动化复验通过，用户本轮明确按已验收步骤发布；逐项手动记录和练习待补。
@@ -130,4 +133,4 @@ Electron管理Python子进程；后端本机随机端口及启动令牌；preloa
 
 ## 当前发布回执
 
-v1.0.0已发布：[https://github.com/ydflow/research-trail/releases/tag/v1.0.0](https://github.com/ydflow/research-trail/releases/tag/v1.0.0)，标签提交`6e2025437588e3e26748496ca324262e59296b10`；CI 37910204557通过。当前只交付本版本及产品README，不开发下一阶段。上方旧步骤的真实未验/发布状态按对应历史保留，最新验证以ACCEPTANCE-v1.0.0和FEATURE-AUDIT-step24当前表为准。
+v1.0.0已发布：[https://github.com/ydflow/research-trail/releases/tag/v1.0.0](https://github.com/ydflow/research-trail/releases/tag/v1.0.0)，标签提交`6e2025437588e3e26748496ca324262e59296b10`；CI 37910204557通过。该发布轮只交付本版本及产品README。上方旧步骤的真实未验/发布状态按对应历史保留，版本验证以ACCEPTANCE-v1.0.0和FEATURE-AUDIT-step24当前表为准；当前第二阶段执行边界见顶部与PHASE2文档，新Worker不属于v1.0.0安装包。

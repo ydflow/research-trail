@@ -1,0 +1,2244 @@
+{
+  "schema": 1,
+  "source_commit": "abe508e1b89912adde45528136c3221eb69acdd7",
+  "core_sources": {
+    "agent.ts": "7024a3145a6ebc951a0f030164adb1dfb12d33d6e0dbbac15ef0efda49c87457",
+    "agent-loop.ts": "28a2b03e34a7e32f004aa851e54d3b5be9dad71c392205614cbc9abdf3a9020a",
+    "types.ts": "2e116ef60fdaca4e26be5a1ace8d8b47f545d648d365de60b8c9f9d1ba629ee4"
+  },
+  "roots": [
+    "@earendil-works/pi-agent-core@1.1.0",
+    "@earendil-works/pi-ai@1.1.0"
+  ],
+  "packages": [
+    {
+      "id": "@anthropic-ai/sdk@0.129.0",
+      "license": "MIT",
+      "integrity": "sha512-MH7LB20kNpGLUpPTe2OG5XvL/KhX8HUO9XyBaFjgFk6TLS4Xjt0VPIuMKywe7POKKPslX+QxSlVok9e+8kG5Nw==",
+      "bytes": 9503985,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "8bf96984ff8bcfae7e48cae76a529e8a25317ba9e02abf7fd3cc64fdf95657a6"
+        },
+        {
+          "file": "src/internal/qs/LICENSE.md",
+          "sha256": "d8c77eaffed7f1f874b97f66ee47a557ae24fd59bae8ae14f9b1b84f26a94d2f"
+        }
+      ],
+      "dependencies": {
+        "json-schema-to-ts": {
+          "requested": "^3.1.1",
+          "resolved": "json-schema-to-ts@3.1.1"
+        },
+        "standardwebhooks": {
+          "requested": "^1.0.0",
+          "resolved": "standardwebhooks@1.1.1"
+        }
+      },
+      "peers": {
+        "zod": {
+          "requested": "^3.25.0 || ^4.0.0",
+          "optional": true,
+          "resolved": null
+        }
+      },
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/client-bedrock-runtime@3.1127.0",
+      "license": "Apache-2.0",
+      "integrity": "sha512-IDl/lrPb90aH+pZFHGNDmgH9nAUQj5PlZH1sJ3w7RikctyjHSnY3oNjZhrLoaBoQn/rNK0zsP6OHEqEhj2tdLA==",
+      "bytes": 860206,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "18c295fdd68d4f68418b0209829f241481e93549d9e7b9fcd4b4c029322c8a45"
+        }
+      ],
+      "dependencies": {
+        "@aws-sdk/core": {
+          "requested": "^3.977.9",
+          "resolved": "@aws-sdk/core@3.978.2"
+        },
+        "@aws-sdk/credential-provider-node": {
+          "requested": "^3.972.82",
+          "resolved": "@aws-sdk/credential-provider-node@3.972.85"
+        },
+        "@aws-sdk/eventstream-handler-node": {
+          "requested": "^3.972.34",
+          "resolved": "@aws-sdk/eventstream-handler-node@3.972.36"
+        },
+        "@aws-sdk/middleware-eventstream": {
+          "requested": "^3.972.29",
+          "resolved": "@aws-sdk/middleware-eventstream@3.972.31"
+        },
+        "@aws-sdk/middleware-websocket": {
+          "requested": "^3.972.52",
+          "resolved": "@aws-sdk/middleware-websocket@3.972.55"
+        },
+        "@aws-sdk/token-providers": {
+          "requested": "3.1127.0",
+          "resolved": "@aws-sdk/token-providers@3.1127.0"
+        },
+        "@aws-sdk/types": {
+          "requested": "^3.974.5",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/core": {
+          "requested": "^3.33.3",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/fetch-http-handler": {
+          "requested": "^5.7.2",
+          "resolved": "@smithy/fetch-http-handler@5.8.0"
+        },
+        "@smithy/node-http-handler": {
+          "requested": "^4.11.3",
+          "resolved": "@smithy/node-http-handler@4.12.1"
+        },
+        "@smithy/types": {
+          "requested": "^4.17.2",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/core@3.978.2",
+      "license": "Apache-2.0",
+      "integrity": "sha512-ViOBLuGSSyPAmkKGJ6KJXtVN7MOEp3rnI7uH+kWxnHccvo8C9cvunEAnN5/oaZH1laQfsTBw7IOnmNkWlFZl2A==",
+      "bytes": 571679,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d"
+        }
+      ],
+      "dependencies": {
+        "@aws-sdk/types": {
+          "requested": "^3.974.6",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@aws-sdk/xml-builder": {
+          "requested": "^3.972.41",
+          "resolved": "@aws-sdk/xml-builder@3.972.41"
+        },
+        "@aws/lambda-invoke-store": {
+          "requested": "^0.3.0",
+          "resolved": "@aws/lambda-invoke-store@0.3.0"
+        },
+        "@smithy/core": {
+          "requested": "^3.35.2",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/signature-v4": {
+          "requested": "^5.7.4",
+          "resolved": "@smithy/signature-v4@5.7.4"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "bowser": {
+          "requested": "^2.11.0",
+          "resolved": "bowser@2.14.1"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/credential-provider-env@3.972.73",
+      "license": "Apache-2.0",
+      "integrity": "sha512-PxlFZiF5IPUsPnuVSqjM9jlmRwZhL0xx40ccWfZiLQS8TRnHQpegpK1uAidatWuEqbJtbbY97A2Sezikz2AMUw==",
+      "bytes": 19452,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+        }
+      ],
+      "dependencies": {
+        "@aws-sdk/core": {
+          "requested": "^3.978.2",
+          "resolved": "@aws-sdk/core@3.978.2"
+        },
+        "@aws-sdk/types": {
+          "requested": "^3.974.6",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/core": {
+          "requested": "^3.35.2",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/credential-provider-http@3.972.75",
+      "license": "Apache-2.0",
+      "integrity": "sha512-Q/uIDy8eAVN7JgSKDg16F/f+hmNJj/ZyLJN8AkW2ofVdDgJVh8fO/A26iZ7YsvM2/k76hsf/u2lLAtyXsK8Ziw==",
+      "bytes": 24815,
+      "licenses": [],
+      "dependencies": {
+        "@aws-sdk/core": {
+          "requested": "^3.978.2",
+          "resolved": "@aws-sdk/core@3.978.2"
+        },
+        "@aws-sdk/types": {
+          "requested": "^3.974.6",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/core": {
+          "requested": "^3.35.2",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/fetch-http-handler": {
+          "requested": "^5.8.0",
+          "resolved": "@smithy/fetch-http-handler@5.8.0"
+        },
+        "@smithy/node-http-handler": {
+          "requested": "^4.12.1",
+          "resolved": "@smithy/node-http-handler@4.12.1"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/credential-provider-ini@3.973.18",
+      "license": "Apache-2.0",
+      "integrity": "sha512-KoyjZ9vdjuxEQ8obAH06xKP8H0WKqGhwUZLMqAOiS7G0xgUAht4X8f0ASLC/vhNLCWGblZOD3VQHWyTROGJHLg==",
+      "bytes": 53400,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+        }
+      ],
+      "dependencies": {
+        "@aws-sdk/core": {
+          "requested": "^3.978.2",
+          "resolved": "@aws-sdk/core@3.978.2"
+        },
+        "@aws-sdk/credential-provider-env": {
+          "requested": "^3.972.73",
+          "resolved": "@aws-sdk/credential-provider-env@3.972.73"
+        },
+        "@aws-sdk/credential-provider-http": {
+          "requested": "^3.972.75",
+          "resolved": "@aws-sdk/credential-provider-http@3.972.75"
+        },
+        "@aws-sdk/credential-provider-login": {
+          "requested": "^3.972.80",
+          "resolved": "@aws-sdk/credential-provider-login@3.972.80"
+        },
+        "@aws-sdk/credential-provider-process": {
+          "requested": "^3.972.73",
+          "resolved": "@aws-sdk/credential-provider-process@3.972.73"
+        },
+        "@aws-sdk/credential-provider-sso": {
+          "requested": "^3.973.17",
+          "resolved": "@aws-sdk/credential-provider-sso@3.973.17"
+        },
+        "@aws-sdk/credential-provider-web-identity": {
+          "requested": "^3.972.79",
+          "resolved": "@aws-sdk/credential-provider-web-identity@3.972.79"
+        },
+        "@aws-sdk/nested-clients": {
+          "requested": "^3.997.47",
+          "resolved": "@aws-sdk/nested-clients@3.997.47"
+        },
+        "@aws-sdk/types": {
+          "requested": "^3.974.6",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/core": {
+          "requested": "^3.35.2",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/credential-provider-imds": {
+          "requested": "^4.5.2",
+          "resolved": "@smithy/credential-provider-imds@4.5.2"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/credential-provider-login@3.972.80",
+      "license": "Apache-2.0",
+      "integrity": "sha512-xF9A0gaO7k+1dYPFoo69OQatA9Ov0QuDZfqE8H0FLyIoOph+mlEC+I1Qo9UULupGuDfSYh+kVpfcDSxSYf/2fg==",
+      "bytes": 34173,
+      "licenses": [],
+      "dependencies": {
+        "@aws-sdk/core": {
+          "requested": "^3.978.2",
+          "resolved": "@aws-sdk/core@3.978.2"
+        },
+        "@aws-sdk/nested-clients": {
+          "requested": "^3.997.47",
+          "resolved": "@aws-sdk/nested-clients@3.997.47"
+        },
+        "@aws-sdk/types": {
+          "requested": "^3.974.6",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/core": {
+          "requested": "^3.35.2",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/credential-provider-node@3.972.85",
+      "license": "Apache-2.0",
+      "integrity": "sha512-CrFcML/xImiSlquH4W3V6Npz3aSkPXHDVciAU1JOBN0vqjmkcz9H9up2sCHQqN76J/WrT+TJ580L8h2joksQrg==",
+      "bytes": 40839,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+        }
+      ],
+      "dependencies": {
+        "@aws-sdk/credential-provider-env": {
+          "requested": "^3.972.73",
+          "resolved": "@aws-sdk/credential-provider-env@3.972.73"
+        },
+        "@aws-sdk/credential-provider-http": {
+          "requested": "^3.972.75",
+          "resolved": "@aws-sdk/credential-provider-http@3.972.75"
+        },
+        "@aws-sdk/credential-provider-ini": {
+          "requested": "^3.973.18",
+          "resolved": "@aws-sdk/credential-provider-ini@3.973.18"
+        },
+        "@aws-sdk/credential-provider-process": {
+          "requested": "^3.972.73",
+          "resolved": "@aws-sdk/credential-provider-process@3.972.73"
+        },
+        "@aws-sdk/credential-provider-sso": {
+          "requested": "^3.973.17",
+          "resolved": "@aws-sdk/credential-provider-sso@3.973.17"
+        },
+        "@aws-sdk/credential-provider-web-identity": {
+          "requested": "^3.972.79",
+          "resolved": "@aws-sdk/credential-provider-web-identity@3.972.79"
+        },
+        "@aws-sdk/types": {
+          "requested": "^3.974.6",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/core": {
+          "requested": "^3.35.2",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/credential-provider-imds": {
+          "requested": "^4.5.2",
+          "resolved": "@smithy/credential-provider-imds@4.5.2"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/credential-provider-process@3.972.73",
+      "license": "Apache-2.0",
+      "integrity": "sha512-tyNnT4aVuOEXmKKKZPExBi828vRd9heshobBsKF0bov5EORHSJc1AGsHOMRP57sDt+dIuVASUOywaixiX26t4g==",
+      "bytes": 23594,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "2ef1e48ea743d9c82313e6887858f7c1feaddd636f5a3f43926aab0143e67ebd"
+        }
+      ],
+      "dependencies": {
+        "@aws-sdk/core": {
+          "requested": "^3.978.2",
+          "resolved": "@aws-sdk/core@3.978.2"
+        },
+        "@aws-sdk/types": {
+          "requested": "^3.974.6",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/core": {
+          "requested": "^3.35.2",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/credential-provider-sso@3.973.17",
+      "license": "Apache-2.0",
+      "integrity": "sha512-gxKTWaUk2gSbBOH4m3NPRfEKcGXeDAOgHr7nNG5JktR1xZLo0R+DpMjbcleoHbB0uJREOG7hjIRE635IuBWsRQ==",
+      "bytes": 37700,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "2ef1e48ea743d9c82313e6887858f7c1feaddd636f5a3f43926aab0143e67ebd"
+        }
+      ],
+      "dependencies": {
+        "@aws-sdk/core": {
+          "requested": "^3.978.2",
+          "resolved": "@aws-sdk/core@3.978.2"
+        },
+        "@aws-sdk/nested-clients": {
+          "requested": "^3.997.47",
+          "resolved": "@aws-sdk/nested-clients@3.997.47"
+        },
+        "@aws-sdk/token-providers": {
+          "requested": "3.1149.0",
+          "resolved": "@aws-sdk/token-providers@3.1149.0"
+        },
+        "@aws-sdk/types": {
+          "requested": "^3.974.6",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/core": {
+          "requested": "^3.35.2",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/credential-provider-web-identity@3.972.79",
+      "license": "Apache-2.0",
+      "integrity": "sha512-/jn0Gs/qm6fs6nTIA5yncHayybz42SATZ3rNxCEBYPJ9v69PLrDRgk07E9xTT2gpRcNmDXXbi27ZbuU06N0Z6Q==",
+      "bytes": 31256,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "2ef1e48ea743d9c82313e6887858f7c1feaddd636f5a3f43926aab0143e67ebd"
+        }
+      ],
+      "dependencies": {
+        "@aws-sdk/core": {
+          "requested": "^3.978.2",
+          "resolved": "@aws-sdk/core@3.978.2"
+        },
+        "@aws-sdk/nested-clients": {
+          "requested": "^3.997.47",
+          "resolved": "@aws-sdk/nested-clients@3.997.47"
+        },
+        "@aws-sdk/types": {
+          "requested": "^3.974.6",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/core": {
+          "requested": "^3.35.2",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/eventstream-handler-node@3.972.36",
+      "license": "Apache-2.0",
+      "integrity": "sha512-HFaKXA6ugPVvpR7W/3UT3hylWIPndqGMwduwNVrmGsRT5+OESHN8/ven4eeofraQF5Kxp8A8QgGVrv7iQsTRKQ==",
+      "bytes": 27669,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "07364a5f7d0177a59a05a0002187431f8f899320983c0dc049d72df015e8064c"
+        }
+      ],
+      "dependencies": {
+        "@aws-sdk/types": {
+          "requested": "^3.974.6",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/core": {
+          "requested": "^3.35.2",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/middleware-eventstream@3.972.31",
+      "license": "Apache-2.0",
+      "integrity": "sha512-4yvdTVwPGKCnrwuwlYEmwLqQXKwk0unx3f/FvBi4FA9ruK/WGoPJyqfK7hOYurheIyQL44FR0ovgOHqvkfdpAQ==",
+      "bytes": 22688,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "e345c2ee7df4446e739de7b91535f0c10ddcd909b9753889e943ee637b05db8c"
+        }
+      ],
+      "dependencies": {
+        "@aws-sdk/types": {
+          "requested": "^3.974.6",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/core": {
+          "requested": "^3.35.2",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/middleware-websocket@3.972.55",
+      "license": "Apache-2.0",
+      "integrity": "sha512-dHlEl3sCn1Cu+qddPoz5RxjgGCXEzs/pbrh/rDRaOeb/Tz//FF59hacDvy7kvUn19mkm2nQRjhpzBnX+Ye37Qw==",
+      "bytes": 58395,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "07364a5f7d0177a59a05a0002187431f8f899320983c0dc049d72df015e8064c"
+        }
+      ],
+      "dependencies": {
+        "@aws-sdk/core": {
+          "requested": "^3.978.2",
+          "resolved": "@aws-sdk/core@3.978.2"
+        },
+        "@aws-sdk/types": {
+          "requested": "^3.974.6",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/core": {
+          "requested": "^3.35.2",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/fetch-http-handler": {
+          "requested": "^5.8.0",
+          "resolved": "@smithy/fetch-http-handler@5.8.0"
+        },
+        "@smithy/signature-v4": {
+          "requested": "^5.7.4",
+          "resolved": "@smithy/signature-v4@5.7.4"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/nested-clients@3.997.47",
+      "license": "Apache-2.0",
+      "integrity": "sha512-bovCKvDsLocNTzaj6VrrMVJ2BGROqO0JlwcGseO67a+I9Bo+08nUJhSQfZUIx4+A4a7I4101GEJd/AYm7dQ68w==",
+      "bytes": 852174,
+      "licenses": [],
+      "dependencies": {
+        "@aws-sdk/core": {
+          "requested": "^3.978.2",
+          "resolved": "@aws-sdk/core@3.978.2"
+        },
+        "@aws-sdk/signature-v4-multi-region": {
+          "requested": "^3.996.48",
+          "resolved": "@aws-sdk/signature-v4-multi-region@3.996.48"
+        },
+        "@aws-sdk/types": {
+          "requested": "^3.974.6",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/core": {
+          "requested": "^3.35.2",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/fetch-http-handler": {
+          "requested": "^5.8.0",
+          "resolved": "@smithy/fetch-http-handler@5.8.0"
+        },
+        "@smithy/node-http-handler": {
+          "requested": "^4.12.1",
+          "resolved": "@smithy/node-http-handler@4.12.1"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/signature-v4-multi-region@3.996.48",
+      "license": "Apache-2.0",
+      "integrity": "sha512-cFDXfEbXaGwbnpvR/DyqfxfjxpjXVRVthQLgkwvcfDS5u3+8G9WSj1X1Ag/pTRg/QOeOno1Tq3ycEdrKsCUcOA==",
+      "bytes": 38617,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "07364a5f7d0177a59a05a0002187431f8f899320983c0dc049d72df015e8064c"
+        }
+      ],
+      "dependencies": {
+        "@aws-sdk/types": {
+          "requested": "^3.974.6",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/signature-v4": {
+          "requested": "^5.7.4",
+          "resolved": "@smithy/signature-v4@5.7.4"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/token-providers@3.1127.0",
+      "license": "Apache-2.0",
+      "integrity": "sha512-Dv2TMWBshJ+tF6ahs2Sy5bh4Iabsd4GAQqVvE9XZmYmnoaVbpS2QKIKE/HRacc7bTtbjEEvP+laGzHvHlf1CiQ==",
+      "bytes": 38250,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+        }
+      ],
+      "dependencies": {
+        "@aws-sdk/core": {
+          "requested": "^3.977.9",
+          "resolved": "@aws-sdk/core@3.978.2"
+        },
+        "@aws-sdk/nested-clients": {
+          "requested": "^3.997.44",
+          "resolved": "@aws-sdk/nested-clients@3.997.47"
+        },
+        "@aws-sdk/types": {
+          "requested": "^3.974.5",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/core": {
+          "requested": "^3.33.3",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/types": {
+          "requested": "^4.17.2",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/token-providers@3.1149.0",
+      "license": "Apache-2.0",
+      "integrity": "sha512-CAwYyA8eVk1w6h8YgLvkjIOakWPwURaUFrP7BRVgkxTFUM+O87thyKsGKJ6rVPbP8eoEV10cBWQ5YfaYl3qSVQ==",
+      "bytes": 38250,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+        }
+      ],
+      "dependencies": {
+        "@aws-sdk/core": {
+          "requested": "^3.978.2",
+          "resolved": "@aws-sdk/core@3.978.2"
+        },
+        "@aws-sdk/nested-clients": {
+          "requested": "^3.997.47",
+          "resolved": "@aws-sdk/nested-clients@3.997.47"
+        },
+        "@aws-sdk/types": {
+          "requested": "^3.974.6",
+          "resolved": "@aws-sdk/types@3.974.6"
+        },
+        "@smithy/core": {
+          "requested": "^3.35.2",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/types@3.974.6",
+      "license": "Apache-2.0",
+      "integrity": "sha512-v/clNZzZnDxGyvpHMOGpJKVXFAExJzUNAAjaWGdcx8QAcXLGwTaOkw33p5SHAi0YAioK32xB3hWwOekRVfmfKg==",
+      "bytes": 53767,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+        }
+      ],
+      "dependencies": {
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws-sdk/xml-builder@3.972.41",
+      "license": "Apache-2.0",
+      "integrity": "sha512-ctjVSyCMegrWfXlx6VqzSBFI6UqmQ5ZlnfMhdLIiWmhoH8UAQxSCP5N3OpG7X3k4LnS7ou74C4mt20+bfTW2aQ==",
+      "bytes": 41741,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+        }
+      ],
+      "dependencies": {
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@aws/lambda-invoke-store@0.3.0",
+      "license": "Apache-2.0",
+      "integrity": "sha512-sl4Bm6yiMNYrZKkqqDFWN0UfnWhlS8ivKxrYl+6t0gCLrqr8y3B2IqZZbFRkfaVVp7C/baApyh71P+LeE1A2sQ==",
+      "bytes": 29557,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@babel/runtime@7.29.10",
+      "license": "MIT",
+      "integrity": "sha512-NpugTzbKgGrNe45Ui32cN8vCFFMxVtP/9rtfwv0nP5FRDAjvYBxJcLVpYA9mr1jxP6cnIT7x9LUzuDTbWYYNRA==",
+      "bytes": 247215,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "117da2af0d4ce0fe1c8e19b5cff9dcd806adf973d328d27b11d4448c4ff24f76"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@earendil-works/pi-agent-core@1.1.0",
+      "license": "MIT",
+      "integrity": "sha512-aX1KZomNCPmwYnXa3OivF3VYLJ+WPUkIJlEIZTgwdOZdY/+oToWTQ334WYpQeOz9POpiYFNMJLPwIhXQ4e48kg==",
+      "bytes": 268663,
+      "licenses": [],
+      "dependencies": {
+        "@earendil-works/pi-ai": {
+          "requested": "^1.1.0",
+          "resolved": "@earendil-works/pi-ai@1.1.0"
+        },
+        "typebox": {
+          "requested": "1.3.27",
+          "resolved": "typebox@1.3.27"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@earendil-works/pi-ai@1.1.0",
+      "license": "MIT",
+      "integrity": "sha512-1T7LAkc/5Bvc0v6w4vAGVdCrli0o/E0pEmYKTnixu95vSFArBjvbhS/G4ZwI0RUePgf0Imcu0VyqlM4EcXxqfw==",
+      "bytes": 4086201,
+      "licenses": [],
+      "dependencies": {
+        "@anthropic-ai/sdk": {
+          "requested": "0.129.0",
+          "resolved": "@anthropic-ai/sdk@0.129.0"
+        },
+        "@aws-sdk/client-bedrock-runtime": {
+          "requested": "3.1127.0",
+          "resolved": "@aws-sdk/client-bedrock-runtime@3.1127.0"
+        },
+        "@earendil-works/pi-telemetry": {
+          "requested": "^1.1.0",
+          "resolved": "@earendil-works/pi-telemetry@1.1.0"
+        },
+        "@google/genai": {
+          "requested": "2.21.0",
+          "resolved": "@google/genai@2.21.0"
+        },
+        "@smithy/node-http-handler": {
+          "requested": "4.12.1",
+          "resolved": "@smithy/node-http-handler@4.12.1"
+        },
+        "http-proxy-agent": {
+          "requested": "9.1.0",
+          "resolved": "http-proxy-agent@9.1.0"
+        },
+        "https-proxy-agent": {
+          "requested": "9.1.0",
+          "resolved": "https-proxy-agent@9.1.0"
+        },
+        "openai": {
+          "requested": "7.19.0",
+          "resolved": "openai@7.19.0"
+        },
+        "partial-json": {
+          "requested": "0.1.7",
+          "resolved": "partial-json@0.1.7"
+        },
+        "typebox": {
+          "requested": "1.3.27",
+          "resolved": "typebox@1.3.27"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@earendil-works/pi-telemetry@1.1.0",
+      "license": "MIT",
+      "integrity": "sha512-8gAK05/2pPozZZz6hCLOi8x2vsqzvsmO9gG92kbvuvTPm0qMHaFlaXX98ndXsrOi5pmzha7vNLguuG4+0Rgxjw==",
+      "bytes": 122963,
+      "licenses": [],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@google/genai@2.21.0",
+      "license": "Apache-2.0",
+      "integrity": "sha512-+PDtco2/Z0ONdzCGekCoCT+O1VJS9xJQNN4XzQpXG/t3El/SWWMkCWlFRO1KmivOHPa4Q0VjUYu1HBKCZ/v33Q==",
+      "bytes": 11277335,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ],
+      "dependencies": {
+        "google-auth-library": {
+          "requested": "^10.3.0",
+          "resolved": "google-auth-library@10.9.1"
+        },
+        "p-retry": {
+          "requested": "^4.6.2",
+          "resolved": "p-retry@4.6.2"
+        },
+        "protobufjs": {
+          "requested": "^7.5.4",
+          "resolved": "protobufjs@7.6.6"
+        },
+        "ws": {
+          "requested": "^8.18.0",
+          "resolved": "ws@8.22.0"
+        }
+      },
+      "peers": {
+        "@modelcontextprotocol/sdk": {
+          "requested": "^1.25.2",
+          "optional": true,
+          "resolved": null
+        }
+      },
+      "optional_missing": []
+    },
+    {
+      "id": "@protobufjs/aspromise@1.1.2",
+      "license": "BSD-3-Clause",
+      "integrity": "sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==",
+      "bytes": 9055,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@protobufjs/base64@1.1.2",
+      "license": "BSD-3-Clause",
+      "integrity": "sha512-AZkcAA5vnN/v4PDqKyMR5lx7hZttPDgClv83E//FMNhR2TMcLUhfRUBHCmSl0oi9zMgDDqRUJkSxO3wm85+XLg==",
+      "bytes": 9224,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@protobufjs/codegen@2.0.5",
+      "license": "BSD-3-Clause",
+      "integrity": "sha512-zgXFLzW3Ap33e6d0Wlj4MGIm6Ce8O89n/apUaGNB/jx+hw+ruWEp7EwGUshdLKVRCxZW12fp9r40E1mQrf/34g==",
+      "bytes": 9749,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@protobufjs/eventemitter@1.1.1",
+      "license": "BSD-3-Clause",
+      "integrity": "sha512-vW1GmwMZNnL+gMRaovlh9yZX74kc+TTU3FObkkurpMaRtBfLP3ldjS9KQWlwZgraRE0+dheEEoAxdzcJQ8eXZg==",
+      "bytes": 10310,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@protobufjs/fetch@1.1.1",
+      "license": "BSD-3-Clause",
+      "integrity": "sha512-GpptLrs57adMSuHi3VNj0mAF8dwh36LMaYF6XyJ6JMWlVsc+t42tm1HSEDmOs3A8fC9yyeisgLhsTVQokOZ0zw==",
+      "bytes": 14872,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+        }
+      ],
+      "dependencies": {
+        "@protobufjs/aspromise": {
+          "requested": "^1.1.1",
+          "resolved": "@protobufjs/aspromise@1.1.2"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@protobufjs/float@1.0.2",
+      "license": "BSD-3-Clause",
+      "integrity": "sha512-Ddb+kVXlXst9d+R9PfTIxh1EdNkgoRe5tOX6t01f1lYWOvJnSPDBlG241QLzcyPdoNTsblLUdujGSE4RzrTZGQ==",
+      "bytes": 26968,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@protobufjs/path@1.1.2",
+      "license": "BSD-3-Clause",
+      "integrity": "sha512-6JOcJ5Tm08dOHAbdR3GrvP+yUUfkjG5ePsHYczMFLq3ZmMkAD98cDgcT2iA1lJ9NVwFd4tH/iSSoe44YWkltEA==",
+      "bytes": 7770,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@protobufjs/pool@1.1.0",
+      "license": "BSD-3-Clause",
+      "integrity": "sha512-0kELaGSIDBKvcgS4zkjz1PeddatrjYcmMWOlAuAPwAeccUrPHdUqo/J6LiymHHEiJT5NrF1UVwxY14f+fy4WQw==",
+      "bytes": 6249,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@protobufjs/utf8@1.1.2",
+      "license": "BSD-3-Clause",
+      "integrity": "sha512-b1UQwcEZ4yCnMCD8DAL1VlbvBJE9/IX4FTIp7BG1xYpf29SLazLSrqUkj4w7Y5y7cCVP6E5tcqqcI0xemPkHug==",
+      "bytes": 42558,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "a67b34a24a5daddcce46aea68c5004e4442bbfb63690329fa607bf4de4269794"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@smithy/core@3.35.2",
+      "license": "Apache-2.0",
+      "integrity": "sha512-ejTukBuP/Pg3t9N8Ux+0zKsXeHWm7p6W3HbXFOyltKasSxZwCFmvTut7kBdZSCF3m9y1bXXyVu6p2xuMFcsTyQ==",
+      "bytes": 1797666,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "07364a5f7d0177a59a05a0002187431f8f899320983c0dc049d72df015e8064c"
+        }
+      ],
+      "dependencies": {
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@smithy/credential-provider-imds@4.5.2",
+      "license": "Apache-2.0",
+      "integrity": "sha512-A9uSdn72ozbRUSit0eib0TW7nXuNPlaeM0zcGkJ+nE6tFcSDbnmtwoxbTCFBukVQcszDAyvsd7+rTduPTXpygg==",
+      "bytes": 80309,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+        }
+      ],
+      "dependencies": {
+        "@smithy/core": {
+          "requested": "^3.33.2",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/types": {
+          "requested": "^4.17.2",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@smithy/fetch-http-handler@5.8.0",
+      "license": "Apache-2.0",
+      "integrity": "sha512-ycSJu3tFAQ4v04CBB0agqFMVsSQ1iG3yw+SpgxRqKfaURpQD4CZ8Wn0zPMmSnOuTpTh65Vz+EA0rMrw089wvkA==",
+      "bytes": 50303,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+        }
+      ],
+      "dependencies": {
+        "@smithy/core": {
+          "requested": "^3.33.3",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/types": {
+          "requested": "^4.18.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@smithy/node-http-handler@4.12.1",
+      "license": "Apache-2.0",
+      "integrity": "sha512-ThMkboGeONWXAelq9FvGsuJC4rOi+qyC4/zhUF58xYpxUg5sQKx2VXZYJmtNjr4dSuBJ1HeJXETQILCz3wOHvw==",
+      "bytes": 128867,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+        }
+      ],
+      "dependencies": {
+        "@smithy/core": {
+          "requested": "^3.33.3",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/types": {
+          "requested": "^4.18.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@smithy/signature-v4@5.7.4",
+      "license": "Apache-2.0",
+      "integrity": "sha512-tHy0K0VtqNd5Y7Y41h0a0Lhh0L1GzC08dTWg0F7vRJWFtTENg7IZikf3wQkanYIRdb7ngoIPMTmqgUi401fEeQ==",
+      "bytes": 106103,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "d82ceb8cbd004a2d4834085c557d55459f528e30268d95159ee1e4030a693a6e"
+        }
+      ],
+      "dependencies": {
+        "@smithy/core": {
+          "requested": "^3.35.0",
+          "resolved": "@smithy/core@3.35.2"
+        },
+        "@smithy/types": {
+          "requested": "^4.19.0",
+          "resolved": "@smithy/types@4.19.0"
+        },
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@smithy/types@4.19.0",
+      "license": "Apache-2.0",
+      "integrity": "sha512-r7jh49VJxGerfAcTQA6gXcKc+98zOp/tqRwzYjgOE+iSQsP6cEU1hq2QzbuipmP68QtYdY9wKEhiCQZIzHgZ4Q==",
+      "bytes": 316339,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "07364a5f7d0177a59a05a0002187431f8f899320983c0dc049d72df015e8064c"
+        }
+      ],
+      "dependencies": {
+        "tslib": {
+          "requested": "^2.6.2",
+          "resolved": "tslib@2.8.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@stablelib/base64@1.0.1",
+      "license": "MIT",
+      "integrity": "sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ==",
+      "bytes": 46052,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "1605b77bebe018db1fc27bd22fbcdeed1335c617937a124299a8b042b42b0fb6"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@types/node@24.19.1",
+      "license": "MIT",
+      "integrity": "sha512-aS3/DG0oM05K0RIXXP+hKjinGG5IgSSVGzswZxW3O0sS3pH4/fycXundUC9XsszgKCk4gHXylTEK6hyFxVxnoQ==",
+      "bytes": 2613546,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ],
+      "dependencies": {
+        "undici-types": {
+          "requested": ">=7.24.0 <7.24.7",
+          "resolved": "undici-types@7.24.6"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "@types/retry@0.12.0",
+      "license": "MIT",
+      "integrity": "sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==",
+      "bytes": 7654,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "dea9265341829002e2c23a7372393eb2ed6e26085fb623f38a4ba0af833f30a6"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "agent-base@7.1.4",
+      "license": "MIT",
+      "integrity": "sha512-MnA+YT8fwfJPgBx3m60MNqakm30XOkyIoH1y6huTQvC0PwZG7ki8NacLBcrPbNoo8vEZy7Jpuk7+jMO+CUovTQ==",
+      "bytes": 23962,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "8d8c55319c7729d57be811c747452636688d54f19701ee0752b6b15ad3771d9a"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "agent-base@9.0.0",
+      "license": "MIT",
+      "integrity": "sha512-TQf59BsZnytt8GdJKLPfUZ54g/iaUL2OWDSFCCvMOhsHduDQxO8xC4PNeyIkVcA5KwL2phPSv0douC0fgWzmnA==",
+      "bytes": 21009,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "8d8c55319c7729d57be811c747452636688d54f19701ee0752b6b15ad3771d9a"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "base64-js@1.5.1",
+      "license": "MIT",
+      "integrity": "sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==",
+      "bytes": 9624,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "5b37224c080cdcc97c871ada971c224e9926370fe74f11b539aa1cf9f3b1aca1"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "bignumber.js@9.3.1",
+      "license": "MIT",
+      "integrity": "sha512-Ko0uX15oIUS7wJ3Rb30Fs6SkVbLmPBAKdlm7q9+ak9bbIeFf0MwuBsQV6z7+X768/cHsfg+WlysDWJcmthjsjQ==",
+      "bytes": 351589,
+      "licenses": [
+        {
+          "file": "LICENCE.md",
+          "sha256": "def75ba75d6426f1c3f02addf8e175fbe6e0d8a82e541cbdffc16d2bd8fd7d6a"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "bowser@2.14.1",
+      "license": "MIT",
+      "integrity": "sha512-tzPjzCxygAKWFOJP011oxFHs57HzIhOEracIgAePE4pqB3LikALKnSzUyU4MGs9/iCEUuHlAJTjTc5M+u7YEGg==",
+      "bytes": 258293,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "dfde54fedc270c2a305d9a9f993d93f706d34624455a2fd2d2a05ca34d8ae8c3"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "buffer-equal-constant-time@1.0.1",
+      "license": "BSD-3-Clause",
+      "integrity": "sha512-zRpUiDwd/xk6ADqPMATG8vc9VPrkck7T07OIx0gnjmJAnHnTVXNQG3vfvWNuiZIkwu9KrKdA1iJKfsfTVxE6NA==",
+      "bytes": 5232,
+      "licenses": [
+        {
+          "file": "LICENSE.txt",
+          "sha256": "751d0e80fb5c828f8c3de198cc760e1e05377e47c8263ab6ee2f10cdc19ba658"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "data-uri-to-buffer@4.0.1",
+      "license": "MIT",
+      "integrity": "sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==",
+      "bytes": 10049,
+      "licenses": [],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "debug@4.4.3",
+      "license": "MIT",
+      "integrity": "sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==",
+      "bytes": 42793,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "3a61c6c96caf5c1d9b623fb9b04c822b783dfcb78aa7e49c76a3f643e6ed7f95"
+        }
+      ],
+      "dependencies": {
+        "ms": {
+          "requested": "^2.1.3",
+          "resolved": "ms@2.1.3"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "ecdsa-sig-formatter@1.0.11",
+      "license": "Apache-2.0",
+      "integrity": "sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==",
+      "bytes": 20588,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "50a6b24f8defc31a078aa9799a91d776f83948071574854f12473362aee74d0d"
+        }
+      ],
+      "dependencies": {
+        "safe-buffer": {
+          "requested": "^5.0.1",
+          "resolved": "safe-buffer@5.1.2"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "extend@3.0.2",
+      "license": "MIT",
+      "integrity": "sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==",
+      "bytes": 23461,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "97af7428f93afbab9bf79cd09254da1357161794f4255eb1b4599f04dd2d2e7c"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "fast-sha256@1.3.0",
+      "license": "Unlicense",
+      "integrity": "sha512-n11RGP/lrWEFI/bWdygLxhI+pVeo1ZYIVwvvPkW7azl/rOy+F3HYRZ2K5zeE9mmkhQppyv9sQFx0JM9UabnpPQ==",
+      "bytes": 27246,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "88d9b4eb60579c191ec391ca04c16130572d7eedc4a86daa58bf28c6e14c9bcd"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "fetch-blob@3.2.0",
+      "license": "MIT",
+      "integrity": "sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==",
+      "bytes": 21755,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "a5edccac92c3aa845694dcfaa72a0c098c1ae40d5ca6a37e4e59d778cf8e29bd"
+        }
+      ],
+      "dependencies": {
+        "node-domexception": {
+          "requested": "^1.0.0",
+          "resolved": "node-domexception@1.0.0"
+        },
+        "web-streams-polyfill": {
+          "requested": "^3.0.3",
+          "resolved": "web-streams-polyfill@3.3.3"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "formdata-polyfill@4.0.10",
+      "license": "MIT",
+      "integrity": "sha512-buewHzMvYL29jdeQTVILecSaZKnt/RJWjoZCF5OW60Z67/GmSLBkOFM7qh1PI3zFNtJbaZL5eQu1vLfazOwj4g==",
+      "bytes": 32220,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "435a6437e47e5e479942255680e7fbe5f333d55234ada1c35f6115ca641d5bb4"
+        }
+      ],
+      "dependencies": {
+        "fetch-blob": {
+          "requested": "^3.1.2",
+          "resolved": "fetch-blob@3.2.0"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "gaxios@7.3.1",
+      "license": "Apache-2.0",
+      "integrity": "sha512-kB3rzJV7d9juLZh8/56QTXCwQfxyhdOMdyYk1HdQKFtF8TJTDTZQJtixWIwXdE9Jji91mC41DUNpjleo4L4eAQ==",
+      "bytes": 679009,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ],
+      "dependencies": {
+        "extend": {
+          "requested": "^3.0.2",
+          "resolved": "extend@3.0.2"
+        },
+        "https-proxy-agent": {
+          "requested": "^7.0.1",
+          "resolved": "https-proxy-agent@7.0.6"
+        },
+        "node-fetch": {
+          "requested": "^3.3.2",
+          "resolved": "node-fetch@3.3.2"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "gcp-metadata@8.1.2",
+      "license": "Apache-2.0",
+      "integrity": "sha512-zV/5HKTfCeKWnxG0Dmrw51hEWFGfcF2xiXqcA3+J90WDuP0SvoiSO5ORvcBsifmx/FoIjgQN3oNOGaQ5PhLFkg==",
+      "bytes": 56762,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ],
+      "dependencies": {
+        "gaxios": {
+          "requested": "^7.0.0",
+          "resolved": "gaxios@7.3.1"
+        },
+        "google-logging-utils": {
+          "requested": "^1.0.0",
+          "resolved": "google-logging-utils@1.1.3"
+        },
+        "json-bigint": {
+          "requested": "^1.0.0",
+          "resolved": "json-bigint@1.0.0"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "google-auth-library@10.9.1",
+      "license": "Apache-2.0",
+      "integrity": "sha512-i1ydyHrqcIxXkWh/uBmVkzCvIuq5yiK2ATndIe5XxKholrG/MTYP9xGYka4sQhrbIAgGjL2B6NOE7rFaiF3fXw==",
+      "bytes": 601779,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ],
+      "dependencies": {
+        "base64-js": {
+          "requested": "^1.3.0",
+          "resolved": "base64-js@1.5.1"
+        },
+        "ecdsa-sig-formatter": {
+          "requested": "^1.0.11",
+          "resolved": "ecdsa-sig-formatter@1.0.11"
+        },
+        "gaxios": {
+          "requested": "^7.1.4",
+          "resolved": "gaxios@7.3.1"
+        },
+        "gcp-metadata": {
+          "requested": "8.1.2",
+          "resolved": "gcp-metadata@8.1.2"
+        },
+        "google-logging-utils": {
+          "requested": "1.1.3",
+          "resolved": "google-logging-utils@1.1.3"
+        },
+        "jws": {
+          "requested": "^4.0.0",
+          "resolved": "jws@4.0.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "google-logging-utils@1.1.3",
+      "license": "Apache-2.0",
+      "integrity": "sha512-eAmLkjDjAFCVXg7A1unxHsLf961m6y17QFqXqAXGj/gVkKFrEICfStRfwUlGNfeCEjNRa32JEWOUTlYXPyyKvA==",
+      "bytes": 63510,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "http-proxy-agent@9.1.0",
+      "license": "MIT",
+      "integrity": "sha512-2NxoveTT58mjYT4n3RPTEfCZGLMbidoO8XEieXfpSYxu+PQJ1qpx4ypwH6N+uF9twBPIvRRgvkvW5HUTYWENig==",
+      "bytes": 17632,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "71368fd0f5b4129191e9afcd1e1ef2dc89a9090d3e4d80bbab92dafd032b3bef"
+        }
+      ],
+      "dependencies": {
+        "agent-base": {
+          "requested": "9.0.0",
+          "resolved": "agent-base@9.0.0"
+        },
+        "debug": {
+          "requested": "^4.3.4",
+          "resolved": "debug@4.4.3"
+        },
+        "proxy-agent-negotiate": {
+          "requested": "1.1.0",
+          "resolved": "proxy-agent-negotiate@1.1.0"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "https-proxy-agent@7.0.6",
+      "license": "MIT",
+      "integrity": "sha512-vK9P5/iUfdl95AI+JVyUuIcVtd4ofvtrOr3HNtM2yxC9bnMbEdp3x01OhQNnjb8IJYi38VlTE3mBXwcfvywuSw==",
+      "bytes": 27706,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "8d8c55319c7729d57be811c747452636688d54f19701ee0752b6b15ad3771d9a"
+        }
+      ],
+      "dependencies": {
+        "agent-base": {
+          "requested": "^7.1.2",
+          "resolved": "agent-base@7.1.4"
+        },
+        "debug": {
+          "requested": "4",
+          "resolved": "debug@4.4.3"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "https-proxy-agent@9.1.0",
+      "license": "MIT",
+      "integrity": "sha512-ag87y7cJJ9/3+GxFr8Oy4O5faDsGRGnBGsJj/YjOSsSx/5eadKLYTMPlzuR6obgoCDDm0abAAZitXXQkMOPSpA==",
+      "bytes": 33422,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "8d8c55319c7729d57be811c747452636688d54f19701ee0752b6b15ad3771d9a"
+        }
+      ],
+      "dependencies": {
+        "agent-base": {
+          "requested": "9.0.0",
+          "resolved": "agent-base@9.0.0"
+        },
+        "debug": {
+          "requested": "^4.3.4",
+          "resolved": "debug@4.4.3"
+        },
+        "proxy-agent-negotiate": {
+          "requested": "1.1.0",
+          "resolved": "proxy-agent-negotiate@1.1.0"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "json-bigint@1.0.0",
+      "license": "MIT",
+      "integrity": "sha512-SiPv/8VpZuWbvLSMtTDU8hEfrZWg/mH/nV/b4o0CYbSxu1UIQPLdwKOCIyLQX+VIPO5vrLX3i8qtqFyhdPSUSQ==",
+      "bytes": 37345,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "def82c085d05e795fe6a9cb5b70c48e022212355afc0e91d4de047cade28df06"
+        }
+      ],
+      "dependencies": {
+        "bignumber.js": {
+          "requested": "^9.0.0",
+          "resolved": "bignumber.js@9.3.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "json-schema-to-ts@3.1.1",
+      "license": "MIT",
+      "integrity": "sha512-+DWg8jCJG2TEnpy7kOm/7/AxaYoaRbjVB4LFZLySZlWn8exGs3A4OLJR966cVvU26N7X9TWxl+Jsw7dzAqKT6g==",
+      "bytes": 121555,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "18a2bfd070b08bd1cc538c90f59989a9523e070e72fe9a9068593c3e82f44fa7"
+        }
+      ],
+      "dependencies": {
+        "@babel/runtime": {
+          "requested": "^7.18.3",
+          "resolved": "@babel/runtime@7.29.10"
+        },
+        "ts-algebra": {
+          "requested": "^2.0.0",
+          "resolved": "ts-algebra@2.0.0"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "jwa@2.0.1",
+      "license": "MIT",
+      "integrity": "sha512-hRF04fqJIP8Abbkq5NKGN0Bbr3JxlQ+qhZufXVr0DvujKy93ZCbXZMHDL4EOtodSbCWxOqR8MS1tXA5hwqCXDg==",
+      "bytes": 14052,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "3320319f8a5f42bc4254e65471eca7a5ea4dc8c883c4c24b4868e36b14890bcf"
+        }
+      ],
+      "dependencies": {
+        "buffer-equal-constant-time": {
+          "requested": "^1.0.1",
+          "resolved": "buffer-equal-constant-time@1.0.1"
+        },
+        "ecdsa-sig-formatter": {
+          "requested": "1.0.11",
+          "resolved": "ecdsa-sig-formatter@1.0.11"
+        },
+        "safe-buffer": {
+          "requested": "^5.0.1",
+          "resolved": "safe-buffer@5.1.2"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "jws@4.0.1",
+      "license": "MIT",
+      "integrity": "sha512-EKI/M/yqPncGUUh44xz0PxSidXFr/+r0pA70+gIYhjv+et7yxM+s29Y+VGDkovRofQem0fs7Uvf4+YmAdyRduA==",
+      "bytes": 18822,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "3320319f8a5f42bc4254e65471eca7a5ea4dc8c883c4c24b4868e36b14890bcf"
+        }
+      ],
+      "dependencies": {
+        "jwa": {
+          "requested": "^2.0.1",
+          "resolved": "jwa@2.0.1"
+        },
+        "safe-buffer": {
+          "requested": "^5.0.1",
+          "resolved": "safe-buffer@5.1.2"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "long@5.3.2",
+      "license": "Apache-2.0",
+      "integrity": "sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==",
+      "bytes": 139458,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "ms@2.1.3",
+      "license": "MIT",
+      "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==",
+      "bytes": 6721,
+      "licenses": [
+        {
+          "file": "license.md",
+          "sha256": "1662fae9b5314d11cf51284e2dcd1f006a354f7343f08712a730fcff9a359801"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "node-domexception@1.0.0",
+      "license": "MIT",
+      "integrity": "sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==",
+      "bytes": 29162,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "8ec1386f7f078b0c7cd25341cd80f332df902371cda9f40c10ec2b4007b420b7"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "node-fetch@3.3.2",
+      "license": "MIT",
+      "integrity": "sha512-dRB78srN/l6gqWulah9SrxeYnxeddIG30+GOqK/9OlLVyLg3HPnr6SqOWTWOXKRwC2eGYCkZ59NNuSgvSrpgOA==",
+      "bytes": 107319,
+      "licenses": [
+        {
+          "file": "LICENSE.md",
+          "sha256": "3e2c11dcf3f17ab585baab8faba54772d7872f1c6e026022acd4b4006665efb0"
+        }
+      ],
+      "dependencies": {
+        "data-uri-to-buffer": {
+          "requested": "^4.0.0",
+          "resolved": "data-uri-to-buffer@4.0.1"
+        },
+        "fetch-blob": {
+          "requested": "^3.1.4",
+          "resolved": "fetch-blob@3.2.0"
+        },
+        "formdata-polyfill": {
+          "requested": "^4.0.10",
+          "resolved": "formdata-polyfill@4.0.10"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "openai@7.19.0",
+      "license": "Apache-2.0",
+      "integrity": "sha512-MX2s3u2L5racTO0CC/SWpCOasJQBCJrqLKXK+l82cAhdeF8mPMBEe/gxMm0ZFa2xpKpOFLRjxv5afYEZbBXmbQ==",
+      "bytes": 18477473,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "636eb7d79da9bb6d515a4b3fd417aa26679eb3cf16396ddab4bc55fa74e616e4"
+        },
+        {
+          "file": "src/_vendor/partial-json-parser/LICENSE",
+          "sha256": "cd519ad3d7e012427f978dfb2e3b92ee403d189d7b859ba6bf68fd7e12ca456f"
+        },
+        {
+          "file": "src/_vendor/zod-to-json-schema/LICENSE",
+          "sha256": "7beaa85b57d7211f6684af6c1d97e6d9ef7ec1851f779152043a47a8700306a9"
+        },
+        {
+          "file": "src/internal/qs/LICENSE.md",
+          "sha256": "d8c77eaffed7f1f874b97f66ee47a557ae24fd59bae8ae14f9b1b84f26a94d2f"
+        }
+      ],
+      "dependencies": {},
+      "peers": {
+        "@aws-sdk/credential-provider-node": {
+          "requested": ">=3.972.0 <4",
+          "optional": true,
+          "resolved": "@aws-sdk/credential-provider-node@3.972.85"
+        },
+        "@smithy/hash-node": {
+          "requested": ">=4.3.0 <5",
+          "optional": true,
+          "resolved": null
+        },
+        "@smithy/signature-v4": {
+          "requested": ">=5.4.0 <6",
+          "optional": true,
+          "resolved": "@smithy/signature-v4@5.7.4"
+        },
+        "undici": {
+          "requested": ">=5 <9",
+          "optional": true,
+          "resolved": "undici@7.30.0"
+        },
+        "ws": {
+          "requested": "^8.21.0",
+          "optional": true,
+          "resolved": "ws@8.22.0"
+        },
+        "zod": {
+          "requested": "^3.25 || ^4.0",
+          "optional": true,
+          "resolved": null
+        }
+      },
+      "optional_missing": []
+    },
+    {
+      "id": "p-retry@4.6.2",
+      "license": "MIT",
+      "integrity": "sha512-312Id396EbJdvRONlngUx0NydfrIQ5lsYu0znKVUzVvArzEIt08V1qhtyESbGVd1FGX7UKtiFp5uwKZdM8wIuQ==",
+      "bytes": 11032,
+      "licenses": [
+        {
+          "file": "license",
+          "sha256": "48da2f39e100d4085767e94966b43f4fa95ff6a0698fba57ed460914e35f94a0"
+        }
+      ],
+      "dependencies": {
+        "@types/retry": {
+          "requested": "0.12.0",
+          "resolved": "@types/retry@0.12.0"
+        },
+        "retry": {
+          "requested": "^0.13.1",
+          "resolved": "retry@0.13.1"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "partial-json@0.1.7",
+      "license": "MIT",
+      "integrity": "sha512-Njv/59hHaokb/hRUjce3Hdv12wd60MtM9Z5Olmn+nehe0QDAsRtRbJPvJ0Z91TusF0SuZRIvnM+S4l6EIP8leA==",
+      "bytes": 21852,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "cd519ad3d7e012427f978dfb2e3b92ee403d189d7b859ba6bf68fd7e12ca456f"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "protobufjs@7.6.6",
+      "license": "BSD-3-Clause",
+      "integrity": "sha512-dYDWdjSl5RNb7SgPxGQcRU+GtvP7s2fpkrY0r432PcOIaZ0/rBcxEZnQN67iJhFuQiVw754JDoPruPCNdGsbjg==",
+      "bytes": 3053104,
+      "licenses": [
+        {
+          "file": "google/LICENSE",
+          "sha256": "4ab87e6e3c0c0b78e47c77d49ec10c048f8a519fb8062e6e3217e3e6e9b0c6e9"
+        },
+        {
+          "file": "LICENSE",
+          "sha256": "49d6a1c9a623784c61c6cb70f773f3457faceb1914a13c8560a9823b7631950c"
+        }
+      ],
+      "dependencies": {
+        "@protobufjs/aspromise": {
+          "requested": "^1.1.2",
+          "resolved": "@protobufjs/aspromise@1.1.2"
+        },
+        "@protobufjs/base64": {
+          "requested": "^1.1.2",
+          "resolved": "@protobufjs/base64@1.1.2"
+        },
+        "@protobufjs/codegen": {
+          "requested": "^2.0.5",
+          "resolved": "@protobufjs/codegen@2.0.5"
+        },
+        "@protobufjs/eventemitter": {
+          "requested": "^1.1.1",
+          "resolved": "@protobufjs/eventemitter@1.1.1"
+        },
+        "@protobufjs/fetch": {
+          "requested": "^1.1.1",
+          "resolved": "@protobufjs/fetch@1.1.1"
+        },
+        "@protobufjs/float": {
+          "requested": "^1.0.2",
+          "resolved": "@protobufjs/float@1.0.2"
+        },
+        "@protobufjs/path": {
+          "requested": "^1.1.2",
+          "resolved": "@protobufjs/path@1.1.2"
+        },
+        "@protobufjs/pool": {
+          "requested": "^1.1.0",
+          "resolved": "@protobufjs/pool@1.1.0"
+        },
+        "@protobufjs/utf8": {
+          "requested": "^1.1.1",
+          "resolved": "@protobufjs/utf8@1.1.2"
+        },
+        "@types/node": {
+          "requested": ">=13.7.0",
+          "resolved": "@types/node@24.19.1"
+        },
+        "long": {
+          "requested": "^5.3.2",
+          "resolved": "long@5.3.2"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "proxy-agent-negotiate@1.1.0",
+      "license": "MIT",
+      "integrity": "sha512-N8IBcM3UgCVzz2L2Lqv8DVntDnnC8/hiV4nEDUPkqq72TPUgYWjQc+bdZlBPZK9LzPAvOY//gAt0S0DApoOXWQ==",
+      "bytes": 4509,
+      "licenses": [],
+      "dependencies": {},
+      "peers": {
+        "kerberos": {
+          "requested": "^2.0.0",
+          "optional": true,
+          "resolved": null
+        }
+      },
+      "optional_missing": []
+    },
+    {
+      "id": "retry@0.13.1",
+      "license": "MIT",
+      "integrity": "sha512-XQBQ3I8W1Cge0Seh+6gjj03LbmRFWuoszgK9ooCpwYIrhhoO80pfq4cUkU5DkknwfOfFteRwlZ56PYOGYyFWdg==",
+      "bytes": 18852,
+      "licenses": [
+        {
+          "file": "License",
+          "sha256": "01ad164273e8e095abc9dbd1c21e194594a671af7d528cb43ee7b4c903ba7da3"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "safe-buffer@5.1.2",
+      "license": "MIT",
+      "integrity": "sha512-Gd2UZBJDkXlY7GbJxfsE8/nvKkUEU1G38c1siN6QP6a9PT9MmHB8GnpscSmMJSoF8LOIrt8ud/wPtojys4G6+g==",
+      "bytes": 31686,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "c7cc929b57080f4b9d0c6cf57669f0463fc5b39906344dfc8d3bc43426b30eac"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "standardwebhooks@1.1.1",
+      "license": "MIT",
+      "integrity": "sha512-bCbX9ZEyFkWPsRz7Bl3NuQUJohmwGSev/yhr7vhaGPlc4AfIrspIRa6cPTBuI1ItmrTDJ4d/S2hCsfe4+vQGnQ==",
+      "bytes": 13402,
+      "licenses": [],
+      "dependencies": {
+        "@stablelib/base64": {
+          "requested": "^1.0.0",
+          "resolved": "@stablelib/base64@1.0.1"
+        },
+        "fast-sha256": {
+          "requested": "^1.3.0",
+          "resolved": "fast-sha256@1.3.0"
+        }
+      },
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "ts-algebra@2.0.0",
+      "license": "MIT",
+      "integrity": "sha512-FPAhNPFMrkwz76P7cdjdmiShwMynZYN6SgOujD1urY4oNm80Ou9oMdmbR45LotcKOXoy7wSmHkRFE6Mxbrhefw==",
+      "bytes": 101154,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "18a2bfd070b08bd1cc538c90f59989a9523e070e72fe9a9068593c3e82f44fa7"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "tslib@2.8.1",
+      "license": "0BSD",
+      "integrity": "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==",
+      "bytes": 90359,
+      "licenses": [
+        {
+          "file": "LICENSE.txt",
+          "sha256": "210b19e543130388c68654b7497e967119ce17145f66ab7d85688fbd70f08751"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "typebox@1.3.27",
+      "license": "MIT",
+      "integrity": "sha512-zu+jc1pcy4UiNThxikUr36f0Rybk9PEeCg/NE6adeWr/SKsdNO4EzZHYRDlv2YCVAfj3Odq3dESSo/jNyoBXzA==",
+      "bytes": 1512886,
+      "licenses": [
+        {
+          "file": "license",
+          "sha256": "e8a7cc256941a26ba8234f04390165243a4d42f74fd6491934140605bf7eae2d"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "undici-types@7.24.6",
+      "license": "MIT",
+      "integrity": "sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg==",
+      "bytes": 116546,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "undici@7.30.0",
+      "license": "MIT",
+      "integrity": "sha512-dkrQXeHSaoamnItlYbmzG0wFYrM0ZwDxCIg0A7aKjTyyhh9svRzCNFEzV+Vm05/yehjCzjDZ31KXfGEjYSztDQ==",
+      "bytes": 1658921,
+      "licenses": [
+        {
+          "file": "lib/web/fetch/LICENSE",
+          "sha256": "a21d6c8d3fc631198b97e57584697f7f9c37805c71c6cf9a12e4442b40394b88"
+        },
+        {
+          "file": "LICENSE",
+          "sha256": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "web-streams-polyfill@3.3.3",
+      "license": "MIT",
+      "integrity": "sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw==",
+      "bytes": 9036205,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "81008a3fb78f69f3c4a72a9e005c8582342ab62864371b3ab8e1b6af9041e080"
+        }
+      ],
+      "dependencies": {},
+      "peers": {},
+      "optional_missing": []
+    },
+    {
+      "id": "ws@8.22.0",
+      "license": "MIT",
+      "integrity": "sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg==",
+      "bytes": 151410,
+      "licenses": [
+        {
+          "file": "LICENSE",
+          "sha256": "2b29dcfe0d6471f7e8c92c5fb38c9f93edee10330937055440192f1832b1ecef"
+        }
+      ],
+      "dependencies": {},
+      "peers": {
+        "bufferutil": {
+          "requested": "^4.0.1",
+          "optional": true,
+          "resolved": null
+        },
+        "utf-8-validate": {
+          "requested": ">=5.0.2",
+          "optional": true,
+          "resolved": null
+        }
+      },
+      "optional_missing": []
+    }
+  ]
+}
