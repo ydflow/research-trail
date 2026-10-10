@@ -2142,3 +2142,44 @@ Draft PR 的 [GitHub Actions](https://github.com/ydflow/research-trail/actions?q
 起点Head的全部两次Windows Actions：[PR 38057065854](https://github.com/ydflow/research-trail/actions/runs/38057065854) 与 [push 38057043841](https://github.com/ydflow/research-trail/actions/runs/38057043841) 均SUCCESS。两日志实际确认736 Python/16 Worker Node+19旧Node/58 Electron，失败/取消/跳过0；这是PR发布轮重新查询的远程证据，不是本轮新执行本机全套。既有Starlette/httpx、Vite chunk、Actions Node20/punycode以及uv准备提示保留。
 
 本次合并前仅补充ROADMAP/EVIDENCE阶段记录；git diff --check及仅文档范围检查通过。文档提交形成新Head后，仍需核对该Head的全部Actions成功、无冲突和阻塞审查，再转Ready/普通合并。其结果以PR最终检查和合并回执为准；合并后的main CI单独报告，不能拿合并前CI代替。同步使用fetch和本地main fast-forward，保留功能分支，不reset/clean/force-push或删除其他分支。完成时确认本地main与origin/main相同、工作区干净，停止等待下一步。
+
+## 64. P2-03：pi 模型传输与工具循环（2026-10-11）
+
+用户仅授权本地P2-03，不提交/推送/PR/发布或P2-04。起点实际Git根`<repo>`、main HEAD `4f5d2d472e7ce90eca0ccdf9a4879d43fd35b97d`，工作区与索引干净；创建`feat/phase2-pi-model-bridge`，HEAD不变。已读AGENTS、P2-01架构/P2-02桥文档、ROADMAP/EVIDENCE、AgentRunner/Fake/RuleDialog/OpenAI/ToolRegistry、Python桥与Worker/协议/测试，以及安装产物的真实pi接口；无用户修改被覆盖。
+
+研迹本轮原创薄适配：PiModelBridge继承原进程/整批工具执行，实现权威当前上下文、工具声明/模型call_index核对、最多9模型请求和独立模型deadline、私有完成队列；Node新增受限文本Chat转换和python-model模式streamFn。真正的Agent循环仍由固定pi核心执行。Fake没有complete，使用原RuleDialog.complete调用FakeModelProvider.plan/respond；OpenAI调用原complete/_request，所有HTTP响应由httpx.MockTransport提供。没有P2-02固定batches冒充模型结果。关键路径及协议完整说明见 [PHASE2-PI-MODEL-BRIDGE](PHASE2-PI-MODEL-BRIDGE.md)。
+
+源码确认并纠正旧版接口假设：固定pi1.1.0把系统指令与toolsAdded放在system transcript中，streamFn收到normalizeContext({messages})；没有读取不存在的context.systemPrompt/tools。assistant的content/null/raw arguments经关联保存，toolResult文本及toolCallId映射回Chat工具消息；参数原串不被Node解析后重编码，重复键仍交Python严格整批拒绝。model_request必须与Python已知历史和原注册表声明一致；tool_batch必须与Python刚返回的模型调用一致，再走原admit/decode/execute。最终答案必须与Python完成响应相同。未改变正式AgentRunner、模型HTTP客户端、业务API/UI、行情/金融公式、研究恢复、Store/数据库或生成契约。
+
+安全：Node无API key/认证头/私有模型配置，进程白名单环境沿用；成功响应只允许assistant字段，既有文本key脱敏外，桥拒绝tool ID/name/原参数中已知key（含JSON转义）。模型错误保留原code/retryable；失败无重试/回退。完成线程的私有队列、checkpoint、model_stop避免迟到结果写入history/事件或触发第二次工具；取消MockTransport实际结束其async exchange。无法强杀任意忽略stop的同步provider线程仍是边界。JSONL128KiB、模型payload96KiB、参数4KiB、深度32、序号256、最终4000字符和8工具调用保持受限；非逐Token模型流。
+
+实际专项证据：
+
+| 类型 | 本轮结果 |
+| --- | --- |
+| 新Python专项 | 最终新旧87 passed（原40+新增47，77.41秒），1项既有弃用警告，无失败/跳过；此前新增44项40.12秒/43项36.21秒通过；含真实pi/Fake双轮、真实complete/MockTransport双轮、混合非法批次零执行、预算/重复ID/非法输出/错误分类、取消/超时/崩溃迟到、协作HTTP取消、4key echo、明确输运桩、Store重放/失败不重试与3产物哈希/路径单元 |
+| P2-02原Python专项 | 开发首轮新旧80 passed（当时新增40项，56.75秒）；40项原用例/断言/时限保留并通过 |
+| Node专项 | 24 passed，原16+新增8；失败/取消/跳过/todo 0；真实Agent异步批次屏障仍通过；新增映射及真实Worker非法model_response/重复/迟到处理 |
+| verify_pi_model | Fake/RuleDialog与OpenAI/MockTransport均completed；各model_calls=2、stream_calls=2、results_seen=1、tool执行=1；AAPL.US=189.43 USD、fixture、模拟数据；Mock第二次上下文确有相同tool_call_id及完整ToolSuccess |
+| 依赖/许可及diff | git diff --check、node scripts/pi-audit.mjs通过；无新依赖/package.json/bun.lock改动；87包/70789644已安装bytes、5声明文本；proxy-agent-negotiate完整版权缺口仍阻塞Worker安装器 |
+| 完整离线验收 | 最终built-verify退出0：783 Python（329.23秒）/24 pi Node（3.76秒）+19原Node（1.69秒）/58实际Electron（501.01秒），合计884项，原829保留、新增55（47 Python/8 Node），失败/取消/跳过0。12工程案例/30历史样例、契约/类型/native及pi审计、0020重复迁移/模型一致性、构建、两个模型CLI和原verify_pi全通过。四份仓库外日志为`%TEMP%\research-trail-p2-03-{verify,final-verify,serial-verify,built-verify}.log` |
+
+当前Node24.19.0/Bun1.4.2/uv0.12.8/Python3.12.14；无安装/升级。最终保留1项Starlette/httpx弃用与Vite510.24kB chunk警告。只修改阶段相关13个源码/测试/构建/文档文件；dist开发产物忽略，日志/临时对照脚本在仓库外，未暂存、HEAD不变、未远程写入。源码入口仍可运行原fixture CLI，但极短启动预算的边界保留；默认正式AgentRunner/原Provider/金融业务/API/UI/数据库无diff。
+
+原始失败与修复：旧deadline用例在工具进入前结束，entered.wait(1.5)为False；串行复验也失败，推翻“只因并行”的最初推断。导出main原Worker、仅把import定位同一已安装包及协议作输运对照，当前/基线各3次均同处失败（不是全仓pristine main复验）；ready耗时当前1.063秒/基线0.922秒，超过原0.8秒预算。用已有esbuild0.28.2 tree shake相同真实Worker后，原用例连续3次通过，不改Agent/断言/时限。增加scripts/build-pi-worker.mjs开发构建，忽略dist产物459252字节、manifest705输入/输出哈希，Python核验源码/依赖/产物一致才使用，旧产物/越界路径拒绝；没有安装器/Node分发或新依赖。完整verify现在在测试前离线重建，不用旧产物掩盖新源码。源码入口在極短预算内仍时序敏感。
+
+新增专项没有失败，不删断言/跳过/放宽超时。源码阅读时一次引用不存在的test_openai_provider.py；实际相关测试在test_agent.py/test_model_reasoning.py及本轮专门测试，未将文件名当功能证明。另一次collect-only输出被PowerShell提前关闭产生stdout EINVAL，是诊断命令输运错误，不计为产品测试通过。正式pi生产路径、真实模型/金融服务、Token流/usage、大上下文、OS隔离/Node分发/ASAR/PyInstaller/新安装包和远程CI未执行，不能将MockTransport或真pi离线闭环写成这些验证通过。P2-04只在技术文档建议，停止等待用户审核。
+
+## 65. P2-03 独立 Draft PR 最终审查（2026-10-11）
+
+用户本轮单独授权最终审查、范围内修复、fetch/安全同步main、重新验收、仅阶段提交/推送与创建Draft PR。不授权合并、安装包、Release或P2-04。起点分支`feat/phase2-pi-model-bridge`，HEAD `4f5d2d472e7ce90eca0ccdf9a4879d43fd35b97d`，索引空；13个阶段文件（6修改、7新增）逐一核对，无其他用户修改。GitHub实时登录`ydflow`，origin为`ydflow/research-trail`；fetch确认origin/main仍与HEAD相同，无新增提交或冲突需要处理。开发轮记录保留，本节单独记录发布轮。
+
+已从源码复核：真正固定pi Agent与自定义streamFn、system/assistant原始参数/tool_call_id映射、Python权威上下文与声明核对、完整message_end异步整批屏障、原ToolRegistry唯一执行来源、取消/超时/崩溃及迟到队列隔离、请求消费和失败不重试。5类混合非法批次均断言0 handler执行/0 tool_started；API Key/认证头/私有配置不进入Worker；模型错误沿用原分类。未发现需修复的阶段代码问题，仅补充发布记录与开发/发布证据区分。默认AgentRunner/app/原模型提供商/工具/Store、API/UI、金融计算、数据库迁移和生成契约无diff。
+
+构建审查：verify先离线重建真实Worker，再运行Python集成；Python校验705输入与bundle哈希，拒绝旧源码、改动产物及越界路径。Node专项直接测试同一Worker源码。额外离线重建后，459252字节bundle与manifest均逐字节一致，Python实际选中`packages/pi-worker/dist/worker.mjs`；两产物被git check-ignore确认忽略，不纳入提交。产物哈希不是签名或OS沙箱证明。无新依赖/package.json/bun.lock改动，已有esbuild版本不升级。
+
+本轮重新执行`bun.cmd run verify`退出0：783 Python（342.34秒）、24 pi Node+19原Node、58实际Electron（512.02秒），共884项；新增55项（47 Python/8 Node），原829项全部保留，失败/取消/跳过/todo 0。原P2-02 CLI和Fake/RuleDialog、原OpenAI.complete/MockTransport双场景均通过；后两者各2模型调用、1工具执行、相同tool_call_id回传。契约/类型、12工程案例、30历史样例、0020重复迁移/模型一致性、native/pi审计与main/preload/renderer构建通过。1项既有Starlette/httpx弃用、Vite510.24kB chunk警告保留。本轮无原始失败，无删除断言或放宽旧超时。
+
+git diff --check及全13文件新增内容扫描通过，未发现私钥/GitHub Token/个人目录；没有数据库、日志或私有配置进入阶段清单。本机完整日志`%TEMP%\research-trail-p2-03-pr-verify.log`留在仓库外。pi审计仍为87锁定包/70789644已安装bytes与5项补充声明；proxy-agent-negotiate@1.1.0完整版权/许可缺口仍未解决，阻塞未来Worker安装器分发。真实模型/行情/账户、正式pi API/UI、Node分发/ASAR/PyInstaller/新Windows安装包、通用同步provider强杀与OS隔离仍未验收。
+
+独立PR的最终编号、提交SHA及新Head的全部GitHub检查按实际发布回执核验；[功能分支Actions](https://github.com/ydflow/research-trail/actions?query=branch%3Afeat%2Fphase2-pi-model-bridge)单独记录远程证据，本机通过不能预写为CI成功。保持Draft、不自动合并或发布。回滚可revert本阶段提交并重新verify，不需数据库回退或正式引擎切换，不重试已执行工具。
