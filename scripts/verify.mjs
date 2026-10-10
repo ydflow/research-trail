@@ -39,6 +39,9 @@ function run(label, command, args, cwd = root) {
   if (result.error || result.status !== 0) throw new Error(`${label} failed (${result.error?.message || result.status}).`);
 }
 run('Python version', python, ['-c', 'import sys; assert sys.version_info[:2] == (3, 12); print(sys.version)']);
+run('Fixed pi dependency / license graph (offline)', process.execPath, ['scripts/pi-audit.mjs']);
+run('Real pi event barrier / Worker protocol tests (offline)', process.execPath, ['--test', 'packages/pi-worker/worker.test.mjs']);
+run('Real pi / Python tool round trip (offline)', python, ['-m', 'research_trail.verify_pi', '--node', process.execPath], resolve(root, 'services/backend'));
 run('OpenAPI / TypeScript consistency', process.execPath, ['scripts/contracts.mjs', '--check']);
 run('Frontend type check', process.execPath, [require.resolve('typescript/bin/tsc'), '--noEmit'], resolve(root, 'apps/desktop'));
 run('Collected native dependency notices (offline)',process.execPath,['scripts/native-audit.mjs']);

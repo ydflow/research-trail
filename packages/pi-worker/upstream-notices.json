@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "entries": [
+    {
+      "packages": [
+        "@aws-sdk/credential-provider-http@3.972.75",
+        "@aws-sdk/credential-provider-login@3.972.80",
+        "@aws-sdk/nested-clients@3.997.47"
+      ],
+      "status": "collected",
+      "file": "notices/aws-sdk-LICENSE.txt",
+      "sha256": "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d",
+      "source": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/a960c14e8ce09ab8fd09352e40d75c6b9d52c1ca/LICENSE",
+      "source_sha256": "edea91454b811f127fbdea3d86f378f6719bd372ed440abf82b232f6fca06c3d",
+      "commit": "a960c14e8ce09ab8fd09352e40d75c6b9d52c1ca",
+      "manifests": [
+        {
+          "url": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/a960c14e8ce09ab8fd09352e40d75c6b9d52c1ca/packages-internal/credential-provider-http/package.json",
+          "sha256": "64fbddec8cd91f10514ef78051f5ae4c112093ea665104a45ad45ec540564e0c",
+          "id": "@aws-sdk/credential-provider-http@3.972.75",
+          "license": "Apache-2.0"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/a960c14e8ce09ab8fd09352e40d75c6b9d52c1ca/packages-internal/credential-provider-login/package.json",
+          "sha256": "233b309500cc62716c7fa1271131fc85b3b50291f75ad6aeaab01d1bd8c0786b",
+          "id": "@aws-sdk/credential-provider-login@3.972.80",
+          "license": "Apache-2.0"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/aws/aws-sdk-js-v3/a960c14e8ce09ab8fd09352e40d75c6b9d52c1ca/packages-internal/nested-clients/package.json",
+          "sha256": "1fd00613dc21086918bd424b31850ba5f5393be8e78bb2a49326e7298b178cc6",
+          "id": "@aws-sdk/nested-clients@3.997.47",
+          "license": "Apache-2.0"
+        }
+      ]
+    },
+    {
+      "packages": [
+        "data-uri-to-buffer@4.0.1"
+      ],
+      "status": "collected",
+      "file": "notices/data-uri-to-buffer-LICENSE.txt",
+      "sha256": "3072ef4a004c4f92b37eae61cdc3e27225c0a7d2f5e144700e40b9c5a5a7a9b9",
+      "source": "https://raw.githubusercontent.com/TooTallNate/node-data-uri-to-buffer/85cd8c854aefbf1bb636789d80364cfac8ea1583/README.md",
+      "source_sha256": "a7cc4332acfa1f9b6530e01aac77fefe74f2efa32579215fddaa473013f9a25c",
+      "commit": "85cd8c854aefbf1bb636789d80364cfac8ea1583",
+      "manifests": [
+        {
+          "url": "https://raw.githubusercontent.com/TooTallNate/node-data-uri-to-buffer/85cd8c854aefbf1bb636789d80364cfac8ea1583/package.json",
+          "sha256": "ad4f90a737ab5d8af4dad265e9218456e3779ca5beb70df38dd5feecf80121dd",
+          "id": "data-uri-to-buffer@4.0.1",
+          "license": "MIT"
+        }
+      ],
+      "extraction": "README License section, excluding trailing rfc link; bytes otherwise unchanged"
+    },
+    {
+      "packages": [
+        "standardwebhooks@1.1.1"
+      ],
+      "status": "collected",
+      "file": "notices/standardwebhooks-LICENSE.txt",
+      "sha256": "5ec8c7b26b64d881a6706617bed25c049f97f2f35de034c756de8546fd6dbe27",
+      "source": "https://raw.githubusercontent.com/standard-webhooks/standard-webhooks/b4d2c14fc5b4ccff3ff271e3b087dff812254c59/libraries/LICENSE",
+      "source_sha256": "5ec8c7b26b64d881a6706617bed25c049f97f2f35de034c756de8546fd6dbe27",
+      "commit": "b4d2c14fc5b4ccff3ff271e3b087dff812254c59",
+      "manifests": [
+        {
+          "url": "https://raw.githubusercontent.com/standard-webhooks/standard-webhooks/b4d2c14fc5b4ccff3ff271e3b087dff812254c59/libraries/javascript/package.json",
+          "sha256": "686397f0f0202e0b693cfd3f6241d7a8da3df326f9642867a484fbbd295690b6",
+          "id": "standardwebhooks@1.1.1",
+          "license": "MIT"
+        }
+      ]
+    },
+    {
+      "packages": [
+        "proxy-agent-negotiate@1.1.0"
+      ],
+      "status": "unresolved",
+      "source": "https://github.com/TooTallNate/proxy-agents/tree/4813885d3f4e2ff837878ceffdba656a71dc31f0/packages/negotiate",
+      "commit": "4813885d3f4e2ff837878ceffdba656a71dc31f0",
+      "reason": "Package manifest declares MIT, but no complete copyright/license/NOTICE text found in this package or repository root. A sibling package license cannot be assigned to negotiate."
+    }
+  ]
+}

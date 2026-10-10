@@ -2058,3 +2058,87 @@ Python概率/校准/A-B及人工量表、提供商首次尝试/worker修复、�
 - 安装器构建来源仍为干净提交 `edc2e601e008798be132fdc8deeae69b5a1d7ea5`；标签合并提交仅后续测试/CI/验收记录与Git历史不同，应用/资源/打包代码一致。没有把安装器build SHA改写成标签SHA。
 - 真实模型新增额度已全部使用，总计10次；不再请求。两报告工程校验通过，人工量表未评审、无质量delta；独立干净Windows按用户要求跳过／未验证、未签名及其他外部边界保留。
 - README在发布后按研究/组合/复审场景重写，截图来自相同构建的独立模拟目录；来源/版权/许可与历史失败记录保持，不上传个人库/日志/原始报告/凭证。
+
+## 60. 第二阶段 P2-01 工程基线与 pi 迁移架构确认（2026-10-10）
+
+用户本轮只授权源码核查、已有依赖的离线回归和文档。命令cwd/Git根为 `<repo>`，分支main，HEAD `7d12da5204d7119dbd71818bbeaa8207b6aeb731`；起始status/unstaged/staged均空，origin为ydflow/research-trail。读取AGENTS/README/路线/证据及全部指定文件，另追app/lifecycle/检查点/报告/桌面IPC/打包/CI。当前Python是全部业务持久状态权威，OpenAI请求stream=False，SSE来自已保存事件；通用会话重启中断与研究显式resume不同，不能互换描述。
+
+实际版本Node24.19.0/Bun1.4.2/uv0.12.8/项目Python3.12.14；本地Electron44.5.1内置Node24.21.0。现有依赖齐备，执行 `bun.cmd run verify`，日志 `%TEMP%\research-trail-p2-01-verify.log`，完整退出0：696 Python（201.74秒、1项Starlette/httpx弃用警告）/19 Node/58实际Electron（410.03秒），失败/取消/跳过0；12原创工程案例CLI、30原创历史样例CLI、OpenAPI一致性/类型/声明/重复迁移0020/模型一致性/构建通过。Vite主chunk510.24kB警告保留。验收环境删凭证/代理变量、启用既有Python/Node/Electron离线护栏，只loopback与临时库；没有真实模型/行情/账户/收费API/外部追踪请求。没有安装或下载依赖、修改系统环境，也不把本机成功写成新远程CI或干净Windows证据。
+
+官方只读查证：旧badlogic/pi-mono重定向earendil-works/pi；latest发行v1.1.0固定提交 `abe508e1b89912adde45528136c3221eb69acdd7`，core/ai/coding-agent新命名 `@earendil-works/*`，Node≥22.19.0、MIT。旧命名core仍为0.73.1，未混用API。阅读固定Agent/loop/types/StreamFn/校验/官方RPC/SDK和registry版本/依赖/体积元数据；未下载tgz或安装/运行pi。来源链接与原许可在 [PHASE2-PI-ARCHITECTURE](PHASE2-PI-ARCHITECTURE.md)，不扩大项目整仓许可，不将源码阅读当pi测试通过。
+
+架构建议：可选Node子进程pi-agent-core + 自建JSONL桥，Python保留模型传输/凭证、整批参数与预算校验、只读工具、SQLite/sequence/唯一终态、研究/证据/评测/恢复。pi默认并行、tool start早于参数校验和工具失败可能继续循环，与当前语义不同；需Python批次许可和顺序执行，不透传事件。官方CLI RPC未提供通用Python工具结果回注命令；首批不接编码工具/CLI会话。完整协议、回退/安全/Node分发/体积限制及下一步离线实验验收见架构文档。
+
+新增 [PHASE2-BASELINE](PHASE2-BASELINE.md)、PHASE2-PI-ARCHITECTURE，最小更新ROADMAP/EVIDENCE；业务/锁文件/迁移/契约无差异，索引空，未add/commit/push/PR/标签/发布。pi实际包运行/桥与Windows进程树清理、安装闭包/体积/独立Windows、真实模型迁移均尚未验证；verify:clean因重新准备依赖未执行，人工体验/练习待验。P2-01文档与本机离线基线范围验收通过，P2-02未开始，完成后停止。
+
+## 61. 第二阶段 P2-02 真实 pi 核心与安全桥（2026-10-10）
+
+本轮用户明确授权固定项目依赖与代码开发，禁止切换默认Agent、真实请求、安装器及Git发布。复核 cwd/Git根 `<repo>`、main、HEAD `7d12da5204d7119dbd71818bbeaa8207b6aeb731`、索引空；起始四份P2-01文档未提交修改保留。读取AGENTS、两份架构/基线、ROADMAP/EVIDENCE以及实际Python Agent/模型/工具/生命周期/存储、Electron启动/打包和测试。两份P2-01文档末次SHA256仍分别为 `D0FBC9C16496E396BD1ED3D95C33138B9BFB576CAD284943FAD3B6AD21E2C82F`、`FD3C3428ABCBD8A15471F994F5AA63848DEA6C55D17C69475E880F03E762E850`。
+
+固定官方源码 [abe508e1](https://github.com/earendil-works/pi/tree/abe508e1b89912adde45528136c3221eb69acdd7) 与 registry core/ai 1.1.0、Node≥22.19.0、MIT。安装前独立下载临时core tgz，校验SHA512与registry SRI相同；实际产物的Agent/agent-loop/types三个sourcesContent与固定提交缓存源码逐字符相同，哈希保存于dependency-audit.json。固定LICENSE复核并保留Copyright(c)2025 Mario Zechner及完整MIT声明。`bun.cmd install --ignore-scripts`退出0，只增加pi-worker workspace的精确core/ai1.1.0直接依赖及必要传递依赖；76个新增外部版本，459个既有版本及SRI均保留，少数旧代理版本移到嵌套key而非升级。无全局pi CLI、coding-agent或Python/React/Electron/Bun升级。
+
+真实运行链：独立 `verify_pi` → PiOfflineBridge/Popen绝对Node → 受限JSONL → 安装包里的真实 `new Agent` + 假AssistantMessageEventStream → await assistant message_end → Python整批校验/一次性许可 → pi代理execute → 原ToolRegistry → ToolSuccess回注pi → 第二次假streamFn/最终回复。明确sequential，禁止把tool_execution_start当业务准入。原app.py/AgentRunner/ToolRegistry/RunManager/Store/模型适配器及UI/金融公式/契约/迁移没有改动；没有生产pi开关，RESEARCH_TRAIL_PI=1也不改变默认Agent。
+
+协议v1有request/run/attempt身份、各方向连续sequence≤256、单帧128KiB、原始参数4KiB/深度32、只读quote/kline白名单、启动/响应/工具/总限时、有界队列与退出清理；不传DB/私有配置/凭证、不透传pi事件到SSE、不自动fallback/重试。Python先预检完整批次所有工具/参数/权限/ID/预算/活动状态，全部通过才许可；token+ordinal+原ID/name与Python验证对象绑定。同批任意非法调用整批handler次数0；跨批重复/超预算零新增。工具执行已开始不能强杀Python线程；取消/超时后的迟到结果丢弃，测试释放阻塞后无新事件。安全护栏是回归tripwire，不冒充OS沙箱。
+
+实际命令/结果：
+
+| 命令（cwd按需backend） | 已执行结果 |
+| --- | --- |
+| git rev-parse根/分支/HEAD、status、diff/cached、diff --check | 本地身份一致；保留已有文档；最终无空白错误/索引变动 |
+| bun.cmd install --ignore-scripts | 退出0；固定新workspace依赖，不执行生命周期脚本 |
+| node scripts/pi-audit.mjs --print / node scripts/pi-audit.mjs | 完整安装依赖快照生成并离线比对通过；87包及源码/许可证哈希 |
+| backend `.venv\Scripts\python.exe -m pytest tests/test_pi_bridge.py -q` | 最终40 passed；其中24真pi离线集成（含4个Store/Manager内部覆盖）、15桥单元、1默认app/注册表兼容；1既有弃用警告 |
+| node --require ./scripts/offline/network.cjs --test packages/pi-worker/worker.test.mjs | 15 passed：真Agent屏障1、JSON/Channel单元7、真实Worker非法输入7；失败/跳过0 |
+| backend `python -m research_trail.verify_pi --node "<node.exe 的绝对路径>"` | completed；AAPL.US189.43 USD、模拟fixture；handler1次、stream_calls2、results_seen1、pi工具start/end各1、进程已退出 |
+| backend临时stdin Python断言脚本（未保存业务数据） | NVDA.US kline闭环通过；GOOG.US合法参数仅执行一次后UNKNOWN_SYMBOL失败；无重试；两进程均已退出 |
+| bun.cmd run verify | 退出0；日志 `%TEMP%\research-trail-p2-02-verify.log`；736 Python239.44秒/新增15+旧19 Node/58实际Electron431.93秒；旧773测试+新增55均通过；12工程案例/30历史样例CLI/契约/类型/声明/迁移0020/模型一致性/构建全部通过 |
+
+批次证据：测试 bad symbol/额外字段/重复JSON key/坏JSON/参数超限/未知工具/非法ID/混合批/重复ID时provider.calls=[]、execution_count=0、pi tool_execution_start=0；合法两工具AAPL→NVDA顺序执行；第二批超预算/跨批重复ID不增加首次执行次数。恶意输运stub的重复tool_request用例只执行1次后PI_PROTOCOL，明确不把stub算真pi闭环。取消/整体timeout/tool timeout/kill Worker的真实pi在途读取用例及无响应/坏JSON/超大帧/重复消息/跨run/乱序/中文空格Worker路径单元均通过；实际Node路径含空格。Store completed/cancelled/timed_out/failed四种内部覆盖各唯一终态、序号连续；重复取消/SSE重放/事件读取零新增调用。
+
+原始失败：root cwd首次pytest找不到research_trail，改按既有backend方式执行；初写测试误用app.state.runs且未启lifespan，改TestClient/app.state.manager，不改业务实现。Windows崩溃用例发现管道close EINVAL，修复结束进程/线程后关闭及断管道关闭错误处理，再次专项40与完整736通过。源码map默认GBK读取失败，显式UTF8后核对成功。未删断言/skip/放宽旧超时。仍有Starlette/httpx弃用与Vite510.24kB chunk警告；Vite因新lock重新优化是正常输出，无隐藏失败。
+
+依赖/分发风险：完整87包约70789644已安装bytes（67.51MiB，含11共享旧包/peer，不是安装器净增），MIT40/Apache2.0 34/BSD3 11/0BSD1/Unlicense1；逐包依赖边、锁SRI、SPDX和可得LICENSE/NOTICE哈希在 `packages/pi-worker/dependency-audit.json`。9包缺独立许可文本，其中pi3包上游MIT已保留；其余6包版权/NOTICE收集、Node二进制分发/第三方声明、ESM资源路径/ASAR/PyInstaller闭包/体积、无系统Node/独立干净Windows/进程树强杀均尚待未来打包专项，当前不能声称安装器可用或授权声明已齐全。未做在线漏洞扫描、新远程CI或安装器测试；verify:clean未执行；全程没有真实模型/行情/账户/收费API/追踪上传。
+
+新增PI-BRIDGE、Worker六文件、Python桥/独立CLI/测试、pi-audit脚本，更新根workspace/bun.lock/verify/路线/证据。无add/commit/push/PR/Release。P2-02仅本机离线开发桥验收通过；P2-03建议为Python持有凭证的独立模型传输桥及离线消息/失败语义验收，未实施。完成后停止等待下一步授权。
+
+## 62. P2-01/P2-02 独立 PR 发布审查（2026-10-10）
+
+本轮单独授权复核、最小修正、独立分支/真实提交、fetch/安全更新 main、push 与 Draft PR；不授权合并、Release、安装器或 P2-03。起点为 main `7d12da5204d7119dbd71818bbeaa8207b6aeb731`，索引空，P2-01/P2-02 全部未提交文件逐一核对，无无关改动；两份 P2-01 文档均纳入。GitHub 实际登录 ydflow，origin 与目标均 ydflow/research-trail。
+
+创建 `feat/phase2-pi-bridge`，实现提交 `b5675ab`；fetch 后确认唯一远程新增提交为 `56b64a5b3041df97362e62d92f46b0dbf0eef909`（README 一行修改），普通 merge 至 `d9b4ecdabdb8ddd2ce94db40709c2a43b766bfb4`，无冲突。未覆盖该 README，未 reset/clean/force-push 或直接提交 main。只暂存23项阶段交付/审查文件，无数据库、日志、凭证或配置。最终提交 SHA 和远程检查以 [功能分支](https://github.com/ydflow/research-trail/tree/feat/phase2-pi-bridge) 与 Draft PR 的实际 GitHub 回执为准。
+
+源码审查确认：真实 pi Agent/streamFn；完整 assistant message_end 的 await 屏障先于顺序工具执行；Python 整批工具/参数/ID/预算/状态检查，实际 handler 唯一来自原 ToolRegistry；重复请求消费、迟到结果隔离、唯一终态和历史重放测试齐备。默认 app/AgentRunner/注册表、正式API/UI/模型提供商/数据库迁移/金融公式无 diff。128KiB/4KiB/深度32/256消息边界、stdout/stderr 与环境白名单均复核。网络护栏仍是回归 tripwire，不是 OS 沙箱。
+
+最小修正：Node strict JSON 原会把 1e999 解析为 Infinity；新增有限数值拒绝与1项回归，未删旧断言/放宽超时。许可方面从固定官方提交收集5项版本匹配文本（AWS三项 Apache-2.0、data-uri-to-buffer README 内 MIT、standardwebhooks libraries/LICENSE 的 MIT），来源/manifest/文本 SHA256 在 upstream-notices.json，离线审计核对原始字节，gitattributes 禁止声明文本行尾变换。standardwebhooks 根 Apache 与 libraries MIT 的层级区别明确保留；nested-clients 的发布路径元数据过时，实际匹配目录为 packages-internal。
+
+proxy-agent-negotiate@1.1.0 官方匹配目录只有 MIT 元数据，没有完整版权文本；不借用同仓其他包声明，仍未解决，阻止未来含 Worker 的安装器分发。已收集5项不等于完整法律/供应链许可；Node二进制及各包版权/NOTICE义务仍须未来打包专项核对。本轮不做安装包/真实模型/行情/账户调用或在线漏洞扫描。
+
+最终功能分支实际复验：
+
+| 检查 | 结果 |
+| --- | --- |
+| git diff --check / staged check / scope与新增内容扫描 | 通过；扫描全部新文件及新增行，无私钥/token/个人目录；新文档本机目录换为占位路径，历史事实未改 |
+| 三份已安装 pi source map 对比固定官方提交 | Agent/agent-loop/types 全部逐字符相同；一次公开源码 TLS ECONNRESET 重读后通过 |
+| 原 main 对比 bun.lock | 459个原外部版本/SRI全部保留，新增76个必要版本 |
+| node scripts/pi-audit.mjs | 87包/70789644已安装bytes离线快照通过；5项补充文本哈希通过，明确输出 negotiate 未解决 |
+| Node Worker 专项 | 16 passed，fail/cancel/skip/todo 0；真 Agent 屏障、非法消息、溢出数值覆盖 |
+| backend verify_pi --node（已有绝对Node） | completed；AAPL.US 189.43 USD、fixture；handler=1、stream_calls=2、results_seen=1、工具start/end各1 |
+| bun.cmd run verify | 退出0；736 Python（233.24秒）、16新增+19原Node、58实际Electron（407.45秒）；合计829项，旧773项/新增56项通过，失败/取消/跳过0 |
+| 其余验收 | 12原创工程案例、30原创历史样例、契约/类型/native声明、0020重复迁移/模型一致性、main/preload/renderer构建全部通过 |
+
+本机日志 `%TEMP%\research-trail-phase2-pr-verify.log` 留在仓库外，不提交。1项 Starlette/httpx 弃用与 Vite510.24kB chunk 警告保留。独立CLI首次从根目录误调用出现 ModuleNotFoundError，按 backend cwd 复验通过；不是业务测试失败。最后证据/标题更新只改文档，完整复验的可执行代码/依赖树保持相同。正式 pi API/UI 链路、独立干净Windows、Node分发/ASAR/PyInstaller闭包、通用进程树清理与安装器仍未执行。
+
+Draft PR 的 [GitHub Actions](https://github.com/ydflow/research-trail/actions?query=branch%3Afeat%2Fphase2-pi-bridge) 单独核验，不把本机通过预写为远程通过；实际最终结果随本轮交付回执报告。回滚可撤销本PR代码/依赖/验证钩子，无业务数据库迁移或默认引擎变更；不得将失败运行中已执行工具静默重试。完成后停止，不自动转Ready、合并或发布。
+
+## 63. P2-01/P2-02 最终合并阶段记录（2026-10-10）
+
+本节在 main 上随 [PR #29](https://github.com/ydflow/research-trail/pull/29) 的实际普通 Merge Commit 合并后生效；PR未合并时不是已合并回执。用户另行明确授权转Ready、核对最终Head/所有Actions/审查线程、普通合并并安全同步本地main。最终 mergedAt、Merge SHA 与 main HEAD 以该PR和GitHub分支实际回执为准，不预造SHA。
+
+阶段状态：P2-01（工程基线/pi架构）与P2-02（真实固定pi离线工具桥）已合并。默认Python AgentRunner未切换；真实模型桥接、Node运行时分发、Windows新安装包仍未验收；proxy-agent-negotiate@1.1.0 完整版权/许可声明缺口仍是未来含Worker安装器的分发阻塞，不能因为合并而认定许可齐全。P2-03未开始；未创建Release、修改业务代码、安装依赖或请求真实模型/金融服务。
+
+合并轮起点：本地功能分支/远程PR Head均为 `23ab9625f57295606bba54a276a3f1d43f55ae24`，工作区和索引干净，base为 `56b64a5b3041df97362e62d92f46b0dbf0eef909`；GitHub活跃身份ydflow、目标ydflow/research-trail。重新读取AGENTS/阶段记录/许可，核对23文件/+4464/-6；没有范围外修改。GraphQL完整查询无review、review thread或issue comment，未见阻塞意见；PR为CLEAN/MERGEABLE。
+
+起点Head的全部两次Windows Actions：[PR 38057065854](https://github.com/ydflow/research-trail/actions/runs/38057065854) 与 [push 38057043841](https://github.com/ydflow/research-trail/actions/runs/38057043841) 均SUCCESS。两日志实际确认736 Python/16 Worker Node+19旧Node/58 Electron，失败/取消/跳过0；这是PR发布轮重新查询的远程证据，不是本轮新执行本机全套。既有Starlette/httpx、Vite chunk、Actions Node20/punycode以及uv准备提示保留。
+
+本次合并前仅补充ROADMAP/EVIDENCE阶段记录；git diff --check及仅文档范围检查通过。文档提交形成新Head后，仍需核对该Head的全部Actions成功、无冲突和阻塞审查，再转Ready/普通合并。其结果以PR最终检查和合并回执为准；合并后的main CI单独报告，不能拿合并前CI代替。同步使用fetch和本地main fast-forward，保留功能分支，不reset/clean/force-push或删除其他分支。完成时确认本地main与origin/main相同、工作区干净，停止等待下一步。
