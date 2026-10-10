@@ -1,8 +1,10 @@
 # 研迹：路线、功能对照与当前进度
 
-更新时间：2026-10-10（Asia/Shanghai）。本文件记录计划与阶段状态，不代表未来步骤已经获得执行或发布授权。
+更新时间：2026-10-11（Asia/Shanghai）。本文件记录计划与阶段状态，不代表未来步骤已经获得执行或发布授权。
 
 ## 当前执行边界
+
+- 第二阶段 P2-03：验收通过（本机离线试验范围）。独立PiModelBridge复用原Fake/RuleDialog与OpenAIModelProvider.complete；真实pi模型→工具→模型闭环、混合非法批次零执行及完整783 Python/43 Node/58实际Electron通过（884项，失败/跳过0，新增55）。已有esbuild离线开发构建消除原源码Worker短启动预算问题，不放宽旧时限；默认AgentRunner不切换。见 [模型桥](PHASE2-PI-MODEL-BRIDGE.md)、EVIDENCE第64节；用户单独授权的独立Draft PR发布审查见第65节。真实模型/金融服务、正式pi API/UI、Node分发/Windows安装包未验收；许可缺口保留。未安装新依赖；开发轮未提交，本次仅授权提交/推送/Draft PR，不合并、发布或执行P2-04。下方P2-01/P2-02“P2-03未开始”保留为当时历史状态。
 
 - 第二阶段 P2-01：验收通过（本机离线工程基线与架构文档范围）。main `7d12da5204d7119dbd71818bbeaa8207b6aeb731`，当轮696 Python / 19 Node / 58实际Electron通过；见 [工程基线](PHASE2-BASELINE.md)、[pi架构决策](PHASE2-PI-ARCHITECTURE.md) 与 EVIDENCE 第60节。公开审查仅移除新文档中的本机目录，保留历史检查与架构结论。
 - 第二阶段 P2-02：验收通过（本机离线开发桥范围）。真实固定 pi-agent-core/ai 1.1.0、独立Node Worker、Python整批许可/顺序工具桥已实现；开发轮736 Python/34 Node/58实际Electron通过，详见 [PI-BRIDGE](PHASE2-PI-BRIDGE.md)、EVIDENCE第61节。默认Python AgentRunner/正式API/UI/业务数据库不切换；Windows新安装包、真实模型均未执行。P2-03未开始。
