@@ -4,6 +4,7 @@ Python admits whole batches using the existing ToolRegistry, and owns all busine
 events. Pipe sequence numbers are private transport state, not Store/SSE cursors.
 """
 from collections import Counter
+import hashlib
 import json
 import math
 import os
@@ -18,6 +19,7 @@ from uuid import uuid4
 
 from .agent import AgentOutcome
 from .conversation import ErrorPayload, ToolSuccess
+from .openai_provider import ModelError
 from .store import RunStopped
 from .tools import ToolExecutionError, ToolRegistry
 
@@ -69,6 +71,34 @@ def worker_environment():
     # No inherited PATH, home/config dirs, credentials, DB path, proxy or NODE_OPTIONS.
     return {key: value for key, value in os.environ.items()
             if key.upper() in {"SYSTEMROOT", "WINDIR", "SYSTEMDRIVE", "COMSPEC", "TEMP", "TMP"}}
+
+
+def default_worker():
+    """Use a verified development build, or the original source if never built.
+
+    Fail closed for stale/modified build artifacts. No runtime build/install and
+    no fallback retry. Source + locked dependency inputs are all hash checked.
+    """
+    directory = ROOT / 'packages/pi-worker'
+    bundle, manifest = directory / 'dist/worker.mjs', directory / 'dist/manifest.json'
+    if not bundle.exists() and not manifest.exists(): return directory / 'worker.mjs'
+    try:
+        with manifest.open('rb') as stream: raw = stream.read(512 * 1024 + 1)
+        if len(raw) > 512 * 1024: raise BridgeError()
+        value = strict_json(raw.decode('utf-8'))
+        exact(value, ('version','core','ai','inputs','bundle'))
+        if type(value['version']) is not int or value['version'] != 1 or value['core'] != '1.1.0' or value['ai'] != '1.1.0' or not isinstance(value['inputs'], dict) or not value['inputs']:
+            raise BridgeError()
+        if value['bundle'] != hashlib.sha256(bundle.read_bytes()).hexdigest(): raise BridgeError()
+        for relative, digest in value['inputs'].items():
+            if not relative.startswith(('packages/pi-worker/', 'node_modules/')): raise BridgeError()
+            path = (ROOT / relative).resolve()
+            if not path.is_relative_to(ROOT.resolve()) or digest != hashlib.sha256(path.read_bytes()).hexdigest(): raise BridgeError()
+        if not {'packages/pi-worker/worker.mjs', 'packages/pi-worker/protocol.mjs', 'packages/pi-worker/model-messages.mjs'} <= value['inputs'].keys():
+            raise BridgeError()
+    except (BridgeError, OSError, ValueError, TypeError):
+        raise ValueError('pi development build invalid; rebuild using scripts/build-pi-worker.mjs') from None
+    return bundle
 
 
 class Pipe:
@@ -163,7 +193,7 @@ class PiOfflineBridge:
     def __init__(self, tools: ToolRegistry, *, node: Path, batches, worker=None,
                  max_calls=8, response_timeout=3.0, run_id=None):
         self.tools, self.node, self.batches = tools, Path(node), batches
-        self.worker = Path(worker) if worker else ROOT / "packages/pi-worker/worker.mjs"
+        self.worker = Path(worker) if worker else default_worker()
         if not self.node.is_absolute() or not self.node.is_file() or not self.worker.is_absolute():
             raise ValueError("Explicit absolute Node and Worker paths required")
         if type(max_calls) is not int or not 1 <= max_calls <= 8 or not 0.05 <= response_timeout <= 10:
@@ -177,6 +207,21 @@ class PiOfflineBridge:
         self.observations, self.proof, self.execution_count = Counter(), {}, 0
         self.process = None
         self._used = False
+
+    def start_payload(self, text, tools):
+        return dict(tools=tools, batches=self.batches)
+
+    def model_request(self, message, pipe, checkpoint, observe, stop, deadline):
+        raise BridgeError()
+
+    def check_batch(self, calls):
+        pass
+
+    def record_result(self, identity, result):
+        pass
+
+    def check_end(self, payload):
+        pass
 
     def admit(self, calls, used, calls_used, rounds, checkpoint):
         checkpoint()
@@ -240,16 +285,20 @@ class PiOfflineBridge:
             emit("status", {"phase":"working", "detail":"pi 1.1.0 离线验证；Python 批次准入，只读模拟行情。"})
             tools = [{key: f["function"][key] for key in ("name", "description", "parameters")}
                      for f in self.tools.definitions() if f["function"]["name"] in ALLOWED_TOOLS]
-            pipe.send("start", dict(tools=tools, batches=self.batches, rpc_timeout_ms=math.ceil(self.response_timeout * 1000),
+            pipe.send("start", dict(**self.start_payload(text, tools), rpc_timeout_ms=math.ceil(self.response_timeout * 1000),
                                     run_timeout_ms=min(120000, max(50, math.ceil((deadline-time.monotonic())*1000)))))
             used, calls_used, rounds, approved, token, cursor = set(), 0, 0, [], None, 0
             while True:
                 message = receive(time.monotonic() + self.response_timeout)
                 kind, payload = message["type"], message["payload"]
                 if observe(message): continue
-                if kind == "tool_batch":
+                if kind == "model_request":
+                    if cursor != len(approved): raise BridgeError()
+                    self.model_request(message, pipe, checkpoint, observe, stop, deadline)
+                elif kind == "tool_batch":
                     exact(payload, ("calls",))
                     if cursor != len(approved): raise BridgeError()
+                    self.check_batch(payload["calls"])
                     approved = self.admit(payload["calls"], used, calls_used, rounds, checkpoint)
                     calls_used += len(approved); rounds += 1; cursor = 0; token = str(uuid4())
                     pipe.send("batch_permit", {"token":token}, message["request_id"])
@@ -288,6 +337,7 @@ class PiOfflineBridge:
                     result = ToolSuccess(data=value).model_dump(mode="json")
                     if result["data"].get("source") != "fixture": raise BridgeError("INVALID_RESULT")
                     emit("tool_result", {"call_id":call_id, "name":call.name, "result":result})
+                    self.record_result(approved[cursor-1][0], result)
                     pipe.send("tool_result", {"result":result}, message["request_id"])
                 elif kind == "engine_end":
                     exact(payload, ("ok", "answer", "stats"))
@@ -298,6 +348,7 @@ class PiOfflineBridge:
                     if any(type(n) is not int or not 0 <= n <= MAX_MESSAGES for n in stats.values()) or any(stats[k] != self.observations[k] for k in OBSERVATIONS) or stats["results_seen"] != self.execution_count:
                         raise BridgeError()
                     self.proof["stats"] = stats
+                    self.check_end(payload)
                     checkpoint()
                     return AgentOutcome(payload["answer"], "completed")
                 else: raise BridgeError()
@@ -306,11 +357,11 @@ class PiOfflineBridge:
                 try: pipe.send("cancel", {})
                 except BridgeError: pass
             raise
-        except (BridgeError, ToolExecutionError, OSError) as error:
+        except (BridgeError, ToolExecutionError, ModelError, OSError) as error:
             if stop.is_set(): raise RunStopped()  # Cancellation wins over a concurrent pipe error.
-            code = error.error.code if isinstance(error, ToolExecutionError) else error.code if isinstance(error, BridgeError) else "PI_WORKER_START"
-            public = ErrorPayload(code=code, message="pi 离线桥接失败；未自动重试，已执行工具保留。")
+            code = error.error.code if isinstance(error, (ToolExecutionError, ModelError)) else error.code if isinstance(error, BridgeError) else "PI_WORKER_START"
+            public = error.error if isinstance(error, ModelError) else ErrorPayload(code=code, message="pi 离线桥接失败；未自动重试，已执行工具保留。")
             emit("error", public.model_dump(mode="json"))
-            return AgentOutcome(public.message, "timed_out" if code in {"RUN_TIMEOUT", "TOOL_TIMEOUT", "PI_RESPONSE_TIMEOUT"} else "failed", public)
+            return AgentOutcome(public.message, "timed_out" if code in {"RUN_TIMEOUT", "MODEL_TIMEOUT", "TOOL_TIMEOUT", "PI_RESPONSE_TIMEOUT"} else "failed", public)
         finally:
             if pipe: pipe.close()

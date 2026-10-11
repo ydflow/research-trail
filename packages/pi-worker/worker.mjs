@@ -3,6 +3,7 @@ import { Agent } from '@earendil-works/pi-agent-core';
 import { AssistantMessageEventStream } from '@earendil-works/pi-ai';
 import { randomUUID } from 'node:crypto';
 import { Channel, MAX_FRAME, ID, exact, parseStrict } from './protocol.mjs';
+import { ModelMessages, bound } from './model-messages.mjs';
 
 const [runId, attemptId] = process.argv.slice(2);
 if (!ID.test(runId || '') || !ID.test(attemptId || '') || process.argv.length !== 4) process.exit(2);
@@ -35,8 +36,14 @@ function request(type, payload, response) {
 }
 
 async function run(payload) {
-  exact(payload, ['tools','batches','rpc_timeout_ms','run_timeout_ms']);
-  if (!Array.isArray(payload.tools) || payload.tools.length > 4 || !Array.isArray(payload.batches) || payload.batches.length > 9 ||
+  const modelMode = payload.mode === 'python-model';
+  exact(payload, modelMode ? ['mode','tools','system','text','max_model_calls','rpc_timeout_ms','run_timeout_ms'] : ['tools','batches','rpc_timeout_ms','run_timeout_ms']);
+  if (modelMode) {
+    bound(payload);
+    if (typeof payload.system !== 'string' || typeof payload.text !== 'string' || !payload.text.trim() || [...payload.text].length > 4000 ||
+        !Number.isInteger(payload.max_model_calls) || payload.max_model_calls < 1 || payload.max_model_calls > 9) throw new Error('PI_PROTOCOL');
+  }
+  if (!Array.isArray(payload.tools) || payload.tools.length > 4 || (!modelMode && (!Array.isArray(payload.batches) || payload.batches.length > 9)) ||
       !Number.isInteger(payload.rpc_timeout_ms) || payload.rpc_timeout_ms < 50 || payload.rpc_timeout_ms > 10000 ||
       !Number.isInteger(payload.run_timeout_ms) || payload.run_timeout_ms < 50 || payload.run_timeout_ms > 120000) throw new Error('PI_PROTOCOL');
   rpcTimeout = payload.rpc_timeout_ms;
@@ -57,7 +64,7 @@ async function run(payload) {
         return {content: [{type: 'text', text: JSON.stringify(result.result)}], details: result.result, isError: result.result.ok !== true};
       }};
   });
-  for (const batch of payload.batches) {
+  for (const batch of payload.batches || []) {
     if (!Array.isArray(batch) || !batch.length || batch.length > 16) throw new Error('PI_PROTOCOL');
     for (const c of batch) {
       exact(c, ['id','name','arguments']);
@@ -66,11 +73,34 @@ async function run(payload) {
   }
   let turn = 0, permit = null, currentBatch = [];
   const model = {id:'offline-fixture', name:'Deterministic fixture', api:'openai-completions', provider:'offline-fixture', baseUrl:'', reasoning:false, input:['text'], cost:{input:0,output:0,cacheRead:0,cacheWrite:0}, contextWindow:8192, maxTokens:2048};
-  agent = new Agent({initialState:{systemPrompt:'Offline fixture; Python owns all tool facts.', model, tools}, toolExecution:'sequential',
-    streamFn: (_model, context) => {
+  const mapping = new ModelMessages(model, payload.tools);
+  agent = new Agent({initialState:{systemPrompt:modelMode ? payload.system : 'Offline fixture; Python owns all tool facts.', model, tools}, toolExecution:'sequential',
+    streamFn: async (_model, context, options) => {
       stats.stream_calls++;
       const results = context.messages.filter(m => m.role === 'toolResult');
       stats.results_seen = results.length;
+      if (modelMode) {
+        const stream = new AssistantMessageEventStream();
+        try {
+          // The parent rejects the first over-budget request before invoking
+          // its model, preserving the precise MODEL_CALL_LIMIT classification.
+          if (stats.stream_calls > payload.max_model_calls + 1 || options.signal?.aborted) throw new Error('PI_MODEL_STOPPED');
+          const response = await request('model_request', mapping.request(context, stats.stream_calls), 'model_response');
+          if (options.signal?.aborted) throw new Error('PI_STOPPED');
+          const converted = mapping.response(response);
+          currentBatch = converted.batch;
+          stream.push({type:'start',partial:converted.message});
+          stream.push({type:'done',reason:converted.message.stopReason,message:converted.message});
+        } catch {
+          // The Python owner reports its precise ModelError. Never invent a
+          // successful final response when the transport was aborted/failed.
+          const message = {role:'assistant',content:[],api:model.api,provider:model.provider,model:model.id,timestamp:Date.now(),
+            usage:{input:0,output:0,cacheRead:0,cacheWrite:0,totalTokens:0,cost:{input:0,output:0,cacheRead:0,cacheWrite:0,total:0}},
+            stopReason:options.signal?.aborted?'aborted':'error',errorMessage:'PI_MODEL_FAILED'};
+          stream.push({type:'error',reason:message.stopReason,error:message});
+        }
+        return stream;
+      }
       currentBatch = payload.batches[turn++] || [];
       const content = currentBatch.length ? currentBatch.map(c => {
         // Preserve the raw argument string for Python admission, even if malformed.
@@ -104,7 +134,7 @@ async function run(payload) {
       }
     }
   });
-  await agent.prompt('Execute the explicit offline fixture.');
+  await agent.prompt(modelMode ? payload.text : 'Execute the explicit offline fixture.');
   await agent.waitForIdle();
   if (closed) return;
   const final = agent.state.messages.filter(m => m.role === 'assistant').at(-1);
@@ -119,7 +149,7 @@ function receive(line) {
     if (started) throw new Error('PI_PROTOCOL');
     started = true;
     run(m.payload).catch(() => { if (!closed) fatal(); });
-  } else if (m.type === 'batch_permit' || m.type === 'tool_result') {
+  } else if (m.type === 'batch_permit' || m.type === 'tool_result' || m.type === 'model_response') {
     const p = pending.get(m.request_id);
     if (!p || p.response !== m.type) throw new Error('PI_PROTOCOL');
     pending.delete(m.request_id); clearTimeout(p.timer); p.resolve(m.payload);

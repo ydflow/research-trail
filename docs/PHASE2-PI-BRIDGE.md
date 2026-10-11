@@ -2,7 +2,7 @@
 
 日期：2026-10-10（Asia/Shanghai）。仅本机开发、确定性假模型和模拟行情。
 状态：验收通过（本机离线开发桥范围）；最终结果在下方验收表与 EVIDENCE 第61节记录。
-P2-01 两份文档是历史基线，原文保留。P2-03 未实施。
+P2-01 两份文档是历史基线，原文保留。本页记录P2-02历史验收；后续模型桥见 [P2-03](PHASE2-PI-MODEL-BRIDGE.md)。
 
 ## 1. 执行前状态与交付边界
 
@@ -206,7 +206,9 @@ SPDX 元数据：MIT40、Apache-2.0 34、BSD-3-Clause11、0BSD1、Unlicense1。�
 公开文档中的本机绝对目录已换为占位路径，未改历史功能和验收事实。
 最终功能分支复验、提交与 CI 证据见 EVIDENCE 第62节；这不授权正式模型或安装器。
 
-## 11. P2-03 建议：尚未授权 / 尚未实施
+## 11. P2-03 历史建议（P2-02交付时尚未授权/实施）
+
+以下是P2-02时的建议；2026-10-11用户单独授权的实现/验收记录见 [P2-03模型桥](PHASE2-PI-MODEL-BRIDGE.md)，不把历史建议当已验证生产能力。
 
 建议首先做模型传输桥，仍保持独立显式试验路径：Node streamFn 发送有界 model_request（规范化消息、tool schema、response ID）；Python复用 OpenAIModelProvider/现有凭证与配置 snapshot，返回 assistant 事件/结果。pi不接触API key；当前OpenAI complete是非流式，不能把已有SSE当模型Token流。先用离线录制/确定性provider验证全部状态，不在本轮或默认路径请求真实模型。
 
