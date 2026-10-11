@@ -107,9 +107,15 @@ class Pipe:
         self.received, self.sent, self.seen = 0, 0, set()
         self.inbox, self.outbox = queue.Queue(16), queue.Queue(8)
         self.closed = threading.Event()
-        self.threads = [threading.Thread(target=job, daemon=True, name="pi-pipe")
-                        for job in (self.read, self.write, self.drain)]
-        for thread in self.threads: thread.start()
+        self.threads = []
+        try:
+            self.threads = [threading.Thread(target=job, daemon=True, name="pi-pipe")
+                            for job in (self.read, self.write, self.drain)]
+            for thread in self.threads: thread.start()
+        except Exception:
+            # Popen already succeeded. Partial pipe setup still owns its child.
+            self.close()
+            raise BridgeError("PI_WORKER_START") from None
 
     def publish(self, item):
         while not self.closed.is_set():
@@ -178,7 +184,8 @@ class Pipe:
             except subprocess.TimeoutExpired:
                 self.process.kill(); self.process.wait(timeout=1)
         self.closed.set()
-        for thread in self.threads: thread.join(0.25)
+        for thread in self.threads:
+            if thread.ident is not None: thread.join(0.25)
         for stream in (self.process.stdin, self.process.stdout, self.process.stderr):
             try: stream.close()
             except OSError: pass  # Windows broken pipe flush after a worker crash.
@@ -203,6 +210,7 @@ class PiOfflineBridge:
         self.tool_timeout = min(2.0, response_timeout * 0.8)
         self.run_id = run_id or str(uuid4())
         if not IDENTITY.fullmatch(self.run_id): raise ValueError("Invalid run ID")
+        self.attempt_id = str(uuid4())
         self.model = SimpleNamespace(label="pi 离线验证／假模型")
         self.observations, self.proof, self.execution_count = Counter(), {}, 0
         self.process = None
@@ -273,7 +281,7 @@ class PiOfflineBridge:
         try:
             checkpoint()
             args = [str(self.node), "--require", str(ROOT / "scripts/offline/network.cjs"),
-                    str(self.worker), self.run_id, str(uuid4())]
+                    str(self.worker), self.run_id, self.attempt_id]
             self.process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                             env=worker_environment(), cwd=self.worker.parent, shell=False,
                                             creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)

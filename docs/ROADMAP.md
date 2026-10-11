@@ -4,7 +4,9 @@
 
 ## 当前执行边界
 
-- 当前任务：Step21 自动财报采集 CI 修复，验收通过（开发轮本地离线范围）。从干净 main `c197b2443037b44c8193bc4d44f24db6d1764612` 创建 `fix/step21-auto-research-ci`；开发轮失败用例连续5次通过，完整783 Python/51 Node/58实际Electron通过，合计892项，失败/取消/跳过0。开发轮未提交/推送/PR，证据见第66节；当前用户单独授权发布审查、重新验收及提交/推送独立Draft PR，发布轮结果见 EVIDENCE 第67节，远程检查按实际回执核验。本次只收紧测试状态同步与单次5秒页面断言，不改 pi、生产业务或安装包；P2-04 暂停，未开始开发，不自动合并。P2-03 已由 [PR #30](https://github.com/ydflow/research-trail/pull/30) 合并；下方开发/发布轮授权与通过数为当时记录。
+- 当前任务：第二阶段 P2-04 最终审查与独立 [Draft PR #32](https://github.com/ydflow/research-trail/pull/32)，验收通过（本机离线内部范围）。main `80beeb7591332ffea0ea3265d6be6825ac4c722b`（PR #31 Step21 修复已合并，main CI 成功）为开发及本次 fetch 核对基线；独立分支 `feat/phase2-pi-runtime-integration`。内部入口补按运行创建/Store业务run_id绑定、模型配置快照、并发隔离与生命周期状态矩阵，限定 Fake/Mock；开发轮823 Python/51 Node/58实际Electron共932项通过。发布审查新增5项工厂/管道/模型截止回归，修正资源清理、Runner接口及单模型超时分类；最终专项145通过，完整828 Python/51 Node/58实际Electron共937项通过，失败/跳过0，最终8文件。详见 EVIDENCE 第69节，开发历史见第68节；远程检查按PR实际回执核验。默认 AgentRunner/API/UI 不切换，契约/数据库/金融/报告/恢复不改。用户已授权本轮提交/推送/Draft PR，不合并、打包、发布或执行 P2-05。详见 [内部运行集成](PHASE2-PI-RUNTIME.md)。
+
+- Step21历史开发/发布记录：自动财报采集 CI 修复，验收通过（开发轮本地离线范围）。从干净 main `c197b2443037b44c8193bc4d44f24db6d1764612` 创建 `fix/step21-auto-research-ci`；开发轮失败用例连续5次通过，完整783 Python/51 Node/58实际Electron通过，合计892项，失败/取消/跳过0。开发轮未提交/推送/PR，证据见第66节；当前用户单独授权发布审查、重新验收及提交/推送独立Draft PR，发布轮结果见 EVIDENCE 第67节，远程检查按实际回执核验。本次只收紧测试状态同步与单次5秒页面断言，不改 pi、生产业务或安装包；P2-04 暂停，未开始开发，不自动合并。P2-03 已由 [PR #30](https://github.com/ydflow/research-trail/pull/30) 合并；下方开发/发布轮授权与通过数为当时记录。
 
 - 第二阶段 P2-03：验收通过（本机离线试验范围）。独立PiModelBridge复用原Fake/RuleDialog与OpenAIModelProvider.complete；真实pi模型→工具→模型闭环、混合非法批次零执行及完整783 Python/43 Node/58实际Electron通过（884项，失败/跳过0，新增55）。已有esbuild离线开发构建消除原源码Worker短启动预算问题，不放宽旧时限；默认AgentRunner不切换。见 [模型桥](PHASE2-PI-MODEL-BRIDGE.md)、EVIDENCE第64节；用户单独授权的独立Draft PR发布审查见第65节。真实模型/金融服务、正式pi API/UI、Node分发/Windows安装包未验收；许可缺口保留。未安装新依赖；开发轮未提交，本次仅授权提交/推送/Draft PR，不合并、发布或执行P2-04。下方P2-01/P2-02“P2-03未开始”保留为当时历史状态。
 

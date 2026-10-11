@@ -2218,3 +2218,31 @@ TEMP中的真实Python/Node/Electron受控对照：同样6秒saved_events延迟�
 本轮实际复验：收紧DOM检查后目标用例连续5次通过（20.83/11.76/12.01/12.41/11.31秒），失败/取消/跳过0；完整 `bun.cmd run verify` 退出0，783 Python（299.16秒）/24 pi Node+27原Node与助手=51 Node/58实际Electron（447.86秒），合计892项，失败/取消/跳过/todo 0，原884项全部保留、新增8项Node。全量目标Step21用例10.84秒通过。原pi两个CLI、12工程评测/30原创历史观测、契约/类型、pi/native许可审计、0020重复迁移/模型一致性及main/preload/renderer构建通过。1项既有Starlette/httpx弃用与Vite 510.24kB chunk警告保留。
 
 完整日志 `%TEMP%\research-trail-step21-pr-verify.log`，重复日志 `%TEMP%\research-trail-step21-pr-repeat.log`，负向对照与诊断数据在独立TEMP目录，不进入Git。再次fetch确认origin/main仍为起点，无需覆盖本地修改；git diff --check及新增内容敏感信息扫描通过，未发现密钥、用户目录或运行数据进入六文件清单。只提交本次测试/脚本/文档，保持独立Draft PR；最终PR编号、提交SHA和两条push/pull_request远程检查以实际发布回执核验，本地通过不预写为CI成功，不自动合并。真实模型/金融服务、Node分发/Windows安装包、OS隔离仍未验收；proxy-agent-negotiate完整版权/许可缺口仍为分发阻塞，与本次测试修复无关。
+
+## 68. P2-04：pi 内部 RunManager 集成与生命周期（2026-10-11）
+
+本轮只授权开发/本机离线验收，不提交/推送/PR/发布，不执行 P2-05。执行前实际 Git 根为研迹仓库，main/远程均为 `80beeb7591332ffea0ea3265d6be6825ac4c722b`，工作区与索引干净；fetch/ff-only 后创建 `feat/phase2-pi-runtime-integration`。这是用户授权合并 Step21 修复 [PR #31](https://github.com/ydflow/research-trail/pull/31) 后的 main；[CI 38131350004](https://github.com/ydflow/research-trail/actions/runs/38131350004) 已 completed/success。用户提示的 c197b244 是 P2-03 合并旧基线，其失败 CI 已由该修复覆盖；本轮实际起点783 Python/51 Node/58 Electron，共892项。读取 AGENTS、P2-02/P2-03文档、路线与证据、RunManager/Store/契约/app/桥/模型/工具及原测试；没有用文件名猜功能。
+
+已实现：新增仅 Python 内部 PiRuntime，RunManager.start 最小追加互斥 runner_factory。Store先生成业务ID，factory按该ID创建每运行专属 Fake/OpenAI Mock模型、配置对象、PiModelBridge；Worker argv/JSONL的run_id直接等于Store记录，attempt_id为本次桥专属。使用现有start/execute/settle/cancel/delete/shutdown与Store事务/事件，不新增数据库/StartRun.kind/RunDTO/公开API/环境或UI选择开关。配置函数在启动时读一次、验证标量与有限时限、复制frozen ModelConfiguration，凭证及认证头留Python；不读取用户真实密钥。OpenAI仅允许显式MockTransport，继续调用原complete/_request，Fake用原RuleDialog。
+
+生命周期修正：旧工具timer回调必须匹配当前tool_timer；Manager未请求stop时，独立RunStopped要failed/RUN_STOPPED而不能移除Work后留下running。后者新增测试实际复现1 failed（Store仍running），修复后通过。Pipe部分线程启动失败也清理已启动Node并返回PI_WORKER_START。整批许可、只读ToolRegistry/顺序执行/预算/大小边界不改；模型/工具默认2秒早于RPC3秒，整体Work.deadline默认15秒，竞态由原锁/stop/Store.finish选择唯一终态。没有修改或放宽旧测试。
+
+实际阶段性验收：首轮新增26项为24 passed/2 failed，均为新测试错误（Mock用全局次数决定第二运行回复、SSE误假定limit参数）；改为按实际工具上下文和已消费游标，保留双轮与关联断言。其后新旧专项132 passed/1项既有Starlette警告（81.86秒），当时新增32项；真实父Python强杀/子Node stdin EOF清理/重启interrupted用例1 passed（4.80秒）；新增36项专项36 passed（29.97秒）。最后补充并发Mock和错误快照，最终新旧专项140 passed（89.19秒，新增40项/原100项），失败/跳过0；最终完整 `bun.cmd run verify` 退出0：823 Python（317.32秒）/24 pi Node+27原Node=51 Node/58实际Electron（410.64秒），共932项，失败/取消/跳过/todo 0；原892项保留，新增40项Python。两个pi CLI、12原创工程案例/30原创历史样例、契约/类型、native/pi许可审计、0020临时库重复迁移/模型一致性、main/preload/renderer构建全部通过。保留1项既有Starlette/httpx弃用与Vite510.24kB chunk警告。专项/全量日志 `%TEMP%\research-trail-p2-04-final-special.log`、`%TEMP%\research-trail-p2-04-verify.log` 在仓库外；没有新远程CI，本机结果不写作远程通过。
+
+新SSE测试验证实际API的游标续读/历史只读，不把TestClient缓冲响应当真实网络断线；真实断线重连复用原Node/Electron测试。实际强杀仅证明当前单Node进程的父管道EOF退出，不能泛化为Windows Job Object/任意多代进程树。忽略stop的同步模型/工具线程不能强杀，迟到结果隔离但读取不能撤销。真实模型/金融服务、正式pi API/UI、生产预算/token统计、Node分发/PyInstaller/ASAR/新安装包/OS沙箱仍未验收，proxy-agent-negotiate@1.1.0完整版权声明缺口仍为分发阻塞。本轮没有依赖安装/升级、金融/报告/恢复修改或发布；新技术说明见 PHASE2-PI-RUNTIME.md。
+
+## 69. P2-04：最终审查与独立 Draft PR（2026-10-11）
+
+用户单独授权最终审查、范围内修正、同步最新main、复验、提交/推送本分支及创建一个指向main的Draft PR；禁止合并、Release、安装包或P2-05。检查Git根、分支、HEAD、索引、origin、全部4个已跟踪/3个未跟踪文件及完整实现/测试；只有7个P2-04文件，索引原先空，无无关修改或生成物。GitHub登录/目标核对为ydflow及ydflow/research-trail。git fetch origin main后远程仍为80beeb7591332ffea0ea3265d6be6825ac4c722b；git merge --ff-only origin/main返回Already up to date，保留所有本地修改。
+
+源码审查确认Store.begin_agent生成ID后factory同步创建独立桥、模型与frozen配置，Worker业务run_id相同、attempt_id独立；整批工具审批/原ToolRegistry仍唯一执行来源，原锁/stop/finish承担唯一终态与迟到隔离。默认AgentRunner、StartRun/RunDTO、app/API/UI、数据库和投资计算未修改，密钥/认证头/配置不进入Node。Worker构建入口及源码未改，verify仍先从真实固定pi依赖构建，Python通过manifest核对输入/产物哈希；dist仍忽略，不纳入提交。没有新增/升级依赖，原许可分发阻塞保留。
+
+审查新增4项确定性回归。修复前实际2 failed/2 passed（4.66秒）：Pipe线程构造在try外，第二次构造失败后Node仍存活；factory返回缺少model.label的Runner也被放行，无法满足timeout/shutdown接口。最小修复把构造纳入资源清理保护，并要求factory Runner具备callable run和非空字符串标签。修复后4 passed（4.30秒）；第二/第三管道线程启动失败也验证子进程退出和已启动线程join，不只覆盖首线程。保留旧用例/断言/时限，回归测试finally也负责旧Bug场景的子进程清理。原复现和修复日志在仓库外 `%TEMP%\research-trail-p2-04-pr-repro.log` / `%TEMP%\research-trail-p2-04-pr-fix.log`。
+
+发布轮实际最终验收：新旧专项144 passed（98.81秒，新增44/原100），无失败/跳过；完整 `bun.cmd run verify` 退出0，827 Python（335.92秒）/24 pi Node+27原Node与助手=51 Node/58实际Electron（425.07秒），共936项，失败/取消/跳过/todo 0。原main的892项全部保留，P2-04共新增44项Python。原Step21自动财报用例本轮10.22秒通过。真实pi两个CLI、12原创工程评测/30原创历史观测、契约/类型、87包pi图与native许可审计、0020重复迁移/模型一致性及main/preload/renderer构建全部通过。保留1项既有Starlette/httpx弃用和Vite510.24kB chunk警告，没有调用真实模型或金融服务。专项及完整日志在仓库外 `%TEMP%\research-trail-p2-04-pr-special.log` / `%TEMP%\research-trail-p2-04-pr-verify.log`。
+
+git diff --check与七文件新增内容敏感信息检查通过；构建dist被忽略，未暂存运行数据/缓存/私有配置。只提交这7个P2-04文件；PR编号、提交SHA、push/pull_request的最终远程检查以真实发布回执记录，不把本机通过提前写作CI成功，不自动合并。真实模型、正式用户pi入口、Node分发/Windows安装包及OS资源隔离仍未验收，proxy-agent-negotiate@1.1.0完整声明缺口仍为分发阻塞。
+
+上述7文件首轮提交为1a156058a92debdaa0f1b3750b399307dd9532d5，创建独立 [Draft PR #32](https://github.com/ydflow/research-trail/pull/32)。随后继续复核超时交错，实际通过真实pi/原OpenAIModelProvider.complete+MockTransport复现1 failed（2.50秒）：桥传给complete的是min(整体deadline,模型deadline)，原适配器先返回时使用RUN_TIMEOUT，旧桥误把更早的单模型时限记录成整体超时。新增一次确定性模型队列交错回归，不模拟错误码；先保留整体checkpoint，再仅将更早且已过期的模型deadline的RUN_TIMEOUT规范为MODEL_TIMEOUT。真正整体截止及其他原模型分类保持，16项超时/工具后错误专项通过（14.19秒），无失败/跳过；没有放宽旧时限、重新实现HTTP或重试。因直接涉及P2-04时限层级，本次最终清单补入pi_model_bridge.py，合计8文件；当前PR继续复验后更新，不新建替代PR。日志 `%TEMP%\research-trail-p2-04-pr-timeout-repro.log` / `%TEMP%\research-trail-p2-04-pr-timeout-fix.log` 在仓库外。
+
+超时修正后实际最终复验：新旧专项145 passed（94.80秒，无失败/跳过），完整 `bun.cmd run verify` 再次退出0，828 Python（328.88秒）/51 Node（24 pi+27原Node）/58实际Electron（457.55秒），共937项，失败/取消/跳过/todo 0。原main 892项全部保留，阶段新增45项Python（开发40/发布审查5）。真实pi两个CLI、工程/历史观测、契约/类型、许可审计、0020重复迁移/模型一致性、三端构建全部再次通过，保留既有Starlette/httpx弃用与Vite chunk警告。实际SSE重连/默认Agent/终态旧断言未放宽；没有真实模型或金融请求。最终日志在仓库外 `%TEMP%\research-trail-p2-04-pr-final-special.log` / `%TEMP%\research-trail-p2-04-pr-final-verify.log`。本轮只普通追加提交并推送同一Draft PR，不amend/强推、不合并或发布；最终Head与两条CI在PR回执核验。
