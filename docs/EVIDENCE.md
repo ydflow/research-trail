@@ -2183,3 +2183,38 @@ Draft PR 的 [GitHub Actions](https://github.com/ydflow/research-trail/actions?q
 git diff --check及全13文件新增内容扫描通过，未发现私钥/GitHub Token/个人目录；没有数据库、日志或私有配置进入阶段清单。本机完整日志`%TEMP%\research-trail-p2-03-pr-verify.log`留在仓库外。pi审计仍为87锁定包/70789644已安装bytes与5项补充声明；proxy-agent-negotiate@1.1.0完整版权/许可缺口仍未解决，阻塞未来Worker安装器分发。真实模型/行情/账户、正式pi API/UI、Node分发/ASAR/PyInstaller/新Windows安装包、通用同步provider强杀与OS隔离仍未验收。
 
 独立PR的最终编号、提交SHA及新Head的全部GitHub检查按实际发布回执核验；[功能分支Actions](https://github.com/ydflow/research-trail/actions?query=branch%3Afeat%2Fphase2-pi-model-bridge)单独记录远程证据，本机通过不能预写为CI成功。保持Draft、不自动合并或发布。回滚可revert本阶段提交并重新verify，不需数据库回退或正式引擎切换，不重试已执行工具。
+
+## 66. main Step21 自动财报采集 CI 状态同步修复（2026-10-11）
+
+本轮用户仅授权本地调查、修复、至少5次单项重复及完整离线回归；不提交、推送、创建PR、发布或执行P2-04。起点干净 main `c197b2443037b44c8193bc4d44f24db6d1764612`，无P2-04或其他用户改动；实时 `git ls-remote origin refs/heads/main` 同SHA。创建独立分支 `fix/step21-auto-research-ci`，未修改索引或HEAD。P2-03已通过PR #30普通合并，该合并提交树与验收Head `c12f2b7afe0f732a45290d6435682246c081b915` 一致。
+
+实际失败：[main CI 38098361632](https://github.com/ydflow/research-trail/actions/runs/38098361632)，783 Python/24 pi Node+19原Node通过，实际Electron 57通过/1失败，失败/取消/跳过分别1/0/0（测试统计；Actions后置清理有跳过）。原 `tests/desktop.test.cjs:343` 在保存规则后直接用5秒DOM断言等待 `monitor-research-action` 的 `dispatched`；快照显示 `running`。日志无后台分阶段耗时，不能确定那次运行在SQLite等待、CPU调度还是其他本地评估步骤消耗了时间，不能宣称已复现CI的具体底层负载。
+
+已从源码确认调用链：TodayPanel.create → preload/IPC → BackendManager.createMonitoringRule → POST /monitoring/rules → MonitoringService.create仅入库。Python独立调度（正式默认60秒，本次monitoring-clock夹具100毫秒）tick先写running，经saved_events/本地日历投影和规则评估写triggered/quiet/failed等终态；自动采集再经start_research的claimed → ResearchService.start → dispatched/failed，实际研究采集本身继续异步运行。POST /today只读这些Python记录；TodayPanel保存后刷新及每3秒轮询，并不是保存接口的同步完成结果。旧断言混合了后台评估、派发与页面更新三个阶段，缺少权威状态同步，是本轮确认的验收时序缺陷；没有证据指向pi、生产接口卡死或页面轮询永久停止。
+
+最小修复：新增测试助手waitForAutomaticResearch，只读Today并按规则ID/运行ID/股票关联；等待监控结束、明确要求triggered/无错误/auto_research=true/model_requests=0，再等待派发结束、明确要求dispatched/无错误/有效research_id。等待总预算15秒（仅测试异步阶段），SQLite忙等待5秒与IPC每请求3秒保持原值；不对外宣称这是监控服务的生产SLA。非法终态或API错误立即停止；pending超时失败；重复规则/运行/派发拒绝；不调用tick、start或research，不重试业务。随后仍使用原5秒DOM断言检查相同run和research_id，依赖正常3秒页面轮询，不用手工刷新掩盖刷新问题。原双击、防重复、禁用按钮、显式刷新、重启持久化、模型请求0断言保留。
+
+受控验证与CI事实分别记录：TEMP内独立sitecustomize沿用原Python/Node/Electron离线网络守卫，在真实MonitoringService.saved_events注入6秒延迟（只作用于命名夹具规则），记录状态与单调时间，不写生产源码。从HEAD导出的原测试同处5000ms超时失败；新测试通过。探针记录新测试评估6秒，派发约62ms，Today API返回0–46ms，先返回running，后返回triggered/dispatched，正常3秒UI轮询后原DOM断言通过。证明错误等待模型可重现同类失败，不能等同原GitHub机器负载复现。第一版探针因Python启动时缺模块路径没有成功注入且两项通过，不计慢执行证据；纠正临时sys.path后才获得上述对照。所有探针/日志/数据库在TEMP，未进入提交清单。
+
+新增8项Node验收助手测试：等待阶段、所有错误监控终态、错误派发终态、重复关联、opt-in/零模型/有效ID、错误终态立即停止、有限超时/禁止无限预算、API错误不重试。实际真Python/真Electron的业务与持久化证据由原桌面用例提供，助手桩测试不冒充业务集成测试。scripts/verify.mjs将8项加入既有完整验收。无生产业务、pi桥接、依赖锁/许可、金融计算、数据库或UI源码修改。真实模型/金融服务、Node分发/Windows安装包仍未验收，proxy-agent-negotiate完整版权/许可缺口继续阻塞分发。
+
+最终实际验收（修复分支，HEAD仍为起点，无暂存/提交）：
+
+- 单项重复：先执行新增8项助手测试通过，再使用原Python/Node/Electron离线网络守卫和干净凭证环境运行 `node --test --test-name-pattern="Step21 opt-in automatic earnings" tests/desktop.test.cjs` 连续5次，全部通过（单用例约17.78/20.30/18.29/16.78/16.23秒）；失败/取消/跳过/todo均0。受控6秒慢评估另有1次通过；导出的旧测试同处超时是预期对照失败，未掩盖为通过。
+- 完整 `bun.cmd run verify` 退出0：783 Python（417.32秒）、24 pi Node+27原Node/助手=51 Node、58实际Electron（481.72秒），合计892项；原884保留，新增8项Node，失败/取消/跳过/todo 0。全量中的目标Step21用例11.68秒通过；默认AgentRunner、原pi离线工具/模型闭环、取消/超时/失败、事件重放与重启持久化均在原回归中通过。12工程评测案例、30原创历史观测、契约/类型、pi/native许可审计、0020迁移重复执行/模型一致性、main/preload/renderer构建均通过。
+- 既有1项Starlette/httpx弃用及Vite 510.24kB chunk警告保留，未安装依赖、修改警告阈值或放宽业务时限。完整日志 `%TEMP%\research-trail-step21-ci-fix-verify.log`，探针对照/状态时间线及临时数据库在TEMP，未进入Git。
+- `git diff --check` 通过；仅修改 `tests/backend-ready.cjs`、`tests/desktop.test.cjs`、`scripts/verify.mjs`、`docs/ROADMAP.md`、`docs/EVIDENCE.md`，新增 `tests/backend-ready.test.cjs`。无生产代码、pi、投资公式、迁移或依赖改动，索引空。本地补丁具备提交独立修复PR的验收条件，但未获本轮提交授权、未上传、未运行新远程CI；原main失败检查仍保留，不能宣称已变绿。原CI后端具体耗时来源仍无法从现有日志确认；若后续仍失败，应按新阶段错误定位，不能继续放宽时限。
+
+## 67. Step21 CI 同步修复独立 Draft PR 发布审查（2026-10-11）
+
+本轮单独授权审查、范围内修复、同步origin/main、重新专项/完整验收、提交当前分支、推送并创建指向main的Draft PR，随后检查Actions；不自动合并、发布安装包、修改pi或执行P2-04。Git根目录与当前分支`fix/step21-auto-research-ci`已核对，起点HEAD `c197b2443037b44c8193bc4d44f24db6d1764612`，只有前轮6个文件改动，索引空。实时GitHub账号`ydflow`，origin为`ydflow/research-trail`；fetch及ff-only核对origin/main仍同SHA，未覆盖工作区。无其他开放PR或同名远程功能分支。
+
+完整审查只读调用链、全部差异及新增测试：等待助手只调用Today读取，不派发、补跑或调用模型；按规则/运行/股票关联，明确监控triggered、派发dispatched、无错误及有效research_id；错误终态/API错误立即停止，pending严格有限，重复关联拒绝。原双击、防重复、禁用按钮、刷新前页面自动轮询、刷新后不重复、重启复用原行动及无模型请求断言保留。不是增加DOM超时来代替完成条件。
+
+发布审查收紧一个测试问题：前轮额外页面等待断言各自可能获得5秒窗口；现在只有一次原有5秒`toContainText('dispatched')`，之后用evaluateAll即时读取同一DOM行的run_id/status/research_id并断言，不给后续检查额外等待窗口。业务、API及页面轮询频率/超时未修改。8项助手单元和3项原Step21真Electron专项实际全部通过，失败/取消/跳过0。
+
+TEMP中的真实Python/Node/Electron受控对照：同样6秒saved_events延迟下，当前最终助手通过（18.37秒）；另一个临时副本在打开Today前只暂停页面的3000ms轮询，后端仍实际完成triggered/dispatched且只读API返回这两个终态，但原5秒页面断言失败（助手行103）。这个预期负向失败证明后台等待不会把页面停更掩盖为通过；不是被跳过的回归失败。探针沿用原离线网络守卫与清理凭证环境，没有生产fixture开关或诊断代码进入Git；相关日志与timeline留在TEMP。原CI具体慢执行来源尚未确认，本次修复的是异步后台状态与页面断言的同步关系，不宣称解决了未证实的后端性能问题。
+
+本轮实际复验：收紧DOM检查后目标用例连续5次通过（20.83/11.76/12.01/12.41/11.31秒），失败/取消/跳过0；完整 `bun.cmd run verify` 退出0，783 Python（299.16秒）/24 pi Node+27原Node与助手=51 Node/58实际Electron（447.86秒），合计892项，失败/取消/跳过/todo 0，原884项全部保留、新增8项Node。全量目标Step21用例10.84秒通过。原pi两个CLI、12工程评测/30原创历史观测、契约/类型、pi/native许可审计、0020重复迁移/模型一致性及main/preload/renderer构建通过。1项既有Starlette/httpx弃用与Vite 510.24kB chunk警告保留。
+
+完整日志 `%TEMP%\research-trail-step21-pr-verify.log`，重复日志 `%TEMP%\research-trail-step21-pr-repeat.log`，负向对照与诊断数据在独立TEMP目录，不进入Git。再次fetch确认origin/main仍为起点，无需覆盖本地修改；git diff --check及新增内容敏感信息扫描通过，未发现密钥、用户目录或运行数据进入六文件清单。只提交本次测试/脚本/文档，保持独立Draft PR；最终PR编号、提交SHA和两条push/pull_request远程检查以实际发布回执核验，本地通过不预写为CI成功，不自动合并。真实模型/金融服务、Node分发/Windows安装包、OS隔离仍未验收；proxy-agent-negotiate完整版权/许可缺口仍为分发阻塞，与本次测试修复无关。

@@ -55,4 +55,64 @@ async function waitForEvaluationCompletion(page, status) {
   return saved;
 }
 
-module.exports = { waitForBackend, waitForResearchCollection, waitForEvaluationCompletion };
+function automaticResearchState(view, ruleName, symbol) {
+  const rules = view.rules.filter(rule => rule.input.name === ruleName);
+  assert.ok(rules.length <= 1, 'Automatic research must have exactly one saved rule');
+  if (!rules.length) return { phase: 'waiting-rule' };
+  const runs = view.runs.filter(run => run.rule_id === rules[0].id);
+  assert.ok(runs.length <= 1, 'Automatic research must not repeat a monitoring occurrence');
+  if (!runs.length) return { phase: 'waiting-run' };
+  const run = runs[0];
+  if (run.status === 'running') return { phase: 'running', run };
+  assert.equal(run.status, 'triggered', `Monitoring ended as ${run.status}: ${run.code}`);
+  assert.equal(run.code, null);
+  assert.equal(run.payload.auto_research, true);
+  assert.equal(run.payload.model_requests, 0);
+  const actions = view.research_actions.filter(action => action.run_id === run.id && action.symbol === symbol);
+  assert.ok(actions.length <= 1, 'Automatic research must not dispatch twice');
+  if (!actions.length) return { phase: 'waiting-action', run };
+  const action = actions[0];
+  if (action.status === 'claimed') return { phase: 'claimed', run, action };
+  assert.equal(action.status, 'dispatched', `Dispatch ended as ${action.status}: ${action.code}`);
+  assert.equal(action.code, null);
+  assert.match(action.research_id, /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/);
+  return { phase: 'dispatched', run, action };
+}
+
+async function waitForAutomaticResearch(page, ruleName, symbol, { timeout = 15000 } = {}) {
+  assert.ok(Number.isFinite(timeout) && timeout > 0 && timeout <= 15000, 'Automatic research wait budget must be bounded');
+  let saved, failure;
+  // Saving a rule only commits it. The fixture scheduler wakes every 100ms;
+  // monitoring evaluation and dispatch then use separate SQLite transactions
+  // (5s busy budgets), with IPC requests bounded at 3s. Give this asynchronous
+  // test phase a finite 15s ceiling; do not extend any DOM assertion timeout.
+  // Poll only the read-only Today API. A wrong terminal or API error fails
+  // immediately; never call tick/start/research or retry a failed dispatch.
+  await expect.poll(async () => {
+    try {
+      const view = await page.evaluate(() => window.researchTrail.today('Asia/Shanghai'));
+      saved = automaticResearchState(view, ruleName, symbol);
+      return saved.phase;
+    } catch (error) { failure = error; return 'invalid'; }
+  }, { timeout, intervals: [100, 250, 500] }).not.toMatch(/^(waiting-rule|waiting-run|running|waiting-action|claimed)$/);
+  if (failure) throw failure;
+  assert.equal(saved.phase, 'dispatched');
+  const row = page.locator(`[data-testid="monitor-run"][data-run-id="${saved.run.id}"]`);
+  // Require the normal 3s Today polling to render it within the original 5s.
+  // No manual refresh: a broken renderer poll must still fail this test.
+  await expect(row.getByTestId('monitor-research-action')).toContainText('dispatched');
+  // One DOM wait only. Read the correlated status and ID immediately instead
+  // of giving subsequent assertions another 5s window to repair stale UI.
+  const rendered = await row.evaluateAll(rows => rows.map(element => ({
+    runId: element.getAttribute('data-run-id'), status: element.getAttribute('data-status'),
+    actionText: element.querySelector('[data-testid="monitor-research-action"]')?.textContent ?? '',
+  })));
+  assert.equal(rendered.length, 1);
+  assert.equal(rendered[0].runId, saved.run.id);
+  assert.equal(rendered[0].status, 'triggered');
+  assert.ok(rendered[0].actionText.includes(saved.action.research_id), 'Rendered research ID must match Python dispatch');
+  return saved;
+}
+
+module.exports = { waitForBackend, waitForResearchCollection, waitForEvaluationCompletion,
+  automaticResearchState, waitForAutomaticResearch };

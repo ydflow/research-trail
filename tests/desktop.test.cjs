@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { waitForBackend, waitForResearchCollection, waitForEvaluationCompletion } = require('./backend-ready.cjs');
+const { waitForBackend, waitForResearchCollection, waitForEvaluationCompletion, waitForAutomaticResearch } = require('./backend-ready.cjs');
 const { _electron: electron, expect } = require('@playwright/test');
 const { execFileSync } = require('node:child_process');
 const { resolve } = require('node:path');
@@ -340,9 +340,7 @@ test('Step21 opt-in automatic earnings collection persists one action across pol
     await page.getByLabel('触发后自动采集',{exact:true}).check();
     await page.getByLabel('创建后启用',{exact:true}).check();
     await page.getByRole('button',{name:'保存规则',exact:true}).dblclick();
-    await expect(page.getByTestId('monitor-research-action')).toContainText('dispatched');
-    action=(await page.evaluate(()=>window.researchTrail.today('Asia/Shanghai'))).research_actions[0];
-    run=(await page.evaluate(()=>window.researchTrail.monitoringRuns()))[0];
+    ({action,run}=await waitForAutomaticResearch(page,'固定自动财报采集','AAPL.US'));
     assert.equal(run.payload.auto_research,true);assert.equal(run.payload.model_requests,0);
     assert.equal((await page.evaluate(()=>window.researchTrail.monitoringRules())).length,1);
     assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,1);
