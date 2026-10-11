@@ -63,7 +63,7 @@ class RunManager:
         self.closed = False
 
     def timer(self, work, seconds, code):
-        timer = threading.Timer(seconds, self.timeout, args=(work, code))
+        timer = threading.Timer(seconds, lambda: self.timeout(work, code, timer))
         timer.daemon = True
         work.timers.append(timer)
         if code == "TOOL_TIMEOUT":
@@ -71,15 +71,31 @@ class RunManager:
         timer.start()
         return timer
 
-    def start(self, session_id, text, scenario, *, runner=None, timing=None, kind="fake_agent"):
+    def start(self, session_id, text, scenario, *, runner=None, runner_factory=None, timing=None, kind="fake_agent"):
+        # Internal factories construct one runner after Store assigns the ID.
+        # They only snapshot/create local objects, never start model/tool/Node IO.
+        if runner is not None and runner_factory is not None:
+            raise ValueError("Choose a runner or a runner factory, not both")
         with self.lock:
             if self.closed:
                 raise RuntimeError("后端正在关闭。")
             timing = self.timings[scenario] if timing is None else timing
             record = self.store.begin_agent(session_id, text, kind)
-            work = Work(session_id, record.id, timing, runner or self.runner, time.monotonic() + timing.run_timeout)
+            work = Work(session_id, record.id, timing, self.runner if runner is None else runner,
+                        time.monotonic() + timing.run_timeout)
             self.work[record.id] = work
             try:
+                if runner_factory is not None:
+                    try:
+                        work.runner = runner_factory(record.id)
+                        label = getattr(getattr(work.runner, "model", None), "label", None)
+                        if not callable(getattr(work.runner, "run", None)) or not isinstance(label, str) or not label.strip():
+                            raise ValueError("Invalid runner")
+                    except Exception:
+                        record = self.settle(work, "failed", error=ErrorPayload(
+                            code="RUNNER_CREATE_FAILED", message="内部实验Runner创建失败；未启动模型或工具。"))
+                        self.work.pop(record.id, None)
+                        return record
                 self.timer(work, work.timing.run_timeout, "RUN_TIMEOUT")
                 work.thread = threading.Thread(target=self.execute, args=(work, text), daemon=True,
                                                name=f"agent-run-{record.id}")
@@ -128,7 +144,12 @@ class RunManager:
                 self.checkpoint(work)
                 self.settle(work, outcome.status, text=outcome.answer, error=outcome.error)
         except RunStopped:
-            pass
+            with self.lock:
+                if not self.closed and not work.stop.is_set():
+                    # A runner/provider may stop independently of Manager.
+                    # Removing Work must never leave an orphan running record.
+                    self.settle(work, "failed", error=ErrorPayload(
+                        code="RUN_STOPPED", message="Runner意外停止；已保存内容保留，不自动重执行。"))
         except Exception:
             with self.lock:
                 if not self.closed and not work.stop.is_set():
@@ -148,12 +169,14 @@ class RunManager:
             timer.cancel()
         return record
 
-    def timeout(self, work, code):
+    def timeout(self, work, code, timer=None):
         with self.lock:
             if self.closed or work.stop.is_set():
                 return
             if code == "TOOL_TIMEOUT" and work.tool_timer is None:
                 return
+            if code == "TOOL_TIMEOUT" and timer is not None and work.tool_timer is not timer:
+                return  # A cancelled previous tool timer cannot time out the next tool.
             error = ErrorPayload(code=code, message="只读工具超时。" if code == "TOOL_TIMEOUT" else "Agent运行达到整体时间限制。")
             self.settle(work, "timed_out", text=f"{work.runner.model.label}：{error.message}", error=error)
 
