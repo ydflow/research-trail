@@ -4,6 +4,8 @@
 
 ## 当前执行边界
 
+- 当前任务：Step21 自动财报采集 CI 修复，验收通过（开发轮本地离线范围）。从干净 main `c197b2443037b44c8193bc4d44f24db6d1764612` 创建 `fix/step21-auto-research-ci`；开发轮失败用例连续5次通过，完整783 Python/51 Node/58实际Electron通过，合计892项，失败/取消/跳过0。开发轮未提交/推送/PR，证据见第66节；当前用户单独授权发布审查、重新验收及提交/推送独立Draft PR，发布轮结果见 EVIDENCE 第67节，远程检查按实际回执核验。本次只收紧测试状态同步与单次5秒页面断言，不改 pi、生产业务或安装包；P2-04 暂停，未开始开发，不自动合并。P2-03 已由 [PR #30](https://github.com/ydflow/research-trail/pull/30) 合并；下方开发/发布轮授权与通过数为当时记录。
+
 - 第二阶段 P2-03：验收通过（本机离线试验范围）。独立PiModelBridge复用原Fake/RuleDialog与OpenAIModelProvider.complete；真实pi模型→工具→模型闭环、混合非法批次零执行及完整783 Python/43 Node/58实际Electron通过（884项，失败/跳过0，新增55）。已有esbuild离线开发构建消除原源码Worker短启动预算问题，不放宽旧时限；默认AgentRunner不切换。见 [模型桥](PHASE2-PI-MODEL-BRIDGE.md)、EVIDENCE第64节；用户单独授权的独立Draft PR发布审查见第65节。真实模型/金融服务、正式pi API/UI、Node分发/Windows安装包未验收；许可缺口保留。未安装新依赖；开发轮未提交，本次仅授权提交/推送/Draft PR，不合并、发布或执行P2-04。下方P2-01/P2-02“P2-03未开始”保留为当时历史状态。
 
 - 第二阶段 P2-01：验收通过（本机离线工程基线与架构文档范围）。main `7d12da5204d7119dbd71818bbeaa8207b6aeb731`，当轮696 Python / 19 Node / 58实际Electron通过；见 [工程基线](PHASE2-BASELINE.md)、[pi架构决策](PHASE2-PI-ARCHITECTURE.md) 与 EVIDENCE 第60节。公开审查仅移除新文档中的本机目录，保留历史检查与架构结论。
