@@ -305,6 +305,35 @@ def test_timeout_layers_keep_correct_error_and_discard_late_results(env, scope):
     finally: released.set(); gate.release.set()
 
 
+def test_provider_deadline_winning_model_timer_is_still_model_timeout(env, monkeypatch):
+    from research_trail.openai_provider import OpenAIModelProvider, ModelError
+    gate, raw_errors = ModelGate(), []
+    original_get, original_complete = queue.Queue.get, OpenAIModelProvider.complete
+    def delayed_delivery(q, *args, **options):
+        # Deterministic scheduler interleaving: the existing HTTP adapter's
+        # deadline is observed before the bridge's model timer loop resumes.
+        if q.maxsize == 1 and threading.current_thread().name.startswith('agent-run-') and options.get('timeout') == .01:
+            return original_get(q, timeout=.5)
+        return original_get(q, *args, **options)
+    def complete(model, *args, **options):
+        try: return original_complete(model, *args, **options)
+        except ModelError as error:
+            raw_errors.append(error.error.code)
+            raise
+    monkeypatch.setattr(queue.Queue, 'get', delayed_delivery)
+    monkeypatch.setattr(OpenAIModelProvider, 'complete', complete)
+    sid = session(env)
+    record = mock_runtime(env, gate, model_timeout=.15).start(env.manager, sid, '查询AAPL.US行情')
+    try:
+        result, events = terminal(env, sid, record, 'timed_out')
+        assert raw_errors == ['RUN_TIMEOUT']  # Actual complete/_request, not a fake error.
+        assert result.error.code == 'MODEL_TIMEOUT'
+        assert gate.aborted.wait(1) and env.provider.calls == []
+        assert env.bridges[record.id].model_calls == 1 and env.bridges[record.id].execution_count == 0
+        assert not any(e.type == 'tool_started' for e in events)
+    finally: gate.release.set()
+
+
 @pytest.mark.parametrize('fault', ['creation', 'invalid_runner', 'node_start', 'crash', 'unresponsive'])
 def test_start_and_worker_failures_settle_once_without_fallback(env, tmp_path, monkeypatch, fault):
     import research_trail.pi_bridge as module

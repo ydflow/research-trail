@@ -148,6 +148,12 @@ class PiModelBridge(PiOfflineBridge):
                 except queue.Empty: pass
             checkpoint()
             if not ok:
+                # complete() calls its supplied deadline RUN_TIMEOUT. Here it
+                # may be the shorter model budget; the overall checkpoint
+                # above already preserves RUN_TIMEOUT when Work expired.
+                if (isinstance(result, ModelError) and result.error.code == 'RUN_TIMEOUT' and
+                    call_deadline < deadline and time.monotonic() >= call_deadline):
+                    raise ModelError('MODEL_TIMEOUT', '模型单次请求超时。', True)
                 if isinstance(result, (RunStopped, ModelError)): raise result
                 raise ModelError('MODEL_ERROR', '模型未能生成合法工具请求或回复；已有工具结果保留。')
             response = assistant_response(result)

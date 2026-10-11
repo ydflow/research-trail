@@ -1,7 +1,7 @@
 # P2-04：pi 内部 RunManager 集成与生命周期
 
 日期：2026-10-11（Asia/Shanghai）。开发轮仅完成内部实验入口；随后用户单独授权最终审查、复验、提交/推送独立 Draft PR。禁止合并、发布安装包或执行 P2-05。
-状态：验收通过（本机离线内部集成范围）；开发证据见本页及 EVIDENCE 第68节，发布审查复验827 Python/51 Node/58实际Electron共936项通过，见第69节。远程 CI 以发布回执为准。
+状态：验收通过（本机离线内部集成范围）；开发证据见本页及 EVIDENCE 第68节，发布审查最终复验828 Python/51 Node/58实际Electron共937项通过，见第69节。远程 CI 以发布回执为准。
 
 ## 1. 实际基线与职责
 
@@ -40,6 +40,7 @@ PiRuntime 的 OpenAI 模式要求显式 httpx.MockTransport，Fake 模式每次�
 | services/backend/research_trail/pi_runtime.py | 冻结内部策略、限定 Fake/Mock、创建运行专属模型与桥、显式启动 |
 | services/backend/research_trail/lifecycle.py | 最小 runner_factory 扩展、创建失败结算、计时器身份、意外停止兜底 |
 | services/backend/research_trail/pi_bridge.py | 可观察的独立 attempt_id、管道部分启动失败清理；复用全部原协议/工具逻辑 |
+| services/backend/research_trail/pi_model_bridge.py | 区分适配器先返回的单模型截止与业务整体截止；不改 HTTP 客户端或 Agent 循环 |
 | services/backend/tests/test_pi_runtime.py | 真实 pi/Store/模型生命周期专项；故障输运和计时器单元明确标注 |
 
 Store 的业务 run_id 是 Worker argv 与所有 JSONL run_id，没有第二套桥 run_id。
@@ -73,6 +74,13 @@ Python 的同一个 Work.deadline 始终是最终上界。工具时限覆盖 bef
 Manager 与桥可能同时发现整体/工具超时，但分别使用相同 RUN_TIMEOUT/TOOL_TIMEOUT；
 stop 与锁先决定赢家，Store.finish 事务只允许一次 running → terminal。模型超时仍保留
 原 MODEL_TIMEOUT；RPC 无响应为 PI_RESPONSE_TIMEOUT。不会把认证、限流或网络错误写成成功。
+
+发布复核另实际复现适配器先返回的边界：原 complete/_request 将传入的 deadline 称为
+RUN_TIMEOUT，而桥传的是 min(整体截止, 单模型截止)。若单模型预算先到且模型队列先唤醒，
+原桥会保存错误的整体超时码。现在先检查整体 Work.deadline，再仅把已到期、更早的单模型
+deadline 返回的 RUN_TIMEOUT 转为 MODEL_TIMEOUT；真正整体截止、认证/限流/网络错误不改。
+确定性调度交错仍经过真实 pi 与原 OpenAI MockTransport，修复前1 failed（2.50秒），
+修复后相关超时/工具后失败16 passed（14.19秒）。没有延长原超时或重试模型/工具。
 
 | 情况 | 行为 |
 | --- | --- |
@@ -120,6 +128,12 @@ Runner 被放行执行。现在管道构造也进入清理保护；factory 必�
 自身也在 finally 清理旧实现遗留的子进程。最终新旧专项144 passed（98.81秒），完整
 `bun.cmd run verify` 退出0：827 Python（335.92秒）/51 Node/58实际Electron（425.07秒），
 共936项，失败/取消/跳过/todo 0；保留同样两类既有警告。详见 EVIDENCE 第69节。
+
+随后补入适配器先返回模型截止的回归及6行分类修正，最终专项145 passed（94.80秒），
+再次完整 `bun.cmd run verify` 退出0：828 Python（328.88秒）/51 Node/58实际Electron
+（457.55秒），共937项，失败/取消/跳过/todo 0。原main 892项全部保留，本阶段新增45项
+Python（开发40、发布审查5）。最终提交范围8文件，比首轮增加上述模型桥修正；不改
+HTTP传输、工具循环、原预算、API/UI或依赖，保留既有警告和分发阻塞。
 
 ## 6. 尚未验证与启用前提
 
