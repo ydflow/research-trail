@@ -132,6 +132,8 @@ SessionPanel仅重写return展示区；原state、execute、perform、effect、�
 
 用户已审核第二轮实际 Electron 截图，同意结束大规模 UI 重构，并明确授权最终验收通过后提交、普通推送及独立 Draft PR。本轮核对 Git 根、分支、HEAD、空暂存区与所有未提交修改；fetch 后 main/origin/main 仍为 `3c3f9bdb75e8318964f4789f25931f4ac01d114e`，基线 CI 38156154913 成功，GitHub 身份为 ydflow，无现有开放 PR。没有 reset、强推或清理用户文件。
 
+本阶段已普通推送并创建 [Draft PR #33](https://github.com/ydflow/research-trail/pull/33)，目标main，保持Draft。提交回执见EVIDENCE第72节；当前远程CI按PR最新checks核验，不将本机通过等同CI成功。
+
 已审核界面的证券标题/主报价、图表与下方摘要间距、来源/模拟标签、助手消息区与底部输入、高级设置折叠及导航选中态满足本轮收尾目标，保留原样。18个代码/测试文件的 SHA256 与第二轮最终验收清单一致，本轮不修改 React、CSS 或测试，只整理文档并复验实际界面。最终完整verify退出0，828 Python/51 Node/67实际Electron共946项通过，失败/取消/跳过/todo均0；契约、类型及main/preload/renderer构建通过。既有Starlette/httpx弃用1条与Vite主chunk517.40kB警告保留。
 
 串行实窗采集覆盖1440×900、1000×700、600×700；行情/资产切换/证券概览/真实持久消息正常，无框架错误覆盖层，pageerror为空，1000/600无整页横向溢出。最终截图与日志位于仓库外 `<项目父目录>/research-trail-p2-05-qa/final-wrapup/`、`final-wrapup-capture.log`、`final-wrapup-verify.log`。Browser插件未提供，使用原Playwright实际Electron和隔离临时库，不读取私人数据或调用真实服务；截图/日志/临时数据不进入提交。

@@ -2298,3 +2298,5 @@ git diff --check与七文件新增内容敏感信息检查通过；构建dist被
 完整验收结束后再串行启动实际Electron采集：1440×900、1000×700、600×700及两种参考原生尺寸；真实已保存的Fake/Fixture行情工具消息、资产选择、证券概览与输入正常。截图实查无空白/框架覆盖层，采集pageerror为空，1000/600文档横向溢出为false；新增导航/消息用例console warning/error断言通过。截图位于仓库外research-trail-p2-05-qa/final-wrapup/，采集日志final-wrapup-capture.log。Browser plugin not available，使用现有Playwright实际Electron、隔离临时SQLite和离线护栏；无真实服务/私人凭证/账户数据，截图/日志/数据库不提交。
 
 UTF-8和git diff --check通过；提交清单仅renderer、tests/desktop.test.cjs及三份文档。用户视觉认可与本机验收通过不等于概念图完全一致或远程CI成功。固定10根日线、稀疏金融信息及未统一的次级面板内部布局仍如实保留；P2-06证券/K线深度增强、P2-07热力图、P2-08 Agent联动均未执行，不合并、打包或发布。Draft PR及提交回执以实际GitHub记录为准，远程检查单独核验。
+
+实际发布回执：主体提交 `d2bb8378908ed29bf4e29993f9f088445186678b`，21文件新增1245/删除132行；普通推送feat/phase2-ui-foundation，创建独立 [Draft PR #33](https://github.com/ydflow/research-trail/pull/33)，目标main、OPEN、isDraft=true。本段仅补交付回执，不改变已验收代码/测试。push/pull_request已触发Windows离线CI，远程结果以该PR最新Head的checks为准；未合并或发布。

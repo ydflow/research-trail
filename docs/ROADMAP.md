@@ -8,6 +8,8 @@
 
 ### P2-04 及更早阶段的历史执行记录
 
+P2-05已交付独立 [Draft PR #33](https://github.com/ydflow/research-trail/pull/33)，目标main，保持Draft；本机946项验收通过，远程CI结果单独查看PR当前checks。未合并或发布。
+
 以下“当前任务”、旧 main、Draft PR 和未开始状态均为当轮历史，保留原始事实；当前执行以本节顶部为准。
 
 - 当前任务：第二阶段 P2-04 最终审查与独立 [Draft PR #32](https://github.com/ydflow/research-trail/pull/32)，验收通过（本机离线内部范围）。main `80beeb7591332ffea0ea3265d6be6825ac4c722b`（PR #31 Step21 修复已合并，main CI 成功）为开发及本次 fetch 核对基线；独立分支 `feat/phase2-pi-runtime-integration`。内部入口补按运行创建/Store业务run_id绑定、模型配置快照、并发隔离与生命周期状态矩阵，限定 Fake/Mock；开发轮823 Python/51 Node/58实际Electron共932项通过。发布审查新增5项工厂/管道/模型截止回归，修正资源清理、Runner接口及单模型超时分类；最终专项145通过，完整828 Python/51 Node/58实际Electron共937项通过，失败/跳过0，最终8文件。详见 EVIDENCE 第69节，开发历史见第68节；远程检查按PR实际回执核验。默认 AgentRunner/API/UI 不切换，契约/数据库/金融/报告/恢复不改。用户已授权本轮提交/推送/Draft PR，不合并、打包、发布或执行 P2-05。详见 [内部运行集成](PHASE2-PI-RUNTIME.md)。
