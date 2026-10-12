@@ -4,6 +4,20 @@
 
 ## 当前执行边界
 
+- 当前针对性任务：P2-06 Draft PR #34合并前OHLCV残留边界修复，本机验收通过（866 Python/51 Node/74 Electron，共991项，失败/取消/跳过0）。原Head 8b81d3b15bf8babe23925e22361425a5a9262790两条CI已SUCCESS；同组件无效数据残留已在真实Electron复现，只修复选择数据批次及扩展既有边界测试，7项P2-06专项通过。修复后的完整verify已通过，新Head两条远程CI须单独核验，详情见技术说明第11节/EVIDENCE第76节。不合并，不重构UI，不执行P2-07/08。
+
+- 当前任务：P2-06 最终收尾与独立Draft PR提交，验收通过（用户确认三张实际Electron截图；最后本机完整866 Python/51 Node/74 Electron，共991通过，失败/取消/跳过0）。原946项与新增45项全部保留。按本轮授权提交、普通推送和独立Draft PR，当前Head的Push/PR CI须单独等待核验；不把本机结果写作远程成功。仅加强新增迟到响应测试，11个产品源码文件与审核版哈希一致；既有三项视觉事项不阻塞本阶段交付，不重构UI。main基线仍3c522ee2d9206352c467f68d7c0e1cc329892dcf，最终验收及远程Head/CI见 [技术说明第10节](PHASE2-SECURITY-KLINE.md#10-最终审查与-draft-pr-交付) 与EVIDENCE第75节。不自动合并，不执行P2-07/08，不创建Release或安装包。
+
+### P2-06 本地开发验收历史
+
+P2-06已交付 [Draft PR #34](https://github.com/ydflow/research-trail/pull/34)，目标main、OPEN/isDraft=true；主体提交d065d59b0244b5461777c641b67447418f9b28d4，普通推送，未合并。该回执补充不改代码/测试；最终Head的Push/PR CI以PR当前checks为准，记录时仍在运行，不提前宣称成功。
+
+- 当前任务：P2-06 证券详情与专业K线增强，代码完成/待验收（本机完整离线验收通过，截图待用户审核）。分支 `feat/phase2-security-chart-enhancement`，从干净main `3c522ee2d9206352c467f68d7c0e1cc329892dcf` 创建；P2-05 PR #33已普通合并，[main CI 38229238638](https://github.com/ydflow/research-trail/actions/runs/38229238638) completed/SUCCESS且精确匹配Merge SHA后才开始。六周期证券模拟历史、原生MA/VOL/交互与resize/清理、证券局部展示已实现。专项209 Python、8实际Electron及收尾7项通过；最终完整verify退出0：866 Python/51 Node/74 Electron共991通过，失败/取消/跳过0，原946项保留，新增45；最终1440/1000/600实窗无整页横向溢出。结果见 [P2-06技术说明](PHASE2-SECURITY-KLINE.md) 与EVIDENCE第74节。保留P2-05外壳/15入口/AI助手、金融/API/DTO/数据库、默认AgentRunner及pi内部边界。只本地开发，未提交/推送/PR/合并/发布，未触发P2-06远程CI，不执行P2-07/08。
+
+### P2-05 开发与文档发布历史（现已合并）
+
+以下Draft、旧main和未进入P2-06为当轮历史；当前基线与范围以顶部为准。P2-05技术说明、开源调研与许可证记录继续保留。
+
 - 当前任务：P2-05 最终收尾，验收通过（用户已审核第二轮实际Electron截图；最终本机完整离线946项复验通过，失败/取消/跳过0）。分支 `feat/phase2-ui-foundation`，已合并P2-01～04的main/origin/main基线仍为 `3c3f9bdb75e8318964f4789f25931f4ac01d114e`，基线CI成功。保留已审核UI，代码/测试18文件哈希一致，本轮仅整理文档；实际1440/1000/600截图与交互复核通过，1000/600无整页横向溢出。前两轮历史与失败记录见 EVIDENCE第70～71节；当前结果与Draft PR回执见第72节及 [UI基础说明第9节](PHASE2-UI-FOUNDATION.md)。本轮用户授权提交、普通推送与独立Draft PR，远程CI以PR实际检查为准，不合并、打包或发布；原API/DTO/数据库/金融/默认AgentRunner/pi内部边界不改。P2-06证券/K线深度增强、P2-07热力图、P2-08 Agent业务联动均未执行。
 
 P2-05已交付独立 [Draft PR #33](https://github.com/ydflow/research-trail/pull/33)，目标main，保持Draft；本机946项验收通过，远程CI结果单独查看PR当前checks。未合并或发布。

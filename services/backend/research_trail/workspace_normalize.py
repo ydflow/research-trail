@@ -65,7 +65,7 @@ def metrics(cap,data):
 def bars(data):
     if not isinstance(data,list): raise ProviderFault('INVALID_RESPONSE')
     result=[]
-    for d in data[:100]:
+    for d in data:
         d=object_data(d); t=timestamp(d.get('timestamp'))
         # A missing bar stays absent; malformed/inconsistent OHLC is an explicit error.
         values={key:numeric(d.get(key)) for key in ('open','high','low','close','volume')}
@@ -74,7 +74,7 @@ def bars(data):
         except ValidationError: raise ProviderFault('INVALID_RESPONSE') from None
     result.sort(key=lambda r:r.timestamp)
     if len({r.timestamp for r in result})!=len(result): raise ProviderFault('INVALID_RESPONSE')
-    return result
+    return result[-260:]
 
 def news(data):
     if not isinstance(data,list): raise ProviderFault('INVALID_RESPONSE')

@@ -1,0 +1,25 @@
+.professional-chart { min-width: 0; font-variant-numeric: tabular-nums; }
+.chart-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 10px; margin-bottom: 5px; font-size: 11px; }
+.chart-period-label { color: var(--muted); }
+.chart-actions { display: flex; gap: 4px; margin-left: auto; }
+.shell .chart-actions button { min-height: 26px; padding: 2px 7px; font-size: 11px; }
+.chart-indicators { display: flex; flex-wrap: wrap; gap: 6px; }
+.shell .chart-indicators label { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; }
+.shell .chart-indicators input { width: 12px; height: 12px; min-height: 0; margin: 0; accent-color: var(--brand); }
+.chart-readout { display: flex; flex-wrap: wrap; gap: 2px 9px; min-height: 32px; padding: 4px 0; font-size: 10px; color: var(--muted); }
+.chart-readout b { color: var(--text); font-weight: 500; }
+.chart-readout time { width: 100%; }
+.chart-limits { color: var(--muted); font-size: 11px; margin: 4px 0; }
+.shell .professional-chart .chart-canvas { height: 360px; }
+.shell .security-overview-chart .professional-chart .chart-canvas { height: 200px; }
+.security-period-bar { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-bottom: 8px; }
+.shell .security-period-bar button { min-height: 28px; font-size: 11px; padding: 3px 7px; background: var(--surface); color: var(--muted); border: 1px solid var(--border); }
+.shell .security-period-bar button[aria-pressed="true"] { background: var(--brand-soft); color: var(--brand); border-color: var(--brand); }
+.security-period-bar label { margin-left: auto; }
+.shell .security-period-bar select { min-height: 28px; font-size: 11px; padding: 3px; }
+.shell .security-overview-chart .overview-card-heading h3 { margin: 0; }
+.shell .security-overview-chart .overview-card-heading { flex-wrap: wrap; }
+.shell .security-overview-chart .chart-controls { gap: 3px 6px; }
+.shell .security-overview-chart .chart-period-label, .shell .security-overview-chart .chart-indicators label { font-size: 10px; }
+.shell .security-overview-chart .chart-readout { min-height: 28px; padding: 2px 0; }
+@media(max-width:760px) { .shell .professional-chart .chart-canvas { height: 280px; } }

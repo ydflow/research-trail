@@ -15,7 +15,8 @@ class SecurityWorkspace:
         result=self.providers.query(body.provider,ReadQuery(capability=cap,mode=body.mode,
             symbol=None if cap=='market.status' else symbol,period=body.period,
             kind=body.kind if cap=='company.financials' else 'ALL',
-            report=body.report if cap=='company.financials' else None,count=20,market=market))
+            report=body.report if cap=='company.financials' else None,count=260 if cap=='market.kline' else 20,market=market),
+            chart_history=cap=='market.kline')
         block=SecurityBlock(title=title,capability=cap,symbol=symbol,status='missing')
         if not result.ok:
             block.status='missing' if result.code=='NO_DATA' else result.state

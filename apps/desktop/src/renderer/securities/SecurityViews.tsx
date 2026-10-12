@@ -49,8 +49,8 @@ export function QuoteView({ page }: { page: SecurityPage }) {
 }
 export function ChartView({ page, period }: { page: SecurityPage; period: SecurityQuery['period'] }) {
   return <>{page.blocks.map((block, i) => <BlockFrame key={i} block={block}>
-    {(block.bars?.length ?? 0) > 0 ? <FinancialKLineChart bars={block.bars!} symbol={block.symbol!} period={period} dataLabel={page.mode === 'simulated' ? '模拟' : '真实'} /> : <p>暂无K线 · —</p>}
-    {page.mode === 'simulated' && <p className="security-note">模拟K线为固定日线样例；不证明所选周期在真实市场可用。</p>}
+    {(block.bars?.length ?? 0) > 0 ? <FinancialKLineChart bars={block.bars!} symbol={block.symbol!} period={period} professional dataLabel={page.mode === 'simulated' ? '模拟' : '真实'} /> : <p>暂无K线 · —</p>}
+    {page.mode === 'simulated' && <p className="security-note">确定性合成样例，非真实证券历史；分钟时间线不代表交易日历。真实周期权限尚未验收。</p>}
   </BlockFrame>)}</>;
 }
 // FinancialsView's table/card layout; extended with the Python statement DTO.

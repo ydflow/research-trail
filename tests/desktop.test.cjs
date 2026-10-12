@@ -7,6 +7,341 @@ const { resolve } = require('node:path');
 const { mkdirSync, mkdtempSync, readFileSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 
+async function chartEvidence(chart) { return chart.evaluate(el => el.chartEvidence); }
+async function openSecurity(page) {
+  await waitForBackend(page);
+  await page.getByLabel('工作区', { exact: true }).getByRole('button', { name: '证券工作台', exact: true }).click();
+  const workspace = page.getByRole('region', { name: '证券工作台', exact: true });
+  await expect(workspace.getByTestId('security-overview-price')).toHaveText('189.43');
+  return workspace;
+}
+
+test('P2-06 six periods reach the real chart with correct history, MA warmup and volume', { timeout: 90000 }, async () => {
+  const instance = await launch({ RESEARCH_TRAIL_OFFLINE: '1' });
+  try {
+    const page = instance.page; await page.setViewportSize({ width: 1440, height: 900 });
+    const workspace = await openSecurity(page);
+    const assistant = page.getByLabel('常驻研究助手', { exact:true });
+    await assistant.getByLabel('会话标题', { exact:true }).fill('证券图表验收');
+    await assistant.getByRole('button', { name:'创建会话', exact:true }).click();
+    await assistant.getByLabel('测试输入', { exact:true }).fill('查询AAPL.US行情');
+    await assistant.getByRole('button', { name:'运行规则演示', exact:true }).click();
+    await expect(assistant.getByTestId('run-state')).toContainText('已完成');
+    for (const period of ['1d','1m','5m','15m','1h','1w']) {
+      await workspace.getByLabel('证券K线周期', { exact: true }).selectOption(period);
+      const chart = workspace.getByTestId('chart-canvas');
+      const expected = period === '1w' ? 53 : 260;
+      await expect(chart).toHaveAttribute('data-loaded-count', String(expected));
+      await expect.poll(async () => (await chartEvidence(chart)).indicators.find(i => i.name === 'MA')?.result.length).toBe(expected);
+      const actual = await chartEvidence(chart);
+      assert.equal(actual.symbol.ticker, 'AAPL.US');
+      assert.deepEqual(actual.period, { type: period === '1d' ? 'day' : period === '1w' ? 'week' : 'minute', span: period === '1h' ? 60 : Number.parseInt(period) });
+      assert.equal(actual.data.at(-1).close, 189.43);
+      assert.equal(new Set(actual.data.map(r => r.timestamp)).size, expected);
+      if (!['1d','1w'].includes(period)) {
+        const delta = { '1m':60000, '5m':300000, '15m':900000, '1h':3600000 }[period];
+        assert.ok(actual.data.slice(1).every((bar, i) => bar.timestamp - actual.data[i].timestamp === delta));
+      }
+      const ma = actual.indicators.find(i => i.name === 'MA');
+      assert.deepEqual(ma.params, [5,10,20]);
+      for (const [index, length] of [5,10,20].entries()) {
+        const key = `ma${index+1}`;
+        assert.ok(ma.result.slice(0,length-1).every(row => row[key] == null));
+        assert.ok(Math.abs(ma.result[length-1][key] - actual.data.slice(0,length).reduce((sum, row) => sum+row.close,0)/length) < 1e-8);
+      }
+      const vol = actual.indicators.find(i => i.name === 'VOL');
+      assert.equal(vol.paneId, 'volume_pane');
+      assert.deepEqual(vol.result.map(r => r.volume), actual.data.map(r => r.volume));
+      await expect(workspace.getByTestId('chart-readout')).toContainText('UTC');
+      await expect(workspace.locator('.chart-period-label')).toContainText(period === '1d' ? '日K线' : period === '1w' ? '周K线' : period === '1h' ? '1小时' : `${Number.parseInt(period)}分钟`);
+      await expect(workspace).toContainText('非真实历史');
+      await expect(workspace.getByTestId('security-source').first()).toContainText('获取时间');
+      if (['1d','5m','1w'].includes(period)) await screenshot(page, `p2-06-overview-${period}-1440.png`);
+    }
+    await workspace.getByRole('button', { name: 'K线', exact: true }).click();
+    await expect(workspace.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-count', '53');
+    await expect(workspace).toContainText('分钟时间线不代表交易日历');
+    await screenshot(page, 'p2-06-full-kline-week-1440.png');
+    await workspace.getByLabel('证券K线周期', { exact:true }).selectOption('1d');
+    await expect(workspace.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-count', '260');
+    await screenshot(page, 'p2-06-full-kline-day-1440.png');
+  } finally { await instance.app.close(); }
+});
+
+test('P2-06 native crosshair zoom drag resize reset and chart disposal work without losing viewport', { timeout: 90000 }, async () => {
+  const instance = await launch({ RESEARCH_TRAIL_OFFLINE: '1' });
+  const errors = [];
+  try {
+    const page = instance.page; page.on('pageerror', e => errors.push(e.message));
+    await waitForBackend(page); await page.setViewportSize({ width:1440, height:900 });
+    await page.evaluate(() => {
+      const NativeObserver = window.ResizeObserver;
+      window.chartObservers = [];
+      window.ResizeObserver = class extends NativeObserver {
+        constructor(callback) { super(callback); this.record = { active:false }; window.chartObservers.push(this.record); }
+        observe(...args) { this.record.active = true; super.observe(...args); }
+        disconnect() { this.record.active = false; super.disconnect(); }
+      };
+    });
+    const workspace = await openSecurity(page);
+    const chart = workspace.getByTestId('chart-canvas');
+    await expect(chart).toHaveAttribute('data-loaded-count', '260');
+    await chart.scrollIntoViewIfNeeded();
+    const box = await chart.boundingBox();
+    await page.mouse.move(box.x + box.width*.45, box.y + box.height*.3);
+    await expect.poll(async () => Number(await workspace.getByTestId('chart-readout').getAttribute('data-timestamp'))).not.toBe((await chartEvidence(chart)).data.at(-1).timestamp);
+    const chosen = Number(await workspace.getByTestId('chart-readout').getAttribute('data-timestamp'));
+    const row = (await chartEvidence(chart)).data.find(r => r.timestamp === chosen);
+    assert.ok(row, 'Crosshair must select a bar actually accepted by KLineCharts');
+    await expect(workspace.getByTestId('chart-readout')).toContainText(row.close.toLocaleString('zh-CN', { maximumFractionDigits:4 }));
+    await screenshot(page, 'p2-06-crosshair-ma-volume-1440.png');
+    const initialSpace = (await chartEvidence(chart)).barSpace;
+    await page.mouse.wheel(0,-180);
+    await expect.poll(async () => (await chartEvidence(chart)).barSpace).not.toBe(initialSpace);
+    await expect.poll(async () => (await chartEvidence(chart)).events.zoom).toBeGreaterThan(0);
+    const beforeDrag = (await chartEvidence(chart)).range.to;
+    await page.mouse.move(box.x+box.width*.4, box.y+box.height*.3); await page.mouse.down();
+    await page.mouse.move(box.x+box.width*.75, box.y+box.height*.3, { steps:10 }); await page.mouse.up();
+    await expect.poll(async () => (await chartEvidence(chart)).range.to).not.toBe(beforeDrag);
+    const panned = await chartEvidence(chart);
+    await page.setViewportSize({ width:1000, height:700 });
+    await expect.poll(async () => (await chartEvidence(chart)).events.resize).toBeGreaterThan(panned.events.resize);
+    assert.equal((await chartEvidence(chart)).barSpace, panned.barSpace, 'Resize must retain user zoom');
+    assert.ok((await chartEvidence(chart)).range.to < 260, 'Resize must not scroll a panned chart to latest');
+    await workspace.getByRole('button', { name:'图表复位', exact:true }).click();
+    await expect.poll(async () => (await chartEvidence(chart)).range.to).toBe(260);
+    await workspace.getByLabel('MA10', { exact:true }).uncheck();
+    await expect.poll(async () => (await chartEvidence(chart)).indicators.find(i => i.name === 'MA')?.params).toEqual([5,20]);
+    await workspace.getByLabel('成交量指标', { exact:true }).uncheck();
+    await expect.poll(async () => (await chartEvidence(chart)).indicators.some(i => i.name === 'VOL')).toBe(false);
+    await chart.evaluate(el => { window.oldChart = el; });
+    await page.getByLabel('工作区', { exact:true }).getByRole('button', { name:'设置与诊断', exact:true }).click();
+    assert.equal(await page.evaluate(() => window.oldChart.chartEvidence.disposed), true);
+    assert.equal(await page.evaluate(() => window.oldChart.querySelectorAll('canvas').length), 0, 'Native dispose must remove its canvases even from the detached element');
+    assert.equal(await page.evaluate(() => window.chartObservers.some(r => r.active)), false);
+    await page.setViewportSize({ width:600, height:700 });
+    await page.getByLabel('工作区', { exact:true }).getByRole('button', { name:'证券工作台', exact:true }).click();
+    await expect(workspace.getByTestId('chart-canvas')).toHaveCount(1);
+    await expect(workspace.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-count', '260');
+    assert.deepEqual(errors, []);
+  } finally { await instance.app.close(); }
+});
+
+test('P2-06 late symbol and period reads cannot replace chart data; real reads remain explicit', { timeout:90000 }, async () => {
+  const instance = await launch({ RESEARCH_TRAIL_OFFLINE:'1' });
+  try {
+    const page = instance.page; await waitForBackend(page);
+    await instance.app.evaluate(({ ipcMain }) => {
+      const original = ipcMain._invokeHandlers.get('workspace:page');
+      globalThis.chartQueries = []; globalThis.chartHeld = []; globalThis.chartRelease = []; globalThis.chartDelivered = [];
+      ipcMain.removeHandler('workspace:page');
+      ipcMain.handle('workspace:page', async (event, query) => {
+        globalThis.chartQueries.push(query); const result = await original(event, query);
+        if (query.view === 'kline' && query.mode === 'simulated' && (query.symbol === 'AAPL.US' && ['1d','5m'].includes(query.period) || query.symbol === 'MSFT.US' && query.period === '15m')) {
+          globalThis.chartHeld.push(`${query.symbol}:${query.period}`); await new Promise(resolve => globalThis.chartRelease.push(resolve));
+          globalThis.chartDelivered.push(`${query.symbol}:${query.period}`);
+        }
+        return result;
+      });
+    });
+    const workspace = await openSecurity(page);
+    await expect.poll(() => instance.app.evaluate(() => globalThis.chartHeld.includes('AAPL.US:1d'))).toBe(true);
+    await workspace.getByLabel('证券K线周期', { exact:true }).selectOption('5m');
+    await expect.poll(() => instance.app.evaluate(() => globalThis.chartHeld.includes('AAPL.US:5m'))).toBe(true);
+    await page.getByLabel('常驻资产页签', { exact:true }).getByRole('button', { name:/MSFT.US/ }).click();
+    await expect(workspace.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-symbol','MSFT.US');
+    await workspace.getByLabel('证券K线周期', { exact:true }).selectOption('15m');
+    await expect.poll(() => instance.app.evaluate(() => globalThis.chartHeld.includes('MSFT.US:15m'))).toBe(true);
+    await workspace.getByLabel('证券K线周期', { exact:true }).selectOption('1h');
+    const chart = workspace.getByTestId('chart-canvas');
+    await expect(chart).toHaveAttribute('data-loaded-period', JSON.stringify({ type:'minute',span:60 }));
+    await expect(chart).toHaveAttribute('data-loaded-close','412.6');
+    await instance.app.evaluate(() => globalThis.chartRelease.forEach(release => release()));
+    await expect.poll(() => instance.app.evaluate(() => globalThis.chartDelivered.length)).toBe(3);
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await expect.poll(async () => (await chartEvidence(chart)).data.at(-1).close).toBe(412.6);
+    const current = await chartEvidence(chart);
+    assert.equal(current.symbol.ticker,'MSFT.US');
+    assert.deepEqual(current.period,{type:'minute',span:60});
+    assert.ok(current.data.slice(1).every((bar,index) => bar.timestamp-current.data[index].timestamp === 3600000), 'Delivered 15-minute bars must not replace the current hourly series');
+    await workspace.getByLabel('证券数据模式', { exact:true }).selectOption('real');
+    await expect(workspace).toContainText('等待显式查询'); await expect(chart).toHaveCount(0);
+    assert.equal(await instance.app.evaluate(() => globalThis.chartQueries.filter(q => q.mode === 'real').length),0);
+    await workspace.getByRole('button', { name:'查询当前视图真实数据',exact:true }).click();
+    await expect(workspace.getByRole('alert').first()).toContainText('未配置');
+    await expect.poll(() => instance.app.evaluate(() => globalThis.chartQueries.filter(q => q.mode === 'real').length)).toBe(5);
+    await workspace.getByLabel('证券K线周期', { exact:true }).selectOption('1w');
+    await expect(workspace).toContainText('等待显式查询'); await expect(chart).toHaveCount(0);
+    assert.equal(await instance.app.evaluate(() => globalThis.chartQueries.filter(q => q.mode === 'real').length),5);
+    await workspace.getByLabel('证券数据模式', { exact:true }).selectOption('simulated');
+    await expect(chart).toHaveAttribute('data-loaded-symbol','MSFT.US');
+    await expect(chart).toHaveAttribute('data-loaded-period', JSON.stringify({ type:'week',span:1 }));
+  } finally { await instance.app.evaluate(() => globalThis.chartRelease?.forEach(release => release())).catch(() => {}); await instance.app.close(); }
+});
+
+test('P2-06 chart boundary handles empty single missing volume invalid timestamps and unsupported data', { timeout:90000 }, async () => {
+  const instance = await launch({ RESEARCH_TRAIL_OFFLINE:'1' });
+  const errors=[];
+  try {
+    const page = instance.page; await waitForBackend(page); await page.setViewportSize({width:1440,height:900});
+    page.on('pageerror',error=>errors.push(error.message));
+    page.on('console',message=>{if(message.type()==='error') errors.push(message.text());});
+    await instance.app.evaluate(({ ipcMain }) => {
+      const original = ipcMain._invokeHandlers.get('workspace:page'); globalThis.chartCase = 'single';
+      ipcMain.removeHandler('workspace:page');
+      ipcMain.handle('workspace:page', async (event, query) => {
+        const result = await original(event, query);
+        if (query.view !== 'kline') return result;
+        for (const block of result.blocks) {
+          if (globalThis.chartCase === 'single') block.bars = block.bars.slice(-1);
+          if (globalThis.chartCase === 'short') block.bars = block.bars.slice(-7);
+          if (globalThis.chartCase === 'missing-volume') block.bars.forEach(bar => { delete bar.volume; });
+          if (globalThis.chartCase === 'invalid') block.bars[0].timestamp = -1;
+          if (globalThis.chartCase === 'empty') { block.bars = []; block.status = 'missing'; }
+          if (globalThis.chartCase === 'unsupported') { block.bars = []; block.status = 'unsupported'; block.code = 'UNSUPPORTED_CAPABILITY'; block.message = '离线权限夹具：周期不支持'; }
+        }
+        return result;
+      });
+    });
+    const workspace = await openSecurity(page), chart = workspace.getByTestId('chart-canvas');
+    await expect(chart).toHaveAttribute('data-loaded-count','1');
+    assert.equal((await chartEvidence(chart)).indicators.some(i => i.name === 'MA'),false);
+    await expect(workspace.getByLabel('MA5', { exact:true })).toBeDisabled();
+    await instance.app.evaluate(() => { globalThis.chartCase = 'short'; });
+    await workspace.getByRole('button',{name:'刷新模拟数据',exact:true}).click();
+    await expect(chart).toHaveAttribute('data-loaded-count','7');
+    await expect.poll(async () => (await chartEvidence(chart)).indicators.find(i => i.name === 'MA')?.params).toEqual([5]);
+    await instance.app.evaluate(() => { globalThis.chartCase = 'missing-volume'; });
+    await workspace.getByRole('button',{name:'刷新模拟数据',exact:true}).click();
+    await expect(chart).toHaveAttribute('data-loaded-count','260');
+    await expect(workspace).toContainText('已隐藏量柱，不补零');
+    assert.equal((await chartEvidence(chart)).indicators.some(i => i.name === 'VOL'),false);
+    assert.ok((await chartEvidence(chart)).data.every(row => row.volume == null));
+    for (const [mode, message] of [['invalid','K线数据无效'],['empty','暂无K线'],['unsupported','UNSUPPORTED_CAPABILITY']]) {
+      await instance.app.evaluate((_, value) => { globalThis.chartCase=value; },mode);
+      await workspace.getByRole('button',{name:'刷新模拟数据',exact:true}).click();
+      await expect(workspace).toContainText(message); await expect(chart).toHaveCount(0);
+      await screenshot(page, `p2-06-${mode}-1440.png`);
+    }
+    await instance.app.evaluate(() => { globalThis.chartCase='normal'; });
+    await workspace.getByRole('button',{name:'刷新模拟数据',exact:true}).click();
+    await expect(chart).toHaveAttribute('data-loaded-count','260');
+    // Render the production component in the real Electron renderer. Normal page
+    // refresh unmounts it while loading and would hide same-instance state bugs.
+    const initialBars = (await chartEvidence(chart)).data.map(row => ({ ...row, timestamp:row.timestamp/1000 }));
+    const harness = require('esbuild').buildSync({
+      stdin:{ contents:`
+        import React, { useLayoutEffect } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { flushSync } from 'react-dom';
+        import { FinancialKLineChart } from './src/renderer/market/FinancialKLineChart';
+        const host = document.createElement('section'); host.id='chart-readout-probe';
+        host.style.cssText='position:fixed;inset:70px 20px;background:white;z-index:1000;padding:20px;overflow:auto';
+        document.body.append(host);
+        const root=createRoot(host);
+        window.chartProbe={ commits:[], mounts:0 };
+        function Probe({bars}) {
+          useLayoutEffect(()=>{ window.chartProbe.mounts++; },[]);
+          useLayoutEffect(()=>{ window.chartProbe.commits.push(host.querySelector('[data-testid="chart-readout"]').textContent); });
+          return React.createElement(FinancialKLineChart,{bars,symbol:'AAPL.US',professional:true});
+        }
+        window.chartProbe.update=bars=>flushSync(()=>root.render(React.createElement(Probe,{bars})));
+        window.chartProbe.close=()=>{flushSync(()=>root.unmount());host.remove();};
+      `, resolveDir:resolve(__dirname,'../apps/desktop'), loader:'jsx' },
+      bundle:true, write:false, outfile:resolve(tmpdir(),'research-trail-chart-probe.js'),
+      platform:'browser', define:{'process.env.NODE_ENV':'"production"'},
+    });
+    for (const output of harness.outputFiles.filter(file=>file.path.endsWith('.css'))) await page.addStyleTag({content:output.text});
+    await page.evaluate(harness.outputFiles.find(file=>file.path.endsWith('.js')).text);
+    const probe=page.locator('#chart-readout-probe'), probeChart=probe.getByTestId('chart-canvas');
+    const readout=probe.getByTestId('chart-readout');
+    try {
+      await page.evaluate(bars=>window.chartProbe.update(bars),initialBars);
+      await expect(probeChart).toHaveAttribute('data-loaded-count','260');
+      const box=await probeChart.boundingBox();
+      await page.mouse.move(box.x+box.width*.45,box.y+box.height*.3);
+      await expect.poll(async()=>Number(await readout.getAttribute('data-timestamp'))).not.toBe(initialBars.at(-1).timestamp*1000);
+      const chosen=Number(await readout.getAttribute('data-timestamp'));
+      assert.ok((await chartEvidence(probeChart)).data.some(row=>row.timestamp===chosen));
+      // Invalid props keep FinancialKLineChart mounted while disposing its canvas.
+      await page.evaluate(bars=>window.chartProbe.update(bars),initialBars.map((row,index)=>index===0?{...row,timestamp:-1}:row));
+      await expect(probe).toContainText('K线数据无效');
+      await expect(probeChart).toHaveCount(0);
+      await screenshot(page,'p2-06-selected-invalid-readout-1440.png');
+      await expect(readout).toHaveAttribute('data-timestamp','');
+      assert.deepEqual(await readout.locator('b').allTextContents(),Array(5).fill('未提供'));
+      assert.match(await page.evaluate(()=>window.chartProbe.commits.at(-1)),/暂无数据/);
+      // Recover and select history again, then replace OHLCV at identical times.
+      await page.mouse.move(0,0);
+      await page.evaluate(bars=>window.chartProbe.update(bars),initialBars);
+      await expect(probeChart).toHaveAttribute('data-loaded-count','260');
+      const recovered=await probeChart.boundingBox();
+      await page.mouse.move(recovered.x+recovered.width*.45,recovered.y+recovered.height*.3);
+      await expect.poll(async()=>Number(await readout.getAttribute('data-timestamp'))).not.toBe(initialBars.at(-1).timestamp*1000);
+      await probeChart.evaluate(el=>{window.chartProbe.canvas=el;});
+      const refreshed=initialBars.map(row=>({...row,open:row.open+1000,high:row.high+1000,low:row.low+1000,close:row.close+1000,volume:row.volume+123}));
+      await page.evaluate(bars=>window.chartProbe.update(bars),refreshed);
+      // Layout-commit evidence precedes passive resetData effects, so even a
+      // one-render flash of old selected OHLCV fails this regression.
+      assert.match(await page.evaluate(()=>window.chartProbe.commits.at(-1)),/1,189\.43/);
+      assert.equal(await probeChart.evaluate(el=>el===window.chartProbe.canvas),true);
+      await expect.poll(async()=>(await chartEvidence(probeChart)).data.at(-1).close).toBe(1189.43);
+      await expect(readout.locator('b').nth(3)).toHaveText('1,189.43');
+      await page.mouse.move(recovered.x+recovered.width*.6,recovered.y+recovered.height*.3);
+      await expect.poll(async()=>Number(await readout.getAttribute('data-timestamp'))).not.toBe(refreshed.at(-1).timestamp*1000);
+      const selectedTimestamp=Number(await readout.getAttribute('data-timestamp'));
+      const selectedRow=(await chartEvidence(probeChart)).data.find(row=>row.timestamp===selectedTimestamp);
+      assert.ok(selectedRow);
+      assert.deepEqual(await readout.locator('b').allTextContents(),['open','high','low','close','volume'].map(key=>selectedRow[key].toLocaleString('zh-CN',{maximumFractionDigits:4})));
+      assert.equal(await page.evaluate(()=>window.chartProbe.mounts),1);
+      await screenshot(page,'p2-06-selected-refreshed-readout-1440.png');
+      assert.equal(await page.locator('vite-error-overlay').count(),0);
+      assert.deepEqual(errors,[]);
+    } finally { await page.evaluate(()=>window.chartProbe.close()); }
+  } finally { await instance.app.close(); }
+});
+
+for (const state of ['missing','failure']) test(`P2-06 actual Python ${state} fixture preserves chart status and retry`, { timeout:60000 }, async () => {
+  const instance = await launch({ RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:state });
+  try {
+    const page = instance.page; await waitForBackend(page); await page.setViewportSize({width:1440,height:900});
+    await page.getByLabel('工作区',{exact:true}).getByRole('button',{name:'证券工作台',exact:true}).click();
+    const workspace=page.getByRole('region',{name:'证券工作台',exact:true});
+    await workspace.getByRole('button',{name:'K线',exact:true}).click();
+    await workspace.getByLabel('证券K线周期',{exact:true}).selectOption('5m');
+    await expect(workspace.getByTestId('security-view')).toHaveAttribute('data-status',state === 'missing' ? 'missing' : 'failed');
+    await expect(workspace.getByTestId('chart-canvas')).toHaveCount(0);
+    await expect(workspace).toContainText(state === 'missing' ? '暂无K线' : 'NETWORK_ERROR');
+    await workspace.getByRole('button',{name:'刷新模拟数据',exact:true}).click();
+    await expect(workspace.getByRole('button',{name:'刷新模拟数据',exact:true})).toBeEnabled();
+    await screenshot(page,`p2-06-python-${state}-1440.png`);
+  } finally { await instance.app.close(); }
+});
+
+test('P2-06 security chart stays usable at 1440 1000 and 600px with shell chat and assets intact', { timeout:90000 }, async () => {
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  try {
+    const page=instance.page, workspace=await openSecurity(page);
+    const assistant=page.getByLabel('常驻研究助手',{exact:true});
+    await assistant.getByLabel('会话标题',{exact:true}).fill('P2-06 响应式会话');
+    await assistant.getByRole('button',{name:'创建会话',exact:true}).click();
+    for (const [width,height] of [[1440,900],[1000,700],[600,700]]) {
+      await page.setViewportSize({width,height});
+      const chart=workspace.getByTestId('chart-canvas'); await expect(chart).toHaveAttribute('data-loaded-count','260');
+      await chart.scrollIntoViewIfNeeded();
+      const box=await chart.boundingBox(); assert.ok(box.width>250 && box.height>=200);
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+      await expect(page.getByLabel('工作区',{exact:true}).getByRole('button')).toHaveCount(15);
+      await expect(page.getByLabel('常驻资产页签',{exact:true})).toBeVisible();
+      await workspace.getByRole('button',{name:'图表复位',exact:true}).click();
+      await expect.poll(async()=>(await chartEvidence(chart)).range.to).toBe(260);
+      await screenshot(page,`p2-06-chart-${width}.png`);
+      await assistant.locator('.chat-composer').scrollIntoViewIfNeeded();
+      await expect(assistant.getByLabel('测试输入',{exact:true})).toBeVisible();
+    }
+  } finally { await instance.app.close(); }
+});
+
 test('P2-05 visual revision puts real saved security data before management and keeps composer visible', { timeout: 60000 }, async () => {
   const instance = await launch({ RESEARCH_TRAIL_OFFLINE: '1' });
   const errors = [];

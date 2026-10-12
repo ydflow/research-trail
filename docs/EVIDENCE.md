@@ -1,8 +1,14 @@
 # 研迹：来源、个人动作与验收证据
 
-当前P2-05最终收尾见第72节：用户已审核第二轮实际Electron截图，最终本机完整离线946项复验通过，按本轮授权提交、普通推送与独立Draft PR。前两轮第70～71节保留当时943/946项结果与视觉待审核记录；远程CI以PR实际检查为准，不把本机结果写作远程CI成功。不合并或发布，P2-06～08未执行。
+当前合并前针对性审查见第76节：P2-06 Draft PR #34旧Head两条CI成功；同组件无效数据的历史OHLCV残留已真实复现并最小修复，本机验收通过（991项）。扩展原边界用例，7项Electron专项及类型/契约/构建通过；完整verify已通过，修复Head的远程CI另验收，不计入旧Head成功。不合并或发布。
 
-最新文档补充见第73节及 [PHASE2-UI-REFERENCES](PHASE2-UI-REFERENCES.md)：四个金融项目仅在本轮调研，未倒填为历史设计来源、未复用代码/素材。补充前Head f9e661c两条CI已成功；新Head远程验收须单独核验。已验收UI/业务代码不变，PR #33保持Draft。
+当前P2-06最终收尾与Draft提交见第75节：用户已确认三张实际Electron截图，最后本机完整复验866 Python/51 Node/74实际Electron，共991通过，失败/取消/跳过0。按本轮授权提交/普通推送/独立Draft PR并等待当前Head的Push/PR CI，不以本机结果代替远程结果。以下第74节截图待审核、未提交均为当轮历史；本轮不自动合并、不执行P2-07/08、不创建Release或安装包。
+
+当前P2-06本地开发见第74节与 [证券K线技术说明](PHASE2-SECURITY-KLINE.md)：P2-05已合并main `3c522ee2d9206352c467f68d7c0e1cc329892dcf`，指定main CI 38229238638精确匹配并SUCCESS后才创建新分支。代码完成/待验收（本机完整866 Python/51 Node/74实际Electron共991通过，失败/取消/跳过0；截图待用户审核）。原946项保留，新增45；未提交/推送/PR/合并/发布，未触发P2-06远程CI，不执行P2-07/08。
+
+P2-05最终收尾历史见第72节：用户已审核第二轮实际Electron截图，最终本机完整离线946项复验通过，按当轮授权提交、普通推送与独立Draft PR。前两轮第70～71节保留当时943/946项结果与视觉待审核记录；当轮远程CI以PR实际检查为准。当轮未合并或发布，当前合并基线以顶部为准。
+
+P2-05文档补充历史见第73节及 [PHASE2-UI-REFERENCES](PHASE2-UI-REFERENCES.md)：四个金融项目只在该轮调研，未倒填为历史设计来源、未复用代码/素材。该轮PR #33保持Draft；当前已合并记录见第74节。
 
 最新第23步开发状态见第52节，独立发布复核见第53节；此前每阶段的未开始／停止／待CI记录保留为当时事实。
 
@@ -2312,3 +2318,43 @@ UTF-8和git diff --check通过；提交清单仅renderer、tests/desktop.test.cj
 新增PHASE2-UI-REFERENCES.md，按来源类别区分用户/施工概念图、已有Folio参考及局部适配、自行实现的P2-05组件、四库本轮补充调研。已有记录无四库实施证据，本轮零产品修改/代码或素材导入，不将相似结构当作已经发生的借鉴，也不把沿用的Folio适配改称全部原创。前三库许可证文本分别MIT、MIT、AGPL v3。Fincept README和COMMERCIAL_LICENSE v3宣称AGPL-3.0-or-later、撤回旧双许可，但根LICENSE v2仍保留商用限制与外观声明，GitHub元数据NOASSERTION；记录冲突，不裁定条款效力或假定已取得标准AGPL授权。各项均给固定SHA源码/许可链接。
 
 必要验收仅文档：固定来源与blob哈希、文件存在性、Markdown链接/表格、UTF-8、git diff --check及仅三份docs文件的范围；相对补充前Head，UI/CSS/测试/业务文件无变化。未重复运行本机完整业务验收，未新造通过数；当前文档提交后的两条远程Windows CI必须完成并单独核验，回执以PR #33最新Head的checks为准。继续原Draft PR、普通提交/推送，无新PR、强推或发布。
+
+## 74. P2-06 证券详情与专业 K 线增强（2026-10-12）
+
+用户明确授权P2-06本地开发，禁止提交、推送、PR、合并、发布及P2-07/08。先核验本地main/origin/main/GitHub main与工作区/暂存区，均为干净 `3c522ee2d9206352c467f68d7c0e1cc329892dcf`；该提交为P2-05 PR #33普通Merge Commit。指定 [main CI 38229238638](https://github.com/ydflow/research-trail/actions/runs/38229238638) 初查仍运行时停止；用户继续后复查completed/SUCCESS、headSha完全一致，才创建 `feat/phase2-security-chart-enhancement`。原946项基线保留。
+
+实际审计发现：概览固定1d；证券请求20根，归一化截前100根；模拟执行器忽略period而返回10根日线。两个真实适配器已有六周期映射但未联网验收。实施前阅读固定 `klinecharts/pro` 4234b79f0bcfc26734d0a721c38cbd6d23aa38f5 与 `tradingview/lightweight-charts` cb06581a0ae28778de17521b5c3edc8119e46d5d 的README/LICENSE/主要UI/API/指标及教程，后者另核NOTICE和README attribution记录。完整tree/blob哈希校验，缓存仓库外；只学习通用周期/主副指标/价量同步/十字图例/复位与resize区别，没有复制第三方组件、样式、图标或安装依赖。使用已有KLineCharts10.0.3原生MA/VOL/鼠标交互，保留原Folio声明。详见技术说明第5节；P2-05四库仍是当轮补充调研。
+
+新增确定性证券专用合成历史：日线260根（250前缀+旧10）、周线53根聚合、四分钟周期各260根按基础分钟规则聚合。全部非真实历史，不依赖系统时间/随机数，不声称交易日历。私有chart_history只影响证券模拟读取，真实SDK/REST分支不替换；旧市场/Agent/金融日线不变，旧fixture非日线明确unsupported。证券读取和投影上限260、保留最新；现有公开data_label枚举保持模拟数据，UI明确合成样例/非真实历史。DTO、桥、迁移、金融计算、pi和AgentRunner未改。
+
+图表增强原生MA5/10/20/VOL、坐标转蜡烛读数、缩放拖动、复位；resize不再fit，卸载清理observer/RAF/action/实例。样本不足不创建对应MA；量不完整隐藏VOL，不补零。公开DTO仍要求volume，后端缺量整根缺失，渲染异常边界另验证缺量价图退化。来源/币种/市场与获取/服务时间保留，真实模式仍显式查询且按完整上下文隔离迟到响应。P2-05外壳、15入口、资产、自选、研究采集和AI会话不重设计。
+
+专项：相关Python209项通过；新增图表7项及原P2-05首屏断言，共8项真实Electron通过；TypeScript/契约及main/preload/renderer构建通过。过程失败日志保留：标签枚举、初版布局高度、v10光标事件读数、新测试evaluate参数与空会话前置条件，均按证据修复；未改旧断言或时限。首轮完整991通过后，仅修准确周期说明、状态截图窗口配置，并加强同证券迟到周期/原生画布清理检查；收尾7项通过，冻结13个代码/测试文件后再次完整验收。
+
+最终 `bun.cmd run verify` 退出0：866 Python（319.68秒）/51 Node（24 pi+27原Node）/74实际Electron（549.12秒），共991通过，失败/取消/跳过/todo均0。原946项完整保留，新增38 Python/7 Electron，不改旧测试正文/时限或依赖。契约/TypeScript、main/preload/renderer构建、两条pi离线CLI往返、工程/历史样例、native/pi许可审计、0020隔离临时库重复升级/一致性通过。保留Starlette/httpx弃用1条与Vite主chunk522.90kB体积警告；日志verify-final.log，首轮verify.log亦991通过，不将本机结果当作P2-06远程CI。
+
+真实Electron1440×900、1000×700、600×700无整页横向溢出，验证实例接受的数据和指标而非React props；缩放/拖动后resize保留barSpace与历史位置，卸载observer断开且原生dispose清空脱离DOM的画布，离开返回仅一个图表。同证券/跨证券迟到响应均不能覆盖当前周期。Browser plugin not available，使用既有Playwright `_electron`、实际Python/preload、隔离SQLite和离线护栏，无真实模型/行情/账户。基线before和stage1/2/3截图已保留；最终14张图表/光标/空值/异常截图的实际PNG尺寸、SHA256，16个改动文件范围与哈希在仓库外 `D:\folio\research-trail-p2-06-qa\delivery-manifest.json`；最终截图在final目录。代码/测试验收前后哈希一致，暂存区为空；UTF-8、相对文档链接、git diff --check通过。用户截图审核尚未执行，不声称概念图完全一致，不提交图片/日志/临时数据。真实Provider权限、默认Massive30天窗口、无币种Kline DTO与Windows分发风险保留，详见技术说明。本轮完成后停止。
+
+## 75. P2-06 最终审查、复验与独立 Draft PR（2026-10-12）
+
+用户审核三张实际Electron截图并认可，明确授权最终验收、提交、普通推送及独立Draft PR；不合并，不执行P2-07/08，不新增真实付费接口、修改AgentRunner、删除分支或创建Release/安装包。根目录研迹，feature分支正确，HEAD/main/origin/main/远程main均3c522ee2d9206352c467f68d7c0e1cc329892dcf，暂存区为空、无同分支已有PR，GitHub身份ydflow。
+
+源码和既有证据逐项复核，无需修改已审核UI或业务。加强新增Electron同证券迟到响应测试：原释放后只比较终价，现等待三个旧响应在IPC交付、经过渲染帧后，核对小时周期与全部蜡烛3600000ms间隔。专项1项通过；11个产品源码文件SHA256与审核版本一致，原946项测试正文/断言/时限保持，新增45项数量不变。16文件允许清单、敏感凭证特征、UTF-8/相对链接/diff检查与两参考库固定blob哈希通过；无新依赖、第三方代码或图标导入，原来源与许可记录保留。
+
+最后完整 `bun.cmd run verify` 退出0：866 Python（297.64秒）/51 Node（24 pi+27原Node）/74实际Electron（473.34秒），共991项，失败/取消/跳过/todo均0。契约/TypeScript、main/preload/renderer、许可图、离线pi往返、工程/历史样例、隔离0020重复升级与一致性均通过；保留Starlette/httpx弃用1条及Vite主chunk522.90kB警告。原946项和新增45项全部保留，本轮只有新增测试加强，旧正文/断言/时限未改。原KLineChart与所附TradingView声明原样保留，无新依赖或素材导入。
+
+14张真实Electron图表、光标、三尺寸、空值/异常截图及日志位于仓库外pr-final/、pr-final-verify.log，提交前清单核对UTF-8/链接/范围/敏感凭证特征/PNG尺寸与SHA256，冻结代码/测试哈希一致。验收后按授权提交/普通推送并创建Draft PR，当前Head的push和pull_request CI须分别等待/核对，不提前写作远程成功。真实Provider未联网、Massive默认30天、合成非交易日历、Kline币种/缺量DTO限制与Windows分发风险如实保留；P2-07/08未执行。
+
+实际交付回执：主体提交 `d065d59b0244b5461777c641b67447418f9b28d4`，16文件新增906/删除68行，普通推送原feature分支；创建并附加 [Draft PR #34](https://github.com/ydflow/research-trail/pull/34)，目标main、OPEN/isDraft=true、MERGEABLE。该主体Head触发Push CI 38260973870与PR CI 38261033248，记录时均in_progress；本段仅补回执，最新Head另核，不把旧Head运行状态或本机通过写作最终远程成功。工作区/暂存区已干净，11个产品及13个代码/测试哈希与最终本机验收一致；不自动合并、删分支、打包或创建Release。
+
+## 76. P2-06 合并前同组件 OHLCV 残留审查
+
+2026-10-12起始分支feat/phase2-security-chart-enhancement、HEAD/远程PR Head均8b81d3b15bf8babe23925e22361425a5a9262790，工作区干净；main仍3c522ee2d9206352c467f68d7c0e1cc329892dcf。旧Head的Push 38261231530/PR 38261238140均SUCCESS。用户授权只针对图表读数修复、完整验收后更新已有Draft #34并等待新Head双CI，不合并。
+
+扩展已有P2-06边界用例：真实Electron中用现有esbuild编译生产FinancialKLineChart，在独立测试root持续更新props，不卸载组件、不操纵React私有状态、不修改生产桥/CSP。有效260根数据选中历史蜡烛后传入无效时间戳，图表进入错误且画布消失，但旧版仍显示1700254800000ms、收178.04；精确清空断言失败。原页面刷新期间卸载图表，未覆盖这一生命周期，不能用旧991项成功否定缺陷。
+
+最小修复仅FinancialKLineChart：selected保存数据批次/证券/周期/时间戳；读数只从当前有效数据查找，旧批次回退当前末根，无效数据五项均未提供。有效数据相同时间戳刷新也验证layout提交阶段不闪现旧OHLCV；恢复后十字光标五项与真实图表蜡烛一致。既有MA/VOL、缩放/拖动/复位/resize/清理、六周期、迟到请求、显式真实读取与三尺寸专项7项通过。类型/契约、构建通过；不改CSS、后端、API/DTO、金融/Agent、导航或AI助手。测试数仍991，无删除/放宽/跳过原测试。
+
+前后专项日志与截图保存于仓库外research-trail-p2-06-qa/readout-review-before.log、readout-review-after.log、readout-review-specialized.log、readout-review-after/。有效刷新时加1000价差/123量差仅用于测试对抗输入，不影响fixture或产品报价；截图明确属于真实Electron组件边界测试。完整验收日志为readout-review-verify.log，已退出0；新Head与远程CI独立记录，不以旧结果代替。
+
+完整复验 `bun.cmd run verify` 退出0：866 Python（297.05秒）、51 Node（24+27）、74实际Electron（471.31秒），共991项，失败/取消/跳过/todo均0。原946项与新增45项全部保留，仅扩展既有Electron边界断言；契约/类型、构建、离线流程与隔离迁移均通过。保留Starlette/httpx弃用和Vite主chunk523.17kB既有警告，不修改阈值。日志为仓库外readout-review-verify.log，最新截图为readout-review-final/。当前按授权更新已有Draft PR #34，修复Head的Push/PR CI须单独等待核验，不以旧Head或本机结果代替，不合并或发布。

@@ -29,6 +29,12 @@ def fixture_executor(case):
             if query.capability=='market.status': return {'market_time':[]}
             return {}
         return authored_data(query)
+    def chart_history(query):
+        if case in ('failure','missing'):
+            return execute(query)
+        from .chart_fixtures import authored_chart_data
+        return authored_chart_data(query)
+    execute.chart_history=chart_history
     return execute
 
 def delayed_report_factory():
