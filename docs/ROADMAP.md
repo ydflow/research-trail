@@ -8,6 +8,8 @@
 
 P2-05已交付独立 [Draft PR #33](https://github.com/ydflow/research-trail/pull/33)，目标main，保持Draft；本机946项验收通过，远程CI结果单独查看PR当前checks。未合并或发布。
 
+P2-05参考来源文档补充见 [PHASE2-UI-REFERENCES](PHASE2-UI-REFERENCES.md) 与 EVIDENCE第73节：固定四个金融项目的SHA、README、许可证与UI观察，均属于本轮补充调研，未用于修改已验收产品、未导入代码或素材；实际概念图方向、既有Folio适配和自行实现组件分别记录。Fincept同一提交内的许可文本不一致如实保留。此轮仅文档，当前Head的push/PR CI另行核验，不合并、不进入P2-06、不发布。
+
 ### P2-04 及更早阶段的历史执行记录
 
 以下“当前任务”、旧 main、Draft PR 和未开始状态均为当轮历史，保留原始事实；当前执行以本节顶部为准。

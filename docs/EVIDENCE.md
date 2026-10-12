@@ -2,6 +2,8 @@
 
 当前P2-05最终收尾见第72节：用户已审核第二轮实际Electron截图，最终本机完整离线946项复验通过，按本轮授权提交、普通推送与独立Draft PR。前两轮第70～71节保留当时943/946项结果与视觉待审核记录；远程CI以PR实际检查为准，不把本机结果写作远程CI成功。不合并或发布，P2-06～08未执行。
 
+最新文档补充见第73节及 [PHASE2-UI-REFERENCES](PHASE2-UI-REFERENCES.md)：四个金融项目仅在本轮调研，未倒填为历史设计来源、未复用代码/素材。补充前Head f9e661c两条CI已成功；新Head远程验收须单独核验。已验收UI/业务代码不变，PR #33保持Draft。
+
 最新第23步开发状态见第52节，独立发布复核见第53节；此前每阶段的未开始／停止／待CI记录保留为当时事实。
 
 记录日期：2026-10-04（Asia/Shanghai）。只写实际事实，不把规划、上游运行或测试结果当作研迹成果。
@@ -2300,3 +2302,13 @@ git diff --check与七文件新增内容敏感信息检查通过；构建dist被
 UTF-8和git diff --check通过；提交清单仅renderer、tests/desktop.test.cjs及三份文档。用户视觉认可与本机验收通过不等于概念图完全一致或远程CI成功。固定10根日线、稀疏金融信息及未统一的次级面板内部布局仍如实保留；P2-06证券/K线深度增强、P2-07热力图、P2-08 Agent联动均未执行，不合并、打包或发布。Draft PR及提交回执以实际GitHub记录为准，远程检查单独核验。
 
 实际发布回执：主体提交 `d2bb8378908ed29bf4e29993f9f088445186678b`，21文件新增1245/删除132行；普通推送feat/phase2-ui-foundation，创建独立 [Draft PR #33](https://github.com/ydflow/research-trail/pull/33)，目标main、OPEN、isDraft=true。本段仅补交付回执，不改变已验收代码/测试。push/pull_request已触发Windows离线CI，远程结果以该PR最新Head的checks为准；未合并或发布。
+
+## 73. P2-05 参考来源文档补充（2026-10-12）
+
+用户明确授权只补文档并提交更新现有Draft PR #33，等待当前Head的push和PR CI均成功，不改UI/CSS/测试/业务，不合并、不执行P2-06、不发布。补充前根目录为研迹，分支feat/phase2-ui-foundation，HEAD/远程分支均f9e661cbace28182908813a71894a4229333c021，工作区与暂存区干净；fetch后origin/main仍3c3f9bdb75e8318964f4789f25931f4ac01d114e，GitHub身份ydflow。PR #33为OPEN/Draft，旧Head [push CI 38198254768](https://github.com/ydflow/research-trail/actions/runs/38198254768) / [PR CI 38198256447](https://github.com/ydflow/research-trail/actions/runs/38198256447) 均SUCCESS，946项通过。这些是旧Head证据，不代替本轮新Head验收。
+
+本轮实际通过GitHub提交对象、完整未截断文件树及blob内容核查四库：ErTasselli/OpenTerminal aed097c680cd8ec1c391ae06966babe7d6d91fc6；Hitheshkaranth/OpenTerminalUI 5ceeb3860308c05ddb9424eb25932312417355a2；ghostfolio/ghostfolio b9832e8eff7f8d5bf471fc02ef3ff3766f6bfe67；Fincept-Corporation/FinceptTerminal 3f444cb7ab712d85a57d270d5edd6e7a2ef50d55。阅读固定README/许可证及相关UI源码，查看同提交的三份界面截图及Fincept宣传图；不安装/运行上游项目，不执行上游命令或请求数据服务。下载副本与blob SHA-1/SHA256核查清单位于仓库外research-trail-p2-05-qa/references，不进入提交。
+
+新增PHASE2-UI-REFERENCES.md，按来源类别区分用户/施工概念图、已有Folio参考及局部适配、自行实现的P2-05组件、四库本轮补充调研。已有记录无四库实施证据，本轮零产品修改/代码或素材导入，不将相似结构当作已经发生的借鉴，也不把沿用的Folio适配改称全部原创。前三库许可证文本分别MIT、MIT、AGPL v3。Fincept README和COMMERCIAL_LICENSE v3宣称AGPL-3.0-or-later、撤回旧双许可，但根LICENSE v2仍保留商用限制与外观声明，GitHub元数据NOASSERTION；记录冲突，不裁定条款效力或假定已取得标准AGPL授权。各项均给固定SHA源码/许可链接。
+
+必要验收仅文档：固定来源与blob哈希、文件存在性、Markdown链接/表格、UTF-8、git diff --check及仅三份docs文件的范围；相对补充前Head，UI/CSS/测试/业务文件无变化。未重复运行本机完整业务验收，未新造通过数；当前文档提交后的两条远程Windows CI必须完成并单独核验，回执以PR #33最新Head的checks为准。继续原Draft PR、普通提交/推送，无新PR、强推或发布。
