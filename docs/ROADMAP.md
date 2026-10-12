@@ -1,8 +1,14 @@
 # 研迹：路线、功能对照与当前进度
 
-更新时间：2026-10-11（Asia/Shanghai）。本文件记录计划与阶段状态，不代表未来步骤已经获得执行或发布授权。
+更新时间：2026-10-12（Asia/Shanghai）。本文件记录计划与阶段状态，不代表未来步骤已经获得执行或发布授权。
 
 ## 当前执行边界
+
+- 当前任务：P2-05 最终收尾，验收通过（用户已审核第二轮实际Electron截图；最终本机完整离线946项复验通过，失败/取消/跳过0）。分支 `feat/phase2-ui-foundation`，已合并P2-01～04的main/origin/main基线仍为 `3c3f9bdb75e8318964f4789f25931f4ac01d114e`，基线CI成功。保留已审核UI，代码/测试18文件哈希一致，本轮仅整理文档；实际1440/1000/600截图与交互复核通过，1000/600无整页横向溢出。前两轮历史与失败记录见 EVIDENCE第70～71节；当前结果与Draft PR回执见第72节及 [UI基础说明第9节](PHASE2-UI-FOUNDATION.md)。本轮用户授权提交、普通推送与独立Draft PR，远程CI以PR实际检查为准，不合并、打包或发布；原API/DTO/数据库/金融/默认AgentRunner/pi内部边界不改。P2-06证券/K线深度增强、P2-07热力图、P2-08 Agent业务联动均未执行。
+
+### P2-04 及更早阶段的历史执行记录
+
+以下“当前任务”、旧 main、Draft PR 和未开始状态均为当轮历史，保留原始事实；当前执行以本节顶部为准。
 
 - 当前任务：第二阶段 P2-04 最终审查与独立 [Draft PR #32](https://github.com/ydflow/research-trail/pull/32)，验收通过（本机离线内部范围）。main `80beeb7591332ffea0ea3265d6be6825ac4c722b`（PR #31 Step21 修复已合并，main CI 成功）为开发及本次 fetch 核对基线；独立分支 `feat/phase2-pi-runtime-integration`。内部入口补按运行创建/Store业务run_id绑定、模型配置快照、并发隔离与生命周期状态矩阵，限定 Fake/Mock；开发轮823 Python/51 Node/58实际Electron共932项通过。发布审查新增5项工厂/管道/模型截止回归，修正资源清理、Runner接口及单模型超时分类；最终专项145通过，完整828 Python/51 Node/58实际Electron共937项通过，失败/跳过0，最终8文件。详见 EVIDENCE 第69节，开发历史见第68节；远程检查按PR实际回执核验。默认 AgentRunner/API/UI 不切换，契约/数据库/金融/报告/恢复不改。用户已授权本轮提交/推送/Draft PR，不合并、打包、发布或执行 P2-05。详见 [内部运行集成](PHASE2-PI-RUNTIME.md)。
 

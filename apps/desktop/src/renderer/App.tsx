@@ -6,6 +6,8 @@ import { SettingsPanel } from './settings/SettingsPanel';
 import { ProviderPanel } from './ProviderPanel';
 import { SecurityWorkspace } from './securities/SecurityWorkspace';
 import { AssetTabs } from './AssetTabs';
+import { Navigation, type WorkbenchView } from './ui/Navigation';
+import { StatusIndicator, StateNotice } from './ui/Primitives';
 const AnalyticsPanel = lazy(() => import('./analytics/AnalyticsPanel').then(module => ({ default: module.AnalyticsPanel })));
 const PortfolioPanel = lazy(() => import('./portfolio/PortfolioPanel').then(module => ({ default: module.PortfolioPanel })));
 
@@ -31,7 +33,7 @@ export function App() {
   const [researchSymbol, setResearchSymbol] = useState<string>();
   const [researchEventRef,setResearchEventRef]=useState<import('../calendar-types').EventResearchRef>();
   const [discoveryTarget,setDiscoveryTarget]=useState<{symbols:string[]; mode:'simulated'|'real'; provider:'longbridge'|'massive'}>();
-  const [view, setView] = useState<'market' | 'sessions' | 'settings' | 'providers' | 'securities' | 'portfolios' | 'analytics' | 'skills' | 'research' | 'theses' | 'discover' | 'calendar' | 'today' | 'evaluation' | 'outcomes'>(() => {
+  const [view, setView] = useState<WorkbenchView>(() => {
     const saved = sessionStorage.getItem('research-trail.view');
     return saved === 'sessions' || saved === 'settings' || saved === 'providers' || saved === 'securities' || saved === 'portfolios' || saved === 'analytics' || saved === 'skills' || saved === 'research' || saved === 'theses' || saved === 'discover' || saved === 'calendar' || saved === 'today' || saved === 'evaluation' || saved === 'outcomes' ? saved : 'market';
   });
@@ -57,43 +59,34 @@ export function App() {
   const pending = busy || state.phase === 'starting' || state.phase === 'stopping';
   return (
     <div className="shell">
-      <header><img className="brand-icon" src="./brand/research-trail.png" alt="研迹图标" width="44" height="44" /><span className="brand">研迹</span><span className="english">ResearchTrail</span></header>
+      <header className="app-toolbar">
+        <div className="app-brand"><img className="brand-icon" src="./brand/research-trail.png" alt="研迹图标" width="32" height="32" /><div><span className="brand">研迹</span><span className="english">ResearchTrail</span></div></div>
+      <section className="connection" aria-live="polite" aria-busy={pending}>
+        <h1 className="connection-title">{titles[state.phase]}</h1>
+        <StatusIndicator tone={state.phase === 'healthy' ? 'success' : state.phase === 'failed' ? 'error' : state.phase === 'starting' ? 'warning' : 'neutral'}>
+          后端健康 <span data-testid="health-label">{labels[state.phase]}</span>
+        </StatusIndicator>
+        <details className="connection-details" open={state.phase === 'failed'}>
+          <summary>连接详情</summary>
+          <div><p className="detail">{state.detail}</p>
+            <p className="timestamp">上次检查：{state.checkedAt ? new Date(state.checkedAt).toLocaleTimeString('zh-CN', { hour12: false }) : '尚未完成'}</p>
+          </div>
+        </details>
+        <button className="secondary" onClick={action} disabled={pending}>{pending ? '正在处理…' : state.phase === 'healthy' ? '重新检查' : '重试启动'}</button>
+      </section>
+      </header>
       <div className="workbench">
       <aside className="workbench-navigation" aria-label="工作台导航">
-      <section className="connection" aria-live="polite" aria-busy={pending}>
-        <h1>{titles[state.phase]}</h1>
-        <p className="detail">{state.detail}</p>
-        <div className={`health-row ${state.phase}`}>
-          <span className="health-name"><span className="dot" />后端健康</span>
-          <span data-testid="health-label">{labels[state.phase]}</span>
-        </div>
-        <p className="timestamp">上次检查：{state.checkedAt ? new Date(state.checkedAt).toLocaleTimeString('zh-CN', { hour12: false }) : '尚未完成'}</p>
-        <button onClick={action} disabled={pending}>{pending ? '正在处理…' : state.phase === 'healthy' ? '重新检查' : '重试启动'}</button>
-      </section>
-      <nav className="view-tabs" aria-label="工作区">
-        <button aria-pressed={view === 'outcomes'} onClick={() => setView('outcomes')}>投资结果</button>
-        <button aria-pressed={view === 'evaluation'} onClick={() => setView('evaluation')}>评测中心</button>
-        <button aria-pressed={view === 'today'} onClick={() => setView('today')}>Today与提醒</button>
-        <button aria-pressed={view === 'calendar'} onClick={() => setView('calendar')}>事件日历</button>
-        <button aria-pressed={view === 'discover'} onClick={() => setView('discover')}>机会发现</button>
-        <button aria-pressed={view === 'theses'} onClick={() => setView('theses')}>投资论点</button>
-        <button aria-pressed={view === 'research'} onClick={() => setView('research')}>研究采集</button>
-        <button aria-pressed={view === 'skills'} onClick={() => setView('skills')}>能力与技能</button>
-        <button aria-pressed={view === 'analytics'} onClick={() => setView('analytics')}>风险与对比</button>
-        <button aria-pressed={view === 'portfolios'} onClick={() => setView('portfolios')}>组合工作台</button>
-        <button aria-pressed={view === 'securities'} onClick={() => setView('securities')}>证券工作台</button>
-        <button aria-pressed={view === 'market'} onClick={() => setView('market')}>模拟行情</button>
-        <button aria-pressed={view === 'sessions'} onClick={() => setView('sessions')}>会话与事件</button>
-        <button aria-pressed={view === 'settings'} onClick={() => setView('settings')}>设置与诊断</button>
-        <button aria-pressed={view === 'providers'} onClick={() => setView('providers')}>数据与只读账户</button>
-      </nav>
+        <Navigation view={view} onSelect={setView} />
+        <p className="navigation-caption">每次研究，都有据可查。</p>
       </aside>
       <main className="workbench-content">
       <AssetTabs available={state.phase === 'healthy'} view={view} onOpen={() => { setAssetRevision(n => n + 1); setView('securities'); }} />
       {view === 'outcomes' ? <Suspense fallback={<p role="status">正在打开投资结果…</p>}><OutcomePanel available={state.phase === 'healthy'} /></Suspense> : view === 'evaluation' ? <Suspense fallback={<p role="status">正在打开评测中心…</p>}><EvaluationPanel available={state.phase === 'healthy'} /></Suspense> : view === 'today' ? <Suspense fallback={<p role="status">正在打开Today…</p>}><TodayPanel available={state.phase === 'healthy'} /></Suspense> : view === 'calendar' ? <Suspense fallback={<p role="status">正在打开事件日历…</p>}><CalendarPanel available={state.phase === 'healthy'} onResearch={target=>{setResearchEventRef(target.event_ref);setDiscoveryTarget({symbols:[target.symbol],mode:target.mode,provider:target.provider});setResearchSymbol(target.symbol);setView('research');}} /></Suspense> : view === 'discover' ? <Suspense fallback={<p role="status">正在打开机会发现…</p>}><DiscoverPanel available={state.phase === 'healthy'} onCompare={target => {setDiscoveryTarget(target);setView('analytics');}} onResearch={target => {setResearchEventRef(undefined);setDiscoveryTarget(target);setResearchSymbol(target.symbols[0]);setView('research');}} /></Suspense> : view === 'theses' ? <Suspense fallback={<p role="status">正在打开投资论点…</p>}><ThesisPanel available={state.phase === 'healthy'} /></Suspense> : view === 'research' ? <Suspense fallback={<p role="status">正在打开研究采集…</p>}><ResearchPanel available={state.phase === 'healthy'} initialSymbol={researchSymbol} initialMode={discoveryTarget?.mode} initialProvider={discoveryTarget?.provider} initialEventRef={researchEventRef} /></Suspense> : view === 'skills' ? <Suspense fallback={<p role="status">正在打开技能目录…</p>}><SkillsPanel available={state.phase === 'healthy'} /></Suspense> : view === 'analytics' ? <Suspense fallback={<p role="status">正在打开风险与对比…</p>}><AnalyticsPanel available={state.phase === 'healthy'} initialSymbols={discoveryTarget?.symbols.join(' ')} initialMode={discoveryTarget?.mode} initialProvider={discoveryTarget?.provider} /></Suspense> : view === 'portfolios' ? <Suspense fallback={<p role="status">正在打开组合工作台…</p>}><PortfolioPanel available={state.phase === 'healthy'} /></Suspense> : view === 'securities' ? <SecurityWorkspace key={assetRevision} available={state.phase === 'healthy'} onResearch={symbol => { setResearchEventRef(undefined);setDiscoveryTarget(undefined);setResearchSymbol(symbol); setView('research'); }} /> : view === 'market' ? <MarketPanel available={state.phase === 'healthy'} /> : view === 'sessions' ? <SessionPanel available={state.phase === 'healthy'} /> : view === 'providers' ? <ProviderPanel available={state.phase === 'healthy'} /> : <SettingsPanel available={state.phase === 'healthy'} />}
       </main>
       <aside className="workbench-copilot" aria-label="常驻研究助手">
-        {view === 'sessions' ? <p>正在主工作区查看完整会话。切换页面后可在此继续研究。</p> : <SessionPanel available={state.phase === 'healthy'} compact />}
+        <div className="copilot-heading"><span className="assistant-mark" aria-hidden="true">R</span><div><h2>AI 研究助手</h2><p>会话、工具与证据</p></div></div>
+        {view === 'sessions' ? <StateNotice kind="info">正在主工作区查看完整会话。切换页面后可在此继续研究。</StateNotice> : <SessionPanel available={state.phase === 'healthy'} compact />}
       </aside>
       </div>
       <footer>每次研究，都有据可查。</footer>

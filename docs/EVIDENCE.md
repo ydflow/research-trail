@@ -1,5 +1,7 @@
 # 研迹：来源、个人动作与验收证据
 
+当前P2-05最终收尾见第72节：用户已审核第二轮实际Electron截图，最终本机完整离线946项复验通过，按本轮授权提交、普通推送与独立Draft PR。前两轮第70～71节保留当时943/946项结果与视觉待审核记录；远程CI以PR实际检查为准，不把本机结果写作远程CI成功。不合并或发布，P2-06～08未执行。
+
 最新第23步开发状态见第52节，独立发布复核见第53节；此前每阶段的未开始／停止／待CI记录保留为当时事实。
 
 记录日期：2026-10-04（Asia/Shanghai）。只写实际事实，不把规划、上游运行或测试结果当作研迹成果。
@@ -2246,3 +2248,53 @@ git diff --check与七文件新增内容敏感信息检查通过；构建dist被
 上述7文件首轮提交为1a156058a92debdaa0f1b3750b399307dd9532d5，创建独立 [Draft PR #32](https://github.com/ydflow/research-trail/pull/32)。随后继续复核超时交错，实际通过真实pi/原OpenAIModelProvider.complete+MockTransport复现1 failed（2.50秒）：桥传给complete的是min(整体deadline,模型deadline)，原适配器先返回时使用RUN_TIMEOUT，旧桥误把更早的单模型时限记录成整体超时。新增一次确定性模型队列交错回归，不模拟错误码；先保留整体checkpoint，再仅将更早且已过期的模型deadline的RUN_TIMEOUT规范为MODEL_TIMEOUT。真正整体截止及其他原模型分类保持，16项超时/工具后错误专项通过（14.19秒），无失败/跳过；没有放宽旧时限、重新实现HTTP或重试。因直接涉及P2-04时限层级，本次最终清单补入pi_model_bridge.py，合计8文件；当前PR继续复验后更新，不新建替代PR。日志 `%TEMP%\research-trail-p2-04-pr-timeout-repro.log` / `%TEMP%\research-trail-p2-04-pr-timeout-fix.log` 在仓库外。
 
 超时修正后实际最终复验：新旧专项145 passed（94.80秒，无失败/跳过），完整 `bun.cmd run verify` 再次退出0，828 Python（328.88秒）/51 Node（24 pi+27原Node）/58实际Electron（457.55秒），共937项，失败/取消/跳过/todo 0。原main 892项全部保留，阶段新增45项Python（开发40/发布审查5）。真实pi两个CLI、工程/历史观测、契约/类型、许可审计、0020重复迁移/模型一致性、三端构建全部再次通过，保留既有Starlette/httpx弃用与Vite chunk警告。实际SSE重连/默认Agent/终态旧断言未放宽；没有真实模型或金融请求。最终日志在仓库外 `%TEMP%\research-trail-p2-04-pr-final-special.log` / `%TEMP%\research-trail-p2-04-pr-final-verify.log`。本轮只普通追加提交并推送同一Draft PR，不amend/强推、不合并或发布；最终Head与两条CI在PR回执核验。
+
+## 70. P2-05：前端设计系统与专业金融工作台基础（2026-10-12）
+
+本轮用户授权本地实现、文档和离线验收，不提交/推送/PR/合并/发布/安装包或P2-06/07/08。执行前重读AGENTS/ROADMAP/EVIDENCE及相关前端/桥/测试，确认根为研迹仓库，干净main、本地origin/main与实时远程均为3c3f9bdb75e8318964f4789f25931f4ac01d114e，创建feat/phase2-ui-foundation。实时核实PR #32已合并；main CI 38156154913为completed/success，日志828 Python/24+27 Node/58实际Electron，共937项，失败/跳过0。该回执为旧基线，不计为本轮远程验证。
+
+施工前用仓库现有Playwright Electron启动原构建和隔离临时SQLite，创建明确UI测试会话并运行原Fake/Fixture行情工具，保存1440×900、1000×700、600×700截图；宽度1000/600均无整页横向溢出，pageerror空。Browser插件/skill未列出（Browser plugin not available），使用实际Electron白名单桥与Python链路，不以浏览器静态假页代替应用。参考用户概念图及内置image_gen施工图；实际不采用生成图里的虚构行情/财报/模型分析/新按钮。图片仅设计资料，不是功能证明。
+
+已实现：43项CSS变量（含兼容别名）、SectionHeader/SurfaceCard/StatusIndicator/StateNotice、五组原创SVG导航、15原名入口、紧凑健康工具栏与详情、资产栏与独立助手；模拟行情卡片/图表容器、证券基本布局与概览、完整/compact会话及公共状态样式。原条件分支、key、lazy/Suspense、sessionStorage、请求generation、会话effect/订阅/取消算法和上下文回调保留。没有依赖/API/DTO/生成契约/数据库/后端/pi/金融计算/图表引擎改动，正式默认AgentRunner不切换。保留来源与版权注释。
+
+真实迭代记录：初次改版视觉采集因健康标题折叠不可见触发原waitForBackend断言；恢复工具栏可见标题，不改等待helper/时限。视觉检查修复证券指标标签被长值压成单字列。新增首5项专项5 passed（23.80秒），无失败/跳过。第6项长文本测试首轮为5 passed/1 failed（57.56秒），原因新测试错误使用不存在的API Key字段label；按已有新凭证label修正。重跑长文本1 failed（4.29秒），宽表格过度换行而无局部滚动；修正Markdown表格单元格nowrap，使表格保留列关系并局部滚动，不放宽断言。最终新增6项专项6 passed（29.00秒），失败/取消/跳过/todo 0。
+
+新回归覆盖全部15页面/唯一选中/键盘焦点/健康复查/完整会话唯一挂载/快照零重执行；三尺寸行情来源时间、资产选择、证券概览、聊天运行；未知行情/未配置真实查询及显式切回模拟；真实原OpenAIProvider+loopback协议响应的长名称/12列表格/长代码局部滚动，一次请求后历史查看和尺寸切换零新增模型请求。旧58项Electron测试未删除/修改/放宽，仅追加6项。类型与契约检查通过；main/preload/renderer构建通过。
+
+最终完整 `bun.cmd run verify` 退出0：828 Python（277.70秒）/51 Node（24 pi + 27原Node）/64实际Electron（435.82秒），共943项通过，失败/取消/跳过/todo 0。原937项全部保留，仅新增6项Electron。真实pi两个离线CLI、12原创工程案例、30原创历史样例、契约/类型、锁定pi/native许可审计、0020临时库重复升级/模型一致性、三端构建均通过；原SSE真实断线续读/取消/重启/报告恢复及迟到结果隔离测试通过。仅既有Starlette/httpx弃用1条与Vite主chunk512.24kB警告，不改变阈值或升级依赖。
+
+实际视觉证据留在仓库外 `<项目父目录>/research-trail-p2-05-qa/`。`before/`与`after/`含1440×900、1000×700、600×700；另外1672×941/1586×992为用户参考/施工概念原生尺寸，已用view_image对照查看。`tests/`含导航/行情/证券/聊天/错误及长文本场景；`full/`保留本轮P2-05及原证券缺失/失败/部分状态的实窗截图。工具栏、分组导航、数字/字体、卡片层级、助手和窄窗逐项检查，无整页横向溢出；新完整导航用例console warning/error与pageerror空。概念数据与不在范围内的新控件没有进入产品。详细对照及尚未统一页面见PHASE2-UI-FOUNDATION第5/6节。
+
+最终源码审计逐字确认App原业务条件分支、SessionPanel运行/订阅代码、SecurityWorkspace请求/写入保护和旧58项桌面测试保持；17文件范围仅renderer、桌面测试与三份文档，无后端/契约/锁文件/main/preload变更。UTF-8及git diff --check通过。测试数据/截图/日志均未进入Git，隔离测试凭证已按本测试配置清理。本轮本机实现和验收完成后停止，HEAD仍为合并基线，未add/commit/push/PR/发布，P2-06/07/08未执行。
+
+
+## 71. P2-05 第二轮：产品布局与信息层级修正（2026-10-12）
+
+用户明确第一轮视觉不满意，要求对照已确认概念图分阶段实窗截图，继续原分支且保护修改，不进入P2-06～08/后端/数据库/金融API，不提交/推送/PR/发布。核对feat/phase2-ui-foundation、HEAD 3c3f9bdb75e8318964f4789f25931f4ac01d114e及已有17文件，将其原字节与SHA256登记到仓库外round2-baseline。读AGENTS/ROADMAP/EVIDENCE、实际前端和原测试；Folio固定SecurityHeader/OverviewView只读辅助，用户概念为主，不安装依赖。
+
+中央改版：原overview仅资料/估值，新增前端组合原quote/kline/financials/news视图，复用securityPage及原FinancialKLineChart。名称/代码/市场/模式、真实DTO主报价及格式化涨跌成为首要信息；选择来源/模式/刷新为紧凑行，自选管理下移。资料、估值中的空值集中保留字段名及“未提供”，不编造零值；独立来源与时间/部分失败保留。真实模式不自动聚合查询，需显式点击，切换上下文后重新等待查询。
+
+助手改版：SessionPanel只替换展示返回区，运行/state/effect/SSE/取消/历史算法逐字保留。消息、过程/工具结果、错误在聊天区；composer在底部，创建会话紧凑行；高级设置默认折叠，固定测试及模拟时序原功能保留；事件原文默认折叠。原64项Electron用例/断言/时限保留，四处仅增加显式展开高级设置操作。新3项验证首屏报价/图表/财报新闻层级、区域滚动/输入位置、1000/600高级控件及完整模式、附加响应迟到与真实查询边界。
+
+迭代证据：阶段1截图发现资料/估值仍压住财务/新闻，重排为图表侧估值及底部摘要区，再截图；阶段2聊天重排后截图；阶段3整理字号、白色业务区、扁平资产栏与区域滚动，实窗1440/1000/600无整页横向溢出，截图采集pageerror空。第一专项13项12 passed/1 failed（102.13秒），是新revealAdvanced错误把HTML open空字符串当作关闭，修正为null判定，未放宽原测试。第二专项13项12 passed/1 failed（84.31秒），新迟到测试误监视fetch，而main实际使用node:http。随后独立夹具出现require/动态导入不可用及HTTP流结束拦截不当；两个悬挂验收进程按精确测试命令和实际父子树核对后定向清理，未按进程名全局杀。改在原workspace:page IPC处理器收到实际Python结果后暂停交付，保留真实链路；测试另误将资产页签的既有key重挂载/默认模拟当作模式保留，改用同实例自选操作验证真实模式上下文，未改变旧挂载行为。最终迟到/显式读取独立用例1 passed（3.49秒），验证未显式真实读取为0，显式概览5个现有视图读取，新证券再次为等待；财报NETWORK_ERROR仍显示。
+
+第一完整verify：828 Python/51 Node通过，67项Electron为65 passed/2 failed（501.80秒）；Step15取消后页面不在研究视图、研究A/B控件未找到。该轮同时执行过视觉采集和renderer重构建，不能作为稳定构建验收；是否直接导致失败未证实。停止并行采集、固定构建后两项原用例独立2 passed（29.15秒），未改断言/时限。另审查补齐空自选概览，1项聚合/迟到/真实边界及空态专项passed（5.82秒）。最终冻结源码和构建、串行完整verify重新执行，结果完成后回填。没有后端/契约/迁移/金融计算/图表引擎变更，测试均隔离临时SQLite与Fake/Fixture/loopback，未读取私人凭证/账户或请求真实服务。第一轮自动化通过不作为本轮视觉通过依据。
+
+
+最终冻结源码的串行完整 `bun.cmd run verify` 退出0：828 Python（292.57秒）/51 Node（24 pi + 27原Node）/67实际Electron（467.09秒），合计946项通过，失败/取消/跳过/todo 0。原943项保留，本轮新增3项；首轮失败的Step15取消及研究A/B原用例在完整运行中通过。契约/类型、三端构建、pi两个离线CLI、工程/历史样例、native/pi许可审计、0020临时库重复升级/模型一致性通过。保留1条Starlette/httpx弃用及Vite主chunk517.40kB警告；未改阈值、删测试、放宽时限或安装新依赖。
+
+最终代码/测试SHA256在 `round2-final-source-sha256.json`，最终验收后复核一致，后续只更新文档。完整日志 `round2-final-verify.log`；原失败日志 `round2-verify.log` 与两项独立复验 `round2-failed-recheck.log` 均保留。最终实际Electron截图位于仓库外 `round2-reviewed/`，以及 `round2-final-full/` 的新增回归截图；标准1440×900、紧凑1000×700、窄窗600×700和参考原生尺寸均查看。阶段1/2/3截图及差距记录完整保留。稳定冻结测试时不并行截图/重构建；完成后再串行采集最终画面，采集pageerror为空、1000/600无整页横向溢出。
+
+视觉结论仅为信息层级与布局已向概念目标接近，未宣称完全一致或用户已认可。固定10根日线、稀疏财报/估值/新闻、当前模型回答和品牌素材与概念仍不同，未用虚构数据或无效按钮补齐；高级设置/证据原文仍需展开或滚动。最终状态为代码完成/待验收（自动化946通过，用户视觉审核待完成）。业务、API/DTO/数据库/依赖及原AgentRunner/pi内部边界保持，无Git暂存/提交/推送/PR/发布；P2-06～08未执行。
+
+## 72. P2-05 最终收尾与独立 Draft PR（2026-10-12）
+
+用户已审核第二轮实际Electron截图，同意结束大规模UI重构；本轮明确授权少量必要精修、功能复验、文档整理及验收通过后提交/普通推送/独立Draft PR。执行前核对Git根为研迹、分支feat/phase2-ui-foundation、HEAD 3c3f9bdb75e8318964f4789f25931f4ac01d114e、暂存区为空、21个前端/测试/文档修改完整保留。fetch后origin/main与HEAD一致，main CI 38156154913仍成功；GitHub身份与Git作者均ydflow，目标远程ydflow/research-trail，无现有开放PR。未reset、强推或清理用户文件。
+
+查看已审核1440/1000/600实窗及对应源码，主报价、来源/模拟标签、图表/摘要间距、聊天/过程与底部输入、高级设置和导航选中态满足本轮收尾范围，保持原样。18个代码/测试SHA256与round2-final-source-sha256.json一致；本轮只更新三份文档状态、阶段边界与验收记录，不为增加改动而调整代码。15个原名入口和既有业务保留，未修改后端/金融/API/DTO/数据库/main/preload/依赖及默认AgentRunner/pi内部边界。
+
+最终串行完整 `bun.cmd run verify` 退出0：828 Python（277.14秒）/51 Node（24 pi+27原Node）/67实际Electron（449.02秒），共946项通过，失败/取消/跳过/todo均0。契约/TypeScript、main/preload/renderer构建、两条pi离线CLI、工程/历史样例、native/pi许可审计、0020隔离临时库重复迁移/一致性通过。旧937项与两轮新增9项完整保留；未改断言/时限、删测试或安装依赖。保留Starlette/httpx弃用1条与Vite主chunk517.40kB警告。日志位于仓库外final-wrapup-verify.log。
+
+完整验收结束后再串行启动实际Electron采集：1440×900、1000×700、600×700及两种参考原生尺寸；真实已保存的Fake/Fixture行情工具消息、资产选择、证券概览与输入正常。截图实查无空白/框架覆盖层，采集pageerror为空，1000/600文档横向溢出为false；新增导航/消息用例console warning/error断言通过。截图位于仓库外research-trail-p2-05-qa/final-wrapup/，采集日志final-wrapup-capture.log。Browser plugin not available，使用现有Playwright实际Electron、隔离临时SQLite和离线护栏；无真实服务/私人凭证/账户数据，截图/日志/数据库不提交。
+
+UTF-8和git diff --check通过；提交清单仅renderer、tests/desktop.test.cjs及三份文档。用户视觉认可与本机验收通过不等于概念图完全一致或远程CI成功。固定10根日线、稀疏金融信息及未统一的次级面板内部布局仍如实保留；P2-06证券/K线深度增强、P2-07热力图、P2-08 Agent联动均未执行，不合并、打包或发布。Draft PR及提交回执以实际GitHub记录为准，远程检查单独核验。

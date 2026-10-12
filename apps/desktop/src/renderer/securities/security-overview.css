@@ -1,0 +1,68 @@
+.shell .workbench-content > .security-workspace { margin-top: 12px; }
+.shell .security-workspace > .section-header { margin: 0 0 8px; }
+.shell .security-workspace > .section-header h2 { color: var(--muted); font-size: 12px; letter-spacing: 0; font-weight: 500; margin: 0; }
+.shell .security-workspace > .security-note { margin: 6px 0; font-size: 11px; }
+.shell .security-workspace > .security-toolbar { display: flex; gap: 8px; padding: 4px 0; margin: 4px 0 8px; border: 0; border-radius: 0; background: transparent; align-items: center; }
+.shell .security-workspace > .security-toolbar label { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+.shell .security-workspace > .security-toolbar select { min-height: 30px; padding: 4px 8px; font-size: 12px; }
+.shell .security-workspace > .security-header { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; justify-content: flex-start; border: 0; padding: 0; margin: 0 0 8px; }
+.shell .security-header strong { font-size: 26px; letter-spacing: -.6px; }
+.shell .security-header .security-name { font-size: 22px; color: var(--text); }
+.shell .security-header .security-market { font-size: 12px; color: var(--muted); }
+.shell .security-header button { margin-left: auto; }
+.shell .security-header .section-header { margin: 0; gap: 6px; }
+.shell .security-header .section-header h2 { margin: 0; font-size: 11px; color: var(--muted); font-weight: 400; }
+.shell .security-tabs { border-bottom: 1px solid var(--border); margin: 0; padding: 4px 0; }
+.shell .security-workspace .security-view-state { padding: 2px 0; margin: 4px 0; background: transparent; }
+.security-guidance { font-size: 11px; color: var(--muted); margin-left: auto; }
+.security-guidance summary { cursor: pointer; }
+.security-guidance p { max-width: 350px; }
+.security-quote-band { display: grid; grid-template-columns: minmax(0,.85fr) minmax(0,1fr); gap: 8px 16px; align-items: center; margin: 8px 0 12px; padding: 0 0 10px; border-bottom: 1px solid var(--border); }
+.security-price-primary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; font-variant-numeric: tabular-nums; }
+.security-price-primary strong { font-size: 40px; line-height: 1.25; letter-spacing: -1px; color: var(--brand); }
+.security-price-primary > span { font-size: 15px; }
+.security-price-primary > span:last-child { font-weight: 600; }
+.security-quote-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin: 0; font-variant-numeric: tabular-nums; }
+.security-quote-metrics dt { color: var(--muted); font-size: 11px; }
+.security-quote-metrics dd { margin: 4px 0 0; font-size: 13px; }
+.security-quote-metrics > div { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 2px 6px; }
+.security-quote-metrics > div { border-left: 1px solid var(--border); padding-left: 8px; }
+.security-quote-metrics dd { margin: 0; }
+.shell .security-workspace .security-source p { margin: 0; line-height: 1.55; }
+.shell .security-quote-band .security-source { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0 8px; margin-top: 0; border: 0; padding: 0; }
+.security-quote-band > .state-notice { grid-column: 1 / -1; }
+.security-overview-grid { display: grid; grid-template-columns: minmax(0,1.45fr) minmax(0,1fr); gap: 12px; align-items: start; }
+.security-overview > .security-tabs { margin-bottom: 12px; }
+.security-overview-secondary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; align-items: start; margin-top: 12px; }
+.shell .security-overview-secondary .surface-card { padding: 12px; }
+.shell .security-overview-secondary .security-grid { grid-template-columns: minmax(0,1fr); }
+.shell .security-overview-secondary .security-metrics > div { padding: 4px 0; font-size: 12px; }
+.shell .security-overview-grid > .surface-card { padding: 14px; }
+.overview-card-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.overview-card-heading span { color: var(--muted); font-size: 11px; }
+.shell .security-overview-chart .chart-canvas { height: 220px; }
+.shell .security-overview-chart .security-source { border: 0; margin-top: 4px; padding: 0; }
+.shell .security-overview-facts .security-grid { display: flex; flex-direction: column; gap: 10px; }
+.shell .security-overview-facts .security-block { padding: 12px; margin: 0; }
+.shell .security-overview-facts .security-metrics > div { padding: 4px 0; font-size: 12px; }
+.shell .security-overview-facts .security-source { font-size: 10px; margin-top: 6px; padding-top: 5px; }
+.unprovided-metrics { margin: 8px 0 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.shell .security-overview-financials .security-block, .shell .security-overview-news .security-block { border: 0; box-shadow: none; padding: 0; margin: 8px 0 0; }
+.shell .security-overview-financials .security-block > h3, .shell .security-overview-news .security-block > h3 { font-size: 11px; color: var(--muted); }
+.shell .security-overview-news .security-news li { padding: 8px 0; }
+.shell .security-overview-news .security-news p { margin: 4px 0; }
+.shell .security-workspace > .security-watchlist { margin-top: 16px; padding: 12px; background: var(--surface-subtle); }
+.shell .security-workspace > .security-watchlist h3 { font-size: 12px; margin-bottom: 8px; }
+.shell .security-workspace > .security-watchlist form { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; }
+.shell .security-workspace > .security-watchlist form label { display: flex; align-items: center; gap: 8px; }
+.shell .security-workspace > .security-watchlist ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; }
+.shell .security-workspace > .security-watchlist li { flex: 0 0 160px; margin: 0; }
+@media(max-width:760px) {
+  .security-overview-grid { grid-template-columns: minmax(0,1fr); }
+  .security-overview-secondary { grid-template-columns: minmax(0,1fr); }
+  .security-quote-band { grid-template-columns: minmax(0,1fr); }
+  .security-quote-metrics { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .shell .security-header strong { font-size: 22px; }
+  .shell .security-header .security-name { font-size: 18px; }
+  .shell .security-workspace > .security-toolbar { flex-wrap: wrap; }
+}

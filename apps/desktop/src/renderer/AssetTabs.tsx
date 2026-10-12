@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { WorkspaceState } from '../workspace-types';
+import { StateNotice } from './ui/Primitives';
 
 export function AssetTabs({ available, view, onOpen }: { available: boolean; view: string; onOpen: () => void }) {
   const [state, setState] = useState<WorkspaceState>();
@@ -24,9 +25,10 @@ export function AssetTabs({ available, view, onOpen }: { available: boolean; vie
     finally { setBusy(false); }
   }
   return <section className="asset-strip" aria-label="常驻资产页签">
+    <span className="asset-strip-label">自选资产</span>
     <nav aria-label="自选资产">{state?.entries.map(entry => <button key={entry.symbol} disabled={busy || !available}
       aria-pressed={state.active_symbol === entry.symbol} onClick={() => void open(entry.symbol)}>{entry.symbol}<small>{entry.name}</small></button>)}</nav>
     {!state?.entries.length && <p>尚无自选资产；请在证券工作台添加。</p>}
-    {error && <p role="status">{error}</p>}
+    {error && <StateNotice kind="warning">{error}</StateNotice>}
   </section>;
 }
