@@ -7,6 +7,345 @@ const { resolve } = require('node:path');
 const { mkdirSync, mkdtempSync, readFileSync } = require('node:fs');
 const { tmpdir } = require('node:os');
 
+test('P2-05 visual revision puts real saved security data before management and keeps composer visible', { timeout: 60000 }, async () => {
+  const instance = await launch({ RESEARCH_TRAIL_OFFLINE: '1' });
+  const errors = [];
+  try {
+    const page = instance.page;
+    page.on('pageerror', e => errors.push(e.message));
+    page.on('console', e => { if (['warning', 'error'].includes(e.type())) errors.push(e.text()); });
+    await waitForBackend(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.getByLabel('工作区', { exact: true }).getByRole('button', { name: '证券工作台', exact: true }).click();
+    const workspace = page.getByRole('region', { name: '证券工作台', exact: true });
+    await expect(workspace.getByTestId('security-overview-price')).toHaveText('189.43');
+    await expect(workspace.getByTestId('security-overview-change')).toContainText('+0.76%');
+    await expect(workspace.locator('.security-overview-chart canvas').first()).toBeVisible();
+    const price = await workspace.getByTestId('security-overview-price').boundingBox();
+    const chart = await workspace.locator('.security-overview-chart').boundingBox();
+    const management = await workspace.getByLabel('持久自选', { exact: true }).boundingBox();
+    assert.ok(price.y < 380 && price.height >= 40, 'Price must be a first-screen focal point');
+    assert.ok(chart.y > price.y && chart.width > 380, 'Chart must lead the overview content');
+    assert.ok(management.y >= chart.y + chart.height, 'Watch management must follow research data');
+    for (const heading of ['财务报表', '新闻线索']) assert.ok((await workspace.getByRole('heading', { name: heading, exact: true }).first().boundingBox()).y < 900, 'Saved-data summaries start on the first screen');
+    await expect(workspace.getByTestId('security-source').first()).toContainText('市场时间');
+    await expect(workspace).toContainText('未提供');
+    const assistant = page.getByLabel('常驻研究助手', { exact: true });
+    await assistant.getByLabel('会话标题', { exact: true }).fill('截图驱动验收');
+    await assistant.getByRole('button', { name: '创建会话', exact: true }).click();
+    await assistant.getByLabel('测试输入', { exact: true }).fill('查询AAPL.US行情');
+    await assistant.getByRole('button', { name: '运行规则演示', exact: true }).click();
+    await expect(assistant.getByTestId('run-state')).toContainText('已完成');
+    await expect(assistant.getByTestId('tool-result')).toContainText('189.43');
+    assert.equal(await assistant.locator('.chat-advanced').evaluate(el => el.open), false);
+    await expect(assistant.getByLabel('模拟工具时序', { exact: true })).not.toBeVisible();
+    const composer = await assistant.locator('.chat-composer').boundingBox();
+    assert.ok(composer.y + composer.height <= 900 && composer.y >= 550, 'Composer stays in the usable bottom region');
+    assert.equal(await page.evaluate(() => document.documentElement.scrollHeight > innerHeight + 1), false, 'Wide workbench uses regional scrolling');
+    await screenshot(page, 'p2-05-revision-three-columns-1440.png');
+    await assistant.locator('.chat-transcript').evaluate(el => { el.scrollTop = el.scrollHeight; });
+    await screenshot(page, 'p2-05-revision-tool-card-1440.png');
+    await assistant.locator('.chat-advanced summary').click();
+    await expect(assistant.getByLabel('模拟工具时序', { exact: true })).toBeVisible();
+    await assistant.getByLabel('模拟工具时序', { exact: true }).selectOption('delayed');
+    await assistant.getByLabel('测试输入', { exact: true }).fill('查询MSFT.US行情');
+    await assistant.getByRole('button', { name: '运行规则演示', exact: true }).click();
+    await expect(assistant.getByTestId('run-state')).toContainText('运行中');
+    await assistant.getByRole('button', { name: '取消运行', exact: true }).click();
+    await expect(assistant.getByTestId('run-state')).toContainText('已取消');
+    assert.deepEqual(errors, []);
+  } finally { await instance.app.close(); }
+});
+
+test('P2-05 visual revision keeps advanced controls and composer usable at 1000 and 600px', { timeout: 60000 }, async () => {
+  const instance = await launch({ RESEARCH_TRAIL_OFFLINE: '1' });
+  try {
+    const page = instance.page;
+    await waitForBackend(page);
+    const assistant = page.getByLabel('常驻研究助手', { exact: true });
+    await assistant.getByLabel('会话标题', { exact: true }).fill('紧凑聊天验收');
+    await assistant.getByRole('button', { name: '创建会话', exact: true }).click();
+    for (const width of [1000, 600]) {
+      await page.setViewportSize({ width, height: 700 });
+      await assistant.getByLabel('测试输入', { exact: true }).fill('查询AAPL.US行情');
+      await assistant.getByRole('button', { name: '运行规则演示', exact: true }).click();
+      await expect(assistant.getByTestId('run-state')).toContainText('已完成');
+      await assistant.locator('.chat-composer').scrollIntoViewIfNeeded();
+      await expect(assistant.getByLabel('测试输入', { exact: true })).toBeVisible();
+      await assistant.locator('.chat-advanced summary').click();
+      await expect(assistant.getByLabel('模拟工具时序', { exact: true })).toBeVisible();
+      await assistant.locator('.chat-advanced summary').click();
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+      await screenshot(page, `p2-05-revision-chat-${width}.png`);
+    }
+    await page.getByLabel('工作区', { exact: true }).getByRole('button', { name: '会话与事件', exact: true }).click();
+    await revealAdvanced(page);
+    await page.getByLabel('测试输入', { exact: true }).fill('完整模式固定测试');
+    await page.getByRole('button', { name: '启动固定测试运行', exact: true }).click();
+    await expect(page.getByTestId('run-state')).toContainText('已完成');
+    await expect(page.getByTestId('message-history')).toContainText('完整模式固定测试');
+    await screenshot(page, 'p2-05-revision-full-chat-600.png');
+  } finally { await instance.app.close(); }
+});
+
+test('P2-05 visual revision discards late overview reads and never auto-queries a real context', { timeout: 60000 }, async () => {
+  const instance = await launch({ RESEARCH_TRAIL_OFFLINE: '1', RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE: 'research-partial' });
+  try {
+    const page = instance.page;
+    await waitForBackend(page);
+    await instance.app.evaluate(({ ipcMain }) => {
+      // Hold the completed real Python response at IPC delivery, not the HTTP stream.
+      const original = ipcMain._invokeHandlers.get('workspace:page');
+      if (typeof original !== 'function') throw new Error('Workspace handler unavailable');
+      globalThis.originalOverviewHandler = original;
+      globalThis.overviewQueries = [];
+      globalThis.heldOverviewQuote = false;
+      ipcMain.removeHandler('workspace:page');
+      ipcMain.handle('workspace:page', async (event, query) => {
+        globalThis.overviewQueries.push(query);
+        const result = await original(event, query);
+        if (query.view === 'quote' && query.symbol === 'AAPL.US' && query.mode === 'simulated') {
+          globalThis.heldOverviewQuote = true;
+          await new Promise(resolve => { globalThis.releaseOverviewQuote = resolve; });
+        }
+        return result;
+      });
+    });
+    await page.getByLabel('工作区', { exact: true }).getByRole('button', { name: '证券工作台', exact: true }).click();
+    await expect.poll(() => instance.app.evaluate(() => globalThis.heldOverviewQuote)).toBe(true);
+    const assets = page.getByLabel('常驻资产页签', { exact: true });
+    await assets.getByRole('button', { name: /MSFT.US/ }).click();
+    await expect(page.getByTestId('security-symbol')).toHaveText('MSFT.US');
+    await expect(page.getByTestId('security-overview-price')).toHaveText('412.60');
+    await expect(page.locator('.security-overview-financials')).toContainText('NETWORK_ERROR');
+    await instance.app.evaluate(() => globalThis.releaseOverviewQuote());
+    await expect(page.getByTestId('security-overview-price')).toHaveText('412.60');
+    await expect(page.locator('.security-overview-chart [data-testid="chart-canvas"]')).toHaveAttribute('data-loaded-symbol', 'MSFT.US');
+    const workspace = page.getByRole('region', { name: '证券工作台', exact: true });
+    await workspace.getByLabel('证券数据模式', { exact: true }).selectOption('real');
+    await expect(workspace).toContainText('等待显式查询');
+    assert.equal(await instance.app.evaluate(() => globalThis.overviewQueries.filter(query => query.mode === 'real').length), 0);
+    await workspace.getByRole('button', { name: '查询当前视图真实数据', exact: true }).click();
+    await expect(workspace.getByRole('alert').first()).toContainText('未配置');
+    await expect.poll(() => instance.app.evaluate(() => globalThis.overviewQueries.filter(query => query.mode === 'real').length)).toBe(5);
+    await workspace.getByRole('button', { name: '选择证券 NVDA.US', exact: true }).click();
+    await expect(workspace.getByTestId('security-symbol')).toHaveText('NVDA.US');
+    await expect(workspace).toContainText('等待显式查询');
+    assert.equal(await instance.app.evaluate(() => globalThis.overviewQueries.filter(query => query.mode === 'real').length), 5);
+    await expect(workspace.getByTestId('security-overview-price')).toHaveCount(0);
+    await page.evaluate(async () => { for (const row of (await window.researchTrail.workspaceState()).entries) await window.researchTrail.removeWatch(row.symbol); });
+    await page.getByLabel('工作区', { exact: true }).getByRole('button', { name: '模拟行情', exact: true }).click();
+    await page.getByLabel('工作区', { exact: true }).getByRole('button', { name: '证券工作台', exact: true }).click();
+    await expect(workspace).toContainText('没有选中的证券');
+    await expect(workspace.locator('.state-loading')).toHaveCount(0);
+    await expect(workspace.getByTestId('security-overview-price')).toHaveCount(0);
+  } finally {
+    await instance.app.evaluate(({ ipcMain }) => { globalThis.releaseOverviewQuote?.(); if (globalThis.originalOverviewHandler) { ipcMain.removeHandler('workspace:page'); ipcMain.handle('workspace:page', globalThis.originalOverviewHandler); } }).catch(() => {});
+    await instance.app.close();
+  }
+});
+
+test('P2-05 grouped navigation preserves all fifteen panels and saved assistant state', { timeout: 90000 }, async () => {
+  const instance = await launch({ RESEARCH_TRAIL_OFFLINE: '1' });
+  const errors = [];
+  try {
+    const page = instance.page;
+    page.on('pageerror', e => errors.push(e.message));
+    page.on('console', e => { if (['error', 'warning'].includes(e.type())) errors.push(e.text()); });
+    await waitForBackend(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const nav = page.getByLabel('工作区', { exact: true });
+    await expect(nav.getByRole('button')).toHaveCount(15);
+    await expect(nav.getByRole('heading')).toHaveCount(5);
+    const assistant = page.getByLabel('常驻研究助手', { exact: true });
+    await assistant.getByLabel('会话标题', { exact: true }).fill('P2-05 导航验收');
+    await assistant.getByRole('button', { name: '创建会话', exact: true }).click();
+    await expect(assistant.getByTestId('current-session')).toHaveText('P2-05 导航验收');
+    await assistant.getByLabel('测试输入', { exact: true }).fill('查询AAPL.US行情');
+    await assistant.getByRole('button', { name: '运行规则演示', exact: true }).click();
+    await expect(assistant.getByTestId('run-state')).toContainText('已完成');
+    const original = await page.evaluate(async () => {
+      const [session] = await window.researchTrail.listSessions();
+      return window.researchTrail.sessionSnapshot(session.id);
+    });
+    const entries = [
+      ['证券工作台', '证券工作台'], ['组合工作台', '组合工作台'], ['风险与对比', '风险与对比'],
+      ['研究采集', '研究采集'], ['投资论点', '投资论点'], ['机会发现', '机会发现'],
+      ['事件日历', '事件与催化日历'], ['Today与提醒', 'Today · 提醒与每日简报'],
+      ['评测中心', '评测中心'], ['投资结果', '投资研究结果'], ['能力与技能', '能力与技能'],
+      ['会话与事件', '研究会话'], ['设置与诊断', '设置与诊断'], ['数据与只读账户', '数据与只读账户'], ['模拟行情', '行情一览'],
+    ];
+    for (const [label, heading] of entries) {
+      await nav.getByRole('button', { name: label, exact: true }).click();
+      await expect(nav.getByRole('button', { name: label, exact: true })).toHaveAttribute('aria-pressed', 'true');
+      await expect(nav.locator('button[aria-pressed="true"]')).toHaveCount(1);
+      await expect(page.getByRole('main').getByRole('heading', { name: heading, exact: true })).toBeVisible();
+      await expect(page.getByLabel('常驻资产页签', { exact: true })).toBeVisible();
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+      if (label === '会话与事件') await expect(assistant.getByLabel('测试输入', { exact: true })).toHaveCount(0);
+      else await expect(assistant.getByTestId('current-session')).toHaveText('P2-05 导航验收');
+    }
+    assert.deepEqual(await page.evaluate(id => window.researchTrail.sessionSnapshot(id), original.session.id), original);
+    await nav.getByRole('button', { name: '模拟行情', exact: true }).focus();
+    await page.keyboard.press('Tab');
+    await expect(nav.getByRole('button', { name: '证券工作台', exact: true })).toBeFocused();
+    assert.equal(await nav.getByRole('button', { name: '证券工作台', exact: true }).evaluate(el => getComputedStyle(el).outlineStyle), 'solid');
+    await page.getByRole('button', { name: '重新检查', exact: true }).click();
+    await waitForBackend(page);
+    assert.deepEqual(errors, []);
+  } finally { await instance.app.close(); }
+});
+
+for (const width of [1440, 1000, 600]) {
+  test(`P2-05 ${width}px assets quotes security context and chat remain operable`, { timeout: 60000 }, async () => {
+    const instance = await launch({ RESEARCH_TRAIL_OFFLINE: '1' });
+    try {
+      const page = instance.page;
+      await waitForBackend(page);
+      await page.setViewportSize({ width, height: width === 1440 ? 900 : 700 });
+      const nav = page.getByLabel('工作区', { exact: true });
+      await expect(page.getByTestId('quote-card').first()).toHaveAttribute('data-symbol', 'AAPL.US');
+      await expect(page.getByTestId('market-time')).toContainText('2024-01-16');
+      await expect(page.getByTestId('fetched-at')).toBeVisible();
+      await screenshot(page, `p2-05-market-${width}.png`);
+      await nav.getByRole('button', { name: '证券工作台', exact: true }).click();
+      await expect(page.getByTestId('security-view')).toHaveAttribute('data-view', 'overview');
+      const assets = page.getByLabel('常驻资产页签', { exact: true });
+      await assets.getByRole('button', { name: /MSFT.US/ }).click();
+      await expect(page.getByTestId('security-symbol')).toHaveText('MSFT.US');
+      await expect(page.getByTestId('security-view')).toHaveAttribute('data-status', 'ready');
+      await expect(page.getByTestId('security-source').first()).toContainText('获取时间');
+      await page.evaluate(() => scrollTo(0, 0));
+      await screenshot(page, `p2-05-security-${width}.png`);
+      const assistant = page.getByLabel('常驻研究助手', { exact: true });
+      await assistant.getByLabel('会话标题', { exact: true }).fill(`P2-05 ${width} 窗口`);
+      await assistant.getByRole('button', { name: '创建会话', exact: true }).click();
+      await assistant.getByLabel('测试输入', { exact: true }).fill('查询MSFT.US行情');
+      await assistant.getByRole('button', { name: '运行规则演示', exact: true }).click();
+      await expect(assistant.getByTestId('run-state')).toContainText('已完成');
+      await expect(assistant.getByTestId('tool-result')).toContainText('模拟数据');
+      await expect(assistant.getByTestId('tool-result')).toContainText('固定市场时间');
+      await assistant.getByLabel('测试输入', { exact: true }).scrollIntoViewIfNeeded();
+      await screenshot(page, `p2-05-assistant-${width}.png`);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+      if (width === 1440) {
+        const boxes = await Promise.all([page.getByLabel('工作台导航').boundingBox(), page.getByRole('main').boundingBox(), assistant.boundingBox()]);
+        assert.ok(boxes[0].x + boxes[0].width <= boxes[1].x + 1);
+        assert.ok(boxes[1].x + boxes[1].width <= boxes[2].x + 1);
+      } else {
+        const main = await page.getByRole('main').boundingBox(), box = await assistant.boundingBox();
+        assert.ok(box.y >= main.y + main.height - 1, 'Narrow assistant follows business content');
+      }
+      await nav.getByRole('button', { name: '研究采集', exact: true }).click();
+      await expect(page.getByRole('main').getByLabel('研究股票')).toBeVisible();
+      assert.equal(await page.locator('vite-error-overlay').count(), 0);
+    } finally { await instance.app.close(); }
+  });
+}
+
+test('P2-05 unknown quote and unconfigured real security stay honest and recoverable', { timeout: 60000 }, async () => {
+  const instance = await launch({ RESEARCH_TRAIL_OFFLINE: '1' });
+  try {
+    const page = instance.page;
+    await waitForBackend(page);
+    await page.setViewportSize({ width: 600, height: 700 });
+    const market = page.getByRole('region', { name: '模拟行情', exact: true });
+    await market.getByLabel('查询代码', { exact: true }).fill('NO_SUCH_STOCK');
+    await market.getByRole('button', { name: '查询', exact: true }).click();
+    await expect(market.getByRole('alert')).toBeVisible();
+    await expect(market.getByTestId('quote-card')).toHaveCount(0);
+    await screenshot(page, 'p2-05-unknown-quote-600.png');
+    await market.getByRole('button', { name: 'AAPL.US', exact: true }).click();
+    await expect(market.getByTestId('quote-price')).toHaveText('189.43');
+    await page.getByLabel('工作区', { exact: true }).getByRole('button', { name: '证券工作台', exact: true }).click();
+    const workspace = page.getByRole('region', { name: '证券工作台', exact: true });
+    await workspace.getByLabel('证券数据模式', { exact: true }).selectOption('real');
+    await expect(workspace).toContainText('等待显式查询');
+    await expect(workspace.getByTestId('security-view')).toHaveCount(0);
+    await workspace.getByRole('button', { name: '查询当前视图真实数据', exact: true }).click();
+    await expect(workspace.getByRole('alert').first()).toContainText('未配置');
+    await expect(workspace.locator('.real-badge')).toContainText('真实数据');
+    await expect(workspace.getByTestId('security-source').first()).toBeVisible();
+    await screenshot(page, 'p2-05-unconfigured-security-600.png');
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+    await workspace.getByLabel('证券数据模式', { exact: true }).selectOption('simulated');
+    await expect(workspace.getByTestId('security-view')).toHaveAttribute('data-status', 'ready');
+  } finally { await instance.app.close(); }
+});
+
+test('P2-05 persisted long model text tables and code scroll locally at every viewport', { timeout: 90000 }, async () => {
+  const { createServer } = require('node:http');
+  const errors = [];
+  let requests = 0;
+  const columns = Array.from({ length: 12 }, (_, i) => `模拟字段${i}`);
+  const response = '# 布局协议夹具\n\n仅验证显示，不包含投资结论。\n\n' + '长证券名称'.repeat(70) + '\n\n' +
+    `| ${columns.join(' | ')} |\n| ${columns.map(() => '---').join(' | ')} |\n| ${columns.map(() => 'fixture_value_0123456789').join(' | ')} |\n\n` +
+    '```text\n' + 'layout_fixture_'.repeat(70) + '\n```';
+  const server = createServer(async (req, res) => {
+    for await (const chunk of req) { /* consume fixture input */ }
+    requests++;
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: response } }] }));
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  let instance;
+  try {
+    instance = await launch({ RESEARCH_TRAIL_OFFLINE: '1' });
+    const page = instance.page;
+    page.on('pageerror', e => errors.push(e.message));
+    await waitForBackend(page);
+    await page.getByLabel('工作区', { exact: true }).getByRole('button', { name: '设置与诊断', exact: true }).click();
+    const model = page.getByTestId('connection-model');
+    await model.getByLabel('服务地址').fill(`http://127.0.0.1:${server.address().port}/v1`);
+    await model.getByLabel('模型名称').fill('p205-layout-protocol-fixture');
+    await model.getByRole('button', { name: '保存配置', exact: true }).click();
+    await expect(model.getByTestId('connection-status')).toHaveText('待测试');
+    await model.getByLabel('新凭证', { exact: true }).fill('p205-test-only-loopback-key');
+    await model.getByRole('button', { name: '保存凭证', exact: true }).click();
+    await expect(model).toContainText('已保存（不回显）');
+    const assistant = page.getByLabel('常驻研究助手', { exact: true });
+    await assistant.getByLabel('会话标题', { exact: true }).fill('长文本布局夹具');
+    await assistant.getByRole('button', { name: '创建会话', exact: true }).click();
+    await assistant.getByLabel('运行模型', { exact: true }).selectOption('openai_agent');
+    await assistant.getByLabel('测试输入', { exact: true }).fill('离线显示验证');
+    await assistant.getByRole('button', { name: '运行真实模型', exact: true }).click();
+    await expect(assistant.getByTestId('run-state')).toContainText('已完成');
+    await expect(assistant.getByRole('heading', { name: '布局协议夹具', exact: true })).toBeVisible();
+    const [session] = await page.evaluate(() => window.researchTrail.listSessions());
+    const saved = await page.evaluate(id => window.researchTrail.sessionSnapshot(id), session.id);
+    for (const width of [1440, 1000, 600]) {
+      await page.setViewportSize({ width, height: width === 1440 ? 900 : 700 });
+      await page.getByLabel('工作区', { exact: true }).getByRole('button', { name: '会话与事件', exact: true }).click();
+      const history = page.getByTestId('message-history');
+      await expect(history.getByRole('heading', { name: '布局协议夹具', exact: true })).toBeVisible();
+      for (const locator of [history.locator('table'), history.locator('pre')]) {
+        assert.equal(await locator.evaluate(el => el.scrollWidth > el.clientWidth), true, `${width}px ${await locator.evaluate(el => el.tagName)} needs local scrolling`);
+        await locator.evaluate(el => { el.scrollLeft = 120; });
+        assert.ok(await locator.evaluate(el => el.scrollLeft) > 0, 'Wide content must actually scroll locally');
+      }
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+      await screenshot(page, `p2-05-long-markdown-${width}.png`);
+      await page.getByLabel('工作区', { exact: true }).getByRole('button', { name: '模拟行情', exact: true }).click();
+      await expect(assistant.getByRole('heading', { name: '布局协议夹具', exact: true })).toBeVisible();
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+    }
+    assert.equal(requests, 1, 'History reads and viewport changes must not call the model again');
+    assert.deepEqual(await page.evaluate(id => window.researchTrail.sessionSnapshot(id), session.id), saved);
+    assert.deepEqual(errors, []);
+  } finally {
+    if (instance) {
+      try { await instance.page.evaluate(() => window.researchTrail.deleteConnection('model')); }
+      finally { await instance.app.close(); }
+    }
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
+async function revealAdvanced(page) {
+  const details = page.locator('.chat-advanced');
+  if (await details.getAttribute('open') === null) await details.locator('summary').click();
+}
+
 test('Step24 persistent assistant asset tabs and saved model controls work across views', {timeout:90000}, async () => {
   const instance = await launch({RESEARCH_TRAIL_OFFLINE:'1'});
   const errors = [];
@@ -2013,6 +2352,7 @@ test('persistent sessions, scoped messages, SSE replay, restart and deletion', {
       await instance.page.getByRole('button', { name: '创建会话', exact: true }).click();
       await expect(instance.page.getByTestId('current-session')).toHaveText(title);
       await instance.page.getByLabel('测试输入', { exact: true }).fill(input);
+      await revealAdvanced(instance.page);
       await instance.page.getByRole('button', { name: '启动固定测试运行', exact: true }).click();
       await expect(instance.page.getByTestId('message-history')).toContainText(input);
       await expect(instance.page.getByTestId('event-list').locator('li')).toHaveCount(7);
@@ -2190,6 +2530,7 @@ test('run lifecycle cancels, times out, deletes active session and marks backend
     await expect(instance.page.getByTestId('current-session')).toHaveText('生命周期验收');
     let sid = (await instance.page.evaluate(() => window.researchTrail.listSessions()))[0].id;
     const start = async (scenario, expected = '运行中') => {
+      await revealAdvanced(instance.page);
       await instance.page.getByLabel('模拟工具时序', { exact: true }).selectOption(scenario);
       await instance.page.getByLabel('测试输入', { exact: true }).fill('查询AAPL.US行情');
       await instance.page.getByRole('button', { name: '运行规则演示', exact: true }).click();
@@ -2308,6 +2649,7 @@ test('snapshot first, real stream reconnect, active refresh and session unsubscr
     await instance.page.getByRole('button', { name: /流甲会话/ }).click();
     await expect(instance.page.getByTestId('current-session')).toHaveText(a.title);
     const start = async (text) => {
+      await revealAdvanced(instance.page);
       await instance.page.getByLabel('模拟工具时序', { exact: true }).selectOption('delayed');
       await instance.page.getByLabel('测试输入', { exact: true }).fill(text);
       await instance.page.getByRole('button', { name: '运行规则演示', exact: true }).click();

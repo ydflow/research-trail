@@ -3,6 +3,7 @@ import type { MarketSnapshot, MarketSymbol } from '../../market-types';
 import { Watchlist } from './Watchlist';
 import { QuoteCard } from './QuoteCard';
 import { FinancialKLineChart } from './FinancialKLineChart';
+import { SectionHeader, SurfaceCard, StateNotice } from '../ui/Primitives';
 
 const utc = (value: string) => new Date(value).toISOString().replace('T', ' ').replace('Z', ' UTC');
 export function MarketPanel({ available }: { available: boolean }) {
@@ -30,20 +31,22 @@ export function MarketPanel({ available }: { available: boolean }) {
   // Hide the previous response immediately on selection or backend disconnection.
   const data = available && view.data?.quote.symbol === symbol ? view.data : undefined;
   return <section className="market-panel" aria-label="模拟行情">
-    <div className="market-heading"><h2>行情一览</h2><span className="mock-badge">模拟数据 · 固定示例</span></div>
+    <SectionHeader title="行情一览"><span className="mock-badge">模拟数据 · 固定示例</span></SectionHeader>
     <p className="market-note">FixtureMarketProvider · 仅供功能演示。重复查询不会更新市场价格。</p>
     <Watchlist symbols={symbols} active={symbol} onSelect={select} />
-    {!available ? <p className="market-message">等待后端连接后读取模拟行情。</p> : <>
+    {!available ? <StateNotice kind="info">等待后端连接后读取模拟行情。</StateNotice> : <>
       <button className="refresh-market" onClick={() => select(symbol)}>重新查询</button>
-      {view.loading && <p role="status">正在读取 {symbol || '代码'}…</p>}
-      {view.error && <p role="alert" className="market-error">{view.error}</p>}
+      {view.loading && <StateNotice kind="loading">正在读取 {symbol || '代码'}…</StateNotice>}
+      {view.error && <StateNotice kind="error">{view.error}</StateNotice>}
       {data && <>
         <QuoteCard quote={data.quote} />
+        <SurfaceCard className="market-chart">
         <div className="chart-heading"><h3>{data.quote.symbol} · 日 K 线</h3><span>模拟数据 · {data.klines.length} 根固定蜡烛</span></div>
         <FinancialKLineChart bars={data.klines} symbol={data.quote.symbol} />
         <p className="data-times">固定市场时间：<time data-testid="market-time">{utc(data.market_time)}</time><br />
           本次获取时间：<time data-testid="fetched-at">{utc(data.fetched_at)}</time></p>
         <p className="chart-summary">最后一根收盘：{data.klines.at(-1)?.close.toFixed(2)} USD · 示例版本 {data.fixture_version}</p>
+        </SurfaceCard>
       </>}
     </>}
   </section>;

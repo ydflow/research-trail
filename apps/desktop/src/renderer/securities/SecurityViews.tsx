@@ -6,6 +6,7 @@
 import { useState, type ReactNode } from 'react';
 import type { SecurityBlock, SecurityPage, SecurityQuery } from '../../workspace-types';
 import { FinancialKLineChart } from '../market/FinancialKLineChart';
+import { SurfaceCard, StateNotice } from '../ui/Primitives';
 
 export const display = (value: string | number | null | undefined) => value == null || value === '' ? '—' : typeof value === 'number' ? value.toLocaleString('zh-CN', { maximumFractionDigits: 4 }) : value;
 export function time(value: string | null | undefined) { return value ? `${new Date(value).toLocaleString('zh-CN', { timeZone: 'UTC', hour12: false })} UTC` : '—'; }
@@ -13,7 +14,7 @@ const names = { longbridge: 'Longbridge', massive: 'Massive', 'longbridge-accoun
 const timing = { unknown: '延迟未知', realtime: '实时（自行声明）', delayed: '延迟（自行声明）', historical: '历史' };
 const sources = { fixture: '自主编写的模拟样例', sdk: '官方Python SDK', cli: '只读CLI', http: 'REST接口' };
 
-function Source({ block }: { block: SecurityBlock }) {
+export function Source({ block }: { block: SecurityBlock }) {
   const p = block.provenance;
   return <div className="security-source" data-testid="security-source">
     <p>{p ? `${names[p.provider]} · ${p.data_label} · ${sources[p.transport]} · ${p.cached ? '缓存命中' : '本次获取'} · ${timing[p.timeliness]}` : '数据来源：—'}</p>
@@ -21,16 +22,20 @@ function Source({ block }: { block: SecurityBlock }) {
     {p?.mode === 'real' && <p>时效依据：{p.timeliness_basis === 'user-declared' ? '本机配置声明' : p.timeliness_basis === 'historical-request' ? '历史请求' : '未知'}；成功仅证明本次能力请求。</p>}
   </div>;
 }
-function BlockFrame({ block, children }: { block: SecurityBlock; children: ReactNode }) {
-  return <section className="security-block" data-testid="security-block" data-status={block.status}>
+export function BlockFrame({ block, children }: { block: SecurityBlock; children: ReactNode }) {
+  return <SurfaceCard className="security-block" data-testid="security-block" data-status={block.status}>
     <h3>{block.title}{block.symbol ? <small> {block.symbol}</small> : null}</h3>
-    {block.status === 'missing' ? <p className="security-empty">缺失数据 · —{block.code ? ` · ${block.code}` : ''}</p> : block.status !== 'ready' ?
-      <p role="alert">{block.status === 'restricted' ? '权限受限' : block.status === 'unconfigured' ? '未配置' : block.status === 'unsupported' ? '能力不支持' : '提供商失败'} · {block.code} · {block.message}</p> : null}
+    {block.status === 'missing' ? <StateNotice kind="empty">缺失数据 · —{block.code ? ` · ${block.code}` : ''}</StateNotice> : block.status !== 'ready' ?
+      <StateNotice kind="error">{block.status === 'restricted' ? '权限受限' : block.status === 'unconfigured' ? '未配置' : block.status === 'unsupported' ? '能力不支持' : '提供商失败'} · {block.code} · {block.message}</StateNotice> : null}
     {children}<Source block={block} />
-  </section>;
+  </SurfaceCard>;
 }
 function Metrics({ block }: { block: SecurityBlock }) {
-  return <dl className="security-metrics">{(block.metrics ?? []).map(m => <div key={m.label}><dt>{m.label}</dt><dd>{display(m.value)}{m.value != null && m.unit ? ` ${m.unit}` : ''}</dd></div>)}</dl>;
+  const metrics = block.metrics ?? [];
+  const present = metrics.filter(m => m.value != null && m.value !== '');
+  const missing = metrics.filter(m => m.value == null || m.value === '');
+  return <><dl className="security-metrics">{present.map(m => <div key={m.label}><dt>{m.label}</dt><dd>{display(m.value)}{m.unit ? ` ${m.unit}` : ''}</dd></div>)}</dl>
+    {missing.length > 0 && <p className="unprovided-metrics">未提供 · —：{missing.map(m => m.label).join('、')}</p>}</>;
 }
 // OverviewView's metric blocks, without its original portfolio or estimated year range.
 export function OverviewView({ page }: { page: SecurityPage }) {

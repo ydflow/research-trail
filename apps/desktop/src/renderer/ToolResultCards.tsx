@@ -6,8 +6,8 @@ import { FinancialKLineChart } from './market/FinancialKLineChart';
 const Results = lazy(() => import('./analytics/Results'));
 const utc = (time: string) => new Date(time).toISOString().replace('T', ' ').replace('Z', ' UTC');
 
-export function ToolResultCards({ events, runId }: { events: StreamEvent[]; runId: string }) {
-  return <div className="tool-cards" data-testid="tool-cards">
+export function ToolResultCards({ events, runId, compact = false }: { events: StreamEvent[]; runId: string; compact?: boolean }) {
+  return <div className={`tool-cards${compact ? ' compact-tool-cards' : ''}`} data-testid="tool-cards">
     {events.map((event) => {
       if (event.run_id !== runId || event.type !== 'tool_result') return null;
       const result = event.payload.result;
