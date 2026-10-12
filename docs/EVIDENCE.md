@@ -2342,3 +2342,5 @@ UTF-8和git diff --check通过；提交清单仅renderer、tests/desktop.test.cj
 最后完整 `bun.cmd run verify` 退出0：866 Python（297.64秒）/51 Node（24 pi+27原Node）/74实际Electron（473.34秒），共991项，失败/取消/跳过/todo均0。契约/TypeScript、main/preload/renderer、许可图、离线pi往返、工程/历史样例、隔离0020重复升级与一致性均通过；保留Starlette/httpx弃用1条及Vite主chunk522.90kB警告。原946项和新增45项全部保留，本轮只有新增测试加强，旧正文/断言/时限未改。原KLineChart与所附TradingView声明原样保留，无新依赖或素材导入。
 
 14张真实Electron图表、光标、三尺寸、空值/异常截图及日志位于仓库外pr-final/、pr-final-verify.log，提交前清单核对UTF-8/链接/范围/敏感凭证特征/PNG尺寸与SHA256，冻结代码/测试哈希一致。验收后按授权提交/普通推送并创建Draft PR，当前Head的push和pull_request CI须分别等待/核对，不提前写作远程成功。真实Provider未联网、Massive默认30天、合成非交易日历、Kline币种/缺量DTO限制与Windows分发风险如实保留；P2-07/08未执行。
+
+实际交付回执：主体提交 `d065d59b0244b5461777c641b67447418f9b28d4`，16文件新增906/删除68行，普通推送原feature分支；创建并附加 [Draft PR #34](https://github.com/ydflow/research-trail/pull/34)，目标main、OPEN/isDraft=true、MERGEABLE。该主体Head触发Push CI 38260973870与PR CI 38261033248，记录时均in_progress；本段仅补回执，最新Head另核，不把旧Head运行状态或本机通过写作最终远程成功。工作区/暂存区已干净，11个产品及13个代码/测试哈希与最终本机验收一致；不自动合并、删分支、打包或创建Release。

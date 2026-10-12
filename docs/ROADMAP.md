@@ -8,6 +8,8 @@
 
 ### P2-06 本地开发验收历史
 
+P2-06已交付 [Draft PR #34](https://github.com/ydflow/research-trail/pull/34)，目标main、OPEN/isDraft=true；主体提交d065d59b0244b5461777c641b67447418f9b28d4，普通推送，未合并。该回执补充不改代码/测试；最终Head的Push/PR CI以PR当前checks为准，记录时仍在运行，不提前宣称成功。
+
 - 当前任务：P2-06 证券详情与专业K线增强，代码完成/待验收（本机完整离线验收通过，截图待用户审核）。分支 `feat/phase2-security-chart-enhancement`，从干净main `3c522ee2d9206352c467f68d7c0e1cc329892dcf` 创建；P2-05 PR #33已普通合并，[main CI 38229238638](https://github.com/ydflow/research-trail/actions/runs/38229238638) completed/SUCCESS且精确匹配Merge SHA后才开始。六周期证券模拟历史、原生MA/VOL/交互与resize/清理、证券局部展示已实现。专项209 Python、8实际Electron及收尾7项通过；最终完整verify退出0：866 Python/51 Node/74 Electron共991通过，失败/取消/跳过0，原946项保留，新增45；最终1440/1000/600实窗无整页横向溢出。结果见 [P2-06技术说明](PHASE2-SECURITY-KLINE.md) 与EVIDENCE第74节。保留P2-05外壳/15入口/AI助手、金融/API/DTO/数据库、默认AgentRunner及pi内部边界。只本地开发，未提交/推送/PR/合并/发布，未触发P2-06远程CI，不执行P2-07/08。
 
 ### P2-05 开发与文档发布历史（现已合并）

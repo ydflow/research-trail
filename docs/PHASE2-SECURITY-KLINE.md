@@ -158,3 +158,5 @@ set RESEARCH_TRAIL_OFFLINE=
 本轮完整 `bun.cmd run verify` 退出0：866 Python（297.64秒）、51 Node（24 pi+27原Node）、74实际Electron（473.34秒），共991项，失败/取消/跳过/todo均0，原946项与新增45项全部保留。契约、TypeScript、main/preload/renderer、许可图审计、离线pi往返、固定工程/历史样例与隔离迁移检查通过。保留既有Starlette/httpx弃用及Vite主chunk522.90kB警告，不放宽阈值。
 
 日志与14张实际Electron截图分别保存到仓库外 `pr-final-verify.log` 和 `pr-final/`，覆盖1440×900、1000×700、600×700、日/分钟/周线、量柱/光标/指标和无数据/异常；PNG尺寸及哈希按提交前清单复核。测试只用离线Fixture/Fake与隔离SQLite，不调用真实行情/模型/账户。验收后按授权提交/普通推送/Draft，远程Push/PR CI须核对最终Head并单独记录，不以本机结果代替；不自动合并。
+
+实际交付：主体提交 `d065d59b0244b5461777c641b67447418f9b28d4`，16文件新增906/删除68行，普通推送并创建 [Draft PR #34](https://github.com/ydflow/research-trail/pull/34)，目标main、OPEN/isDraft=true、MERGEABLE。当前段只补交付回执，不改代码/测试。主体Head的Push CI 38260973870与PR CI 38261033248已触发，记录时均在运行；补回执后的最新Head与两条CI须以PR检查单独核验，不将旧Head状态计为最终成功。不合并、不创建Release或安装包。
