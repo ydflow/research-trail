@@ -38,6 +38,10 @@ def authored_data(query):
     if query.symbol and not query.capability.startswith('account.'):
         FixtureMarketProvider().snapshot(query.symbol)  # Unknown securities have no invented examples.
     if query.capability in ('market.quote','market.kline'):
+        # Legacy market/Agent examples only provide daily bars. Other periods
+        # require the chart-only executor, never a daily series with a new label.
+        if query.capability=='market.kline' and query.period!='1d':
+            raise ProviderFault('UNSUPPORTED_CAPABILITY','unsupported')
         data=FixtureMarketProvider().snapshot(query.symbol)
         return data.quote.model_dump(mode='json') if query.capability=='market.quote' else [b.model_dump() for b in data.klines][-query.count:]
     symbol=query.symbol or 'AAPL.US'
@@ -110,7 +114,7 @@ class ProviderService:
     def capabilities(self):
         return self.registry.provider_views()
 
-    def query(self,provider,query,*,stop=None,timeout_seconds=None,expected_revision=None,expected_identity=None):
+    def query(self,provider,query,*,stop=None,timeout_seconds=None,expected_revision=None,expected_identity=None,chart_history=False):
         query=ReadQuery.model_validate(query.model_dump())
         control = self.stop if stop is None else QueryStop(self.stop,stop)
         cap=query.capability; revision=0
@@ -124,7 +128,11 @@ class ProviderService:
                     revision=self.settings.profile(provider).revision
                     if expected_identity is not None and self.settings.identity(provider)!=expected_identity: raise ProviderFault('CONFIG_CHANGED')
                 if expected_revision is not None and revision != expected_revision: raise ProviderFault('CONFIG_CHANGED')
-                try: data=self.simulated_executor(query)
+                executor=self.simulated_executor
+                if chart_history and cap=='market.kline':
+                    from .chart_fixtures import authored_chart_data
+                    executor=authored_chart_data if executor is authored_data else getattr(executor,'chart_history',executor)
+                try: data=executor(query)
                 except UnknownSymbolError: raise ProviderFault('NO_DATA') from None
             else:
                 with self.settings.lock:

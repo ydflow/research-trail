@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { SecurityPage, SecurityQuery } from '../../workspace-types';
-import { FinancialKLineChart } from '../market/FinancialKLineChart';
+import { FinancialKLineChart, periodNames, type ChartPeriod } from '../market/FinancialKLineChart';
 import { SurfaceCard, StateNotice } from '../ui/Primitives';
 import { BlockFrame, OverviewView, FinancialsView, NewsView, Source, display } from './SecurityViews';
 import './security-overview.css';
+import { ChartPeriodBar } from './ChartPeriodBar';
 
 const reads = ['quote', 'kline', 'financials', 'news'] as const;
 type ReadView = typeof reads[number];
@@ -11,8 +12,8 @@ type ReadState = { page?: SecurityPage; error?: string };
 
 // Compose only existing DTO reads. No financial calculations or new API.
 // Each response belongs to the full symbol/provider/mode/revision context.
-export function SecurityOverview({ page, requestKey, allowReal, navigation }: {
-  page: SecurityPage; requestKey: string; allowReal: boolean; navigation: ReactNode;
+export function SecurityOverview({ page, requestKey, period, onPeriodChange, allowReal, navigation }: {
+  page: SecurityPage; requestKey: string; period: ChartPeriod; onPeriodChange: (value: ChartPeriod) => void; allowReal: boolean; navigation: ReactNode;
 }) {
   const [data, setData] = useState<Partial<Record<ReadView, ReadState>>>({});
   const symbol = page.symbol, provider = page.provider, mode = page.mode;
@@ -22,7 +23,7 @@ export function SecurityOverview({ page, requestKey, allowReal, navigation }: {
     setData({});
     if (!symbol || mode === 'real' && !allowReal) return;
     for (const view of reads) {
-      const body: SecurityQuery = { symbol, provider, mode, view, period: '1d', kind: 'ALL', report: 'annual', offset: 0 };
+      const body: SecurityQuery = { symbol, provider, mode, view, period, kind: 'ALL', report: 'annual', offset: 0 };
       void window.researchTrail!.securityPage(body).then(next => {
         if (!active) return;
         if (next.symbol !== symbol || next.provider !== provider || next.mode !== mode || next.view !== view) throw new Error('Context mismatch');
@@ -30,7 +31,7 @@ export function SecurityOverview({ page, requestKey, allowReal, navigation }: {
       }).catch(() => { if (active) setData(previous => ({ ...previous, [view]: { error: '读取未完成，请刷新重试。' } })); });
     }
     return () => { active = false; };
-  }, [symbol, provider, mode, requestedAt, requestKey, allowReal]);
+  }, [symbol, provider, mode, requestedAt, requestKey, period, allowReal]);
 
   const quote = data.quote?.page?.blocks[0];
   const metric = (label: string) => quote?.metrics?.find(m => m.label === label);
@@ -60,9 +61,10 @@ export function SecurityOverview({ page, requestKey, allowReal, navigation }: {
     {navigation}
     <div className="security-overview-grid">
       <SurfaceCard className="security-overview-chart">
-        <div className="overview-card-heading"><h3>价格走势 · 日K线</h3><span>{mode === 'simulated' ? '固定模拟日线' : '已有日线数据'}</span></div>
+        <div className="overview-card-heading"><h3>价格走势 · {periodNames[period]}</h3><span>{mode === 'simulated' ? '合成样例 · 非真实历史' : '供应商历史'}</span></div>
+        <ChartPeriodBar period={period} onChange={onPeriodChange} />
         {data.kline?.page ? data.kline.page.blocks.map((block, i) => <div key={i}>
-          {block.bars?.length ? <FinancialKLineChart bars={block.bars} symbol={symbol!} dataLabel={mode === 'simulated' ? '模拟' : '真实'} /> : <StateNotice kind={block.status === 'missing' ? 'empty' : 'error'}>暂无K线 · — {block.code} {block.message}</StateNotice>}
+          {block.bars?.length ? <FinancialKLineChart bars={block.bars} symbol={symbol!} period={period} professional currency={metric('最新价')?.unit || undefined} dataLabel={mode === 'simulated' ? '模拟' : '真实'} /> : <StateNotice kind={block.status === 'missing' ? 'empty' : 'error'}>暂无K线 · — {block.code} {block.message}</StateNotice>}
           <Source block={block} />
         </div>) : pending('kline')}
       </SurfaceCard>
