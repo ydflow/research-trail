@@ -38,10 +38,12 @@ export function FinancialKLineChart({ bars, symbol, period = '1d', dataLabel = '
 }) {
   const prepared = useMemo(() => prepare(bars), [bars]);
   const dataRef = useRef(prepared.data); dataRef.current = prepared.data;
+  const selectionContext = { data: prepared.data, symbol, period };
+  const selectionContextRef = useRef(selectionContext); selectionContextRef.current = selectionContext;
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<Chart | null>(null);
   const resetRef = useRef<(() => void) | null>(null);
-  const [selected, setSelected] = useState<KLineData>();
+  const [selected, setSelected] = useState<(typeof selectionContext) & { timestamp: number }>();
   const [initError, setInitError] = useState('');
   const [averages, setAverages] = useState([5, 10, 20]);
   const [volume, setVolume] = useState(true);
@@ -104,7 +106,10 @@ export function FinancialKLineChart({ bars, symbol, period = '1d', dataLabel = '
       const converted = cursor?.x == null ? undefined : chart.convertFromPixel([{ x: cursor.x, y: cursor.y ?? 0 }], { paneId: cursor.paneId });
       const point = Array.isArray(converted) ? converted[0] : converted;
       const bar = cursor?.kLineData ?? (point?.dataIndex != null ? chart.getDataList()[point.dataIndex] : undefined);
-      setSelected(previous => previous?.timestamp === bar?.timestamp ? previous : bar);
+      const context = selectionContextRef.current;
+      setSelected(previous => bar ? previous?.timestamp === bar.timestamp && previous.data === context.data &&
+        previous.symbol === context.symbol && previous.period === context.period ? previous :
+        { ...context, timestamp: bar.timestamp } : undefined);
     };
     const zoom = () => { events.zoom++; later(inspect); };
     const scroll = () => { events.scroll++; later(inspect); };
@@ -143,7 +148,10 @@ export function FinancialKLineChart({ bars, symbol, period = '1d', dataLabel = '
     }
   }, [hasData, professional, prepared.data, averages, volume, completeVolume]);
 
-  const bar = selected ?? prepared.data.at(-1);
+  // Resolve OHLCV from this batch, never from a cached candle. This also guards
+  // the render before resetData effects and the no-data/disposed-chart path.
+  const bar = (selected?.data === prepared.data && selected.symbol === symbol && selected.period === period ?
+    prepared.data.find(row => row.timestamp === selected.timestamp) : undefined) ?? prepared.data.at(-1);
   const number = (value?: number) => value == null ? '未提供' : value.toLocaleString('zh-CN', { maximumFractionDigits: 4 });
   return <div className={professional ? 'professional-chart' : 'basic-chart'}>
     {professional && <>

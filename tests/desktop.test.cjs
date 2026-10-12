@@ -181,8 +181,11 @@ test('P2-06 late symbol and period reads cannot replace chart data; real reads r
 
 test('P2-06 chart boundary handles empty single missing volume invalid timestamps and unsupported data', { timeout:90000 }, async () => {
   const instance = await launch({ RESEARCH_TRAIL_OFFLINE:'1' });
+  const errors=[];
   try {
     const page = instance.page; await waitForBackend(page); await page.setViewportSize({width:1440,height:900});
+    page.on('pageerror',error=>errors.push(error.message));
+    page.on('console',message=>{if(message.type()==='error') errors.push(message.text());});
     await instance.app.evaluate(({ ipcMain }) => {
       const original = ipcMain._invokeHandlers.get('workspace:page'); globalThis.chartCase = 'single';
       ipcMain.removeHandler('workspace:page');
@@ -223,6 +226,78 @@ test('P2-06 chart boundary handles empty single missing volume invalid timestamp
     await instance.app.evaluate(() => { globalThis.chartCase='normal'; });
     await workspace.getByRole('button',{name:'刷新模拟数据',exact:true}).click();
     await expect(chart).toHaveAttribute('data-loaded-count','260');
+    // Render the production component in the real Electron renderer. Normal page
+    // refresh unmounts it while loading and would hide same-instance state bugs.
+    const initialBars = (await chartEvidence(chart)).data.map(row => ({ ...row, timestamp:row.timestamp/1000 }));
+    const harness = require('esbuild').buildSync({
+      stdin:{ contents:`
+        import React, { useLayoutEffect } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import { flushSync } from 'react-dom';
+        import { FinancialKLineChart } from './src/renderer/market/FinancialKLineChart';
+        const host = document.createElement('section'); host.id='chart-readout-probe';
+        host.style.cssText='position:fixed;inset:70px 20px;background:white;z-index:1000;padding:20px;overflow:auto';
+        document.body.append(host);
+        const root=createRoot(host);
+        window.chartProbe={ commits:[], mounts:0 };
+        function Probe({bars}) {
+          useLayoutEffect(()=>{ window.chartProbe.mounts++; },[]);
+          useLayoutEffect(()=>{ window.chartProbe.commits.push(host.querySelector('[data-testid="chart-readout"]').textContent); });
+          return React.createElement(FinancialKLineChart,{bars,symbol:'AAPL.US',professional:true});
+        }
+        window.chartProbe.update=bars=>flushSync(()=>root.render(React.createElement(Probe,{bars})));
+        window.chartProbe.close=()=>{flushSync(()=>root.unmount());host.remove();};
+      `, resolveDir:resolve(__dirname,'../apps/desktop'), loader:'jsx' },
+      bundle:true, write:false, outfile:resolve(tmpdir(),'research-trail-chart-probe.js'),
+      platform:'browser', define:{'process.env.NODE_ENV':'"production"'},
+    });
+    for (const output of harness.outputFiles.filter(file=>file.path.endsWith('.css'))) await page.addStyleTag({content:output.text});
+    await page.evaluate(harness.outputFiles.find(file=>file.path.endsWith('.js')).text);
+    const probe=page.locator('#chart-readout-probe'), probeChart=probe.getByTestId('chart-canvas');
+    const readout=probe.getByTestId('chart-readout');
+    try {
+      await page.evaluate(bars=>window.chartProbe.update(bars),initialBars);
+      await expect(probeChart).toHaveAttribute('data-loaded-count','260');
+      const box=await probeChart.boundingBox();
+      await page.mouse.move(box.x+box.width*.45,box.y+box.height*.3);
+      await expect.poll(async()=>Number(await readout.getAttribute('data-timestamp'))).not.toBe(initialBars.at(-1).timestamp*1000);
+      const chosen=Number(await readout.getAttribute('data-timestamp'));
+      assert.ok((await chartEvidence(probeChart)).data.some(row=>row.timestamp===chosen));
+      // Invalid props keep FinancialKLineChart mounted while disposing its canvas.
+      await page.evaluate(bars=>window.chartProbe.update(bars),initialBars.map((row,index)=>index===0?{...row,timestamp:-1}:row));
+      await expect(probe).toContainText('K线数据无效');
+      await expect(probeChart).toHaveCount(0);
+      await screenshot(page,'p2-06-selected-invalid-readout-1440.png');
+      await expect(readout).toHaveAttribute('data-timestamp','');
+      assert.deepEqual(await readout.locator('b').allTextContents(),Array(5).fill('未提供'));
+      assert.match(await page.evaluate(()=>window.chartProbe.commits.at(-1)),/暂无数据/);
+      // Recover and select history again, then replace OHLCV at identical times.
+      await page.mouse.move(0,0);
+      await page.evaluate(bars=>window.chartProbe.update(bars),initialBars);
+      await expect(probeChart).toHaveAttribute('data-loaded-count','260');
+      const recovered=await probeChart.boundingBox();
+      await page.mouse.move(recovered.x+recovered.width*.45,recovered.y+recovered.height*.3);
+      await expect.poll(async()=>Number(await readout.getAttribute('data-timestamp'))).not.toBe(initialBars.at(-1).timestamp*1000);
+      await probeChart.evaluate(el=>{window.chartProbe.canvas=el;});
+      const refreshed=initialBars.map(row=>({...row,open:row.open+1000,high:row.high+1000,low:row.low+1000,close:row.close+1000,volume:row.volume+123}));
+      await page.evaluate(bars=>window.chartProbe.update(bars),refreshed);
+      // Layout-commit evidence precedes passive resetData effects, so even a
+      // one-render flash of old selected OHLCV fails this regression.
+      assert.match(await page.evaluate(()=>window.chartProbe.commits.at(-1)),/1,189\.43/);
+      assert.equal(await probeChart.evaluate(el=>el===window.chartProbe.canvas),true);
+      await expect.poll(async()=>(await chartEvidence(probeChart)).data.at(-1).close).toBe(1189.43);
+      await expect(readout.locator('b').nth(3)).toHaveText('1,189.43');
+      await page.mouse.move(recovered.x+recovered.width*.6,recovered.y+recovered.height*.3);
+      await expect.poll(async()=>Number(await readout.getAttribute('data-timestamp'))).not.toBe(refreshed.at(-1).timestamp*1000);
+      const selectedTimestamp=Number(await readout.getAttribute('data-timestamp'));
+      const selectedRow=(await chartEvidence(probeChart)).data.find(row=>row.timestamp===selectedTimestamp);
+      assert.ok(selectedRow);
+      assert.deepEqual(await readout.locator('b').allTextContents(),['open','high','low','close','volume'].map(key=>selectedRow[key].toLocaleString('zh-CN',{maximumFractionDigits:4})));
+      assert.equal(await page.evaluate(()=>window.chartProbe.mounts),1);
+      await screenshot(page,'p2-06-selected-refreshed-readout-1440.png');
+      assert.equal(await page.locator('vite-error-overlay').count(),0);
+      assert.deepEqual(errors,[]);
+    } finally { await page.evaluate(()=>window.chartProbe.close()); }
   } finally { await instance.app.close(); }
 });
 

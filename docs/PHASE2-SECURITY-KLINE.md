@@ -2,6 +2,8 @@
 
 日期：2026-10-12（Asia/Shanghai）。当前状态：验收通过（用户已审核三张实际Electron截图并认可；最后本机完整离线991项通过）。用户授权提交、普通推送、独立Draft PR并等待当前Head两条CI；远程结果须独立核验，不以本机通过代替。不合并、不执行P2-07/08、不创建Release或安装包。当前结果见第10节及EVIDENCE第75节；第1～9节保留本地开发验收范围。
 
+合并前针对性审查：旧Head `8b81d3b15bf8babe23925e22361425a5a9262790` 两条CI均成功；发现并最小修复同一图表组件的数据更新读数残留。当前修复本机验收通过，范围与证据见第11节，新Head两条远程CI待核验，不把旧Head的CI计为修复后成功。
+
 ## 1. 进入基线与范围
 
 P2-05 已由 [PR #33](https://github.com/ydflow/research-trail/pull/33) 普通 Merge Commit 合并，main SHA 为 `3c522ee2d9206352c467f68d7c0e1cc329892dcf`。开发前核对本地 main、origin/main、GitHub main 一致，工作区/暂存区干净。用户指定的 [main CI 38229238638](https://github.com/ydflow/research-trail/actions/runs/38229238638) 最初仍运行时暂停开发；收到继续指令后复查 completed/SUCCESS 且 head_sha 精确匹配，才创建 `feat/phase2-security-chart-enhancement`。原基线 828 Python / 51 Node / 67 Electron，共946项。
@@ -160,3 +162,15 @@ set RESEARCH_TRAIL_OFFLINE=
 日志与14张实际Electron截图分别保存到仓库外 `pr-final-verify.log` 和 `pr-final/`，覆盖1440×900、1000×700、600×700、日/分钟/周线、量柱/光标/指标和无数据/异常；PNG尺寸及哈希按提交前清单复核。测试只用离线Fixture/Fake与隔离SQLite，不调用真实行情/模型/账户。验收后按授权提交/普通推送/Draft，远程Push/PR CI须核对最终Head并单独记录，不以本机结果代替；不自动合并。
 
 实际交付：主体提交 `d065d59b0244b5461777c641b67447418f9b28d4`，16文件新增906/删除68行，普通推送并创建 [Draft PR #34](https://github.com/ydflow/research-trail/pull/34)，目标main、OPEN/isDraft=true、MERGEABLE。当前段只补交付回执，不改代码/测试。主体Head的Push CI 38260973870与PR CI 38261033248已触发，记录时均在运行；补回执后的最新Head与两条CI须以PR检查单独核验，不将旧Head状态计为最终成功。不合并、不创建Release或安装包。
+
+## 11. 合并前 OHLCV 残留边界审查
+
+2026-10-12复核Draft PR #34，Head为 `8b81d3b15bf8babe23925e22361425a5a9262790`，Push 38261231530与PR 38261238140均SUCCESS。有效行情选中历史蜡烛后，同一个FinancialKLineChart接收无效时间戳：画布已销毁、错误已显示，但selected未清除，读数仍为旧蜡烛（1700254800000ms；收178.04）。既有页面刷新会先卸载图表，因此原边界用例未覆盖该路径。
+
+只修改选择状态与当前数据的对应关系：保存数据批次/证券/周期/时间戳，渲染时从当前有效批次查找OHLCV，批次或上下文变化即回退当前末根，无有效数据则显示暂无数据/未提供。不会依赖被动effect先清空旧读数，正常十字光标仍读取原生图表当前蜡烛。未改图表引擎、MA/VOL、缩放/拖动/resize、CSS、业务/API/后端或P2-05外壳。
+
+扩展既有P2-06 Electron边界测试，不新增或跳过测试项。使用已有esbuild编译实际生产组件，通过Playwright在真实Electron渲染器的独立测试root里连续传递props；测试层不接触React私有状态、不修改应用CSP/桥/后端，React组件始终保持挂载。选中蜡烛后验证无效数据的时间戳为空、五项读数均未提供；恢复后选中历史蜡烛，再以相同时间戳的新OHLCV更新，layout提交证据确认在resetData被动effect前已使用新批次末根。实际图表数据更新、画布节点保留、刷新后的十字光标五项读数及单次挂载均核对。测试内加1000价差/123量差仅为对抗性输入，不写入演示fixture或真实业务数据。
+
+修复前扩展用例明确失败；修复后7项P2-06 Electron专项全部通过，类型/契约及构建通过。截图与日志在仓库外 `D:\folio\research-trail-p2-06-qa\readout-review-before*`、`readout-review-after/`，截图是运行中Electron的组件边界测试，非用户产品演示数据；无有效数据的修复前/后及刷新后读数均留证。完整verify与当前修复Head的远程CI须分别验收；只更新已有Draft，不合并或发布。
+
+完整复验 `bun.cmd run verify` 退出0：866 Python（297.05秒）、51 Node（24+27）、74实际Electron（471.31秒），共991项，失败/取消/跳过/todo均0。原946项与新增45项全部保留，仅扩展既有Electron边界断言；契约/类型、构建、离线流程与隔离迁移均通过。保留Starlette/httpx弃用和Vite主chunk523.17kB既有警告，不修改阈值。日志为仓库外readout-review-verify.log，最新截图为readout-review-final/。当前按授权更新已有Draft PR #34，修复Head的Push/PR CI须单独等待核验，不以旧Head或本机结果代替，不合并或发布。
