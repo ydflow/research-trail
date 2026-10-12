@@ -6,9 +6,9 @@
 
 - 当前任务：P2-05 最终收尾，验收通过（用户已审核第二轮实际Electron截图；最终本机完整离线946项复验通过，失败/取消/跳过0）。分支 `feat/phase2-ui-foundation`，已合并P2-01～04的main/origin/main基线仍为 `3c3f9bdb75e8318964f4789f25931f4ac01d114e`，基线CI成功。保留已审核UI，代码/测试18文件哈希一致，本轮仅整理文档；实际1440/1000/600截图与交互复核通过，1000/600无整页横向溢出。前两轮历史与失败记录见 EVIDENCE第70～71节；当前结果与Draft PR回执见第72节及 [UI基础说明第9节](PHASE2-UI-FOUNDATION.md)。本轮用户授权提交、普通推送与独立Draft PR，远程CI以PR实际检查为准，不合并、打包或发布；原API/DTO/数据库/金融/默认AgentRunner/pi内部边界不改。P2-06证券/K线深度增强、P2-07热力图、P2-08 Agent业务联动均未执行。
 
-### P2-04 及更早阶段的历史执行记录
-
 P2-05已交付独立 [Draft PR #33](https://github.com/ydflow/research-trail/pull/33)，目标main，保持Draft；本机946项验收通过，远程CI结果单独查看PR当前checks。未合并或发布。
+
+### P2-04 及更早阶段的历史执行记录
 
 以下“当前任务”、旧 main、Draft PR 和未开始状态均为当轮历史，保留原始事实；当前执行以本节顶部为准。
 
