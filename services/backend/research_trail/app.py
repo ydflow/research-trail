@@ -15,6 +15,8 @@ from .database import Database, default_database_path
 from .store import Store, MissingRecord, ActiveRun
 from .lifecycle import DatabaseLease, RunManager
 from .market import FixtureMarketProvider, MarketError, MarketProvider, MarketSnapshot, MarketSymbol, UnknownSymbolError
+from .market_overview import MarketOverviewService
+from .market_overview_contracts import OverviewQuery, MarketOverviewResult, OverviewCancelResult
 from .agent import AgentRunner
 from .openai_provider import OpenAIModelProvider, ModelError
 from .model_provider import FakeModelProvider, ModelProvider
@@ -78,7 +80,7 @@ class Health(BaseModel):
 
 def create_app(token: str, market_provider: MarketProvider | None = None, *,
                database_path: Path | str | None = None, model_provider: ModelProvider | None = None,
-               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None, research_options=None, report_options=None, screening_options=None, calendar_options=None, monitoring_options=None, evaluation_options=None, trace_options=None, outcome_options=None) -> FastAPI:
+               run_timings=None, credential_vault=None, openai_transport=None, provider_options=None, skills_root=None, research_options=None, report_options=None, screening_options=None, calendar_options=None, monitoring_options=None, evaluation_options=None, trace_options=None, outcome_options=None, overview_options=None) -> FastAPI:
     if len(token) < 32:
         raise ValueError("启动令牌缺失或过短；请由 Electron 启动服务。")
     @asynccontextmanager
@@ -90,6 +92,7 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             lease = DatabaseLease(database.path)
             database.migrate()
             app.state.store = Store(database)
+            app.state.market_overview = MarketOverviewService(**(overview_options or {}))
             app.state.settings = SettingsService(database, credential_vault)
             app.state.evaluation = EvaluationService(database,**(evaluation_options or {}))
             app.state.evaluation_tracing = EvaluationTracing(database,app.state.settings,app.state.evaluation,**(trace_options or {}))
@@ -127,6 +130,8 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
             yield
         finally:
             try:
+                if hasattr(app.state, 'market_overview'):
+                    await app.state.market_overview.close()
                 if hasattr(app.state,'outcomes'):
                     app.state.outcomes.close()
                 if hasattr(app.state,'research_evaluation'):
@@ -734,6 +739,24 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     @app.get("/market/symbols", response_model=list[MarketSymbol], dependencies=[Depends(authorize)])
     def symbols() -> list[MarketSymbol]:
         return provider.symbols()
+
+    @app.post('/market/overview', response_model=MarketOverviewResult, dependencies=[Depends(authorize)])
+    async def market_overview(body: OverviewQuery, request: Request):
+        task = asyncio.create_task(app.state.market_overview.query(body))
+        try:
+            while not task.done():
+                await asyncio.wait((task,), timeout=.05)
+                if not task.done() and await request.is_disconnected():
+                    await app.state.market_overview.cancel(body.request_id)
+            return await task
+        finally:
+            if not task.done():
+                await app.state.market_overview.cancel(body.request_id)
+                await task
+
+    @app.post('/market/overview/{request_id}/cancel', response_model=OverviewCancelResult, dependencies=[Depends(authorize)])
+    async def cancel_market_overview(request_id: UUID):
+        return await app.state.market_overview.cancel(request_id)
 
     @app.get("/market/snapshot/{symbol}", response_model=MarketSnapshot,
              responses={404: {"model": MarketError}}, dependencies=[Depends(authorize)])

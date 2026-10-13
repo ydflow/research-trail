@@ -482,6 +482,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/market/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Market Overview */
+        post: operations["market_overview_market_overview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/market/overview/{request_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Market Overview */
+        post: operations["cancel_market_overview_market_overview__request_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/market/snapshot/{symbol}": {
         parameters: {
             query?: never;
@@ -2558,6 +2592,40 @@ export interface components {
              */
             secret: string;
         };
+        /** CryptoPairAsset */
+        CryptoPairAsset: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            asset_class: "crypto_pair";
+            /** Base Asset */
+            base_asset: string;
+            /** Id */
+            id: string;
+            /**
+             * Market
+             * @default CRYPTO
+             * @constant
+             */
+            market: "CRYPTO";
+            /** Name */
+            name: string;
+            /**
+             * Quote Asset
+             * @default USDT
+             * @constant
+             */
+            quote_asset: "USDT";
+            /** Symbol */
+            symbol: string;
+            /**
+             * Venue
+             * @default authored-fixture
+             * @constant
+             */
+            venue: "authored-fixture";
+        };
         /** CsvPreviewInput */
         CsvPreviewInput: {
             /** Csv Text */
@@ -2662,6 +2730,30 @@ export interface components {
         };
         /** EmptyPayload */
         EmptyPayload: Record<string, never>;
+        /** EquityAsset */
+        EquityAsset: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            asset_class: "equity";
+            /**
+             * Currency
+             * @enum {string}
+             */
+            currency: "CNY" | "USD";
+            /** Id */
+            id: string;
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "CN" | "US";
+            /** Name */
+            name: string;
+            /** Symbol */
+            symbol: string;
+        };
         /** ErrorEvent */
         ErrorEvent: {
             payload: components["schemas"]["ErrorPayload"];
@@ -3150,6 +3242,100 @@ export interface components {
             /** Symbol */
             symbol: string;
         };
+        /** MarketOverview */
+        MarketOverview: {
+            /**
+             * Area Encoding
+             * @default equal
+             * @constant
+             */
+            area_encoding: "equal";
+            /**
+             * Cache Age Seconds
+             * @default 0
+             */
+            cache_age_seconds: number;
+            /**
+             * Cache Hit
+             * @default false
+             */
+            cache_hit: boolean;
+            /**
+             * Data Label
+             * @default 模拟数据
+             * @constant
+             */
+            data_label: "模拟数据";
+            /**
+             * Fetched At
+             * Format: date-time
+             */
+            fetched_at: string;
+            /**
+             * Fixture Version
+             * @default overview-v1
+             * @constant
+             */
+            fixture_version: "overview-v1";
+            /**
+             * Freshness
+             * @default fixture
+             * @constant
+             */
+            freshness: "fixture";
+            /**
+             * Freshness Basis
+             * @default fixed-authored-example
+             * @constant
+             */
+            freshness_basis: "fixed-authored-example";
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "CN" | "US" | "CRYPTO";
+            /**
+             * Mode
+             * @default simulated
+             * @constant
+             */
+            mode: "simulated";
+            /**
+             * Ok
+             * @default true
+             * @constant
+             */
+            ok: true;
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            /** Rows */
+            rows: components["schemas"]["OverviewRow"][];
+            /**
+             * Served At
+             * Format: date-time
+             */
+            served_at: string;
+            /**
+             * Source
+             * @default authored-market-v1
+             * @constant
+             */
+            source: "authored-market-v1";
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "empty";
+            summary: components["schemas"]["OverviewSummary"];
+            /**
+             * Timezone
+             * @enum {string}
+             */
+            timezone: "Asia/Shanghai" | "America/New_York" | "UTC";
+        };
         /** MarketSnapshot */
         MarketSnapshot: {
             /**
@@ -3550,6 +3736,148 @@ export interface components {
              */
             label: string;
             opinion: components["schemas"]["OutcomeOpinion"];
+        };
+        /** OverviewCancelResult */
+        OverviewCancelResult: {
+            /** Cancelled */
+            cancelled: boolean;
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+        };
+        /** OverviewFailure */
+        OverviewFailure: {
+            /**
+             * Code
+             * @enum {string}
+             */
+            code: "REAL_OVERVIEW_NOT_AUTHORIZED" | "CRYPTO_PROVIDER_NOT_CONNECTED" | "UNCONFIGURED" | "ACCESS_DENIED" | "RATE_LIMITED" | "NETWORK_ERROR" | "TIMEOUT" | "CANCELLED" | "INVALID_RESPONSE" | "REQUEST_LIMIT" | "REQUEST_ID_CONFLICT";
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "CN" | "US" | "CRYPTO";
+            /** Message */
+            message: string;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /**
+             * Ok
+             * @default false
+             * @constant
+             */
+            ok: false;
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            /**
+             * Retryable
+             * @default false
+             */
+            retryable: boolean;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "unauthorized" | "unavailable" | "unconfigured" | "restricted" | "rate_limited" | "failed" | "timed_out" | "cancelled" | "busy";
+        };
+        /** OverviewQuery */
+        OverviewQuery: {
+            /**
+             * Market
+             * @enum {string}
+             */
+            market: "CN" | "US" | "CRYPTO";
+            /**
+             * Mode
+             * @default simulated
+             * @enum {string}
+             */
+            mode: "simulated" | "real";
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+        };
+        /** OverviewRow */
+        OverviewRow: {
+            /** Asset */
+            asset: components["schemas"]["EquityAsset"] | components["schemas"]["CryptoPairAsset"];
+            /** Change */
+            change: number | null;
+            /**
+             * Change Basis
+             * @enum {string}
+             */
+            change_basis: "previous_close" | "rolling_24h";
+            /** Change Percent */
+            change_percent: number | null;
+            /** Classification */
+            classification?: string | null;
+            /**
+             * Classification Kind
+             * @default unclassified
+             * @enum {string}
+             */
+            classification_kind: "unclassified" | "watch_group";
+            /** Classification Source */
+            classification_source?: "authored-example-group" | null;
+            /** Detail Target */
+            detail_target?: "security" | null;
+            /** Last Price */
+            last_price: number | null;
+            /** Market Cap */
+            market_cap?: number | null;
+            /** Market Cap Currency */
+            market_cap_currency?: string | null;
+            /** Market Cap Source */
+            market_cap_source?: string | null;
+            /** Market Cap Time */
+            market_cap_time?: string | null;
+            /**
+             * Market Time
+             * Format: date-time
+             */
+            market_time: string;
+            /** Reference Price */
+            reference_price: number | null;
+            /** Security Symbol */
+            security_symbol?: ("AAPL.US" | "MSFT.US" | "NVDA.US" | "TSLA.US") | null;
+            /** Turnover */
+            turnover?: number | null;
+            /** Turnover Unit */
+            turnover_unit: string;
+            /** Volume */
+            volume?: number | null;
+            /** Volume Unit */
+            volume_unit: string;
+            /** Window End */
+            window_end?: string | null;
+            /** Window Start */
+            window_start?: string | null;
+        };
+        /** OverviewSummary */
+        OverviewSummary: {
+            /** Advancing */
+            advancing: number;
+            /** Average Change Percent */
+            average_change_percent: number | null;
+            /** Declining */
+            declining: number;
+            /** Missing */
+            missing: number;
+            /** Total */
+            total: number;
+            /** Unchanged */
+            unchanged: number;
         };
         /** PartialText */
         PartialText: {
@@ -7517,6 +7845,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Health"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    market_overview_market_overview_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OverviewQuery"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarketOverview"] | components["schemas"]["OverviewFailure"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_market_overview_market_overview__request_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OverviewCancelResult"];
                 };
             };
             /** @description Validation Error */

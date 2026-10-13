@@ -1732,6 +1732,62 @@
         "title": "CredentialInput",
         "type": "object"
       },
+      "CryptoPairAsset": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_class": {
+            "const": "crypto_pair",
+            "default": "crypto_pair",
+            "title": "Asset Class",
+            "type": "string"
+          },
+          "base_asset": {
+            "pattern": "^[A-Z0-9]{2,12}$",
+            "title": "Base Asset",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "market": {
+            "const": "CRYPTO",
+            "default": "CRYPTO",
+            "title": "Market",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "quote_asset": {
+            "const": "USDT",
+            "default": "USDT",
+            "title": "Quote Asset",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          },
+          "venue": {
+            "const": "authored-fixture",
+            "default": "authored-fixture",
+            "title": "Venue",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "symbol",
+          "name",
+          "base_asset"
+        ],
+        "title": "CryptoPairAsset",
+        "type": "object"
+      },
       "CsvPreviewInput": {
         "additionalProperties": false,
         "properties": {
@@ -1992,6 +2048,56 @@
         "additionalProperties": false,
         "properties": {},
         "title": "EmptyPayload",
+        "type": "object"
+      },
+      "EquityAsset": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_class": {
+            "const": "equity",
+            "default": "equity",
+            "title": "Asset Class",
+            "type": "string"
+          },
+          "currency": {
+            "enum": [
+              "CNY",
+              "USD"
+            ],
+            "title": "Currency",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "market": {
+            "enum": [
+              "CN",
+              "US"
+            ],
+            "title": "Market",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "symbol": {
+            "title": "Symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "market",
+          "symbol",
+          "name",
+          "currency"
+        ],
+        "title": "EquityAsset",
         "type": "object"
       },
       "ErrorEvent": {
@@ -3204,6 +3310,134 @@
         "title": "MarketError",
         "type": "object"
       },
+      "MarketOverview": {
+        "additionalProperties": false,
+        "properties": {
+          "area_encoding": {
+            "const": "equal",
+            "default": "equal",
+            "title": "Area Encoding",
+            "type": "string"
+          },
+          "cache_age_seconds": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Cache Age Seconds",
+            "type": "number"
+          },
+          "cache_hit": {
+            "default": false,
+            "title": "Cache Hit",
+            "type": "boolean"
+          },
+          "data_label": {
+            "const": "模拟数据",
+            "default": "模拟数据",
+            "title": "Data Label",
+            "type": "string"
+          },
+          "fetched_at": {
+            "format": "date-time",
+            "title": "Fetched At",
+            "type": "string"
+          },
+          "fixture_version": {
+            "const": "overview-v1",
+            "default": "overview-v1",
+            "title": "Fixture Version",
+            "type": "string"
+          },
+          "freshness": {
+            "const": "fixture",
+            "default": "fixture",
+            "title": "Freshness",
+            "type": "string"
+          },
+          "freshness_basis": {
+            "const": "fixed-authored-example",
+            "default": "fixed-authored-example",
+            "title": "Freshness Basis",
+            "type": "string"
+          },
+          "market": {
+            "enum": [
+              "CN",
+              "US",
+              "CRYPTO"
+            ],
+            "title": "Market",
+            "type": "string"
+          },
+          "mode": {
+            "const": "simulated",
+            "default": "simulated",
+            "title": "Mode",
+            "type": "string"
+          },
+          "ok": {
+            "const": true,
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/OverviewRow"
+            },
+            "maxItems": 20,
+            "title": "Rows",
+            "type": "array"
+          },
+          "served_at": {
+            "format": "date-time",
+            "title": "Served At",
+            "type": "string"
+          },
+          "source": {
+            "const": "authored-market-v1",
+            "default": "authored-market-v1",
+            "title": "Source",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "empty"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/OverviewSummary"
+          },
+          "timezone": {
+            "enum": [
+              "Asia/Shanghai",
+              "America/New_York",
+              "UTC"
+            ],
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "market",
+          "status",
+          "timezone",
+          "fetched_at",
+          "served_at",
+          "rows",
+          "summary"
+        ],
+        "title": "MarketOverview",
+        "type": "object"
+      },
       "MarketSnapshot": {
         "additionalProperties": false,
         "properties": {
@@ -4242,6 +4476,459 @@
           "attempts"
         ],
         "title": "OutcomeView",
+        "type": "object"
+      },
+      "OverviewCancelResult": {
+        "additionalProperties": false,
+        "properties": {
+          "cancelled": {
+            "title": "Cancelled",
+            "type": "boolean"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "cancelled"
+        ],
+        "title": "OverviewCancelResult",
+        "type": "object"
+      },
+      "OverviewFailure": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "REAL_OVERVIEW_NOT_AUTHORIZED",
+              "CRYPTO_PROVIDER_NOT_CONNECTED",
+              "UNCONFIGURED",
+              "ACCESS_DENIED",
+              "RATE_LIMITED",
+              "NETWORK_ERROR",
+              "TIMEOUT",
+              "CANCELLED",
+              "INVALID_RESPONSE",
+              "REQUEST_LIMIT",
+              "REQUEST_ID_CONFLICT"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "market": {
+            "enum": [
+              "CN",
+              "US",
+              "CRYPTO"
+            ],
+            "title": "Market",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "ok": {
+            "const": false,
+            "default": false,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "retryable": {
+            "default": false,
+            "title": "Retryable",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "unauthorized",
+              "unavailable",
+              "unconfigured",
+              "restricted",
+              "rate_limited",
+              "failed",
+              "timed_out",
+              "cancelled",
+              "busy"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "market",
+          "mode",
+          "status",
+          "code",
+          "message"
+        ],
+        "title": "OverviewFailure",
+        "type": "object"
+      },
+      "OverviewQuery": {
+        "additionalProperties": false,
+        "properties": {
+          "market": {
+            "enum": [
+              "CN",
+              "US",
+              "CRYPTO"
+            ],
+            "title": "Market",
+            "type": "string"
+          },
+          "mode": {
+            "default": "simulated",
+            "enum": [
+              "simulated",
+              "real"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "market"
+        ],
+        "title": "OverviewQuery",
+        "type": "object"
+      },
+      "OverviewRow": {
+        "additionalProperties": false,
+        "properties": {
+          "asset": {
+            "discriminator": {
+              "mapping": {
+                "crypto_pair": "#/components/schemas/CryptoPairAsset",
+                "equity": "#/components/schemas/EquityAsset"
+              },
+              "propertyName": "asset_class"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/EquityAsset"
+              },
+              {
+                "$ref": "#/components/schemas/CryptoPairAsset"
+              }
+            ],
+            "title": "Asset"
+          },
+          "change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change"
+          },
+          "change_basis": {
+            "enum": [
+              "previous_close",
+              "rolling_24h"
+            ],
+            "title": "Change Basis",
+            "type": "string"
+          },
+          "change_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Percent"
+          },
+          "classification": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Classification"
+          },
+          "classification_kind": {
+            "default": "unclassified",
+            "enum": [
+              "unclassified",
+              "watch_group"
+            ],
+            "title": "Classification Kind",
+            "type": "string"
+          },
+          "classification_source": {
+            "anyOf": [
+              {
+                "const": "authored-example-group",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Classification Source"
+          },
+          "detail_target": {
+            "anyOf": [
+              {
+                "const": "security",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail Target"
+          },
+          "last_price": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Price"
+          },
+          "market_cap": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Cap"
+          },
+          "market_cap_currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Cap Currency"
+          },
+          "market_cap_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Cap Source"
+          },
+          "market_cap_time": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Cap Time"
+          },
+          "market_time": {
+            "format": "date-time",
+            "title": "Market Time",
+            "type": "string"
+          },
+          "reference_price": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Price"
+          },
+          "security_symbol": {
+            "anyOf": [
+              {
+                "enum": [
+                  "AAPL.US",
+                  "MSFT.US",
+                  "NVDA.US",
+                  "TSLA.US"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Security Symbol"
+          },
+          "turnover": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover"
+          },
+          "turnover_unit": {
+            "title": "Turnover Unit",
+            "type": "string"
+          },
+          "volume": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume"
+          },
+          "volume_unit": {
+            "title": "Volume Unit",
+            "type": "string"
+          },
+          "window_end": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window End"
+          },
+          "window_start": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window Start"
+          }
+        },
+        "required": [
+          "asset",
+          "last_price",
+          "reference_price",
+          "change",
+          "change_percent",
+          "change_basis",
+          "volume_unit",
+          "turnover_unit",
+          "market_time"
+        ],
+        "title": "OverviewRow",
+        "type": "object"
+      },
+      "OverviewSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "advancing": {
+            "maximum": 20,
+            "minimum": 0,
+            "title": "Advancing",
+            "type": "integer"
+          },
+          "average_change_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Change Percent"
+          },
+          "declining": {
+            "maximum": 20,
+            "minimum": 0,
+            "title": "Declining",
+            "type": "integer"
+          },
+          "missing": {
+            "maximum": 20,
+            "minimum": 0,
+            "title": "Missing",
+            "type": "integer"
+          },
+          "total": {
+            "maximum": 20,
+            "minimum": 0,
+            "title": "Total",
+            "type": "integer"
+          },
+          "unchanged": {
+            "maximum": 20,
+            "minimum": 0,
+            "title": "Unchanged",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "advancing",
+          "declining",
+          "unchanged",
+          "missing",
+          "average_change_percent"
+        ],
+        "title": "OverviewSummary",
         "type": "object"
       },
       "PartialText": {
@@ -13597,6 +14284,126 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/market/overview": {
+      "post": {
+        "operationId": "market_overview_market_overview_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverviewQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/MarketOverview"
+                    },
+                    {
+                      "$ref": "#/components/schemas/OverviewFailure"
+                    }
+                  ],
+                  "title": "Response Market Overview Market Overview Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Market Overview"
+      }
+    },
+    "/market/overview/{request_id}/cancel": {
+      "post": {
+        "operationId": "cancel_market_overview_market_overview__request_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-researchtrail-token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Researchtrail-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverviewCancelResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Market Overview"
       }
     },
     "/market/snapshot/{symbol}": {

@@ -176,6 +176,21 @@ export class BackendManager extends EventEmitter {
     return result.body as MarketSymbol[];
   }
 
+  marketOverview(input: unknown) {
+    if (!input || typeof input !== 'object' || Array.isArray(input) ||
+        ![Object.prototype, null].includes(Object.getPrototypeOf(input))) throw new Error('总览参数格式无效。');
+    const body = input as Record<string, unknown>;
+    if (Object.keys(body).some(key => !['request_id', 'market', 'mode'].includes(key)) ||
+        !['CN', 'US', 'CRYPTO'].includes(body.market as string) ||
+        body.mode !== undefined && body.mode !== 'simulated' && body.mode !== 'real') throw new Error('总览市场或模式无效。');
+    return this.business<import('../market-overview-types').MarketOverviewResult>('/market/overview', 'POST',
+      { request_id: this.id(body.request_id), market: body.market, mode: body.mode ?? 'simulated' }, 6500);
+  }
+
+  cancelMarketOverview(requestId: unknown) {
+    return this.business<import('../market-overview-types').OverviewCancelResult>(`/market/overview/${this.id(requestId)}/cancel`, 'POST');
+  }
+
   async marketSnapshot(symbol: unknown): Promise<MarketResult> {
     if (typeof symbol !== 'string' || !/^[A-Z0-9]{1,6}\.US$/.test(symbol)) {
       return { ok: false, error: { code: 'INVALID_SYMBOL', message: '代码格式无效，请使用 AAPL.US 等格式。' } };
