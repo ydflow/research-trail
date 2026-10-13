@@ -94,6 +94,8 @@ export function ProviderPanel({ available }: { available: boolean }) {
     </section>
     <h3>当前提供商逐项状态</h3>
     <p>模拟通过只验证接口流程；每一项真实能力需要单独验收。</p>
-    <ul data-testid="provider-capabilities">{choices.map(c => <li key={c.capability}>{c.capability} · {c.transport}{['research.events', 'company.financials'].includes(c.capability) ? '/部分条件 CLI' : ''} · {states[c.validation]} {c.code || ''}</li>)}</ul>
+    <p>支持市场：{provider === 'massive' ? '美股（US）' : provider === 'longbridge-account' ? '只读账户；不是市场总览来源' : 'A股 / 美股等官方行情范围，实际权限逐市场未验证'}。加密 Provider 尚未接入；真实批量总览尚未开放。</p>
+    <p>下列状态是本进程最近一次能力结果，未按市场区分；一次股票成功不代表其他市场或套餐授权。缓存 TTL 只控制本机复用，不证明行情实时。</p>
+    <ul data-testid="provider-capabilities">{choices.map(c => <li key={c.capability}>{c.capability} · {c.transport}{['research.events', 'company.financials'].includes(c.capability) ? '/部分条件 CLI' : ''} · {states[c.validation]} {c.code || ''} · 最近检查：{c.checked_at || '尚未验证'}</li>)}</ul>
   </section>;
 }

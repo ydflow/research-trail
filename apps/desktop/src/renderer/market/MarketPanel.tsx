@@ -4,9 +4,16 @@ import { Watchlist } from './Watchlist';
 import { QuoteCard } from './QuoteCard';
 import { FinancialKLineChart } from './FinancialKLineChart';
 import { SectionHeader, SurfaceCard, StateNotice } from '../ui/Primitives';
+import { MarketOverview } from './MarketOverview';
 
 const utc = (value: string) => new Date(value).toISOString().replace('T', ' ').replace('Z', ' UTC');
-export function MarketPanel({ available }: { available: boolean }) {
+export function MarketPanel({ available, onOpenSecurity }: { available: boolean; onOpenSecurity?: (symbol: string) => Promise<void> }) {
+  // Preserve the existing default flow and its accepted tests; overview is inside the same entry.
+  const [tab, setTab] = useState<'single' | 'overview'>('single');
+  return <><nav className="market-view-tabs" aria-label="行情功能"><button aria-pressed={tab === 'overview'} onClick={() => setTab('overview')}>市场总览</button><button aria-pressed={tab === 'single'} onClick={() => setTab('single')}>单股行情</button></nav>{tab === 'overview' ? <MarketOverview available={available} onOpenSecurity={onOpenSecurity} /> : <SingleMarketPanel available={available} />}</>;
+}
+
+function SingleMarketPanel({ available }: { available: boolean }) {
   const [symbols, setSymbols] = useState<MarketSymbol[]>([]);
   const [symbol, setSymbol] = useState('AAPL.US');
   const [revision, setRevision] = useState(0);

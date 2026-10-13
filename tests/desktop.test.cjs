@@ -2471,7 +2471,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       bridge: Object.keys(window.researchTrail).sort(),
       node: typeof window.require,
       process: typeof window.process,
-    })), { bridge: ['checkHealth', 'marketSnapshot', 'marketSymbols', 'onStatus', 'retryBackend', 'status',
+    })), { bridge: ['checkHealth', 'marketSnapshot', 'marketSymbols', 'marketOverview', 'cancelMarketOverview', 'onStatus', 'retryBackend', 'status',
       'listSessions', 'createSession', 'getSession', 'deleteSession', 'sessionMessages', 'sessionRuns', 'sessionSnapshot', 'startRun', 'startAgentRun', 'cancelRun', 'getRun', 'runEvents', 'subscribeRun',
       'connections', 'saveConnection', 'deleteConnection', 'saveCredential', 'deleteCredential', 'testConnection', 'profile', 'saveProfile', 'deleteProfile', 'diagnostics', 'exportDiagnostics',
       'providerProfiles', 'saveProvider', 'deleteProvider', 'saveProviderCredential', 'deleteProviderCredential', 'providerCapabilities', 'queryProvider',
@@ -3130,3 +3130,225 @@ test('release research A/B stays unscored until a complete rubric and survives r
     assert.deepEqual(errors,[]);
   }finally{await instance.app.close();}
 });
+
+
+async function openMarketOverview(page) {
+  await waitForBackend(page);
+  await page.getByLabel('工作区', {exact:true}).getByRole('button', {name:'模拟行情', exact:true}).click();
+  await page.getByLabel('行情功能', {exact:true}).getByRole('button', {name:'市场总览',exact:true}).click();
+  const overview=page.getByRole('region',{name:'多市场总览',exact:true});
+  await expect(overview).toHaveAttribute('data-status','ready');
+  return overview;
+}
+
+async function overviewWindow(instance,width,height) {
+  await instance.app.evaluate(({BrowserWindow},size)=>BrowserWindow.getAllWindows()[0].setContentSize(size[0],size[1]),[width,height]);
+  await expect.poll(()=>instance.page.evaluate(()=>[innerWidth,innerHeight])).toEqual([width,height]);
+}
+
+test('P2-07 three markets search sort groups equal heatmap and supported detail navigation', {timeout:90000}, async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});const errors=[];
+  try {
+    const page=instance.page; page.on('pageerror',e=>errors.push(e.message));
+    page.on('console',msg=>{if(['error','warning'].includes(msg.type()))errors.push(msg.text());});
+    await overviewWindow(instance,1440,900);
+    const overview=await openMarketOverview(page);
+    for(const [label,market,count,unit] of [['A 股','CN',6,'CNY'],['美股','US',4,'USD'],['加密货币','CRYPTO',6,'USDT']]) {
+      await overview.getByLabel('市场切换',{exact:true}).getByRole('button',{name:new RegExp(label)}).click();
+      await expect(overview).toHaveAttribute('data-market',market);await expect(overview).toHaveAttribute('data-status','ready');
+      await expect(overview.getByTestId('overview-row')).toHaveCount(count);
+      await expect(overview.getByLabel('总览标的列表')).toContainText(unit);
+      await expect(overview).toContainText('模拟数据 · 自主离线样例');
+      await expect(overview).toContainText('等面积热力格');
+      const geometry=await overview.locator('.overview-heat-tile').evaluateAll(els=>els.map(el=>({w:el.getBoundingClientRect().width,h:el.getBoundingClientRect().height,weight:el.dataset.weight})));
+      assert.ok(geometry.every(g=>Math.abs(g.w-geometry[0].w)<1 && g.h===geometry[0].h && g.weight==='1'));
+      assert.equal(await overview.getByLabel('涨跌幅颜色图例').locator('i').count(),8);
+      const first=overview.locator('.overview-heat-tile').first();
+      const before=await first.evaluate(el=>getComputedStyle(el).backgroundColor);await first.hover();
+      await expect(overview.getByRole('tooltip')).toContainText('自主离线样例');
+      assert.equal(await first.evaluate(el=>getComputedStyle(el).backgroundColor),before);
+      await first.focus();await expect(overview.getByRole('tooltip')).toBeVisible();
+      if(market==='CN') await screenshot(page,'p2-07-heatmap-hover-1440.png');
+      await page.mouse.move(0,0);await page.locator('.app-brand').click();
+      await screenshot(page,`p2-07-${market.toLowerCase()}-1440.png`);
+    }
+    const keyboardTile=overview.getByRole('button',{name:/选择行情 BNB\/USDT/});
+    await keyboardTile.focus();await page.keyboard.press('Enter');
+    await expect(keyboardTile).toHaveAttribute('aria-pressed','true');
+    await expect(overview.getByLabel('选中标的详情')).toContainText('BNB/USDT');
+    await overview.getByLabel('选中标的详情').scrollIntoViewIfNeeded();
+    await screenshot(page,'p2-07-selected-detail-1440.png');
+    await overview.getByLabel('总览搜索',{exact:true}).fill(' ETH ');
+    await expect(overview.getByTestId('overview-row')).toHaveCount(1);
+    await expect(overview.getByTestId('overview-row')).toHaveAttribute('data-symbol','ETH/USDT');
+    await overview.locator('.overview-heat-tile').click();
+    await expect(overview.getByLabel('选中标的详情')).toContainText('ETH/USDT');
+    await expect(overview.getByRole('button',{name:/打开证券工作台/})).toHaveCount(0);
+    await screenshot(page,'p2-07-crypto-search-1440.png');
+    await overview.getByLabel('总览搜索',{exact:true}).fill('AAPL.US');
+    await expect(overview).toContainText('没有匹配的标的');
+    await expect(overview.getByLabel('选中标的详情')).toHaveCount(0);
+    await overview.getByLabel('市场切换').getByRole('button',{name:/A 股/}).click();
+    await expect(overview.getByTestId('overview-row')).toHaveCount(6);
+    await overview.getByLabel('总览排序').selectOption('asc');
+    await expect(overview.getByTestId('overview-row').first()).toHaveAttribute('data-symbol','601318.SH');
+    await expect(overview.getByTestId('overview-row').last()).toHaveAttribute('data-symbol','300750.SZ');
+    await screenshot(page,'p2-07-cn-sort-1440.png');
+    await overview.getByLabel('总览分组').selectOption('unclassified');await expect(overview.getByTestId('overview-row')).toHaveCount(4);
+    await overview.getByLabel('总览搜索').fill('银行');await expect(overview.getByTestId('overview-row')).toHaveCount(2);
+    await screenshot(page,'p2-07-cn-filter-1440.png');
+    await overview.getByLabel('市场切换').getByRole('button',{name:/美股/}).click();
+    await overview.getByLabel('总览搜索').fill('AAPL');
+    await overview.getByRole('button',{name:'打开证券工作台 AAPL.US',exact:true}).click();
+    await expect(page.getByRole('region',{name:'证券工作台',exact:true}).getByTestId('security-overview-price')).toHaveText('189.43');
+    await page.getByLabel('工作区',{exact:true}).getByRole('button',{name:'模拟行情',exact:true}).click();
+    await expect(page.getByTestId('quote-card')).toBeVisible();
+    assert.deepEqual(errors,[]);
+  } finally {await instance.app.close();}
+});
+
+test('P2-07 real overview refuses data while IPC validates and never selects crypto or calls providers', {timeout:60000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  try {
+    const page=instance.page;await waitForBackend(page);await overviewWindow(instance,1440,900);
+    await instance.app.evaluate(({ipcMain})=>{
+      globalThis.overviewVendorCalls=0;globalThis.overviewStockCalls=0;
+      for(const [channel,key] of [['providers:query','overviewVendorCalls'],['workspace:select','overviewStockCalls']]) {
+        const original=ipcMain._invokeHandlers.get(channel);ipcMain.removeHandler(channel);
+        ipcMain.handle(channel,(...args)=>{globalThis[key]++;return original(...args);});
+      }
+    });
+    const overview=await openMarketOverview(page);
+    for(const [label,code] of [['A 股','REAL_OVERVIEW_NOT_AUTHORIZED'],['美股','REAL_OVERVIEW_NOT_AUTHORIZED'],['加密货币','CRYPTO_PROVIDER_NOT_CONNECTED']]) {
+      await overview.getByLabel('市场切换').getByRole('button',{name:new RegExp(label)}).click();
+      await overview.getByLabel('总览数据模式').selectOption('real');
+      await expect(overview).toContainText(code);await expect(overview.getByTestId('overview-row')).toHaveCount(0);
+      await expect(overview.locator('.overview-heat-tile')).toHaveCount(0);
+      if(label==='加密货币') await expect(overview.getByLabel('总览数据源状态')).not.toContainText('本市场权限未验证');
+      await screenshot(page,`p2-07-${label==='加密货币'?'crypto-unavailable':'stock-unauthorized'}-1440.png`);
+    }
+    await overview.getByLabel('总览数据模式').selectOption('simulated');
+    await expect(overview).toHaveAttribute('data-status','ready');
+    await overview.locator('.overview-heat-tile').first().click();
+    assert.deepEqual(await instance.app.evaluate(()=>[globalThis.overviewVendorCalls,globalThis.overviewStockCalls]),[0,0]);
+    await assert.rejects(page.evaluate(()=>window.researchTrail.marketOverview({request_id:'../health',market:'CN'})),/ID格式/);
+    await assert.rejects(page.evaluate(()=>window.researchTrail.marketOverview({request_id:crypto.randomUUID(),market:'US',symbol:'BTC/USDT'})),/市场或模式/);
+  } finally {await instance.app.close();}
+});
+
+test('P2-07 actual 1440 1000 and 600 windows retain navigation assets chat and usable overview controls', {timeout:90000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});const errors=[];
+  try {
+    const page=instance.page;page.on('pageerror',e=>errors.push(e.message));
+    const overview=await openMarketOverview(page);
+    for(const [width,height] of [[1440,900],[1000,700],[600,700]]) {
+      await overviewWindow(instance,width,height);
+      await expect(page.getByLabel('工作区',{exact:true}).getByRole('button')).toHaveCount(15);
+      await expect(page.getByLabel('常驻资产页签',{exact:true})).toBeVisible();
+      for(const label of ['A 股','美股','加密货币']) {
+        await overview.getByLabel('市场切换').getByRole('button',{name:new RegExp(label)}).click();
+        await expect(overview).toHaveAttribute('data-status','ready');
+        await overview.getByLabel('总览搜索').fill(label==='加密货币'?'BTC':label==='美股'?'Apple':'茅台');
+        await expect(overview.getByTestId('overview-row')).toHaveCount(1);
+        await overview.getByLabel('总览搜索').fill('');
+      }
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+      await overview.locator('.overview-heat-tile').first().click();
+      await expect(overview.getByLabel('选中标的详情')).toContainText('USDT');
+      await page.evaluate(()=>scrollTo(0,0));
+      await screenshot(page,`p2-07-responsive-${width}.png`);
+      if(width===600) {
+        await overview.getByTestId('overview-heat-grid').scrollIntoViewIfNeeded();
+        const touchTile=overview.getByRole('button',{name:/选择行情 ETH\/USDT/});
+        const box=await touchTile.boundingBox();assert.ok(box);
+        await page.evaluate(()=>{window.overviewTouchStarts=0;document.addEventListener('touchstart',()=>window.overviewTouchStarts++,{once:true});});
+        await instance.app.evaluate(async({BrowserWindow},point)=>{
+          const debuggerApi=BrowserWindow.getAllWindows()[0].webContents.debugger;
+          debuggerApi.attach('1.3');
+          try {
+            await debuggerApi.sendCommand('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:1});
+            await debuggerApi.sendCommand('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});
+            await debuggerApi.sendCommand('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+          } finally {await debuggerApi.sendCommand('Emulation.setTouchEmulationEnabled',{enabled:false});debuggerApi.detach();}
+        },{x:box.x+box.width/2,y:box.y+box.height/2});
+        await expect.poll(()=>page.evaluate(()=>window.overviewTouchStarts)).toBe(1);
+        await expect(touchTile).toHaveAttribute('aria-pressed','true');
+        await expect(overview.getByLabel('选中标的详情')).toContainText('ETH/USDT');
+        await screenshot(page,'p2-07-heatmap-600.png');
+        await overview.getByLabel('选中标的详情').scrollIntoViewIfNeeded();
+        await expect(overview.getByLabel('选中标的详情')).toBeVisible();
+        await screenshot(page,'p2-07-detail-600.png');
+      }
+      await page.getByLabel('常驻研究助手',{exact:true}).getByLabel('会话标题',{exact:true}).scrollIntoViewIfNeeded();
+      await expect(page.getByLabel('常驻研究助手',{exact:true}).getByRole('button',{name:'创建会话',exact:true})).toBeVisible();
+    }
+    assert.deepEqual(errors,[]);
+  } finally {await instance.app.close();}
+});
+
+test('P2-07 cancelled and late market responses never overwrite another market or remounted view', {timeout:90000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  try {
+    const page=instance.page;await waitForBackend(page);await overviewWindow(instance,1440,900);
+    await instance.app.evaluate(({ipcMain})=>{
+      const original=ipcMain._invokeHandlers.get('market:overview');const cancel=ipcMain._invokeHandlers.get('market:overview-cancel');
+      globalThis.overviewHeld=[];globalThis.overviewRelease=[];globalThis.overviewDelivered=[];globalThis.overviewCancels=[];globalThis.overviewReads=0;
+      ipcMain.removeHandler('market:overview');ipcMain.removeHandler('market:overview-cancel');
+      ipcMain.handle('market:overview',async(event,query)=>{
+        globalThis.overviewReads++;const result=await original(event,query);
+        if(query.market==='CN') {globalThis.overviewHeld.push(query.request_id);await new Promise(resolve=>globalThis.overviewRelease.push(resolve));globalThis.overviewDelivered.push(query.request_id);}
+        return result;
+      });
+      ipcMain.handle('market:overview-cancel',async(event,id)=>{globalThis.overviewCancels.push(id);return cancel(event,id);});
+    });
+    await page.getByLabel('行情功能').getByRole('button',{name:'市场总览',exact:true}).click();
+    const overview=page.getByRole('region',{name:'多市场总览',exact:true});
+    await expect.poll(()=>instance.app.evaluate(()=>globalThis.overviewHeld.length)).toBe(1);
+    await overview.getByLabel('市场切换').getByRole('button',{name:/美股/}).click();await expect(overview).toHaveAttribute('data-status','ready');
+    const calls=await instance.app.evaluate(()=>globalThis.overviewReads);
+    await overview.getByLabel('总览搜索').fill('Apple');await overview.getByLabel('总览排序').selectOption('asc');
+    assert.equal(await instance.app.evaluate(()=>globalThis.overviewReads),calls,'Filter and sort cannot spend requests');
+    await instance.app.evaluate(()=>globalThis.overviewRelease.forEach(release=>release()));
+    await expect.poll(()=>instance.app.evaluate(()=>globalThis.overviewDelivered.length)).toBe(1);
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    await expect(overview).toHaveAttribute('data-market','US');await expect(overview.getByTestId('overview-row')).toHaveAttribute('data-symbol','AAPL.US');
+    assert.ok((await instance.app.evaluate(()=>globalThis.overviewCancels)).length>=1);
+    await page.getByLabel('行情功能').getByRole('button',{name:'单股行情',exact:true}).click();
+    await expect(page.getByTestId('quote-card')).toBeVisible();
+    await page.getByLabel('行情功能').getByRole('button',{name:'市场总览',exact:true}).click();
+    await expect.poll(()=>instance.app.evaluate(()=>globalThis.overviewHeld.length)).toBe(2);
+    await overview.getByRole('button',{name:'取消读取',exact:true}).click();
+    await expect.poll(()=>instance.app.evaluate(()=>globalThis.overviewCancels.length)).toBeGreaterThan(1);
+    await expect(overview).toHaveAttribute('data-status','cancelled');
+    await instance.app.evaluate(()=>globalThis.overviewRelease.forEach(release=>release()));
+    await expect.poll(()=>instance.app.evaluate(()=>globalThis.overviewDelivered.length)).toBe(2);
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    await expect(overview).toHaveAttribute('data-status','cancelled');await expect(overview.getByTestId('overview-row')).toHaveCount(0);
+    await screenshot(page,'p2-07-cancelled-1440.png');
+    await overview.getByLabel('市场切换').getByRole('button',{name:/加密货币/}).click();await expect(overview).toHaveAttribute('data-status','ready');
+    await expect(overview).toHaveAttribute('data-market','CRYPTO');await expect(overview.getByTestId('overview-row')).toHaveCount(6);
+  } finally {await instance.app.close();}
+});
+
+for(const [scenario,status,code] of [['empty','empty',null],['permission','restricted','ACCESS_DENIED'],['limited','rate_limited','RATE_LIMITED'],['failure','failed','NETWORK_ERROR']])
+  test(`P2-07 injected ${scenario} state is explicit empty or error without retained grid`,{timeout:60000},async()=>{
+    const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+    try {
+      const page=instance.page;await waitForBackend(page);await overviewWindow(instance,1440,900);
+      const overview=await openMarketOverview(page);
+      await instance.app.evaluate(({ipcMain},params)=>{
+        const original=ipcMain._invokeHandlers.get('market:overview');ipcMain.removeHandler('market:overview');
+        ipcMain.handle('market:overview',async(event,query)=>{
+          const result=await original(event,query);
+          if(params.scenario==='empty')return {...result,status:'empty',rows:[],summary:{total:0,advancing:0,declining:0,unchanged:0,missing:0,average_change_percent:null}};
+          return {ok:false,request_id:query.request_id,market:query.market,mode:query.mode,status:params.status,code:params.code,message:'离线错误夹具：'+params.code,retryable:false};
+        });
+      },{scenario,status,code});
+      await overview.getByRole('button',{name:'刷新总览',exact:true}).click();
+      await expect(overview).toHaveAttribute('data-status',status);await expect(overview.locator('.overview-heat-tile')).toHaveCount(0);
+      await expect(overview.getByLabel('选中标的详情')).toHaveCount(0);
+      await expect(overview).toContainText(code??'样例池暂无数据');
+      if(scenario==='empty') await expect(overview.getByTestId('overview-summary').locator('strong').nth(1)).not.toHaveClass(/negative|positive/);
+      await screenshot(page,`p2-07-injected-${scenario}-1440.png`);
+    } finally {await instance.app.close();}
+  });

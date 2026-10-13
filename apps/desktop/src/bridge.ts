@@ -104,6 +104,8 @@ export interface ResearchTrailBridge {
   removeWatch(symbol: string): Promise<import('./workspace-types').WorkspaceState>;
   selectSecurity(symbol: string): Promise<import('./workspace-types').WorkspaceState>;
   securityPage(query: import('./workspace-types').SecurityQuery): Promise<import('./workspace-types').SecurityPage>;
+  marketOverview(query: import('./market-overview-types').OverviewQuery): Promise<import('./market-overview-types').MarketOverviewResult>;
+  cancelMarketOverview(requestId: string): Promise<import('./market-overview-types').OverviewCancelResult>;
   openNewsSource(url: string): Promise<void>;
   providerProfiles(): Promise<import('./provider-types').ProviderProfile[]>;
   saveProvider(provider: import('./provider-types').ProviderId, input: import('./provider-types').ProviderConfiguration): Promise<import('./provider-types').ProviderProfile>;

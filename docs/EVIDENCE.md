@@ -1,5 +1,49 @@
 # 研迹：来源、个人动作与验收证据
 
+## 79. P2-07最终审查、完整复验与独立Draft PR（2026-10-13）
+
+用户已审核A股、美股、加密货币及600px四张实际Electron截图并认可，明确授权最终审查/小范围必要修复/完整验收后提交、普通推送及独立Draft PR；不合并、不新增真实Provider/付费API/依赖/P2-08/Release/安装包。起始feature分支正确，HEAD/main/origin/main/远程main均3c428fd2005959fef4f2931da266eb8ba7b8f53c、main CI38274410878成功，GitHub身份ydflow，暂无同分支PR。第78节的用户截图待审核/仅本地授权是上一轮事实。
+
+复核26文件完整范围、独立8模型/两个端点、具名IPC sender/参数/固定本机路径、crypto不进入股票详情、CNY/USD/USDT、真实模式拒绝、共享任务独立取消与最后清理、有界缓存/超时、迟到上下文匹配、等面积七档/缺失图例与样例统计。旧OpenAPI全部模型/路径结构一致，旧单股正文一致，原74项Electron除批准的两方法精确期望追加外完全保留；新8项强化键盘选择、600px Chromium原生触摸事件、排序/选中详情/取消截图后专项全部通过，失败/取消/跳过/todo均0。产品源码哈希与认可版一致，无UI或业务修复；没有引入第三方代码/素材/依赖/真实行情。UTF-8、相对链接、敏感令牌特征与范围检查通过。
+
+查看实际Electron1440×900/1000×700/600×700画面及交互，统计/图例/热力格/说明/时间/价格可用，保留认可UI。Browser plugin not available，使用既有Playwright实际Electron，隔离Temp SQLite和离线网络护栏；600px验证真实Chromium触摸输入，非实体触屏硬件验收。三市场、搜索/排序/选中详情、真实模式拒绝、空/权限/限流/网络测试注入和取消/迟到状态共20张P2-07截图保存在仓库外qa/pr-final，专项pr-focused另保留；不提交日志/截图/临时库。
+
+最终串行完整 `bun.cmd run verify` 退出0：900 Python（293.25秒）/57 Node（24+33）/82实际Electron（532.09秒），共1039项通过，失败/取消/跳过/todo均0，原991与新增48全部保留。契约/类型/构建、离线Pi往返与许可审计、原创工程/历史CLI、隔离库重复迁移/一致性通过；保留Starlette/httpx弃用与Vite主chunk538.54kB警告，未改阈值。日志research-trail-p2-07-qa/pr-final-verify.log，源范围/哈希审查pr-review.json，20张截图尺寸/SHA256清单和验收前后产品/测试/契约哈希在pr-final/screenshot-manifest.json与P2-07-acceptance.json。专项20图逐张实查，全量重采重点核对。验收通过后按授权创建Draft，并分别核对同Head的Push/PR CI；最新远程交付回执记录于PR及仓库外pr-delivery.json，不以本机或旧Head通过替代。三市场结果仅自主离线总览，真实市场覆盖/账户权限、数据展示/再分发、Massive历史分页和Windows/Pi分发缺口继续保留。
+
+## 78. P2-07方案A本地开发与离线验收（2026-10-13）
+
+用户已阅读两份审计/方案并明确批准A，授权独立DTO/生成契约、POST /market/overview及POST /market/overview/{request_id}/cancel、具名IPC、三市场固定样例/总览/热力格和专项/三尺寸/完整verify；第77节的等待批准不再适用。仅本地，不授权新Provider/付费API/数据依赖/旧金融契约扩展/Agent工具/P2-08或提交/推送/PR/合并/发布。
+
+实际独立新增8个schema（EquityAsset、CryptoPairAsset、OverviewRow、OverviewSummary、OverviewQuery、MarketOverview、OverviewFailure、OverviewCancelResult）与两个受token保护端点；preload/main的market:overview、market:overview-cancel沿sender核验，主进程拒绝任意字段/URL/Provider/股票池和非法UUID/市场/模式，固定本机路径。已有所有OpenAPI schemas与paths逐项比较main完全一致；旧market.py/provider_contracts/workspace_contracts/chart_fixtures/provider_sdk/provider_massive/tools/agent内容不变。
+
+自主确定性6只A股CNY/4只美股USD/6crypto交易对USDT；固定aware UTC市场与生成时间、独立服务时间；股票前收/crypto滚动24h基准分别校验。总览仅模拟Fixture，Python计算样例统计；等面积格weight=1、绿涨/红跌七档与缺失纹理、准确图例、focus/hover/触屏选中、查询/分组/排序、来源/缓存/时间和有限支持证券跳转。新MarketPanel默认仍旧单股流，总览在同一导航内部切换；15入口/三栏/资产/助手/P2-06保留。
+
+小型异步服务只有两个执行槽、最多4个逻辑请求（含排队/共享），三市场TTL30秒缓存、64个30秒幂等/提前取消记录。按市场合并读取，每请求独立取消；最后消费者终态/超时/HTTP任务取消回收共享任务。用户取消立即丢弃本页响应，切换/卸载清旧数据并取消；request_id/market/mode/source/generation联合匹配。初轮专项暴露共享任务清理2项失败，按终态先标记消费者结束修正，最终专项通过，未放宽断言。库存空/超限/重复/非法数值与来源/单位失败不缓存成功，真实模式只返回未授权/尚未接入，无外部Provider或模型调用。
+
+专项最终34 Python（失败/跳过0）、6 Node（失败/取消/跳过0）、8实际Electron（失败/取消/跳过0），契约/类型/构建通过。旧74项Electron均保留；原精确bridge白名单断言只追加本轮已批准的两个方法名称，仍严格deepEqual且拒绝任意额外入口，其他断言/时限保持；另追加8项。Electron使用现有Playwright及实际应用/隔离Temp数据库，三实际contentSize=1440×900、1000×700、600×700，15导航/资产/助手可达、整页横向溢出0、正常流程pageerror/console warning/error为空。搜索/排序IPC计数不增加；crypto未发送股票选择IPC；迟到成功在取消/切换后交付不能污染当前页。首轮完整verify为900 Python/57 Node通过、Electron81通过/1失败：原精确preload白名单缺新增批准的两名称；已只扩充该精确期望集合，保留deepEqual和其余隔离/生命周期断言。最终专项复验9 Electron（原1 + 新8）全通过；最终完整verify已退出0：900 Python（270.90秒）/57 Node（24+33）/82实际Electron（502.83秒），共1039通过，失败/取消/跳过/todo均0，原991保留、新增48。契约/类型/构建/Pi及原生许可审计/离线往返/原创CLI/隔离重复迁移均通过；全程0真实Provider/模型/账户请求。首轮日志/截图在qa/verify-initial.log与verify-initial目录保留，不能省略失败事实。
+
+截图/日志在仓库外D:/folio/research-trail-p2-07-qa（final-focused最终专项、focused-final历史专项、verify最终全量、verify-initial首轮）、research-trail-p2-07-final-focused.log与research-trail-p2-07-verify.log。17张P2-07截图覆盖三市场/热力悬浮/搜索分组、真实模式未授权与尚未接入、四个Mock异常和三尺寸/窄窗口热力格与详情；最终专项17图逐张查看；全量重采重点画面检查，PNG三尺寸/来源/SHA清单通过，详见技术说明第9节最终回执和qa/verify/P2-07-acceptance.json。权限/限流/网络截图是显著标记的主进程离线注入，不是供应商真实响应；Python对应错误路径有独立专项。概念图/行业树图/指数/市值/BTC占比/情绪指数/AI分析未冒充实现。
+
+ProviderPanel只补市场/数据类型与checked_at及状态局限说明，健康仍旧provider/capability/revision，不宣称逐市场权限或最近成功/失败历史能力。Massive窗口/分页未修；Binance条款提取/地域/展示、CoinGecko账户/署名/商业与再分发、Longbridge/Massive实际权限/数据展示和既有Windows/Pi分发许可缺口均保留。最终26文件全部UTF-8及diff/本地链接检查通过，截图/日志/隔离库均仓库外，不含私人数据；新依赖/真实API费用0。既有Starlette/httpx弃用和Vite主chunk538.54kB警告保留。用户截图验收未完成，状态代码完成/待验收；本轮停止，没有提交/推送/PR/合并/发布或P2-08。
+
+以下第77节和旧“当前审查”保留为当轮历史，当前开发以第78节为准。
+
+## 77. P2-07上下文恢复、Provider审计与独立契约方案（2026-10-13）
+
+状态：进行中（审计与方案完成，产品未实现）。用户正式授权P2-07本地开发，但明确新增真实Provider/依赖/数据授权/公开契约扩展须单独批准；本轮停在该公开契约边界，不扩大到P2-08或GitHub写入。
+
+现场命令核验`main=origin/main=远程main=3c428fd2005959fef4f2931da266eb8ba7b8f53c`，工作区/暂存区干净；PR #34的mergeCommit匹配且MERGED；main CI38274410878 completed/success、headSha精确匹配。既有991项为已合并基线，交接存在并已读取；新建`feat/phase2-multi-market-heatmap`，既有分支保留，没有提交或远程变更。
+
+审计实际Provider契约/SDK/Massive/健康/凭证与缓存、市场/证券DTO、ProviderPanel/MarketPanel/SecurityWorkspace以及main/preload白名单和专项测试，新增[PHASE2-MARKET-DATA-AUDIT](PHASE2-MARKET-DATA-AUDIT.md)。分别标记实现、离线假测、历史有限真实请求、需要凭证和不支持；历史第56节AAPL三能力成功不扩大为本轮真实验证/A股覆盖。发现Massive默认窗口源码为count×3/上限366天，证券页260对应366天，与P2-06交接30天描述不一致，仅记录未修代码；现有健康不按市场键区分，不据单能力成功推出其他市场授权。
+
+官方文档只读审计涵盖Longbridge.SH/.SZ/US/批量/套餐、Massive配额/聚合基础limit/分页/许可、Binance公开行情与权重/条款抓取缺口、CoinGecko币种/市值/分类/额度/展示与分发区别、Coinbase2026-08-07市场数据条款（含AI/Agent限制）。具体直达链接与获取失败边界都在审计。没有访问真实行情API或使用私人凭证，未申请/安装任何账户或依赖；ECharts只读源码/Apache-2.0参考，不复制实现。
+
+新增[PHASE2-MULTI-MARKET](PHASE2-MULTI-MARKET.md)作为可审查方案：独立Python资产/交易对与总览DTO、两个token保护本机只读查询/取消操作、对应IPC/生成契约，旧股票和Agent契约保持。推荐6只A股/4只美股/6加密交易对自主固定样例、等面积热力格、保留绿涨/砖红跌语义与图例，缺市值/行业不伪造，只有原四美股跳证券详情。列出文件级清单、请求硬上限/共享缓存/单请求取消/迟到响应保护与三尺寸验收安排，API预算0。本轮这些产品能力尚未实现；依用户单独批准条件暂不写入契约/API/产品。
+
+本轮现有Python 3.12环境运行`tests/test_providers.py tests/test_market.py tests/test_workspace.py tests/test_chart_history.py`，启用RESEARCH_TRAIL_OFFLINE与scripts/offline网络护栏，使用隔离库/假凭证/SDK假上下文/MockTransport：188 passed，失败/跳过0，27.67秒，1项既有Starlette/httpx弃用警告。没有新增、删除、放宽测试；无真实行情/账户/模型调用。新UI/Electron截图/完整verify未执行，不能把991基线或188专项写成P2-07完整验收。当前改动仅本节/ROADMAP和两份新审计/方案文档。
+
+以下“当前审查”等是P2-06及更早历史；最新状态以第77节和现场恢复基线为准。
+
 当前合并前针对性审查见第76节：P2-06 Draft PR #34旧Head两条CI成功；同组件无效数据的历史OHLCV残留已真实复现并最小修复，本机验收通过（991项）。扩展原边界用例，7项Electron专项及类型/契约/构建通过；完整verify已通过，修复Head的远程CI另验收，不计入旧Head成功。不合并或发布。
 
 当前P2-06最终收尾与Draft提交见第75节：用户已确认三张实际Electron截图，最后本机完整复验866 Python/51 Node/74实际Electron，共991通过，失败/取消/跳过0。按本轮授权提交/普通推送/独立Draft PR并等待当前Head的Push/PR CI，不以本机结果代替远程结果。以下第74节截图待审核、未提交均为当轮历史；本轮不自动合并、不执行P2-07/08、不创建Release或安装包。
