@@ -9,8 +9,9 @@ import { ReportPanel } from './ReportPanel';
 import { RecoveryPanel } from './RecoveryPanel';
 import type { EventResearchRef } from '../../calendar-types';
 import { EventContextCard } from '../calendar/EventContextCard';
+import type { ReportCandidate } from '../../conversation-types';
 
-export function ResearchPanel({ available, initialSymbol, initialMode, initialProvider, initialEventRef }: { available: boolean; initialSymbol?: string; initialMode?: 'simulated'|'real'; initialProvider?: 'longbridge'|'massive'; initialEventRef?:EventResearchRef }) {
+export function ResearchPanel({ available, initialSymbol, initialMode, initialProvider, initialEventRef, entryKey = 0, onTaskChange, onAssociateReport }: { available: boolean; initialSymbol?: string; initialMode?: 'simulated'|'real'; initialProvider?: 'longbridge'|'massive'; initialEventRef?:EventResearchRef; entryKey?: number; onTaskChange?: () => void; onAssociateReport?: (report: ReportCandidate) => void }) {
   const [symbol, setSymbol] = useState(initialSymbol || 'AAPL.US');
   const [strategy, setStrategy] = useState<StrategyId>(initialEventRef?'event-driven':'comprehensive');
   const [eventRef,setEventRef]=useState<EventResearchRef|undefined>(initialEventRef);
@@ -27,7 +28,16 @@ export function ResearchPanel({ available, initialSymbol, initialMode, initialPr
   const input: ResearchInput = { symbol, strategy, mode, provider, concurrency: 4,event_ref:eventRef };
   const running = run?.status === 'fetching';
   const disabled = !available || !ready || busy || recoveryBusy || running;
+  const supported = mode !== 'simulated' || ['AAPL.US','MSFT.US','NVDA.US','TSLA.US'].includes(symbol);
+  const planMatches = !!plan && plan.input.symbol === symbol && plan.input.strategy === strategy && plan.input.mode === mode && plan.input.provider === provider &&
+    (plan.input.event_ref?.snapshot_id ?? '') === (eventRef?.snapshot_id ?? '') && (plan.input.event_ref?.event_id ?? '') === (eventRef?.event_id ?? '') && (plan.input.event_ref?.timezone ?? '') === (eventRef?.timezone ?? '');
   const showError = (e: unknown) => e instanceof Error ? e.message : '采集操作失败，请重试。';
+
+  useEffect(() => {
+    clearDisplay(); setPlan(undefined); setBusy(false);
+    setSymbol(initialSymbol || 'AAPL.US'); setStrategy(initialEventRef ? 'event-driven' : 'comprehensive');
+    setMode(initialMode ?? 'simulated'); setProvider(initialProvider ?? 'longbridge'); setEventRef(initialEventRef);
+  }, [entryKey, initialSymbol, initialMode, initialProvider, initialEventRef]);
 
   useEffect(() => {
     let active = true;
@@ -47,7 +57,7 @@ export function ResearchPanel({ available, initialSymbol, initialMode, initialPr
         if (active) setReady(true);
       }).catch(e => { if (active) setError(showError(e)); });
     return () => { active = false; ++runGeneration.current; ++dataGeneration.current; };
-  }, [available]);
+  }, [available, entryKey, initialSymbol, initialMode, initialProvider, initialEventRef]);
 
   useEffect(() => {
     let active = true;
@@ -84,8 +94,10 @@ export function ResearchPanel({ available, initialSymbol, initialMode, initialPr
     return () => { active = false; clearTimeout(timer); };
   }, [available, runId, status]);
 
-  function clearDisplay() { ++runGeneration.current; ++dataGeneration.current; setRun(undefined); setData(undefined); setError(''); }
+  function clearDisplay() { onTaskChange?.(); ++runGeneration.current; ++dataGeneration.current; setRun(undefined); setData(undefined); setPlan(undefined); setError(''); }
   async function begin() {
+    if (!supported || !planMatches || planning) return;
+    onTaskChange?.();
     const ticket = ++runGeneration.current;
     ++dataGeneration.current; setBusy(true); setError(''); setData(undefined); setRun(undefined);
     try {
@@ -103,6 +115,7 @@ export function ResearchPanel({ available, initialSymbol, initialMode, initialPr
     finally { if (ticket === runGeneration.current) setBusy(false); }
   }
   async function restore() {
+    onTaskChange?.();
     const ticket = ++runGeneration.current;
     ++dataGeneration.current; setBusy(true); setError(''); setRun(undefined); setData(undefined);
     try {
@@ -123,13 +136,15 @@ export function ResearchPanel({ available, initialSymbol, initialMode, initialPr
     finally { if (ticket === dataGeneration.current) setBusy(false); }
   }
   function recovered(next: ResearchRun) {
+    onTaskChange?.();
     ++runGeneration.current; ++dataGeneration.current; setData(undefined); setError('');
     setRun(next); setHistoryId(next.id); setSymbol(next.symbol); setStrategy(next.strategy); setMode(next.mode); setProvider(next.provider);
     setEventRef(next.plan.input.event_ref??undefined);
     setHistory(h => [next, ...h.filter(r => r.id !== next.id)].slice(0, 100));
   }
   return <section className="research-panel" aria-label="研究采集工作台" aria-busy={busy}>
-    <h2>研究采集</h2><p>选择策略，采集已有能力的结构化数据。默认最多并发四项，每项二十秒。采集结束后可显式生成报告。</p>
+    <h2>研究采集</h2><p>选择策略 → 确认计划 → 显式采集 → 保存报告 → 关联助手。默认最多并发四项，每项二十秒。</p>
+    {!supported && <p role="status">当前离线证券研究仅支持AAPL.US、MSFT.US、NVDA.US、TSLA.US；A股与加密交易对尚无已验证采集能力。</p>}
     {(run?.plan.event_context??plan?.event_context)&&<EventContextCard context={(run?.plan.event_context??plan?.event_context)!} available={available}/>}
     {eventRef&&<button disabled={disabled} onClick={()=>{clearDisplay();setEventRef(undefined);}}>移除事件研究上下文</button>}
     <div className="research-toolbar">
@@ -138,12 +153,13 @@ export function ResearchPanel({ available, initialSymbol, initialMode, initialPr
       <label>采集提供商<select aria-label="采集提供商" value={provider} disabled={disabled} onChange={e => { clearDisplay(); setEventRef(undefined); setProvider(e.target.value as typeof provider); }}><option value="longbridge">Longbridge</option><option value="massive">Massive</option></select></label>
     </div>
     <StrategyPicker strategies={presets} value={strategy} disabled={disabled} onChange={v => { clearDisplay(); setStrategy(v); }} />
-    {plan && <details data-testid="research-plan" data-strategy={plan.input.strategy}><summary>采集计划 · {plan.reads.length} 项 · 可用 {plan.reads.filter(r => r.availability.available).length} 项</summary>
+    {plan && planMatches && <details open data-testid="research-plan" data-strategy={plan.input.strategy}><summary>采集计划 · {plan.reads.length} 项 · 可用 {plan.reads.filter(r => r.availability.available).length} 项</summary>
+      <p>计划预览 · {plan.input.symbol} · {plan.input.strategy} · {plan.input.mode} · {plan.input.provider} · 尚未执行。点击“开始采集”确认；运行中展示后端实际保存的计划。</p>
       <p>{plan.label}</p><ul>{plan.reads.map(r => <li key={r.capability}>{r.capability} · {r.availability.available ? '已验证可采集' : r.availability.can_attempt ? '已配置，启动时尝试真实查询' : '不可用'} · {r.availability.code}</li>)}</ul>
       <p>选择的技能资料（不执行指令）：</p><ul>{plan.skills.map(s => <li key={s.id}>{s.id} · {s.status} · {s.code}</li>)}</ul>
     </details>}
-    <div className="research-toolbar"><button disabled={disabled || planning || !plan} onClick={() => void begin()}>开始采集</button>
-      <label>已保存采集<select aria-label="已保存采集" value={historyId} disabled={disabled || !history.length} onChange={e => setHistoryId(e.target.value)}><option value="">选择任务</option>{history.map(r => <option key={r.id} value={r.id}>{r.symbol} · {r.strategy} · {researchLabels[r.status]} · {r.started_at}</option>)}</select></label>
+    <div className="research-toolbar"><button disabled={disabled || planning || !planMatches || !supported} onClick={() => void begin()}>开始采集</button>
+      <label>已保存采集<select aria-label="已保存采集" value={historyId} disabled={disabled || !history.length} onChange={e => { onTaskChange?.(); setHistoryId(e.target.value); }}><option value="">选择任务</option>{history.map(r => <option key={r.id} value={r.id}>{r.symbol} · {r.strategy} · {researchLabels[r.status]} · {r.started_at}</option>)}</select></label>
       <button disabled={disabled || !historyId} onClick={() => void restore()}>读取已保存任务</button>
     </div>
     {planning && <p role="status">正在检查采集计划…</p>}{error && <p role="alert">{error}</p>}
@@ -154,6 +170,6 @@ export function ResearchPanel({ available, initialSymbol, initialMode, initialPr
       <p>市场时间 {data.result.provenance.market_time ?? '未提供'}；此数据未经报告合成，不保证字段或窗口完整。</p>
       <pre>{JSON.stringify(data.result.data, null, 2)}</pre>
     </section>}
-    {run && run.status !== 'fetching' && <ReportPanel key={`report-${run.id}`} runId={run.id} symbol={run.symbol} succeeded={run.succeeded} available={available} generateAllowed={!run.abandoned_at} onStateChange={refreshRecovery} />}
+    {run && run.status !== 'fetching' && <ReportPanel key={`report-${run.id}`} runId={run.id} symbol={run.symbol} succeeded={run.succeeded} available={available} generateAllowed={!run.abandoned_at} onStateChange={refreshRecovery} onAssociateReport={onAssociateReport} onContextChange={onTaskChange} />}
   </section>;
 }

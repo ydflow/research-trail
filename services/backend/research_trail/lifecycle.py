@@ -71,7 +71,7 @@ class RunManager:
         timer.start()
         return timer
 
-    def start(self, session_id, text, scenario, *, runner=None, runner_factory=None, timing=None, kind="fake_agent"):
+    def start(self, session_id, text, scenario, *, runner=None, runner_factory=None, timing=None, kind="fake_agent", research_context=None, binding_validate=None):
         # Internal factories construct one runner after Store assigns the ID.
         # They only snapshot/create local objects, never start model/tool/Node IO.
         if runner is not None and runner_factory is not None:
@@ -80,7 +80,7 @@ class RunManager:
             if self.closed:
                 raise RuntimeError("后端正在关闭。")
             timing = self.timings[scenario] if timing is None else timing
-            record = self.store.begin_agent(session_id, text, kind)
+            record = self.store.begin_agent(session_id, text, kind, research_context=research_context, binding_validate=binding_validate)
             work = Work(session_id, record.id, timing, self.runner if runner is None else runner,
                         time.monotonic() + timing.run_timeout)
             self.work[record.id] = work
@@ -117,7 +117,8 @@ class RunManager:
                 if kind == "status" and work.runner is self.runner:
                     payload = {**payload, "detail": payload["detail"] +
                                f" 模拟工具时序：延迟{work.timing.delay:g}秒，工具限时{work.timing.tool_timeout:g}秒。"}
-                self.store.append_running(work.session_id, work.run_id, kind, payload)
+                guard = getattr(work.runner, 'report_result_guard', None) if kind == 'tool_result' and payload['result']['ok'] else None
+                self.store.append_running(work.session_id, work.run_id, kind, payload, result_guard=guard)
 
     def before_tool(self, work):
         with self.lock:
@@ -150,10 +151,11 @@ class RunManager:
                     # Removing Work must never leave an orphan running record.
                     self.settle(work, "failed", error=ErrorPayload(
                         code="RUN_STOPPED", message="Runner意外停止；已保存内容保留，不自动重执行。"))
-        except Exception:
+        except Exception as error:
             with self.lock:
                 if not self.closed and not work.stop.is_set():
-                    self.settle(work, "failed", error=ErrorPayload(code="RUN_ERROR", message="Agent运行发生内部错误。"))
+                    code = getattr(error, 'code', 'RUN_ERROR') if hasattr(work.runner, 'report_result_guard') else 'RUN_ERROR'
+                    self.settle(work, "failed", error=ErrorPayload(code=code, message="Agent运行发生错误；保存报告或原始证据不可用。" if code != 'RUN_ERROR' else "Agent运行发生内部错误。"))
         finally:
             with self.lock:
                 work.stop.set()
@@ -163,7 +165,8 @@ class RunManager:
 
     def settle(self, work, status, text="", error=None):
         # Manager lock orders callbacks; Store's transaction is the final guard.
-        record = self.store.finish(work.session_id, work.run_id, status, text, error)
+        guard = getattr(work.runner, 'report_result_guard', None) if status == 'completed' else None
+        record = self.store.finish(work.session_id, work.run_id, status, text, error, result_guard=guard)
         work.stop.set()
         for timer in work.timers:
             timer.cancel()

@@ -10,15 +10,15 @@ const message = (e: unknown) => e instanceof Error ? e.message : '报告操作�
 
 function Claims({ title, items, document, disabled, onRead }: { title: string; items: ReportClaim[]; document: ReportDocument; disabled: boolean; onRead: (reference: string) => void }) {
   const facts = new Map(document.evidence.map(f => [f.id, f]));
-  return <section className="report-section"><h4>{title}</h4><ul>{items.map((claim, index) => <li key={index}>
+  return <section className="report-section"><h4>{title}</h4><ul>{items.map((claim, index) => <li key={index} className={`report-claim report-claim-${claim.kind}`}>
     <strong>【{kindLabel[claim.kind]}】</strong>{claim.kind === 'fact' ? claim.evidence_ids.map(id => {
       const f = facts.get(id)!; return `${f.capability}${f.pointer} = ${JSON.stringify(f.value)}`;
     }).join('；') : claim.text}
-    <div className="report-references">{claim.evidence_ids.map(id => <button key={id} disabled={disabled} onClick={() => onRead(id)}>查看原始事实 {id}</button>)}</div>
+    <div className="report-references"><span>证据 {claim.evidence_ids.length} 条</span>{claim.evidence_ids.map((id, i) => <button className="secondary" key={id} aria-label={`查看原始事实 ${id}`} disabled={disabled} onClick={() => onRead(id)}>查看证据 {i + 1}</button>)}</div>
   </li>)}</ul></section>;
 }
 
-export function ReportPanel({ runId, symbol, succeeded, available, generateAllowed = true, onStateChange }: { runId: string; symbol: string; succeeded: number; available: boolean; generateAllowed?: boolean; onStateChange?: () => void }) {
+export function ReportPanel({ runId, symbol, succeeded, available, generateAllowed = true, onStateChange, onAssociateReport, onContextChange }: { runId: string; symbol: string; succeeded: number; available: boolean; generateAllowed?: boolean; onStateChange?: () => void; onAssociateReport?: (report: import('../../conversation-types').ReportCandidate) => void; onContextChange?: () => void }) {
   const [mode, setMode] = useState<'fixed' | 'real'>('fixed');
   const [rows, setRows] = useState<ReportSummary[]>([]), [historyId, setHistoryId] = useState('');
   const [job, setJob] = useState<ReportJob>(), [raw, setRaw] = useState<ReportOriginal>(), [difference, setDifference] = useState<ReportDiff>();
@@ -70,6 +70,7 @@ export function ReportPanel({ runId, symbol, succeeded, available, generateAllow
 
   async function changeJob(action: () => Promise<ReportJob>) {
     if (activeOperation.current) return;
+    onContextChange?.();
     activeOperation.current = true;
     const ticket = ++generation.current;
     ++rawGeneration.current; ++diffGeneration.current; setRaw(undefined); setDifference(undefined); setBusy(true); setError(''); setNotice('');
@@ -114,7 +115,7 @@ export function ReportPanel({ runId, symbol, succeeded, available, generateAllow
     <div className="research-toolbar"><label>报告合成器<select aria-label="报告合成器" value={mode} disabled={blocked || running} onChange={e => setMode(e.target.value as typeof mode)}><option value="fixed">固定合成器（离线）</option><option value="real">真实模型（使用现有本机配置）</option></select></label>
       <button disabled={blocked || running || !succeeded || !generateAllowed} onClick={e => { if (e.detail < 2) void changeJob(() => window.researchTrail!.generateReport(runId, mode, crypto.randomUUID())); }}>生成新报告</button>
       {running && <button disabled={blocked} onClick={() => void changeJob(() => window.researchTrail!.cancelReport(job!.id))}>取消报告生成</button>}
-      <label>已保存报告<select aria-label="已保存报告" value={historyId} disabled={blocked || running || !versions.length} onChange={e => setHistoryId(e.target.value)}><option value="">选择版本</option>{versions.map(r => <option key={r.id} value={r.id}>版本 {r.version} · {r.mode} · {statusLabel[r.status]} · {r.started_at}</option>)}</select></label>
+      <label>已保存报告<select aria-label="已保存报告" value={historyId} disabled={blocked || running || !versions.length} onChange={e => { onContextChange?.(); setHistoryId(e.target.value); }}><option value="">选择版本</option>{versions.map(r => <option key={r.id} value={r.id}>版本 {r.version} · {r.mode} · {statusLabel[r.status]} · {r.started_at}</option>)}</select></label>
       <button disabled={blocked || running || !historyId} onClick={() => void changeJob(() => window.researchTrail!.report(historyId))}>读取报告版本</button>
     </div>
     {!succeeded && <p role="status">没有成功采集结果，不能生成报告。</p>}
@@ -124,13 +125,16 @@ export function ReportPanel({ runId, symbol, succeeded, available, generateAllow
     {doc && <article data-testid="research-report">
       {doc.event_context&&<EventContextCard context={doc.event_context} available={available}/>}
       <h3>{doc.symbol} · {doc.synthesis.stance === 'bullish' ? '偏多' : doc.synthesis.stance === 'bearish' ? '偏空' : '中性'}（分析判断）</h3>
-      <p>{doc.disclaimer}</p><p>{doc.source_mode === 'simulated' ? '模拟数据，不代表真实行情' : '真实提供商数据'} · {doc.provider} · 采集 {doc.collection_status} · 任务 {doc.source_run_id}</p>
-      <section data-testid="report-forecast"><h4>预测概率</h4>{doc.synthesis.forecast?<><p>{doc.synthesis.forecast.label}</p><p>{(doc.synthesis.forecast.probability*100).toFixed(1)}% · {doc.synthesis.forecast.horizon} · {doc.synthesis.forecast.event}</p><p>{doc.synthesis.forecast.basis}</p></>:<p>未提供概率，不从文字立场推测。</p>}</section>
+      <p>{doc.disclaimer}</p><p>{doc.source_mode === 'simulated' ? '模拟数据，不代表真实行情' : '真实提供商数据'} · {doc.provider} · 采集 {doc.collection_status}</p>
+      <p className="report-overview" data-testid="report-evidence-summary">已保存事实 <strong>{doc.evidence.length}</strong> 项 · 数据缺口 <strong>{doc.gaps.length}</strong> 项</p>
+      <details className="report-identity"><summary>报告身份与采集任务</summary><p>报告 {job!.id} · 版本 {job!.version}<br/>采集任务 {doc.source_run_id}</p></details>
+      {onAssociateReport && <section className="report-association"><button disabled={blocked || !generateAllowed || job?.status !== 'completed' || job.mode !== 'fixed' || doc.source_mode !== 'simulated' || doc.source_run_id !== runId || !['AAPL.US','MSFT.US','NVDA.US','TSLA.US'].includes(doc.symbol)} onClick={() => job && onAssociateReport({report_id:job.id, source_run_id:doc.source_run_id, symbol:doc.symbol, version:job.version})}>关联到AI助手</button><p>显式关联已保存身份；发送后通过只读工具核验原始证据，不自动执行Agent。真实报告当前无法作为AI工具证据。</p></section>}
+      <section className="report-prediction" data-testid="report-forecast"><h4>预测概率</h4>{doc.synthesis.forecast?<><p>{doc.synthesis.forecast.label}</p><p>{(doc.synthesis.forecast.probability*100).toFixed(1)}% · {doc.synthesis.forecast.horizon} · {doc.synthesis.forecast.event}</p><p>{doc.synthesis.forecast.basis}</p></>:<p>未提供概率，不从文字立场推测。</p>}</section>
       <button disabled={blocked} onClick={() => void exportMarkdown()}>导出 Markdown</button>
       <button disabled={blocked || job?.status !== 'completed'} onClick={() => void formThesis()}>将报告形成投资论点</button>
       {groups.map(([title, items], index) => <Claims key={index} title={title} items={items} document={doc} disabled={blocked} onRead={reference => void read(job!.id, reference)} />)}
-      <section data-testid="report-gaps"><h4>数据缺口</h4>{doc.gaps.length ? <ul>{doc.gaps.map((g, i) => <li key={i}>{g.scope} · {g.key} · {g.code}</li>)}</ul> : <p>当前投影范围内未记录缺口；这不保证资料完整。</p>}</section>
-      <details><summary>全部原始事实索引 · {doc.evidence.length} 项</summary><ul>{doc.evidence.map(f => <li key={f.id}>{f.capability}{f.pointer} = {JSON.stringify(f.value)} <button disabled={blocked} onClick={() => void read(job!.id, f.id)}>查看原始事实 {f.id}</button></li>)}</ul></details>
+      <section className="report-gap-section" data-testid="report-gaps"><h4>数据缺口</h4>{doc.gaps.length ? <ul>{doc.gaps.map((g, i) => <li key={i}>{g.scope} · {g.key} · {g.code}</li>)}</ul> : <p>当前投影范围内未记录缺口；这不保证资料完整。</p>}</section>
+      <details><summary>全部原始事实索引 · {doc.evidence.length} 项</summary><ul>{doc.evidence.map((f, i) => <li key={f.id}>{f.capability}{f.pointer} = {JSON.stringify(f.value)} <button className="secondary" aria-label={`查看原始事实 ${f.id}`} disabled={blocked} onClick={() => void read(job!.id, f.id)}>查看证据 {i + 1}</button></li>)}</ul></details>
     </article>}
     <section aria-label="Research Diff"><h4>Research Diff</h4><p>选择两份已保存报告。数据模式必须相同；文字或字段变化不代表论断已证明。</p>
       <div className="research-toolbar">{([['差异旧报告', beforeId, setBeforeId], ['差异新报告', afterId, setAfterId]] as const).map(([label, value, update]) => <label key={label}>{label}<select aria-label={label} value={value} disabled={blocked} onChange={e => { ++diffGeneration.current; setDifference(undefined); update(e.target.value); }}><option value="">选择报告</option>{comparable.map(r => <option value={r.id} key={r.id}>{r.symbol} · {r.started_at} · {r.mode} · {r.id}</option>)}</select></label>)}
@@ -142,7 +146,7 @@ export function ReportPanel({ runId, symbol, succeeded, available, generateAllow
           {c.after_evidence && <button disabled={blocked} onClick={() => void read(difference.after_id, c.after_evidence!)}>查看新原始事实</button>}
         </li>)}</ul>}</section>}
     </section>
-    {raw && <section data-testid="report-original"><h4>已保存原始事实</h4><p>任务 {raw.evidence.run_id} · 执行序号 {raw.evidence.ordinal} · {raw.evidence.capability} · 字段 {raw.evidence.pointer}</p>
+    {raw && <section className="report-original" data-testid="report-original"><h4>已保存原始事实</h4><p>引用 {raw.evidence.id} · 任务 {raw.evidence.run_id} · 执行序号 {raw.evidence.ordinal} · {raw.evidence.capability} · 字段 {raw.evidence.pointer}</p>
       <p>执行 {raw.step_started_at} 至 {raw.step_completed_at} · 获取 {raw.evidence.fetched_at} · {raw.result.provenance.data_label}</p><p>SHA256 {raw.evidence.result_hash}</p><pre>{JSON.stringify(raw.result, null, 2)}</pre></section>}
   </section>;
 }

@@ -6,7 +6,7 @@ Python implementation; provider health remains owned by ProviderService.
 from dataclasses import dataclass
 from typing import Callable, Literal
 from pydantic import BaseModel, ConfigDict
-from .conversation import ToolArguments
+from .tool_arguments import ToolArguments
 from .analytics_contracts import RiskQuery, CompareQuery
 from .provider_contracts import MARKET_CAPABILITIES, ACCOUNT_CAPABILITIES, MASSIVE_CAPABILITIES, CapabilityView
 
@@ -33,12 +33,13 @@ class CapabilityState(BaseModel):
     can_attempt: bool = False
 
 class CapabilityRegistry:
-    def __init__(self):
+    def __init__(self, *, tool_specs=None):
         self.handlers: dict[str, Callable] = {}
         self.providers = None
+        self.tool_specs = dict(TOOL_SPECS if tool_specs is None else tool_specs)
 
     def register_tool(self, name, handler):
-        if name not in TOOL_SPECS or name in self.handlers:
+        if name not in self.tool_specs or name in self.handlers:
             raise ValueError('工具名称未允许或已注册')
         self.handlers[name] = handler
 
@@ -62,7 +63,9 @@ class CapabilityRegistry:
         implemented = is_tool or data
         code, available = 'NOT_IMPLEMENTED', False
         if implemented:
-            if name in ('portfolio.risk', 'stocks.compare'):
+            if name == 'research.report.read' and is_tool:
+                code, available = 'SAVED_SIMULATED_REPORT', mode == 'simulated'
+            elif name in ('portfolio.risk', 'stocks.compare'):
                 code, available = 'PYTHON_COMPUTATION', True
             elif name not in SUPPORTED.get(provider, []):
                 code = 'PROVIDER_UNSUPPORTED'
@@ -88,7 +91,7 @@ class CapabilityRegistry:
                                can_attempt=available or code=='REAL_UNVERIFIED')
 
     def list(self, mode='simulated', provider='longbridge'):
-        names = sorted(set(TOOL_SPECS) | {c for cs in SUPPORTED.values() for c in cs} | {'calendar.earnings','calendar.macro','calendar.central-bank'})
+        names = sorted(set(self.tool_specs) | {c for cs in SUPPORTED.values() for c in cs} | {'calendar.earnings','calendar.macro','calendar.central-bank'})
         return [self.state(n, mode, provider) for n in names]
 
     def tool_available(self, name):

@@ -130,7 +130,7 @@ const bridge: ResearchTrailBridge = {
   sessionRuns: (id) => ipcRenderer.invoke('sessions:runs', id),
   sessionSnapshot: (id) => ipcRenderer.invoke('sessions:snapshot', id),
   startRun: (id, input) => ipcRenderer.invoke('runs:start', id, input),
-  startAgentRun: (id, input, scenario = 'normal', kind = 'fake_agent') => ipcRenderer.invoke('runs:agent', id, input, scenario, kind),
+  startAgentRun: (id, input, scenario = 'normal', kind = 'fake_agent', context) => ipcRenderer.invoke('runs:agent', id, input, scenario, kind, context),
   cancelRun: (id, runId) => ipcRenderer.invoke('runs:cancel', id, runId),
   getRun: (id, runId) => ipcRenderer.invoke('runs:get', id, runId),
   runEvents: (id, runId, after = 0) => ipcRenderer.invoke('runs:events', id, runId, after),

@@ -2431,6 +2431,224 @@ async function screenshot(page, name) {
   mkdirSync(process.env.RESEARCH_TRAIL_QA_DIR, { recursive: true });
   await page.screenshot({ path: resolve(process.env.RESEARCH_TRAIL_QA_DIR, name), fullPage: false, animations: 'disabled' });
 }
+
+async function p208ReportFlow(instance, prefix = 'p2-08', partial = false) {
+  const page = instance.page;
+  await waitForBackend(page);
+  await expect.poll(()=>instance.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].isVisible())).toBe(true);
+  await instance.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(1440,900));
+  await expect.poll(()=>page.evaluate(()=>[innerWidth,innerHeight])).toEqual([1440,900]);
+  await openSecurity(page);
+  const assistant = page.getByLabel('常驻研究助手', {exact:true});
+  await assistant.getByLabel('会话标题', {exact:true}).fill('报告证据研究');
+  await assistant.getByRole('button', {name:'创建会话',exact:true}).click();
+  await expect(assistant.getByTestId('current-session')).toHaveText('报告证据研究');
+  await screenshot(page,`${prefix}-security-1440.png`);
+  await page.getByRole('button', {name:'采集此股票研究数据',exact:true}).click();
+  const research=page.getByRole('region',{name:'研究采集工作台',exact:true});
+  await expect(research.getByLabel('研究股票',{exact:true})).toHaveValue('AAPL.US');
+  await research.getByRole('radio',{name:/价值投资/}).check();
+  await expect(research.getByTestId('research-plan').locator('summary')).toContainText('4 项');
+  assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,0);
+  assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,0);
+  await research.getByTestId('research-plan').scrollIntoViewIfNeeded(); await screenshot(page,`${prefix}-plan-1440.png`);
+  await research.getByRole('button',{name:'开始采集',exact:true}).click();
+  await expect(research.getByTestId('research-run')).toHaveAttribute('data-status',partial?'partial':'collected');
+  await research.getByTestId('research-run').scrollIntoViewIfNeeded(); await screenshot(page,`${prefix}-collection-1440.png`);
+  assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,0);
+  await research.getByRole('button',{name:'生成新报告',exact:true}).click();
+  await expect(research.getByTestId('report-status')).toHaveAttribute('data-status','completed');
+  await research.getByTestId('research-report').locator('h3').first().scrollIntoViewIfNeeded(); await screenshot(page,`${prefix}-report-1440.png`);
+  const collection=await research.getByTestId('research-run').getAttribute('data-run-id');
+  const report=await research.getByTestId('report-status').getAttribute('data-report-id');
+  await research.getByRole('button',{name:'关联到AI助手',exact:true}).click();
+  await expect(assistant.getByTestId('assistant-report-context')).toContainText(report);
+  const sid=await page.evaluate(async()=> (await window.researchTrail.listSessions())[0].id);
+  assert.equal((await page.evaluate(id=>window.researchTrail.sessionSnapshot(id),sid)).runs.length,0);
+  await assistant.getByRole('button',{name:'准备报告问题',exact:true}).click();
+  assert.equal((await page.evaluate(id=>window.researchTrail.sessionSnapshot(id),sid)).runs.length,0);
+  await assistant.getByRole('button',{name:'运行规则演示',exact:true}).click();
+  await expect(assistant.getByTestId('run-state')).toContainText('已完成');
+  await expect(assistant.getByTestId('report-tool-result')).toContainText(report);
+  await expect(assistant.getByTestId('message-history')).toContainText('research.report.read');
+  const snapshot=await page.evaluate(id=>window.researchTrail.sessionSnapshot(id),sid);
+  const calls=snapshot.events.filter(e=>e.type==='tool_started');
+  assert.equal(calls.length,1);assert.equal(calls[0].payload.name,'research.report.read');
+  assert.equal(calls[0].payload.input.source_run_id,collection);
+  assert.equal(snapshot.events.find(e=>e.type==='run_started').payload.research_context.report_id,report);
+  return {research,assistant,sid,report,collection,snapshot};
+}
+
+test('P2-08 actual security plan collection report tool reply three sizes and restart form one offline flow', {timeout:120000},async()=>{
+  let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  const errors=[];
+  try{
+    instance.page.on('pageerror',e=>errors.push(e.message));
+    instance.page.on('console',m=>{if(['warning','error'].includes(m.type()))errors.push(m.text());});
+    const result=await p208ReportFlow(instance);
+    const savedReport=await instance.page.evaluate(id=>window.researchTrail.report(id),result.report);
+    const evidence=result.snapshot.events.find(e=>e.type==='tool_result').payload.result.data;
+    await expect(result.research.getByTestId('report-evidence-summary')).toContainText(`已保存事实 ${savedReport.document.evidence.length} 项`);
+    const originalButton=result.research.getByRole('button',{name:/^查看原始事实 ev-/}).first();
+    const originalId=(await originalButton.getAttribute('aria-label')).replace('查看原始事实 ','');
+    const originalFact=savedReport.document.evidence.find(f=>f.id===originalId);
+    await expect(originalButton).toHaveText(/查看证据 \d+/);
+    for(const [width,height] of [[1440,900],[1000,700],[600,700]]){
+      await instance.app.evaluate(({BrowserWindow}, size)=>BrowserWindow.getAllWindows()[0].setContentSize(...size),[width,height]);
+      await expect.poll(()=>instance.page.evaluate(()=>[innerWidth,innerHeight])).toEqual([width,height]);
+      await result.research.getByTestId('research-report').locator('h3').first().scrollIntoViewIfNeeded();await screenshot(instance.page,`p2-08-report-${width}.png`);
+      await result.assistant.getByTestId('assistant-report-context').scrollIntoViewIfNeeded();await screenshot(instance.page,`p2-08-association-${width}.png`);
+      await result.assistant.getByTestId('report-tool-result').locator('h3').scrollIntoViewIfNeeded();await screenshot(instance.page,`p2-08-tool-evidence-${width}.png`);
+      const reportIdentity=result.research.locator('.report-identity');
+      await expect(reportIdentity.locator('p')).toBeHidden();
+      await reportIdentity.locator('summary').focus();await instance.page.keyboard.press('Enter');
+      await expect(reportIdentity.locator('p')).toContainText(result.report);
+      await screenshot(instance.page,`p2-08-report-identity-${width}.png`);
+      await reportIdentity.locator('summary').press('Enter');
+      await originalButton.click();
+      const original=result.research.getByTestId('report-original');
+      await expect(original).toContainText(originalFact.id);
+      await expect(original).toContainText(originalFact.pointer);
+      await expect(original).toContainText(`执行序号 ${originalFact.ordinal}`);
+      await expect(original).toContainText(originalFact.result_hash);
+      await original.scrollIntoViewIfNeeded();await screenshot(instance.page,`p2-08-original-evidence-${width}.png`);
+      const tool=result.assistant.getByTestId('report-tool-result');
+      const identity=tool.getByText('报告身份与工具信息',{exact:true});
+      await identity.focus();await instance.page.keyboard.press('Enter');
+      await expect(identity.locator('..').locator('p').last()).toContainText(result.collection);
+      await identity.press('Enter');
+      const facts=tool.getByText('查看本页事实、来源与SHA256',{exact:true});
+      await facts.click();
+      await expect(tool.locator('article').first()).toContainText(evidence.facts[0].id);
+      await expect(tool.locator('article').first()).toContainText(evidence.facts[0].result_hash);
+      await facts.scrollIntoViewIfNeeded();await screenshot(instance.page,`p2-08-tool-facts-${width}.png`);
+      await facts.click();
+      await expect(tool).toContainText(`未读 ${evidence.omitted_facts}`);
+      assert.equal(await instance.page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+    }
+    const path=instance.databasePath;
+    await instance.app.close();instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_DB_PATH:path});
+    await waitForBackend(instance.page);
+    assert.deepEqual(await instance.page.evaluate(id=>window.researchTrail.sessionSnapshot(id),result.sid),result.snapshot);
+    await expect(instance.page.getByTestId('report-tool-result')).toContainText(result.report);
+    assert.equal(await instance.page.getByTestId('assistant-report-context').count(),0);
+    await screenshot(instance.page,'p2-08-restarted-history.png');
+    assert.deepEqual(errors,[]);
+  }finally{await instance.app.close();}
+});
+
+test('P2-08 partial collection missing evidence still opens an explicit fixed report and bounded tool', {timeout:90000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'research-partial'});
+  try{
+    const result=await p208ReportFlow(instance,'p2-08-partial',true);
+    await expect(result.research.getByTestId('report-gaps')).toContainText('company.profile');
+    const data=result.snapshot.events.find(e=>e.type==='tool_result').payload.result.data;
+    assert.equal(data.collection_status,'partial');assert.ok(data.gaps.length>0);
+    await result.assistant.getByTestId('report-tool-result').scrollIntoViewIfNeeded();await screenshot(instance.page,'p2-08-partial-tool.png');
+  }finally{await instance.app.close();}
+});
+
+test('P2-08 switching research input and session invalidates candidate without auto runs', {timeout:90000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  try{
+    const result=await p208ReportFlow(instance,'p2-08-context');
+    const page=instance.page;
+    await result.assistant.getByLabel('会话标题',{exact:true}).fill('第二会话');
+    await result.assistant.getByRole('button',{name:'创建会话',exact:true}).click();
+    await expect(result.assistant.getByTestId('assistant-report-context')).toHaveCount(0);
+    await result.research.getByRole('button',{name:'关联到AI助手',exact:true}).click();
+    await expect(result.assistant.getByTestId('assistant-report-context')).toHaveCount(1);
+    await result.research.getByLabel('研究股票',{exact:true}).fill('MSFT.US');
+    await expect(result.assistant.getByTestId('assistant-report-context')).toHaveCount(0);
+    await expect(result.research.getByTestId('research-plan')).toContainText('MSFT.US');
+    const sessions=await page.evaluate(()=>window.researchTrail.listSessions());
+    assert.equal((await page.evaluate(id=>window.researchTrail.sessionSnapshot(id),sessions.find(s=>s.title==='第二会话').id)).runs.length,0);
+  }finally{await instance.app.close();}
+});
+
+test('P2-08 pending security selection disables old research and carries the completed symbol', {timeout:60000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  try{
+    const page=instance.page;await openSecurity(page);
+    await page.evaluate(()=>window.researchTrail.addWatch('MSFT.US'));
+    await page.getByRole('button',{name:'模拟行情',exact:true}).click();await page.getByRole('button',{name:'证券工作台',exact:true}).click();
+    await expect(page.getByRole('button',{name:'选择证券 MSFT.US',exact:true})).toBeVisible();
+    await instance.app.evaluate(({ipcMain})=>{
+      const old=ipcMain._invokeHandlers.get('workspace:select');ipcMain.removeHandler('workspace:select');
+      globalThis.p208SelectionRelease=undefined;
+      ipcMain.handle('workspace:select',async(...args)=>{await new Promise(resolve=>{globalThis.p208SelectionRelease=resolve;});return old(...args);});
+    });
+    await page.getByRole('button',{name:'选择证券 MSFT.US',exact:true}).click();
+    await expect(page.getByRole('button',{name:'采集此股票研究数据',exact:true})).toBeDisabled();
+    await instance.app.evaluate(()=>globalThis.p208SelectionRelease());
+    await expect(page.getByRole('button',{name:'采集此股票研究数据',exact:true})).toBeEnabled();
+    await page.getByRole('button',{name:'采集此股票研究数据',exact:true}).click();
+    await expect(page.getByLabel('研究股票',{exact:true})).toHaveValue('MSFT.US');
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,0);
+  }finally{await instance.app.close();}
+});
+
+test('P2-08 late overview selection never navigates back after leaving and CN crypto research stays unavailable', {timeout:60000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  try{
+    const page=instance.page;await waitForBackend(page);await page.getByRole('button',{name:'市场总览',exact:true}).click();
+    await expect(page.getByRole('region',{name:'选中标的详情'})).toContainText('研究尚未支持');
+    await page.getByRole('button',{name:/加密货币/}).click();await expect(page.getByRole('region',{name:'选中标的详情'})).toContainText('研究尚未支持');
+    await page.getByRole('button',{name:/美股/}).click();
+    await instance.app.evaluate(({ipcMain})=>{
+      const old=ipcMain._invokeHandlers.get('workspace:select');ipcMain.removeHandler('workspace:select');
+      ipcMain.handle('workspace:select',async(...args)=>{const value=await old(...args);await new Promise(resolve=>{globalThis.p208OverviewRelease=resolve;});return value;});
+    });
+    await page.getByRole('button',{name:/打开证券工作台/}).click();
+    await page.getByRole('button',{name:'研究采集',exact:true}).click();
+    await instance.app.evaluate(()=>globalThis.p208OverviewRelease());
+    await expect(page.getByRole('region',{name:'研究采集工作台'})).toBeVisible();
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,0);
+  }finally{await instance.app.close();}
+});
+
+test('P2-08 actual in-progress collection and user cancellation preserve steps without creating reports', {timeout:60000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_WORKSPACE_FIXTURE_CASE:'research-checkpoint'});
+  try{
+    const page=instance.page;await waitForBackend(page);
+    await expect.poll(()=>instance.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].isVisible())).toBe(true);
+    await instance.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(1440,900));
+    await expect.poll(()=>page.evaluate(()=>[innerWidth,innerHeight])).toEqual([1440,900]);
+    await page.getByRole('button',{name:'研究采集',exact:true}).click();
+    await page.getByRole('radio',{name:/价值投资/}).check();
+    await expect(page.getByTestId('research-plan').locator('summary')).toContainText('4 项');
+    await page.getByRole('button',{name:'开始采集',exact:true}).click();
+    await expect.poll(async()=>page.evaluate(async()=>{const b=window.researchTrail;const rows=await b.researchRuns();return rows.length?(await b.researchRun(rows[0].id)).succeeded:0;})).toBe(3);
+    await expect(page.getByTestId('research-run')).toHaveAttribute('data-status','fetching');
+    await page.getByTestId('research-run').scrollIntoViewIfNeeded();await screenshot(page,'p2-08-executing-1440.png');
+    await page.getByRole('button',{name:'取消整项采集',exact:true}).click();
+    await expect(page.getByTestId('research-run')).toHaveAttribute('data-status','cancelled');
+    assert.equal((await page.evaluate(()=>window.researchTrail.reportList())).length,0);
+    await screenshot(page,'p2-08-cancelled-1440.png');
+  }finally{await instance.app.close();}
+});
+
+test('P2-08 same mounted research component replaces entry identity and ignores the old delayed plan', {timeout:60000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  try{
+    const page=instance.page;await waitForBackend(page);
+    await instance.app.evaluate(({ipcMain})=>{
+      const old=ipcMain._invokeHandlers.get('research:plan');ipcMain.removeHandler('research:plan');
+      ipcMain.handle('research:plan',async(...args)=>{const p=await old(...args);if(p.input.symbol==='AAPL.US')await new Promise(resolve=>{globalThis.p208OldPlanRelease=resolve;});return p;});
+    });
+    const {buildSync}=require('esbuild');
+    const code=buildSync({stdin:{contents:`import React from 'react';import {createRoot} from 'react-dom/client';import {ResearchPanel} from './src/renderer/research/ResearchPanel';const host=document.createElement('div');document.body.append(host);const root=createRoot(host);window.p208Entry=(symbol,entryKey)=>root.render(React.createElement(ResearchPanel,{available:true,initialSymbol:symbol,entryKey}));window.p208Entry('AAPL.US',1);`,resolveDir:desktop},bundle:true,platform:'browser',format:'iife',write:false,loader:{'.css':'empty'}}).outputFiles[0].text;
+    await page.evaluate(code=>{new Function(code)();},code);
+    await expect.poll(()=>instance.app.evaluate(()=>typeof globalThis.p208OldPlanRelease)).toBe('function');
+    await page.evaluate(()=>window.p208Entry('MSFT.US',2));
+    const panel=page.getByRole('region',{name:'研究采集工作台',exact:true});
+    await expect(panel.getByLabel('研究股票',{exact:true})).toHaveValue('MSFT.US');
+    await expect(panel.getByTestId('research-plan')).toContainText('MSFT.US');
+    await instance.app.evaluate(()=>globalThis.p208OldPlanRelease());
+    await expect(panel.getByTestId('research-plan')).toContainText('MSFT.US');
+    assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,0);
+  }finally{await instance.app.close();}
+});
 async function launch(extraEnv = {}) {
   const databasePath = extraEnv.RESEARCH_TRAIL_DB_PATH || resolve(mkdtempSync(resolve(tmpdir(), 'research-trail-qa-')), 'test.sqlite3');
   // Playwright deliberately removes NODE_OPTIONS from Electron's environment.

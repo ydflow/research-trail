@@ -13,7 +13,7 @@ export function RunProgressCard({ run, busy, onCancel, onRead }: {
     <p role="status" data-testid="research-status">{researchLabels[run.status]} · 已结束 {run.completed}/{run.total} · 已采集 {run.succeeded} · 失败或不可用 {run.failed}</p>
     <progress aria-label="采集进度" max={Math.max(1, run.total)} value={run.completed} />
     <p>{run.mode === 'simulated' ? '模拟数据' : '真实模式'} · {run.provider} · 并发上限 {run.plan.input.concurrency} · 单项限时 {run.plan.timeout_seconds} 秒</p>
-    <p>进度表示采集项已结束；采集完成不代表报告、数据完整或投资结论。</p>
+    <p>这里是ResearchService的实际采集步骤，与聊天Agent工具事件分开。进度表示采集项已结束；采集完成不代表报告、数据完整或投资结论。</p>
     {run.status === 'fetching' && <button disabled={busy} onClick={onCancel}>取消整项采集</button>}
     <ul className="research-steps">{run.steps.map(s => <li key={s.capability} data-capability={s.capability} data-status={s.status}>
       <span>{s.capability} · {stepLabels[s.status]} {s.code && `· ${s.code}`}</span>

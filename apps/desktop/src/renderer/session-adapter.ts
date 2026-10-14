@@ -1,6 +1,6 @@
 import type { MessageDTO, RunDTO, StreamEvent, SessionSnapshot } from '../conversation-types';
 function toolTarget(input: Extract<StreamEvent, { type: 'tool_started' }>['payload']['input']) {
-  return 'symbol' in input ? input.symbol : 'portfolio_id' in input ? input.portfolio_id : input.symbols.join(', ');
+  return 'report_id' in input ? `报告 ${input.report_id} · 采集 ${input.source_run_id}` : 'symbol' in input ? input.symbol : 'portfolio_id' in input ? input.portfolio_id : input.symbols.join(', ');
 }
 
 export function runStatus(status: RunDTO['status']) {

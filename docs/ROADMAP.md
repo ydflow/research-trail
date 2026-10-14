@@ -1,8 +1,40 @@
 # 研迹：路线、功能对照与当前进度
 
-更新时间：2026-10-13（Asia/Shanghai）。本文件记录计划与阶段状态，不代表未来步骤已经获得执行或发布授权。
+更新时间：2026-10-15（Asia/Shanghai）。本文件记录计划与阶段状态，不代表未来步骤已经获得执行或发布授权。
 
 ## 当前执行边界
+
+### P2-08最终收尾：验收通过（离线闭环，独立Draft已获授权）
+
+用户已审核四张实际Electron图，认可研究计划、保存报告、可信工具读取与助手联动；本轮授权局部视觉收尾、最终审查、完整验收后提交/普通推送/独立Draft PR，不授权合并或发布。下方“仅本地/待用户审核”段落是上一轮记录。
+
+报告改用短编号证据按钮（完整引用仍在无障碍标签与原始事实中），首屏展示证券/事实数/缺口数；报告/会话身份可展开，事实、固定分析、未校准预测与缺口分层。原始来源/Pointer/ordinal/SHA256均保留。最终审查补齐报告工具结果保存后、最终回复提交前的证据变更核验；新增3项离线回归，原1039与前轮85项保留。容量/工具专项77通过，现有IPC专项4通过，最后完整verify为977 Python/61 Node/89实际Electron共1127通过，失败/取消/跳过/todo0。新增总数88；33个源码/测试/契约哈希验收前后一致，33张实际P2-08图/尺寸与3个真实保存工具Run的原始hash/Pointer/ordinal一致性均核对。日志wrapup-verify.log、图wrapup-accepted/、清单wrapup-acceptance.json及工具回执wrapup-tool-run-evidence.json在仓库外qa。最终Head双CI须与本机验收分开核对，记录于独立Draft PR及pr-delivery.json；不自动合并。
+
+默认agent.py/原四工具/Pi与旧公开金融契约不变，无新HTTP/IPC名、迁移、依赖或真实服务。P2-09/10未开始；真实金融/模型、A股/crypto研究、地域/再分发与Windows/Pi许可仍需独立核验。详见[技术说明第12节](PHASE2-AGENT-RESEARCH-WORKBENCH.md#12-最终审查与独立draft交付2026-10-14)。
+
+### P2-08：代码完成/待验收（本机完整1124项通过）
+
+方案A已按授权完成本地证券→计划确认→显式采集→保存报告→助手候选→显式发送→受限research.report.read→有来源回复/历史重读。最终完整verify退出0：974 Python/61 Node/89实际Electron共1124，失败/取消/跳过/todo0；原1039保留、新增85。24张实际Electron截图及三尺寸/哈希清单在仓库外research-trail-p2-08-qa/accepted和P2-08-acceptance.json；验收前后32个源码/测试/契约哈希一致。详见[技术说明第11节](PHASE2-AGENT-RESEARCH-WORKBENCH.md#11-最终本地回执2026-10-14)及EVIDENCE第81节最终回执。
+
+仅四US、Fake/Fixture/fixed报告；新绑定/工具契约和既有runs:agent可选参数，无新端点/IPC名/迁移/依赖/Provider，默认AgentRunner/Pi不变。容量与取消保护通过，真实金融/模型与A股/crypto研究未接入。用户实际界面审核待完成；未暂存/提交/推送/PR/合并/发布，P2-09/10未开始。下列实施/审计“运行中/待批准”保留为历史，不覆盖本段。
+
+### P2-08方案A：本地实现与专项通过，完整验收运行中
+
+2026-10-14用户正式批准技术文档第5.1～5.4节，之前的契约/工具审批阻塞已解除。当前在feat/phase2-agent-research-workbench完成证券/计划/报告/助手显式联动、可选报告身份绑定、受限research.report.read及原子会话容量门禁；旧研究调度/证据数据库/默认AgentRunner循环/Pi保持。报告工具仅fake_agent、completed/fixed/simulated、原四US，默认16/最多32事实、24KiB、单次调用；不接真实服务或自动执行。
+
+新增52 Python、4 Node及首批5实际Electron专项通过。容量以实际JSON/UTF-16和恰好24KiB工具结果验证，131072/98304/旧262144不变。完整bun.cmd run verify已启动，结果尚待结束后记录；另补实际执行中/取消和同组件入口迟到计划的Electron检查，旧1039项保留。状态进行中，用户界面审核尚未完成。实际源码/契约清单、过程失败与截图见[技术说明第10节](PHASE2-AGENT-RESEARCH-WORKBENCH.md#10-方案a实施与本地验收2026-10-14进行中)。仅本地，不提交/推送/PR/合并/发布，不执行P2-09/10。
+
+以下架构审计等待批准段落保留为2026-10-13历史，已被上述明确授权取代。
+
+### P2-08：架构审计完成，可信报告工具与契约待单独批准
+
+用户正式启动P2-08，本轮核实本地main/origin/main/远程main均为`d51476757e508b2054942478bfb19fe6deb0b0c0`、工作区干净，[main CI 38382422780](https://github.com/ydflow/research-trail/actions/runs/38382422780)成功且对应同一Head，900 Python/57 Node/82 Electron共1039项为已合并基线。新建`feat/phase2-agent-research-workbench`，保留既有分支。P2-07已合并，但只完成三市场离线总览/等面积热力格，不代表真实行情或crypto Provider已经接入。
+
+实际追踪证券→既有八策略计划→显式采集→保存证据→显式报告→历史/恢复，以及会话→默认Python AgentRunner→四个现有工具→快照/SSE。旧报告可核验来源，但没有Agent报告读取工具；StartRun没有结构化研究绑定，报告ID文字也不会被规则假模型读为证据。按本轮用户明确要求，先提交[架构审计与最小方案A](PHASE2-AGENT-RESEARCH-WORKBENCH.md)，等待可选StartRun/started事件绑定、专用工具参数/结果及生成契约、受限`research.report.read`与现有`runs:agent`末尾上下文参数的单独批准。不新增HTTP/IPC名称、数据库迁移、Provider或依赖；默认AgentRunner循环和旧股票契约保留。
+
+既有专项116 Python/17 Node及生成契约一致性检查通过。隔离SQLite/Fake/Fixture探针验证计划零Provider读取、保存37条报告证据、历史零重采，现有会话没有报告工具调用，额外上下文字段422拒绝。当前只有三份审计文档修改，产品联动、新工具、新UI/截图和完整verify未执行，不能称P2-08完成。后续按批准方案进行本地开发/离线验收；不提交/推送/PR/合并/真实服务/Release/安装包，不执行P2-09/10。审计日志与探针在仓库外research-trail-p2-08-qa，详情见EVIDENCE第80节。
+
+下方P2-07及更早的“当前”段落保留为各轮历史，不覆盖本轮授权与现状。
 
 ### P2-07最终收尾：验收通过（三市场离线总览）
 

@@ -70,7 +70,7 @@ export function SecurityWorkspace({ available, onResearch }: { available: boolea
   return <section className="security-workspace" aria-label="证券工作台">
         <header className="security-header"><strong data-testid="security-symbol">{state?.active_symbol ?? '—'}</strong><span className="security-name">{state?.entries.find(r => r.symbol === state.active_symbol)?.name ?? '—'}</span><span className="security-market">{state?.active_symbol?.split('.').at(-1) ?? '—'} 市场</span>
           <SectionHeader title="证券工作台"><span className={mode === 'simulated' ? 'mock-badge' : 'real-badge'}>{mode === 'simulated' ? '模拟数据' : '真实数据 · 显式查询'}</span></SectionHeader>
-          {onResearch && <button disabled={!available || !state?.active_symbol} onClick={() => state?.active_symbol && onResearch(state.active_symbol)}>采集此股票研究数据</button>}
+          {onResearch && <button disabled={!available || writing || !state?.active_symbol || !['AAPL.US','MSFT.US','NVDA.US','TSLA.US'].includes(state.active_symbol)} onClick={() => !writing && state?.active_symbol && onResearch(state.active_symbol)}>采集此股票研究数据</button>}
         </header>
     <div className="security-toolbar">
       <label>证券提供商<select aria-label="证券提供商" disabled={!enabled} value={provider} onChange={e => setProvider(e.target.value as SecurityQuery['provider'])}><option value="longbridge">Longbridge</option><option value="massive">Massive（美股）</option></select></label>

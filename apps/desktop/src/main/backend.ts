@@ -451,12 +451,24 @@ export class BackendManager extends EventEmitter {
     if (typeof input !== 'string' || input.length > 2000 || !input.trim()) throw new Error('测试输入需要1至2000个字符。');
     return this.business<RunDTO>(`/sessions/${this.id(id)}/runs`, 'POST', { input });
   }
-  startAgentRun(id: unknown, input: unknown, scenario: unknown = 'normal', kind: unknown = 'fake_agent') {
+  startAgentRun(id: unknown, input: unknown, scenario: unknown = 'normal', kind: unknown = 'fake_agent', context?: unknown) {
     if (typeof input !== 'string' || input.length > 2000 || !input.trim()) throw new Error('规则演示输入需要1至2000个字符。');
     if (!['normal', 'delayed', 'timeout'].includes(scenario as string)) throw new Error('未知模拟工具时序。');
     if (!['fake_agent', 'openai_agent'].includes(kind as string)) throw new Error('未知模型类型。');
     if (kind === 'openai_agent' && scenario !== 'normal') throw new Error('真实模型不使用模拟工具时序。');
-    return this.business<RunDTO>(`/sessions/${this.id(id)}/runs`, 'POST', { input, kind, scenario });
+    let research_context: { report_id: string; source_run_id: string } | undefined;
+    if (context !== undefined) {
+      for (let index = 0; index < input.length; index++) {
+        const code = input.codePointAt(index)!;
+        if (code >= 0xd800 && code <= 0xdfff) throw new Error('报告问题含无效Unicode。');
+        if (code > 0xffff) index++;
+      }
+      if (!context || typeof context !== 'object' || Array.isArray(context) || Object.getPrototypeOf(context) !== Object.prototype || Object.keys(context).length !== 2 || Object.keys(context).some(k => !['report_id', 'source_run_id'].includes(k))) throw new Error('报告关联参数无效。');
+      const ref = context as Record<string, unknown>;
+      research_context = { report_id: this.id(ref.report_id), source_run_id: this.id(ref.source_run_id) };
+      if (kind !== 'fake_agent' || scenario !== 'normal') throw new Error('报告关联仅支持正常假模型运行。');
+    }
+    return this.business<RunDTO>(`/sessions/${this.id(id)}/runs`, 'POST', { input, kind, scenario, ...(research_context ? { research_context } : {}) });
   }
   cancelRun(id: unknown, runId: unknown) { return this.business<RunDTO>(`/sessions/${this.id(id)}/runs/${this.id(runId)}/cancel`, 'POST'); }
   sessionSnapshot(id: unknown) { return this.business<SessionSnapshot>(`/sessions/${this.id(id)}/snapshot`); }

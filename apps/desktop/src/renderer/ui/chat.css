@@ -69,3 +69,20 @@
   .chat-session .chat-transcript { max-height: 480px; }
   .shell .chat-content > .chat-composer { position: sticky; bottom: 0; z-index: 2; }
 }
+
+/* Saved report identities and evidence remain readable in the narrow copilot. */
+.report-context, .report-tool-card { overflow-wrap: anywhere; font-size: 12px; line-height: 1.65; }
+.report-context { padding: 10px; border: 1px solid var(--border, #d6e4e1); background: #f0f7f5; border-radius: 6px; }
+.report-context p, .report-tool-card p { margin: 6px 0; }
+.report-tool-card article { padding: 8px 0; border-bottom: 1px solid #d6e4e1; }
+.report-context button { margin: 4px 6px 0 0; }
+.report-tool-card > details { margin: 6px 0; padding: 0 8px; border: 1px solid var(--border, #d6e4e1); border-radius: 4px; }
+.report-tool-card .report-analysis { background: #f4f7fa; }
+.report-tool-card .report-prediction, .report-tool-card .report-gap-section { margin-top: 8px; }
+.report-tool-card h4 { margin: 0 0 4px; font-size: 12px; }
+.report-tool-card small { display: block; overflow-wrap: anywhere; color: var(--muted, #5d6d67); }
+.report-context > summary { font-weight: 600; }
+.report-tool-card summary, .report-context summary { cursor: pointer; padding: 5px 0; }
+.report-tool-card summary:focus-visible, .report-context summary:focus-visible { outline: 2px solid var(--brand, #466658); outline-offset: 3px; }
+.report-tool-card .report-overview { padding: 8px 10px; border-left: 3px solid var(--brand, #466658); background: #f0f7f5; }
+.report-tool-card .report-prediction, .report-tool-card .report-gap-section { padding: 8px 10px; border-left: 3px solid #d1ad68; background: #fcf9f1; }
