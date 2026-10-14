@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { WorkspaceState } from '../workspace-types';
 import { StateNotice } from './ui/Primitives';
 
-export function AssetTabs({ available, view, onOpen }: { available: boolean; view: string; onOpen: () => void }) {
+export function AssetTabs({ available, view, onOpen, onSelectionStart }: { available: boolean; view: string; onOpen: (ticket?: number) => void; onSelectionStart?: () => number }) {
   const [state, setState] = useState<WorkspaceState>();
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   useEffect(() => {
@@ -19,8 +19,9 @@ export function AssetTabs({ available, view, onOpen }: { available: boolean; vie
   }, [available, view]);
   async function open(symbol: string) {
     if (busy) return;
+    const ticket = onSelectionStart?.();
     setBusy(true); setError('');
-    try { setState(await window.researchTrail!.selectSecurity(symbol)); onOpen(); }
+    try { setState(await window.researchTrail!.selectSecurity(symbol)); onOpen(ticket); }
     catch { setError('证券选择未完成'); }
     finally { setBusy(false); }
   }

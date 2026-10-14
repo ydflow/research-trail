@@ -6548,6 +6548,27 @@
         "title": "ReportClaim",
         "type": "object"
       },
+      "ReportContextRef": {
+        "additionalProperties": false,
+        "properties": {
+          "report_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "title": "Report Id",
+            "type": "string"
+          },
+          "source_run_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "title": "Source Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "source_run_id"
+        ],
+        "title": "ReportContextRef",
+        "type": "object"
+      },
       "ReportDiff": {
         "additionalProperties": false,
         "properties": {
@@ -7020,6 +7041,271 @@
           "result"
         ],
         "title": "ReportOriginal",
+        "type": "object"
+      },
+      "ReportReadArguments": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_limit": {
+            "default": 16,
+            "maximum": 32,
+            "minimum": 1,
+            "title": "Evidence Limit",
+            "type": "integer"
+          },
+          "evidence_offset": {
+            "default": 0,
+            "maximum": 383,
+            "minimum": 0,
+            "title": "Evidence Offset",
+            "type": "integer"
+          },
+          "report_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "title": "Report Id",
+            "type": "string"
+          },
+          "source_run_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "title": "Source Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "source_run_id"
+        ],
+        "title": "ReportReadArguments",
+        "type": "object"
+      },
+      "ReportReadSource": {
+        "additionalProperties": false,
+        "properties": {
+          "capability": {
+            "maxLength": 80,
+            "title": "Capability",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "step_completed_at": {
+            "format": "date-time",
+            "title": "Step Completed At",
+            "type": "string"
+          },
+          "step_started_at": {
+            "format": "date-time",
+            "title": "Step Started At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "capability",
+          "provenance",
+          "step_started_at",
+          "step_completed_at"
+        ],
+        "title": "ReportReadSource",
+        "type": "object"
+      },
+      "ReportReadToolData": {
+        "additionalProperties": false,
+        "properties": {
+          "collection_status": {
+            "maxLength": 40,
+            "title": "Collection Status",
+            "type": "string"
+          },
+          "evidence_offset": {
+            "maximum": 383,
+            "minimum": 0,
+            "title": "Evidence Offset",
+            "type": "integer"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/ReportEvidence"
+            },
+            "maxItems": 32,
+            "title": "Facts",
+            "type": "array"
+          },
+          "facts_label": {
+            "const": "已保存的模拟事实；不是实时行情",
+            "default": "已保存的模拟事实；不是实时行情",
+            "title": "Facts Label",
+            "type": "string"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/ReportGap"
+            },
+            "maxItems": 16,
+            "title": "Gaps",
+            "type": "array"
+          },
+          "kind": {
+            "const": "research_report",
+            "default": "research_report",
+            "title": "Kind",
+            "type": "string"
+          },
+          "next_offset": {
+            "anyOf": [
+              {
+                "maximum": 383,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Offset"
+          },
+          "omitted_facts": {
+            "maximum": 384,
+            "minimum": 0,
+            "title": "Omitted Facts",
+            "type": "integer"
+          },
+          "omitted_forecast": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Omitted Forecast",
+            "type": "integer"
+          },
+          "omitted_gaps": {
+            "minimum": 0,
+            "title": "Omitted Gaps",
+            "type": "integer"
+          },
+          "omitted_sources": {
+            "minimum": 0,
+            "title": "Omitted Sources",
+            "type": "integer"
+          },
+          "omitted_summary": {
+            "maximum": 4,
+            "minimum": 0,
+            "title": "Omitted Summary",
+            "type": "integer"
+          },
+          "provider": {
+            "maxLength": 80,
+            "title": "Provider",
+            "type": "string"
+          },
+          "report_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "title": "Report Id",
+            "type": "string"
+          },
+          "report_version": {
+            "minimum": 1,
+            "title": "Report Version",
+            "type": "integer"
+          },
+          "returned": {
+            "maximum": 32,
+            "minimum": 0,
+            "title": "Returned",
+            "type": "integer"
+          },
+          "saved_forecast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportForecast"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "saved_summary": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "maxItems": 4,
+            "title": "Saved Summary",
+            "type": "array"
+          },
+          "source_mode": {
+            "const": "simulated",
+            "default": "simulated",
+            "title": "Source Mode",
+            "type": "string"
+          },
+          "source_run_id": {
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "title": "Source Run Id",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/ReportReadSource"
+            },
+            "maxItems": 16,
+            "title": "Sources",
+            "type": "array"
+          },
+          "strategy": {
+            "maxLength": 80,
+            "title": "Strategy",
+            "type": "string"
+          },
+          "symbol": {
+            "enum": [
+              "AAPL.US",
+              "MSFT.US",
+              "NVDA.US",
+              "TSLA.US"
+            ],
+            "title": "Symbol",
+            "type": "string"
+          },
+          "synthesis_label": {
+            "const": "固定合成器演示；分析与未校准预测不是事实",
+            "default": "固定合成器演示；分析与未校准预测不是事实",
+            "title": "Synthesis Label",
+            "type": "string"
+          },
+          "synthesizer_mode": {
+            "const": "fixed",
+            "default": "fixed",
+            "title": "Synthesizer Mode",
+            "type": "string"
+          },
+          "total": {
+            "maximum": 384,
+            "minimum": 0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "report_id",
+          "source_run_id",
+          "symbol",
+          "strategy",
+          "report_version",
+          "provider",
+          "collection_status",
+          "facts",
+          "sources",
+          "gaps",
+          "saved_summary",
+          "evidence_offset",
+          "total",
+          "returned",
+          "omitted_facts",
+          "omitted_sources",
+          "omitted_gaps",
+          "omitted_summary",
+          "omitted_forecast"
+        ],
+        "title": "ReportReadToolData",
         "type": "object"
       },
       "ReportSection": {
@@ -10343,6 +10629,16 @@
             "title": "Kind",
             "type": "string"
           },
+          "research_context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportContextRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "scenario": {
             "default": "normal",
             "enum": [
@@ -10366,6 +10662,16 @@
           "input": {
             "title": "Input",
             "type": "string"
+          },
+          "research_context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportContextRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "started_at": {
             "format": "date-time",
@@ -11494,7 +11800,8 @@
               "market.quote",
               "market.kline",
               "portfolio.risk",
-              "stocks.compare"
+              "stocks.compare",
+              "research.report.read"
             ],
             "title": "Name",
             "type": "string"
@@ -11583,6 +11890,9 @@
               },
               {
                 "$ref": "#/components/schemas/CompareQuery"
+              },
+              {
+                "$ref": "#/components/schemas/ReportReadArguments"
               }
             ],
             "title": "Input"
@@ -11592,7 +11902,8 @@
               "market.quote",
               "market.kline",
               "portfolio.risk",
-              "stocks.compare"
+              "stocks.compare",
+              "research.report.read"
             ],
             "title": "Name",
             "type": "string"
@@ -11615,6 +11926,7 @@
                 "compare": "#/components/schemas/CompareToolData",
                 "kline": "#/components/schemas/KlineToolData",
                 "quote": "#/components/schemas/QuoteToolData",
+                "research_report": "#/components/schemas/ReportReadToolData",
                 "risk": "#/components/schemas/RiskToolData"
               },
               "propertyName": "kind"
@@ -11631,6 +11943,9 @@
               },
               {
                 "$ref": "#/components/schemas/CompareToolData"
+              },
+              {
+                "$ref": "#/components/schemas/ReportReadToolData"
               }
             ],
             "title": "Data"

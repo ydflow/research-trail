@@ -38,6 +38,8 @@ from .skills import SkillCatalog, SkillError
 from .skill_contracts import SkillView, SkillToggle, SkillRead, SkillResource
 from .research import ResearchService
 from .research_store import ResearchError
+from .session_capacity import SessionContextCapacity
+from .report_read_tool import VerifiedReport, bound_runner
 from .research_strategies import strategies as research_strategies
 from .research_contracts import ResearchInput, ResearchPlan, ResearchStrategy, ResearchSummary, ResearchRun, ResearchData
 from .reports import ReportService
@@ -177,6 +179,10 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     @app.exception_handler(ActiveRun)
     async def active_run(_request, error):
         return JSONResponse(status_code=409, content={"detail": str(error)})
+
+    @app.exception_handler(SessionContextCapacity)
+    async def session_context_capacity(_request, error):
+        return JSONResponse(status_code=409, content={'detail': str(error)})
 
     protected = [Depends(authorize)]
 
@@ -646,6 +652,18 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
 
     @app.post("/sessions/{session_id}/runs", response_model=RunDTO, status_code=201, dependencies=protected)
     def start_run(session_id: str, body: StartRun):
+        if body.research_context is not None:
+            app.state.store.session(session_id)
+            try:
+                body.input.encode('utf-8')
+            except UnicodeEncodeError:
+                raise HTTPException(status_code=422, detail='INVALID_ARGUMENT') from None
+            if body.kind != 'fake_agent' or body.scenario != 'normal':
+                raise HTTPException(status_code=422, detail='REPORT_CONTEXT_UNSUPPORTED')
+            verified = VerifiedReport.prepare(app.state.reports, body.research_context)
+            return app.state.manager.start(session_id, body.input, 'normal', research_context=verified.ref,
+                binding_validate=verified.validate,
+                runner_factory=lambda run_id: bound_runner(verified, app.state.store, session_id, run_id))
         if body.kind == "fake_agent":
             return app.state.manager.start(session_id, body.input, body.scenario)
         if body.kind == "openai_agent":

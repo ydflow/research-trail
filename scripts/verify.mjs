@@ -53,7 +53,7 @@ run('ResearchTrail original deterministic historical observations', python, ['-m
 for (const operation of [['upgrade', 'head'], ['upgrade', 'head'], ['current'], ['check']]) {
   run(`Temporary database migration: ${operation.join(' ')}`, python, ['-m', 'alembic', ...operation], resolve(root, 'services/backend'));
 }
-run('Node offline / SSE / adapter / packaged launch / Markdown / notice / asynchronous readiness tests', process.execPath, ['--test', 'tests/offline.test.cjs', 'tests/stream.test.cjs', 'tests/packaging.test.cjs', 'tests/markdown.test.cjs', 'tests/ui-notices.test.cjs', 'tests/backend-ready.test.cjs', 'tests/market-overview.test.cjs']);
+run('Node offline / SSE / adapter / packaged launch / Markdown / notice / asynchronous readiness tests', process.execPath, ['--test', 'tests/offline.test.cjs', 'tests/stream.test.cjs', 'tests/packaging.test.cjs', 'tests/markdown.test.cjs', 'tests/ui-notices.test.cjs', 'tests/backend-ready.test.cjs', 'tests/market-overview.test.cjs', 'tests/report-context.test.cjs']);
 run('Electron main / preload build', process.execPath, ['scripts/build.mjs']);
 run('Renderer build', process.execPath, [join(desktopRequire.resolve('vite/package.json'), '..', 'bin/vite.js'), 'build'], resolve(root, 'apps/desktop'));
 run('Real Electron integration', process.execPath, ['--test', 'tests/desktop.test.cjs']);

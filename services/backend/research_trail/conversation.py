@@ -4,9 +4,11 @@ This is a Python implementation, not the upstream TypeScript business kernel.
 Wire names are snake_case and UTC ISO times; legacy UI conversions belong in TS.
 """
 from typing import Annotated, Literal
-from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, TypeAdapter, field_validator, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, TypeAdapter, field_validator, model_validator, model_serializer
 from .market import Quote, Kline
 from .analytics_contracts import RiskQuery, CompareQuery, RiskReport, Comparison
+from .provider_contracts import Provenance
+from .tool_arguments import ToolArguments
 
 MODEL_LABEL = "规则演示／假模型"
 LIVE_MODEL_LABEL = "OpenAI兼容／真实模型"
@@ -35,10 +37,16 @@ class SessionDTO(DTO):
     message_count: int = Field(ge=0)
 
 
+class ReportContextRef(DTO):
+    report_id: str = Field(pattern=r'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$')
+    source_run_id: str = Field(pattern=r'^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$')
+
+
 class StartRun(DTO):
     input: str = Field(min_length=1, max_length=2000)
     kind: Literal["fixture", "fake_agent", "openai_agent"] = "fixture"
     scenario: Literal["normal", "delayed", "timeout"] = "normal"
+    research_context: ReportContextRef | None = None
 
     @field_validator("input")
     @classmethod
@@ -64,12 +72,13 @@ class ErrorPayload(DTO):
     retryable: bool = False
 
 
-class ToolArguments(DTO):
-    symbol: str = Field(pattern=r"^[A-Z0-9]{1,6}\.US$")
+class ReportReadArguments(ReportContextRef):
+    evidence_offset: int = Field(default=0, strict=True, ge=0, le=383)
+    evidence_limit: int = Field(default=16, strict=True, ge=1, le=32)
 
 
-ToolName = Literal["market.quote", "market.kline", "portfolio.risk", "stocks.compare"]
-ToolInput = ToolArguments | RiskQuery | CompareQuery
+ToolName = Literal["market.quote", "market.kline", "portfolio.risk", "stocks.compare", "research.report.read"]
+ToolInput = ToolArguments | RiskQuery | CompareQuery | ReportReadArguments
 
 
 class ToolCall(DTO):
@@ -106,7 +115,46 @@ class CompareToolData(DTO):
     kind: Literal['compare'] = 'compare'
     report: Comparison
 
-ToolData = Annotated[QuoteToolData | KlineToolData | RiskToolData | CompareToolData, Field(discriminator="kind")]
+# These references reuse existing report schemas. CapabilityRegistry imports the
+# independent legacy argument module, so cold calendar/report CLI imports are safe.
+from .report_contracts import ReportEvidence, ReportGap, ReportClaim, ReportForecast
+
+
+class ReportReadSource(DTO):
+    capability: str = Field(max_length=80)
+    provenance: Provenance
+    step_started_at: AwareDatetime
+    step_completed_at: AwareDatetime
+
+
+class ReportReadToolData(ReportContextRef):
+    kind: Literal['research_report'] = 'research_report'
+    symbol: Literal['AAPL.US', 'MSFT.US', 'NVDA.US', 'TSLA.US']
+    strategy: str = Field(max_length=80)
+    report_version: int = Field(ge=1)
+    source_mode: Literal['simulated'] = 'simulated'
+    provider: str = Field(max_length=80)
+    synthesizer_mode: Literal['fixed'] = 'fixed'
+    collection_status: str = Field(max_length=40)
+    facts: list[ReportEvidence] = Field(max_length=32)
+    sources: list[ReportReadSource] = Field(max_length=16)
+    gaps: list[ReportGap] = Field(max_length=16)
+    saved_summary: list[ReportClaim] = Field(max_length=4)
+    saved_forecast: ReportForecast | None = None
+    evidence_offset: int = Field(ge=0, le=383)
+    total: int = Field(ge=0, le=384)
+    returned: int = Field(ge=0, le=32)
+    next_offset: int | None = Field(default=None, ge=0, le=383)
+    omitted_facts: int = Field(ge=0, le=384)
+    omitted_sources: int = Field(ge=0)
+    omitted_gaps: int = Field(ge=0)
+    omitted_summary: int = Field(ge=0, le=4)
+    omitted_forecast: int = Field(ge=0, le=1)
+    facts_label: Literal['已保存的模拟事实；不是实时行情'] = '已保存的模拟事实；不是实时行情'
+    synthesis_label: Literal['固定合成器演示；分析与未校准预测不是事实'] = '固定合成器演示；分析与未校准预测不是事实'
+
+
+ToolData = Annotated[QuoteToolData | KlineToolData | RiskToolData | CompareToolData | ReportReadToolData, Field(discriminator="kind")]
 
 
 class ToolSuccess(DTO):
@@ -151,6 +199,14 @@ class EmptyPayload(DTO):
 class StartedPayload(DTO):
     input: str
     started_at: AwareDatetime
+    research_context: ReportContextRef | None = None
+
+    @model_serializer(mode='wrap')
+    def serialize(self, handler):
+        value = handler(self)
+        if self.research_context is None:
+            value.pop('research_context', None)
+        return value
 
 
 class TextPayload(DTO):

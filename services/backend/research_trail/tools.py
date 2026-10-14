@@ -35,11 +35,15 @@ class ToolRegistry:
         result=[]
         for name in self._handlers:
             if not self.capabilities.tool_available(name): continue
-            schema=ARGUMENTS[name].model_json_schema()
+            schema=self.capabilities.tool_specs[name].arguments.model_json_schema()
             schema['required']=list(schema['properties'])
             result.append({"type":"function","function":{"name":name.replace('.', '_'),
                 "description":"Read-only "+name+"; Python computed facts; inspect source, currency and missing data. Default simulated mode. Portfolio ID must be supplied by user; never guess.",
                 "parameters":schema,"strict":True}})
+            if name == 'research.report.read':
+                for key in ('report_id', 'source_run_id'):
+                    schema['properties'][key]['enum'] = [getattr(self.report_context, key)]
+                result[-1]['function']['description'] = 'Read only this run-bound saved simulated report. Facts and fixed synthesis are separate; no collection, network or implicit pagination.'
         return result
 
     def decode(self, name, arguments):
@@ -47,7 +51,7 @@ class ToolRegistry:
         if name not in allowed:
             raise ToolExecutionError("UNKNOWN_TOOL", "模型请求的工具未注册或不是允许的只读工具。")
         try:
-            return ToolCall(name=allowed[name], arguments=ARGUMENTS[allowed[name]].model_validate(arguments))
+            return ToolCall(name=allowed[name], arguments=self.capabilities.tool_specs[allowed[name]].arguments.model_validate(arguments))
         except ValidationError:
             raise ToolExecutionError("INVALID_ARGUMENT", "模型工具参数不符合注册工具契约。") from None
 
@@ -57,16 +61,18 @@ class ToolRegistry:
             raise ToolExecutionError("UNKNOWN_TOOL", f"工具未注册：{call.name}。")
         # Validate again at the execution boundary, not just in the rule model.
         try:
-            arguments = ARGUMENTS[call.name].model_validate(call.arguments.model_dump())
+            arguments = self.capabilities.tool_specs[call.name].arguments.model_validate(call.arguments.model_dump())
         except ValidationError:
             raise ToolExecutionError("INVALID_ARGUMENT", "工具股票参数不符合US代码契约。" if call.name.startswith('market.') else "工具参数不符合注册契约。") from None
         try:
             data = DATA_ADAPTER.validate_python(handler(arguments).model_dump(mode="json"))
-            valid = data.kind == RESULT_KINDS[call.name]
+            valid = data.kind == self.capabilities.tool_specs[call.name].result_kind
             if not valid: raise ToolExecutionError('INVALID_RESULT','工具返回的结果类型与请求不符。')
             if data.kind in ('quote','kline'):
                 valid = valid and (data.quote.symbol if data.kind=='quote' else data.symbol)==arguments.symbol
             elif data.kind=='risk': valid=valid and data.report.portfolio_id==arguments.portfolio_id and data.report.provider==arguments.provider and data.report.mode==arguments.mode
+            elif data.kind=='research_report':
+                valid = valid and data.report_id == arguments.report_id and data.source_run_id == arguments.source_run_id and data.evidence_offset == arguments.evidence_offset and data.returned == len(data.facts) and data.returned <= arguments.evidence_limit
             else: valid=valid and data.report.symbols==arguments.symbols and data.report.currency==arguments.currency and data.report.provider==arguments.provider and data.report.mode==arguments.mode and data.report.report_period==f'{arguments.report_year} Annual'
             if not valid:
                 raise ToolExecutionError("INVALID_RESULT", "数据工具返回的类型或股票代码与请求不一致。")

@@ -21,4 +21,16 @@
 .report-references { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .report-panel button { overflow-wrap: anywhere; max-width: 100%; }
 .report-panel select { width: 340px; }
+.report-panel .report-overview { padding: 8px 10px; border-left: 3px solid var(--brand, #466658); background: #f0f7f5; }
+.report-claim { padding: 8px 10px; border-left: 3px solid #b6c9c2; background: #f6f9f8; overflow-wrap: anywhere; }
+.report-claim-analysis { border-color: #8297ae; background: #f4f7fa; }
+.report-claim-prediction, .report-prediction { border-color: #d1ad68; background: #fcf9f1; }
+.report-panel .report-references { align-items: center; margin: 6px 0 0; font-size: 12px; }
+.report-panel .report-references button { min-height: 32px; padding: 4px 8px; font-size: 12px; }
+.report-identity, .report-original { overflow-wrap: anywhere; }
+.report-panel summary { cursor: pointer; padding: 5px 0; }
+.report-panel .report-prediction, .report-panel .report-gap-section { padding: 8px 10px; border-left: 3px solid #d1ad68; }
+.report-panel .report-gap-section { background: #fcf9f1; }
+.report-panel .report-prediction h4, .report-panel .report-gap-section h4 { margin-top: 0; }
+.report-panel summary:focus-visible { outline: 2px solid var(--brand, #466658); outline-offset: 3px; }
 .recovery-panel { border-top: 1px solid var(--border); margin-top: 14px; padding-top: 12px; overflow-wrap: anywhere; }

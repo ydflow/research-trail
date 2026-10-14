@@ -4536,6 +4536,13 @@ export interface components {
              */
             text: string;
         };
+        /** ReportContextRef */
+        ReportContextRef: {
+            /** Report Id */
+            report_id: string;
+            /** Source Run Id */
+            source_run_id: string;
+        };
         /** ReportDiff */
         ReportDiff: {
             /** After Id */
@@ -4713,6 +4720,115 @@ export interface components {
             step_completed_at: string;
             /** Step Started At */
             step_started_at: string;
+        };
+        /** ReportReadArguments */
+        ReportReadArguments: {
+            /**
+             * Evidence Limit
+             * @default 16
+             */
+            evidence_limit: number;
+            /**
+             * Evidence Offset
+             * @default 0
+             */
+            evidence_offset: number;
+            /** Report Id */
+            report_id: string;
+            /** Source Run Id */
+            source_run_id: string;
+        };
+        /** ReportReadSource */
+        ReportReadSource: {
+            /** Capability */
+            capability: string;
+            provenance: components["schemas"]["Provenance"];
+            /**
+             * Step Completed At
+             * Format: date-time
+             */
+            step_completed_at: string;
+            /**
+             * Step Started At
+             * Format: date-time
+             */
+            step_started_at: string;
+        };
+        /** ReportReadToolData */
+        ReportReadToolData: {
+            /** Collection Status */
+            collection_status: string;
+            /** Evidence Offset */
+            evidence_offset: number;
+            /** Facts */
+            facts: components["schemas"]["ReportEvidence"][];
+            /**
+             * Facts Label
+             * @default 已保存的模拟事实；不是实时行情
+             * @constant
+             */
+            facts_label: "已保存的模拟事实；不是实时行情";
+            /** Gaps */
+            gaps: components["schemas"]["ReportGap"][];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "research_report";
+            /** Next Offset */
+            next_offset?: number | null;
+            /** Omitted Facts */
+            omitted_facts: number;
+            /** Omitted Forecast */
+            omitted_forecast: number;
+            /** Omitted Gaps */
+            omitted_gaps: number;
+            /** Omitted Sources */
+            omitted_sources: number;
+            /** Omitted Summary */
+            omitted_summary: number;
+            /** Provider */
+            provider: string;
+            /** Report Id */
+            report_id: string;
+            /** Report Version */
+            report_version: number;
+            /** Returned */
+            returned: number;
+            saved_forecast?: components["schemas"]["ReportForecast"] | null;
+            /** Saved Summary */
+            saved_summary: components["schemas"]["ReportClaim"][];
+            /**
+             * Source Mode
+             * @default simulated
+             * @constant
+             */
+            source_mode: "simulated";
+            /** Source Run Id */
+            source_run_id: string;
+            /** Sources */
+            sources: components["schemas"]["ReportReadSource"][];
+            /** Strategy */
+            strategy: string;
+            /**
+             * Symbol
+             * @enum {string}
+             */
+            symbol: "AAPL.US" | "MSFT.US" | "NVDA.US" | "TSLA.US";
+            /**
+             * Synthesis Label
+             * @default 固定合成器演示；分析与未校准预测不是事实
+             * @constant
+             */
+            synthesis_label: "固定合成器演示；分析与未校准预测不是事实";
+            /**
+             * Synthesizer Mode
+             * @default fixed
+             * @constant
+             */
+            synthesizer_mode: "fixed";
+            /** Total */
+            total: number;
         };
         /** ReportSection */
         ReportSection: {
@@ -5944,6 +6060,7 @@ export interface components {
              * @enum {string}
              */
             kind: "fixture" | "fake_agent" | "openai_agent";
+            research_context?: components["schemas"]["ReportContextRef"] | null;
             /**
              * Scenario
              * @default normal
@@ -5955,6 +6072,7 @@ export interface components {
         StartedPayload: {
             /** Input */
             input: string;
+            research_context?: components["schemas"]["ReportContextRef"] | null;
             /**
              * Started At
              * Format: date-time
@@ -6364,7 +6482,7 @@ export interface components {
              * Name
              * @enum {string}
              */
-            name: "market.quote" | "market.kline" | "portfolio.risk" | "stocks.compare";
+            name: "market.quote" | "market.kline" | "portfolio.risk" | "stocks.compare" | "research.report.read";
             /** Result */
             result: components["schemas"]["ToolSuccess"] | components["schemas"]["ToolFailure"];
         };
@@ -6399,17 +6517,17 @@ export interface components {
             /** Call Id */
             call_id: string;
             /** Input */
-            input: components["schemas"]["ToolArguments"] | components["schemas"]["RiskQuery"] | components["schemas"]["CompareQuery"];
+            input: components["schemas"]["ToolArguments"] | components["schemas"]["RiskQuery"] | components["schemas"]["CompareQuery"] | components["schemas"]["ReportReadArguments"];
             /**
              * Name
              * @enum {string}
              */
-            name: "market.quote" | "market.kline" | "portfolio.risk" | "stocks.compare";
+            name: "market.quote" | "market.kline" | "portfolio.risk" | "stocks.compare" | "research.report.read";
         };
         /** ToolSuccess */
         ToolSuccess: {
             /** Data */
-            data: components["schemas"]["QuoteToolData"] | components["schemas"]["KlineToolData"] | components["schemas"]["RiskToolData"] | components["schemas"]["CompareToolData"];
+            data: components["schemas"]["QuoteToolData"] | components["schemas"]["KlineToolData"] | components["schemas"]["RiskToolData"] | components["schemas"]["CompareToolData"] | components["schemas"]["ReportReadToolData"];
             /**
              * Ok
              * @default true

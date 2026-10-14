@@ -1,5 +1,49 @@
 # 研迹：来源、个人动作与验收证据
 
+## 82. P2-08最终审查、局部视觉收尾与独立Draft交付（2026-10-14启动，2026-10-15收尾）
+
+用户已认可四张实际Electron图，本轮单独授权最终审查/必要局部精修/完整verify后提交、普通推送及目标main的独立Draft PR；不自动合并/发布或进入P2-09/10。现场feature分支正确，HEAD/main/origin/main/远程main仍d51476757e508b2054942478bfb19fe6deb0b0c0；main CI38382422780成功且对应同一Head，GitHub账号ydflow，同分支暂无PR。第81节的仅本地及待视觉审核是上一轮事实。
+
+视觉只收纳长身份和证据按钮，完整引用/原始事实/来源/Pointer/ordinal/SHA256可读取；助手工具卡显示本页/总数/未读及来源/缺口数量，保存分析与未校准预测分区。没有修改批准的读取DTO、权限或假模型回复事实。实际三尺寸流程加强键盘展开、原始引用/hash核对与历史快照相等；Browser plugin not available，沿已有Playwright驱动真实Electron，不安装依赖。
+
+审查发现成功tool_result提交之后、最终回复提交之前尚缺报告变更守卫，已在Store.finish的同一BEGIN IMMEDIATE内核验冻结绑定，只用于新关联运行的completed提交。新增3回归验证报告正文/来源generation变化及报告读取边界返回REPORT_NOT_FOUND，失败时保留先前工具事件且不写最终text_delta/成功终态；删除桩不绕过原SQLite外键。默认Runner循环与旧成功路径不变。容量/工具专项77通过，131072/98304/262144及24KiB不动。
+
+过程日志保留：首次手工Vite路径错误导致测试读到旧构建（wrapup-focused.log），正确desktop目录构建后主流程通过；专项暴露新增超时测试修改共享时序字典，改为测试内副本，不更改生产阈值/旧断言。删除报告的初始测试触发既有外键约束，改为已批准只读服务边界的缺失桩；修正后77通过（wrapup-report-python-fixed.log）。Electron专项原报告+6新用例通过/1新拍摄用例尺寸失败，拍摄前显式等待native窗口可见，保留严格实际1440×900断言，单项通过（wrapup-visible-window.log）。完整verify运行中，最终源码哈希/日志/截图/双CI回执待结果补齐。
+
+最终完整wrapup-verify.log含PASS：977 Python（417.55秒）/61 Node（24+37）/89实际Electron（623.96秒）共1127通过，失败/取消/跳过/todo0。原1039与前轮85保留，新增加3回归，本阶段新增88。独立CLI、契约/类型/构建、隔离迁移、Pi离线与许可审计通过；现有弃用和bundle>500kB警告保留。wrapup_manifest.py核对33源码哈希不变、旧Python/Node测试未改、Electron旧正文无删除/替换、4新/5修改schema及HTTP路径不变、敏感文件/密钥模式无命中、agent.py/Pi/Provider/依赖/迁移零改动。共36提交文件，截图/日志/数据库不进Git。
+
+wrapup-accepted/的33张P2-08实际图覆盖计划/采集/partial/取消、报告、身份/原始证据展开、助手与工具卡；1440×900/1000×700/600×700的native窗口与PNG尺寸核对，无整页横向溢出，主流程页面错误/console error-warning为0。wrapup-acceptance.json含图片SHA256与全部源码哈希；wrapup-tool-run-evidence.json读取本次三个独立Electron测试数据库，逐条核对实际工具事件、report/source/session/agent Run绑定、唯一一次调用、投影事实、SHA256/Pointer/ordinal、真实工具JSON进入规则回复。全程Fake/Fixture，非真实行情或LLM能力验收。用户已授权提交/普通推送/Draft，最终Head双CI必须独立核验并保存于pr-delivery.json/远程完整日志，不能以本机通过代替；不合并/发布，P2-09/10未开始。
+
+## 81. P2-08批准方案A后的本地开发与离线验收（2026-10-14，代码完成/待用户审核）
+
+用户单独批准第5.1～5.4节，授权报告Ref、可选StartRun/started持久绑定、专用读取参数/结果及生成契约、受限工具、现有runs:agent可选参数和容量/跨页联动。保留第80节审计及原三份文档，未切分支/覆盖用户改动。禁止真实服务、依赖/Provider/新端点/迁移/正式Pi/P2-09/10/发布及Git提交推送，本轮均未执行。
+
+先实现并测试容量门禁：compact JSONResponse序列化、UTF-16代码单元，现有快照>131072在创建Run前拒绝，BEGIN IMMEDIATE防竞争；98304预留+32768安全余量，旧262144不动。16项容量专项通过，包含边界、转义/中文/非BMP、最大输入/答复、恰好24KiB的实际ReportReadToolData成功封套、五终态、真实JSONResponse/SSE帧、并发单赢家、非法绑定零写入。新52项Python全部通过，另36覆盖可信ID/投影/原始SHA256/来源、权限与真实拒绝、分页/遗漏/24KiB、单调用、真实Manager取消/删除/超时迟到及重开数据库只读历史；4项Node通过。
+
+复用旧采集/恢复/报告/会话，修复证券写入入口和上下文/导航迟到隔离，计划与实际步骤区分，显式报告关联与发送。启动前以及Run写事务内验证原始采集检查点/投影证据，冻结报告hash/采集generation到session/agent Run；每实例注册表只新读取工具，普通仍四工具。成功tool_result写入前再次核验并沿旧终态事务阻止迟到写入。新增schema只有ReportContextRef/ReportReadArguments/ReportReadSource/ReportReadToolData，旧schema实际仅StartRun/StartedPayload/ToolStartedPayload/ToolResultPayload/ToolSuccess变化，HTTP路径集合完全相同，IPC名不变。契约/类型/构建通过；agent.py、旧金融/研究/报告契约及服务、Pi、依赖/迁移无修改。
+
+首批5实际Electron专项通过，标准流程原始报告37事实、工具页16事实，准备问题和关联均零Run，显式发送后恰好一次真实Python工具调用并在规则答复引用实际事实ID；partial保留缺口；会话/研究切换、证券写入禁用、总览迟到与CN/crypto限制通过。真实窗口1440×900/1000×700/600×700零整页横溢出；主流程控制台/pageerror空，重启快照精确相同。Browser plugin not available，已有Playwright实际Electron/preload/Python及隔离Temp SQLite/离线网络护栏；没有用浏览器截图替代Electron、调用真模型/Provider或读取用户账户。
+
+过程问题与日志均保留：契约导入循环已调整导入顺序；新增测试的非ready报告遵循原数据库document终态约束；最初专项2 Electron通过/3失败，补准确计划标的说明并修正测试中的IPC名称/控件角色，后5通过，不放宽旧断言。第一次手工Renderer命令cwd错误已用desktop内实际构建复验通过；既有Starlette/httpx弃用和主chunk>500kB警告保留，未装依赖或改阈值。仓库外qa的capacity-initial/report-capacity-result、backend-import-fixed/report-focused/report-expanded、electron-initial/electron-corrected等过程日志和截图保留。contract-scope-review.json及P2-08-tool-run-evidence.json记录实际差异与工具UUID/原始事实SHA256，不提交截图/日志/数据库。完整verify运行中，最终数量/失败与截图清单将在完成后追加，不能提前写全量通过或用户视觉认可。
+
+第81节最终回执：最新完整bun.cmd run verify退出0（accepted-verify.log）：974 Python/61 Node（24+37）/89实际Electron共1124通过，失败/取消/跳过/todo0，原1039完整保留、新增74/4/7共85。旧Python/Node文件未改，Electron旧正文零删除/替换，未放宽旧时限。独立CLI、契约/类型/构建、Pi与许可审计、隔离重复迁移/一致性均通过；保留现有弃用与bundle警告。首轮完整import失败、主动停止的预算补强过程、后来原P2-07 hover及Pi计时竞争各一次全量失败均保留日志；单项原断言复验通过，未稳定复现为永久缺陷，没有改Pi或旧测试。最后一次完整全通过不抹去这些过程。
+
+补强后容量31与工具43共74新Python通过；实际JSON最大2000/4000字符、控制/转义/非BMP、32事实且24KiB成功封套和五终态20组合最大增量88064<98304，阈值131072、旧262144不变。新增Fake回复8192 UTF-16序列化门禁超限明确失败而非截断，旧公共字段和模型不改。读取后提交前报告变更、源generation改变、取消/超时/删除迟到成功拒绝；上下文改变沿原取消API结束旧绑定运行。首期冷导入四种顺序也覆盖独立CLI入口，旧ToolArguments仅内部移位，公开生成schema不变。
+
+最终24张P2-08图在qa/accepted，真实1440×900/1000×700/600×700及PNG头核对；初期默认窗口照片名称问题已在拍摄准备阶段修正，不称旧照片实际1440。证券/计划/进行中/取消/partial/报告/助手/工具/重启均有实图。P2-08-acceptance.json含24图SHA256、32源码/测试/契约哈希；accepted-source-sha256.json全量前后一致，截图/日志/临时库均仓库外。标准报告a6197daf-cec3-42e6-a1a0-2852dd19c8f4、源Run8d7d1e41-2ef4-4c73-a970-4ebb62f8cc75、实际tool_result#5、16/37事实与SHA256/引用回执在accepted-tool-run-evidence.json；回复确实消费工具JSON，仍是规则假模型，不是实时金融或LLM分析。没有自动开始/翻页/重采/重放执行、真实费用、依赖/迁移或新端点；旧金融/研究/报告服务、agent.py/Pi/凭证边界保留。技术说明第11节是当前事实；状态代码完成/待用户视觉审核，feature分支与main基线不变、暂存为空，未提交/推送/PR/合并/发布，P2-09/10未执行。
+
+## 80. P2-08现有研究架构审计与可信报告联动审批方案（2026-10-13）
+
+用户正式授权P2-08本地开发、离线测试及实际Electron验收，同时明确新公开API/DTO、Agent工具或迁移须先提交最小设计并单独批准；核心证据闭环若需要扩展，先报告阻塞，不把部分实现称全阶段完成。本轮没有GitHub写入、提交或暂存。恢复AGENTS/阶段文档、实际源码、仓库外PROJECT_STATE与P2-07交接，核实main/origin/main/远程main为`d51476757e508b2054942478bfb19fe6deb0b0c0`、工作区干净，最新[main CI 38382422780](https://github.com/ydflow/research-trail/actions/runs/38382422780) completed/SUCCESS且headSha一致。900 Python/57 Node/82 Electron共1039是既有基线；创建`feat/phase2-agent-research-workbench`，不覆盖其他分支。
+
+逐项追踪App跨页状态、证券WorkspaceState、总览四US跳转、ResearchPanel初始化与计划、采集/恢复、报告保存与原始引用、Agent注册工具、SessionPanel与SSE、ResearchRun/会话Run身份。现有链路已经能证券→计划→用户采集→保存数据→用户生成固定报告→历史/来源核验，但采集直接经ProviderService，不是聊天Agent工具事件。默认AgentRunner只暴露quote/kline/risk/compare四工具，StartRun不接受报告关联；现有报告页面的数据GET不等于模型获得报告工具证据。新报告类型不能落入K线或对比结果兜底。另发现证券写入中研究按钮及跨页await需要上下文代次保护、研究初始props只初始化、会话快照全量历史受Electron262144 UTF-16长度限制等具体连接点。
+
+新增[PHASE2-AGENT-RESEARCH-WORKBENCH.md](PHASE2-AGENT-RESEARCH-WORKBENCH.md)，列出十项源码审计、旧链路/可直接复用UI、文件清单及离线验收方案。推荐未批准的最小A：已有StartRun/started事件增加可选report_id/source_run_id绑定，专用ReportReadArguments/ReportReadToolData进入公开工具联合类型与生成契约，现有runs:agent可选末尾参数严格校验；无新端点/IPC名/数据库迁移。每Run受限research.report.read只读显式绑定、simulated数据/fixed合成器的completed报告与核验后的原始证据；初期只fake_agent/四US，不读取真实报告、不启采集/报告生成。保留默认AgentRunner循环及普通四工具；新实例一次有界读取、24KiB结果上限和启动前原子会话容量门禁，不放宽旧传输预算。身份、错误/取消、来源/事实/保存分析/当前答复分层及全部审批范围写明，不以提示词粘贴报告代替工具。
+
+实际验收仅审计：既有六份Python专项116 passed、失败/跳过0、64.15秒（保留既有Starlette/httpx弃用警告）；既有流/就绪Node专项17通过、失败/取消/跳过/todo0；生成契约一致性检查通过。仓库外自主探针使用新Temp SQLite、实际create_app/TestClient、Fake/Fixture、拒绝访问的凭证Vault桩与离线护栏。value计划4项时Provider读取0、研究Run0；用户式显式采集4项成功，显式fixed报告completed、真实模型请求0、保存37条事实，report.run_id=document.source_run_id=采集UUID且原始回读核验成功；历史重读新增Provider调用0。实际注册表只有原四工具，发送含实际报告UUID的规则假模型运行tool_started=0；附research_context的启动请求422拒绝。该运行completed仅为旧规则回复完成，不能作为报告进入Agent的证明。
+
+日志/探针位于仓库外`D:/folio/research-trail-p2-08-qa`的audit-python.log、audit-node.log、audit-contracts.log、audit_probe.py、audit-probe.log、audit-probe.json；初次无显式Vault桩的探针亦使用新临时空库、未读取凭证，保留为audit-probe-initial.log/json；后续加拒绝访问Vault桩再次通过。未消费真实金融API、LLM、账户额度或读取私人数据库。本轮只新增技术文档、更新ROADMAP和本文，不改产品源码/公开契约/工具/迁移/依赖/UI，未新增仓库测试、执行全量verify或拍摄新Electron截图。待用户单独批准A后才能进入可信报告工具实现与整体验收；P2-08尚未完成，P2-09/10没有开始，既有真实权限/地域/再分发与Windows/Pi分发风险保留。
+
 ## 79. P2-07最终审查、完整复验与独立Draft PR（2026-10-13）
 
 用户已审核A股、美股、加密货币及600px四张实际Electron截图并认可，明确授权最终审查/小范围必要修复/完整验收后提交、普通推送及独立Draft PR；不合并、不新增真实Provider/付费API/依赖/P2-08/Release/安装包。起始feature分支正确，HEAD/main/origin/main/远程main均3c428fd2005959fef4f2931da266eb8ba7b8f53c、main CI38274410878成功，GitHub身份ydflow，暂无同分支PR。第78节的用户截图待审核/仅本地授权是上一轮事实。

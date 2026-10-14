@@ -6,6 +6,7 @@ from sqlalchemy import delete, func, select
 from .conversation import EVENT_ADAPTER, MODEL_LABEL, LIVE_MODEL_LABEL, ErrorPayload, EventPage, MessageDTO, RunDTO, SessionDTO, SessionSnapshot
 from .database import Database
 from .models import EventRecord, MessageRecord, RunRecord, SessionRecord
+from .session_capacity import require_capacity
 
 FIXTURE_PARTS = ("固定通信测试事件。", "未调用模型或行情。")
 
@@ -101,14 +102,17 @@ class Store:
             # sqlite3 legacy mode does not BEGIN on SELECT. Pin one WAL read
             # snapshot so message text and each run's event waterline agree.
             db.connection().exec_driver_sql("BEGIN")
-            session = self.session_dto(db, self.require_session(db, session_id))
-            messages = [MessageDTO.model_validate(row) for row in db.scalars(
-                select(MessageRecord).where(MessageRecord.session_id == session_id).order_by(MessageRecord.sequence))]
-            runs = [RunDTO.model_validate(row) for row in db.scalars(
-                select(RunRecord).where(RunRecord.session_id == session_id).order_by(RunRecord.started_at.desc(), RunRecord.id))]
-            events = [EVENT_ADAPTER.validate_python(row.envelope) for row in db.scalars(
-                select(EventRecord).where(EventRecord.session_id == session_id).order_by(EventRecord.run_id, EventRecord.sequence))]
-            return SessionSnapshot(session=session, messages=messages, runs=runs, events=events)
+            return self._snapshot(db, session_id)
+
+    def _snapshot(self, db, session_id):
+        session = self.session_dto(db, self.require_session(db, session_id))
+        messages = [MessageDTO.model_validate(row) for row in db.scalars(
+            select(MessageRecord).where(MessageRecord.session_id == session_id).order_by(MessageRecord.sequence))]
+        runs = [RunDTO.model_validate(row) for row in db.scalars(
+            select(RunRecord).where(RunRecord.session_id == session_id).order_by(RunRecord.started_at.desc(), RunRecord.id))]
+        events = [EVENT_ADAPTER.validate_python(row.envelope) for row in db.scalars(
+            select(EventRecord).where(EventRecord.session_id == session_id).order_by(EventRecord.run_id, EventRecord.sequence))]
+        return SessionSnapshot(session=session, messages=messages, runs=runs, events=events)
 
     def start_fixture(self, session_id, text):
         return self._start_run(session_id, text)
@@ -174,13 +178,17 @@ class Store:
                            type=kind, timestamp=timestamp, envelope=envelope))
         session.updated_at = timestamp
 
-    def begin_agent(self, session_id, text, kind="fake_agent"):
+    def begin_agent(self, session_id, text, kind="fake_agent", *, research_context=None, binding_validate=None):
         if kind not in ("fake_agent", "openai_agent"):
             raise ValueError("不是Agent运行类型")
         with self.database.write() as db:
             session = self.require_session(db, session_id)
             if db.scalar(select(RunRecord.id).where(RunRecord.session_id == session_id, RunRecord.status == "running")):
                 raise ActiveRun("当前会话已有活动运行，请先取消或等待结束。")
+            if research_context is not None:
+                require_capacity(self._snapshot(db, session_id).model_dump(mode='json'))
+                if binding_validate is not None:
+                    binding_validate()
             message_sequence = (db.scalar(select(func.max(MessageRecord.sequence))
                                 .where(MessageRecord.session_id == session_id)) or 0) + 1
             started = now()
@@ -188,7 +196,10 @@ class Store:
                                model_label=MODEL_LABEL if kind == "fake_agent" else LIVE_MODEL_LABEL, error=None, input=text, answer="",
                                assistant_message_id=str(uuid4()), started_at=started, completed_at=None,
                                last_sequence=0)
-            self.append_event(db, record, session, "run_started", {"input": text, "started_at": started})
+            started_payload = {"input": text, "started_at": started}
+            if research_context is not None:
+                started_payload['research_context'] = research_context.model_dump(mode='json')
+            self.append_event(db, record, session, "run_started", started_payload)
             self.append_event(db, record, session, "message_started", {}, True)
             db.add(record)
             db.flush([record])
@@ -202,7 +213,7 @@ class Store:
             result = RunDTO.model_validate(record)
         return result
 
-    def append_running(self, session_id, run_id, kind, payload):
+    def append_running(self, session_id, run_id, kind, payload, *, result_guard=None):
         if kind not in ("status", "text_delta", "tool_started", "tool_result"):
             raise ValueError("终态事件只能通过finish写入")
         with self.database.write() as db:
@@ -213,12 +224,14 @@ class Store:
             if record.status != "running":
                 raise RunStopped()
             session = self.require_session(db, session_id)
+            if result_guard is not None:
+                result_guard()
             self.append_event(db, record, session, kind, payload, kind == "text_delta")
             if kind == "text_delta":
                 record.answer += payload["text"]
                 db.get(MessageRecord, record.assistant_message_id).content = record.answer
 
-    def finish(self, session_id, run_id, status, text="", error: ErrorPayload | None = None):
+    def finish(self, session_id, run_id, status, text="", error: ErrorPayload | None = None, *, result_guard=None):
         if status not in ("completed", "failed", "cancelled", "timed_out", "interrupted"):
             raise ValueError("不是合法终态")
         with self.database.write() as db:
@@ -227,6 +240,8 @@ class Store:
             # can write a final message/event; retries return the winning record.
             if record.status == "running":
                 session = self.require_session(db, session_id)
+                if result_guard is not None:
+                    result_guard()
                 assistant = db.get(MessageRecord, record.assistant_message_id)
                 if error is not None:
                     self.append_event(db, record, session, "error", error.model_dump(mode="json"))
