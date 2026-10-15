@@ -3,10 +3,10 @@ from uuid import uuid4
 
 from sqlalchemy import delete, func, select
 
-from .conversation import EVENT_ADAPTER, MODEL_LABEL, LIVE_MODEL_LABEL, ErrorPayload, EventPage, MessageDTO, RunDTO, SessionDTO, SessionSnapshot
+from .conversation import EVENT_ADAPTER, MODEL_LABEL, LIVE_MODEL_LABEL, ErrorPayload, EventPage, MessageDTO, RunDTO, SessionDTO, SessionSnapshot, SessionHistoryPage
 from .database import Database
 from .models import EventRecord, MessageRecord, RunRecord, SessionRecord
-from .session_capacity import require_capacity
+from .session_capacity import require_capacity, json_units, LOCAL_RESPONSE_LIMIT, SessionContextCapacity
 
 FIXTURE_PARTS = ("固定通信测试事件。", "未调用模型或行情。")
 
@@ -103,6 +103,43 @@ class Store:
             # snapshot so message text and each run's event waterline agree.
             db.connection().exec_driver_sql("BEGIN")
             return self._snapshot(db, session_id)
+
+    def history(self, session_id, before_sequence=None, limit=10):
+        if type(limit) is not int or not 1 <= limit <= 10 or (before_sequence is not None and
+                (type(before_sequence) is not int or not 1 <= before_sequence <= 9007199254740991)):
+            raise ValueError('历史分页参数无效。')
+        with self.database.sessions() as db:
+            db.connection().exec_driver_sql('BEGIN')
+            session = self.session_dto(db, self.require_session(db, session_id))
+            first_sequence = func.min(MessageRecord.sequence)
+            query = select(MessageRecord.run_id, first_sequence.label('first_sequence')).where(
+                MessageRecord.session_id == session_id).group_by(MessageRecord.run_id)
+            if before_sequence is not None:
+                query = query.having(first_sequence < before_sequence)
+            groups = db.execute(query.order_by(first_sequence.desc(), MessageRecord.run_id).limit(limit + 1)).all()
+            selected = groups[:limit]
+            ids = [run_id for run_id, _sequence in selected]
+            messages = [MessageDTO.model_validate(row) for row in db.scalars(select(MessageRecord).where(
+                MessageRecord.session_id == session_id, MessageRecord.run_id.in_(ids)).order_by(MessageRecord.sequence))]
+            runs = {row.id: RunDTO.model_validate(row) for row in db.scalars(select(RunRecord).where(
+                RunRecord.session_id == session_id, RunRecord.id.in_(ids)))}
+            events = [EVENT_ADAPTER.validate_python(row.envelope) for row in db.scalars(select(EventRecord).where(
+                EventRecord.session_id == session_id, EventRecord.run_id.in_(ids)).order_by(EventRecord.run_id, EventRecord.sequence))]
+            while True:
+                ids = {run_id for run_id, _sequence in selected}
+                more = len(selected) < len(groups)
+                page = SessionHistoryPage(session=session,
+                    messages=[message for message in messages if message.run_id in ids],
+                    runs=[runs[run_id] for run_id, _sequence in selected],
+                    events=[event for event in events if event.run_id in ids], has_more=more,
+                    next_before_sequence=selected[-1][1] if more and selected else None)
+                # One normal-path serialization, then shrink by complete runs
+                # only when the exact wire size exceeds the unchanged limit.
+                if json_units(page.model_dump(mode='json')) <= LOCAL_RESPONSE_LIMIT:
+                    return page
+                if len(selected) <= 1:
+                    raise SessionContextCapacity('SESSION_CONTEXT_CAPACITY：单次运行历史超过读取上限；历史仍保存在本机。')
+                selected = selected[:-1]
 
     def _snapshot(self, db, session_id):
         session = self.session_dto(db, self.require_session(db, session_id))

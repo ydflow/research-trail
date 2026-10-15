@@ -40,10 +40,16 @@ def run(c, sid, text):
     response = c.post(f"/sessions/{sid}/runs", json={"input": text, "kind": "fake_agent"})
     assert response.status_code == 201
     record = response.json()
-    deadline = time.monotonic() + 5
-    while record["status"] == "running" and time.monotonic() < deadline:
-        time.sleep(0.01)
-        record = c.get(f"/sessions/{sid}/runs/{record['id']}").json()
+    # Join the owned worker: its exit follows the terminal transaction commit
+    # and timer/Work cleanup. Keep the original five-second failure bound, while
+    # avoiding repeated HTTP/SQLite reads competing with the worker's commits.
+    # One atomic dict lookup keeps a strong reference without waiting on the
+    # manager lock (which can itself be inside a database commit).
+    work = c.app.state.manager.work.get(record['id'])
+    if work is not None:
+        work.thread.join(5)
+        assert not work.thread.is_alive(), 'Agent worker did not finish and release its resources'
+    record = c.get(f"/sessions/{sid}/runs/{record['id']}").json()
     assert record["status"] != "running"
     events = c.get(f"/sessions/{sid}/runs/{record['id']}/event-log").json()["events"]
     assert record["model_label"] == MODEL_LABEL

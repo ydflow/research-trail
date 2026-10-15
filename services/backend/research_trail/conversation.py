@@ -321,3 +321,9 @@ class SessionSnapshot(DTO):
     messages: list[MessageDTO]
     runs: list[RunDTO]
     events: list[StreamEvent]
+
+
+class SessionHistoryPage(SessionSnapshot):
+    """A whole-run slice; cursor is the oldest included user message sequence."""
+    has_more: bool
+    next_before_sequence: int | None = Field(default=None, ge=1, le=9007199254740991)

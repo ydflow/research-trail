@@ -1323,6 +1323,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sessions/{session_id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Session History */
+        get: operations["session_history_sessions__session_id__history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sessions/{session_id}/messages": {
         parameters: {
             query?: never;
@@ -5952,6 +5969,23 @@ export interface components {
              */
             updated_at: string;
         };
+        /**
+         * SessionHistoryPage
+         * @description A whole-run slice; cursor is the oldest included user message sequence.
+         */
+        SessionHistoryPage: {
+            /** Events */
+            events: (components["schemas"]["RunStartedEvent"] | components["schemas"]["MessageStartedEvent"] | components["schemas"]["StatusEvent"] | components["schemas"]["TextDeltaEvent"] | components["schemas"]["MessageCompletedEvent"] | components["schemas"]["RunCompletedEvent"] | components["schemas"]["ToolStartedEvent"] | components["schemas"]["ToolResultEvent"] | components["schemas"]["ErrorEvent"] | components["schemas"]["CancelledEvent"])[];
+            /** Has More */
+            has_more: boolean;
+            /** Messages */
+            messages: components["schemas"]["MessageDTO"][];
+            /** Next Before Sequence */
+            next_before_sequence?: number | null;
+            /** Runs */
+            runs: components["schemas"]["RunDTO"][];
+            session: components["schemas"]["SessionDTO"];
+        };
         /** SessionSnapshot */
         SessionSnapshot: {
             /** Events */
@@ -9901,6 +9935,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    session_history_sessions__session_id__history_get: {
+        parameters: {
+            query?: {
+                before_sequence?: number | null;
+                limit?: number;
+            };
+            header?: {
+                "x-researchtrail-token"?: string | null;
+            };
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionHistoryPage"];
+                };
             };
             /** @description Validation Error */
             422: {

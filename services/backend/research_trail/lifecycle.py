@@ -108,6 +108,12 @@ class RunManager:
     def checkpoint(self, work):
         if work.stop.is_set() or self.closed:
             raise RunStopped()
+        # A delayed Timer callback is not proof that the deadline has not passed.
+        # Check at every publication boundary using the same absolute deadline.
+        if work.deadline and time.monotonic() >= work.deadline:
+            with self.lock:
+                self.timeout(work, 'RUN_TIMEOUT')
+            raise RunStopped()
 
     def emit(self, work, kind, payload):
         with self.lock:

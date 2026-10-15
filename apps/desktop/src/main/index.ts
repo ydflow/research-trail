@@ -208,6 +208,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('sessions:messages', (event, id: unknown) => { assertSender(event); return backend.sessionMessages(id); });
   ipcMain.handle('sessions:runs', (event, id: unknown) => { assertSender(event); return backend.sessionRuns(id); });
   ipcMain.handle('sessions:snapshot', (event, id: unknown) => { assertSender(event); return backend.sessionSnapshot(id); });
+  ipcMain.handle('sessions:history', (event, id: unknown, before: unknown, limit: unknown) => { assertSender(event); return backend.sessionHistory(id, before, limit); });
   ipcMain.handle('runs:start', (event, id: unknown, input: unknown) => { assertSender(event); return backend.startRun(id, input); });
   ipcMain.handle('runs:agent', (event, id: unknown, input: unknown, scenario: unknown, kind: unknown, context: unknown) => { assertSender(event); return backend.startAgentRun(id, input, scenario, kind, context); });
   ipcMain.handle('runs:cancel', (event, id: unknown, runId: unknown) => { assertSender(event); return backend.cancelRun(id, runId); });

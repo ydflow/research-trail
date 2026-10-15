@@ -1,4 +1,4 @@
-import { periodNames, type ChartPeriod } from '../market/FinancialKLineChart';
+import { periodNames, type ChartPeriod } from '../market/chart-periods';
 
 export function ChartPeriodBar({ period, onChange }: { period: ChartPeriod; onChange: (value: ChartPeriod) => void }) {
   return <div className="security-period-bar" role="group" aria-label="证券K线周期切换">

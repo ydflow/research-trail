@@ -134,7 +134,8 @@ const bridge: ResearchTrailBridge = {
   cancelRun: (id, runId) => ipcRenderer.invoke('runs:cancel', id, runId),
   getRun: (id, runId) => ipcRenderer.invoke('runs:get', id, runId),
   runEvents: (id, runId, after = 0) => ipcRenderer.invoke('runs:events', id, runId, after),
-  subscribeRun(id, runId, after, callback) {
+    sessionHistory: (id, before, limit) => ipcRenderer.invoke('sessions:history', id, before, limit),
+    subscribeRun(id, runId, after, callback) {
     const key = crypto.randomUUID();
     const listener = (_event: unknown, receivedKey: string, value: RunStreamUpdate) => { if (receivedKey === key) callback(value); };
     ipcRenderer.on('runs:changed', listener);

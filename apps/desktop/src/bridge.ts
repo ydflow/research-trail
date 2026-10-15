@@ -137,6 +137,7 @@ export interface ResearchTrailBridge {
   sessionMessages(sessionId: string): Promise<MessageDTO[]>;
   sessionRuns(sessionId: string): Promise<RunDTO[]>;
   sessionSnapshot(sessionId: string): Promise<SessionSnapshot>;
+  sessionHistory(sessionId: string, beforeSequence?: number, limit?: number): Promise<import('./conversation-types').SessionHistoryPage>;
   startRun(sessionId: string, input: string): Promise<RunDTO>;
   startAgentRun(sessionId: string, input: string, scenario?: 'normal' | 'delayed' | 'timeout', kind?: 'fake_agent' | 'openai_agent', researchContext?: import('./conversation-types').ReportContextRef): Promise<RunDTO>;
   cancelRun(sessionId: string, runId: string): Promise<RunDTO>;

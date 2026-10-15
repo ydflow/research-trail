@@ -67,6 +67,10 @@ export class RunSubscription {
       this.request?.destroy();
       if (fatal) { this.status('failed', message); this.stop(); return; }
       this.failures++;
+      if (this.failures >= 8) {
+        this.status('failed', '事件续读连续失败，请更新记录或重新连接后端。');
+        this.stop(); return;
+      }
       this.status('reconnecting', message);
       this.retryTimer = setTimeout(() => this.connect(), Math.min(250 * 2 ** Math.min(this.failures - 1, 4), 4000));
     };

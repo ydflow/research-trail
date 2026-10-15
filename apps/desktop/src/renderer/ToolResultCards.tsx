@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import type { StreamEvent } from '../conversation-types';
 import { QuoteCard } from './market/QuoteCard';
-import { FinancialKLineChart } from './market/FinancialKLineChart';
+import { FinancialKLineChart } from './market/LazyFinancialKLineChart';
 
 const Results = lazy(() => import('./analytics/Results'));
 const utc = (time: string) => new Date(time).toISOString().replace('T', ' ').replace('Z', ' UTC');

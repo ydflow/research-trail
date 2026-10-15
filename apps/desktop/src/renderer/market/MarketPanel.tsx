@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { MarketSnapshot, MarketSymbol } from '../../market-types';
 import { Watchlist } from './Watchlist';
 import { QuoteCard } from './QuoteCard';
-import { FinancialKLineChart } from './FinancialKLineChart';
+import { FinancialKLineChart } from './LazyFinancialKLineChart';
 import { SectionHeader, SurfaceCard, StateNotice } from '../ui/Primitives';
 import { MarketOverview } from './MarketOverview';
 
