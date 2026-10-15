@@ -5,7 +5,7 @@
 // Python owns all reads/state. Scope and retained declarations: docs/EVIDENCE.md §28.
 import { useState, type ReactNode } from 'react';
 import type { SecurityBlock, SecurityPage, SecurityQuery } from '../../workspace-types';
-import { FinancialKLineChart } from '../market/FinancialKLineChart';
+import { FinancialKLineChart } from '../market/LazyFinancialKLineChart';
 import { SurfaceCard, StateNotice } from '../ui/Primitives';
 
 export const display = (value: string | number | null | undefined) => value == null || value === '' ? '—' : typeof value === 'number' ? value.toLocaleString('zh-CN', { maximumFractionDigits: 4 }) : value;

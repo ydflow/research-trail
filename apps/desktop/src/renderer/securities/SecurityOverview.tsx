@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { SecurityPage, SecurityQuery } from '../../workspace-types';
-import { FinancialKLineChart, periodNames, type ChartPeriod } from '../market/FinancialKLineChart';
+import { FinancialKLineChart } from '../market/LazyFinancialKLineChart';
+import { periodNames, type ChartPeriod } from '../market/chart-periods';
 import { SurfaceCard, StateNotice } from '../ui/Primitives';
 import { BlockFrame, OverviewView, FinancialsView, NewsView, Source, display } from './SecurityViews';
 import './security-overview.css';

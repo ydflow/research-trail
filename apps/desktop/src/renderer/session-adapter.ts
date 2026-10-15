@@ -1,4 +1,4 @@
-import type { MessageDTO, RunDTO, StreamEvent, SessionSnapshot } from '../conversation-types';
+import type { MessageDTO, RunDTO, StreamEvent, SessionSnapshot, SessionHistoryPage } from '../conversation-types';
 function toolTarget(input: Extract<StreamEvent, { type: 'tool_started' }>['payload']['input']) {
   return 'report_id' in input ? `报告 ${input.report_id} · 采集 ${input.source_run_id}` : 'symbol' in input ? input.symbol : 'portfolio_id' in input ? input.portfolio_id : input.symbols.join(', ');
 }
@@ -44,11 +44,36 @@ export function applySessionEvent(snapshot: SessionSnapshot, event: StreamEvent)
   if (!run || event.sequence <= run.last_sequence) return snapshot;
   if (event.sequence !== run.last_sequence + 1) throw new Error('事件序号不连续，请重新读取会话。');
   return { ...snapshot,
-    events: mergeEvents(snapshot.events, [event]),
+    // Identity/sequence checks above prove append-only order for this run.
+    // Avoid rebuilding and sorting a Map of all saved history per SSE event.
+    events: [...snapshot.events, event],
     runs: snapshot.runs.map((item) => item.id === run.id ? { ...item, last_sequence: event.sequence } : item),
     messages: event.type === 'text_delta' ? snapshot.messages.map((item) => item.id === event.message_id && item.run_id === event.run_id
       ? { ...item, content: item.content + event.payload.text } : item) : snapshot.messages,
   };
+}
+
+export function mergeHistory(current: SessionHistoryPage, incoming: SessionHistoryPage, head = false): SessionHistoryPage {
+  if (current.session.id !== incoming.session.id) return current;
+  // A disconnected renderer may miss more than a page of new runs. Keeping its
+  // old tail cursor would hide the middle gap. Rebuild from the fresh head so
+  // every omitted run remains reachable through the server's returned cursor.
+  if (head && current.messages.length && incoming.messages.length &&
+      incoming.messages[0].sequence > current.messages.at(-1)!.sequence + 1) return incoming;
+  // An earlier-page request can outlive that head refresh. Only overlapping or
+  // adjacent older pages belong to the current chain; keep its cursor on gaps.
+  if (!head && current.messages.length && incoming.messages.length &&
+      incoming.messages.at(-1)!.sequence < current.messages[0].sequence - 1) return current;
+  const merge = <T extends { id: string }>(a: T[], b: T[]) => [...new Map([...a, ...b].map(item => [item.id, item])).values()];
+  const older = current.messages.length && (!incoming.messages.length || current.messages[0].sequence < incoming.messages[0].sequence) ? current : incoming;
+  // A head refresh replaces overlapping records with newer SQLite facts. Older
+  // pages must never roll back the live message or its SSE waterline.
+  const first = head ? current : incoming, last = head ? incoming : current;
+  return { session: head ? incoming.session : current.session,
+    messages: merge(first.messages, last.messages).sort((a, b) => a.sequence - b.sequence),
+    runs: merge(first.runs, last.runs).sort((a, b) => b.started_at.localeCompare(a.started_at) || a.id.localeCompare(b.id)),
+    events: mergeEvents(first.events, last.events),
+    has_more: older.has_more, next_before_sequence: older.next_before_sequence };
 }
 
 export interface ToolView {

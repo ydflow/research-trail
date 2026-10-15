@@ -2649,6 +2649,166 @@ test('P2-08 same mounted research component replaces entry identity and ignores 
     assert.equal((await page.evaluate(()=>window.researchTrail.researchRuns())).length,0);
   }finally{await instance.app.close();}
 });
+function seedLongHistory(count=100) {
+  const output=mkdtempSync(resolve(tmpdir(),'research-trail-long-'));
+  return JSON.parse(execFileSync(resolve(root,'services/backend/.venv/Scripts/python.exe'),
+    [resolve(root,'scripts/stability-performance.py'),'seed','--output',output,'--count',String(count)],
+    {cwd:root,env:{...env,RESEARCH_TRAIL_OFFLINE:'1',PYTHONUTF8:'1'},encoding:'utf8',windowsHide:true}));
+}
+
+async function p209Screenshot(page,name) {
+  if(!process.env.RESEARCH_TRAIL_QA_DIR)return;
+  mkdirSync(process.env.RESEARCH_TRAIL_QA_DIR,{recursive:true});
+  await page.screenshot({path:resolve(process.env.RESEARCH_TRAIL_QA_DIR,name),scale:'css',fullPage:false,animations:'disabled'});
+}
+
+test('P2-09 long history pages, unchanged capacity prompt, native sizes and restart stay read only', {timeout:120000},async()=>{
+  const data=seedLongHistory();let instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_DB_PATH:data.database});
+  const errors=[];
+  try {
+    let page=instance.page;page.on('pageerror',e=>errors.push(e.message));await waitForBackend(page);
+    assert.equal(await page.title(),'研迹 · ResearchTrail');assert.equal(await page.locator('vite-error-overlay').count(),0);
+    assert.equal(await page.getByLabel('工作区',{exact:true}).getByRole('button').count(),15);
+    let assistant=page.getByLabel('常驻研究助手',{exact:true});
+    await expect(assistant.getByTestId('current-session')).toHaveText('离线长期会话');
+    await expect(assistant.locator('.message-history article')).toHaveCount(20);
+    await assert.rejects(page.evaluate(id=>window.researchTrail.sessionSnapshot(id),data.session_id),/响应过大/);
+    const original=await page.evaluate(id=>window.researchTrail.sessionHistory(id),data.session_id);
+    for(const [width,height] of [[1440,900],[1000,700],[600,700]]) {
+      await instance.app.evaluate(({BrowserWindow},size)=>BrowserWindow.getAllWindows()[0].setContentSize(...size),[width,height]);
+      await expect.poll(()=>page.evaluate(()=>[innerWidth,innerHeight])).toEqual([width,height]);
+      await assistant.getByRole('button',{name:'加载更早历史',exact:true}).scrollIntoViewIfNeeded();
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+      await p209Screenshot(page,`p2-09-history-${width}.png`);
+    }
+    for(let index=0;index<9;index++) {
+      await assistant.getByRole('button',{name:'加载更早历史',exact:true}).click();
+      await expect(assistant.locator('.message-history article')).toHaveCount(40+20*index);
+    }
+    assert.equal(await assistant.getByRole('button',{name:'加载更早历史',exact:true}).count(),0);
+    const ids=await assistant.locator('[data-message-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.messageId));
+    assert.equal(ids.length,200);assert.equal(new Set(ids).size,200);
+    await expect(assistant.getByTestId('message-history')).toContainText('研究问题 0000');
+    await expect(assistant.getByTestId('message-history')).toContainText('研究问题 0099');
+    const scroll=await assistant.locator('.chat-transcript').evaluate(async el=>{
+      const before=performance.now();el.scrollTop=el.scrollHeight;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+      return {ms:performance.now()-before,top:el.scrollTop,height:el.scrollHeight};
+    });assert.ok(scroll.top>0);await p209Screenshot(page,'p2-09-history-all-scrolled.png');
+    // An explicit real UI report candidate must still hit the ORIGINAL full-
+    // session 131072 gate. Pagination cannot bypass Agent admission.
+    await instance.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setContentSize(1440,900));
+    await page.getByLabel('工作区',{exact:true}).getByRole('button',{name:'研究采集',exact:true}).click();
+    const research=page.getByRole('region',{name:'研究采集工作台',exact:true});
+    await research.getByRole('radio',{name:/价值投资/}).check();
+    await research.getByRole('button',{name:'开始采集',exact:true}).click();
+    await expect(research.getByTestId('research-run')).toHaveAttribute('data-status','collected');
+    await research.getByRole('button',{name:'生成新报告',exact:true}).click();
+    await expect(research.getByTestId('report-status')).toHaveAttribute('data-status','completed');
+    await research.getByRole('button',{name:'关联到AI助手',exact:true}).click();
+    await assistant.getByRole('button',{name:'准备报告问题',exact:true}).click();
+    await assistant.getByRole('button',{name:'运行规则演示',exact:true}).click();
+    await expect(assistant.getByRole('alert')).toContainText('SESSION_CONTEXT_CAPACITY');
+    await expect(assistant.getByRole('alert')).toContainText('新建会话');
+    assert.equal((await page.evaluate(id=>window.researchTrail.sessionRuns(id),data.session_id)).length,100);
+    await assistant.getByRole('alert').scrollIntoViewIfNeeded();await p209Screenshot(page,'p2-09-capacity-gate.png');
+    const owned=children(instance.pid);await instance.app.close();
+    for(const pid of owned)await expect.poll(()=>alive(pid)).toBe(false);
+    instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_DB_PATH:data.database});page=instance.page;
+    page.on('pageerror',e=>errors.push(e.message));await waitForBackend(page);
+    assistant=page.getByLabel('常驻研究助手',{exact:true});
+    await expect(assistant.locator('.message-history article')).toHaveCount(20);
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.sessionHistory(id),data.session_id),original);
+    assert.ok((await page.evaluate(id=>window.researchTrail.sessionRuns(id),data.session_id)).every(r=>r.kind==='fixture'));
+    assert.deepEqual(errors,[]);
+    if(process.env.RESEARCH_TRAIL_QA_DIR)require('node:fs').writeFileSync(resolve(process.env.RESEARCH_TRAIL_QA_DIR,'p2-09-long-history.json'),JSON.stringify({data,scroll,messages:ids.length,unique:new Set(ids).size,errors},null,2));
+  } finally {await instance.app.close();}
+});
+
+test('P2-09 late older page cannot pollute a newly selected session or retain IPC listeners', {timeout:60000},async()=>{
+  const data=seedLongHistory(25),instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_DB_PATH:data.database});
+  try {
+    const page=instance.page;await waitForBackend(page);
+    const assistant=page.getByLabel('常驻研究助手',{exact:true});
+    await assistant.getByLabel('会话标题',{exact:true}).fill('另一会话');await assistant.getByRole('button',{name:'创建会话',exact:true}).click();
+    await expect(assistant.getByTestId('current-session')).toHaveText('另一会话');
+    await assistant.getByRole('button',{name:/离线长期会话/}).click();await expect(assistant.locator('.message-history article')).toHaveCount(20);
+    await instance.app.evaluate(({ipcMain})=>{
+      const original=ipcMain._invokeHandlers.get('sessions:history');globalThis.historyHeld=false;
+      ipcMain.removeHandler('sessions:history');ipcMain.handle('sessions:history',async(...args)=>{
+        const result=await original(...args);
+        if(args[2]!==undefined){globalThis.historyHeld=true;await new Promise(r=>{globalThis.releaseHistory=r;});}return result;
+      });
+      globalThis.listenersBefore=ipcMain.listenerCount('runs:subscribe');
+    });
+    await assistant.getByRole('button',{name:'加载更早历史',exact:true}).click();
+    await expect.poll(()=>instance.app.evaluate(()=>globalThis.historyHeld)).toBe(true);
+    await assistant.getByRole('button',{name:/另一会话/}).click();await expect(assistant.getByTestId('current-session')).toHaveText('另一会话');
+    await instance.app.evaluate(()=>globalThis.releaseHistory());
+    await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+    await expect(assistant.locator('.message-history article')).toHaveCount(0);
+    await expect(assistant).not.toContainText('读取更早历史');
+    for(let index=0;index<5;index++) {
+      await page.getByLabel('工作区',{exact:true}).getByRole('button',{name:'会话与事件',exact:true}).click();
+      await expect(page.getByTestId('current-session')).toHaveText('另一会话');
+      await page.getByLabel('工作区',{exact:true}).getByRole('button',{name:'模拟行情',exact:true}).click();
+      await expect(assistant.getByTestId('current-session')).toHaveText('另一会话');
+    }
+    assert.equal(await instance.app.evaluate(({ipcMain})=>ipcMain.listenerCount('runs:subscribe')),await instance.app.evaluate(()=>globalThis.listenersBefore));
+  } finally {await instance.app.close();}
+});
+
+test('P2-09 missed pages after disconnection stay reachable and older run selection survives refresh', {timeout:60000},async()=>{
+  const data=seedLongHistory(1),instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_DB_PATH:data.database});
+  try {
+    const page=instance.page;await waitForBackend(page);
+    const assistant=page.getByLabel('常驻研究助手',{exact:true});
+    await expect(assistant.locator('.message-history article')).toHaveCount(2);
+    const original=await page.evaluate(id=>window.researchTrail.sessionHistory(id),data.session_id);
+    // Deliberately write through the actual backend while this renderer holds
+    // its old head, modeling more than one missed page without fake UI state.
+    await page.evaluate(async id=>{for(let index=0;index<25;index++)await window.researchTrail.startRun(id,`断线期间保存 ${index}`);},data.session_id);
+    await assistant.getByRole('button',{name:'重新读取事件',exact:true}).click();
+    await expect(assistant.locator('.message-history article')).toHaveCount(20);
+    await assistant.getByRole('button',{name:'加载更早历史',exact:true}).click();
+    await expect(assistant.locator('.message-history article')).toHaveCount(40);
+    await assistant.getByRole('button',{name:'加载更早历史',exact:true}).click();
+    await expect(assistant.locator('.message-history article')).toHaveCount(52);
+    const ids=await assistant.locator('[data-message-id]').evaluateAll(nodes=>nodes.map(n=>n.dataset.messageId));
+    assert.equal(new Set(ids).size,52);assert.ok(original.messages.every(m=>ids.includes(m.id)));
+    await assistant.getByLabel('运行记录',{exact:true}).selectOption(original.runs[0].id);
+    await assistant.getByRole('button',{name:'重新读取事件',exact:true}).click();
+    await expect(assistant.getByRole('button',{name:'重新读取事件',exact:true})).toBeEnabled();
+    await expect(assistant.getByLabel('运行记录',{exact:true})).toHaveValue(original.runs[0].id);
+    await expect(assistant.locator('.message-history article')).toHaveCount(52);
+    await expect(assistant.getByTestId('event-list').locator('li')).toHaveCount(7);
+    await page.reload();await waitForBackend(page);
+    await expect(assistant.locator('.message-history article')).toHaveCount(20);
+    await instance.app.evaluate(({ipcMain})=>{
+      const original=ipcMain._invokeHandlers.get('sessions:history');globalThis.oldPageHeld=false;
+      ipcMain.removeHandler('sessions:history');ipcMain.handle('sessions:history',async(...args)=>{
+        const result=await original(...args);
+        if(args[2]!==undefined&&!globalThis.oldPageHeld){globalThis.oldPageHeld=true;await new Promise(r=>{globalThis.releaseOldPage=r;});}
+        return result;
+      });
+    });
+    await assistant.getByRole('button',{name:'加载更早历史',exact:true}).click();
+    await expect.poll(()=>instance.app.evaluate(()=>globalThis.oldPageHeld)).toBe(true);
+    await page.evaluate(async id=>{for(let index=0;index<25;index++)await window.researchTrail.startRun(id,`并发头更新 ${index}`);},data.session_id);
+    await assistant.getByRole('button',{name:'重新读取事件',exact:true}).click();
+    await expect(assistant.getByTestId('message-history')).toContainText('并发头更新 24');
+    await instance.app.evaluate(()=>globalThis.releaseOldPage());
+    await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+    await expect(assistant.locator('.message-history article')).toHaveCount(20);
+    for(const count of [40,60,80,100,102]) {
+      await assistant.getByRole('button',{name:'加载更早历史',exact:true}).click();
+      await expect(assistant.locator('.message-history article')).toHaveCount(count);
+    }
+    const restored=await assistant.locator('[data-message-id]').evaluateAll(nodes=>nodes.map(n=>n.dataset.messageId));
+    assert.equal(new Set(restored).size,102);assert.ok(original.messages.every(m=>restored.includes(m.id)));
+    await p209Screenshot(page,'p2-09-gap-restored.png');
+  } finally {await instance.app.close();}
+});
+
 async function launch(extraEnv = {}) {
   const databasePath = extraEnv.RESEARCH_TRAIL_DB_PATH || resolve(mkdtempSync(resolve(tmpdir(), 'research-trail-qa-')), 'test.sqlite3');
   // Playwright deliberately removes NODE_OPTIONS from Electron's environment.
@@ -2690,7 +2850,7 @@ test('real window, isolated bridge, health, interruption/retry, scoped shutdown'
       node: typeof window.require,
       process: typeof window.process,
     })), { bridge: ['checkHealth', 'marketSnapshot', 'marketSymbols', 'marketOverview', 'cancelMarketOverview', 'onStatus', 'retryBackend', 'status',
-      'listSessions', 'createSession', 'getSession', 'deleteSession', 'sessionMessages', 'sessionRuns', 'sessionSnapshot', 'startRun', 'startAgentRun', 'cancelRun', 'getRun', 'runEvents', 'subscribeRun',
+      'listSessions', 'createSession', 'getSession', 'deleteSession', 'sessionMessages', 'sessionRuns', 'sessionSnapshot', 'sessionHistory', 'startRun', 'startAgentRun', 'cancelRun', 'getRun', 'runEvents', 'subscribeRun',
       'connections', 'saveConnection', 'deleteConnection', 'saveCredential', 'deleteCredential', 'testConnection', 'profile', 'saveProfile', 'deleteProfile', 'diagnostics', 'exportDiagnostics',
       'providerProfiles', 'saveProvider', 'deleteProvider', 'saveProviderCredential', 'deleteProviderCredential', 'providerCapabilities', 'queryProvider',
       'workspaceState', 'addWatch', 'removeWatch', 'selectSecurity', 'securityPage', 'openNewsSource',
@@ -3232,7 +3392,7 @@ test('snapshot first, real stream reconnect, active refresh and session unsubscr
     assert.equal(streams.length, 2);
     assert.match(streams[1].cursor, new RegExp(`${first.id}:\\d+$`));
     assert.equal(streams[1].cursor, disconnectedCursor);
-    const snapshotIndex = trace.findIndex((item) => item.url.endsWith(`/sessions/${a.id}/snapshot`));
+    const snapshotIndex = trace.findIndex((item) => item.url.includes(`/sessions/${a.id}/history?`));
     assert.ok(snapshotIndex >= 0 && snapshotIndex < trace.findIndex((item) => item.url.includes('follow=true')));
     const fetched = await instance.page.getByTestId('tool-fetched-at').textContent();
     await instance.page.getByTestId('tool-activity-toggle').click();
@@ -3294,10 +3454,10 @@ test('late earlier session snapshot cannot overwrite selected session', { timeou
     });
     await instance.app.evaluate(({ ipcMain }, samples) => {
       globalThis.snapshotQa = [];
-      ipcMain.removeHandler('sessions:snapshot');
-      ipcMain.handle('sessions:snapshot', async (_event, id) => {
+      ipcMain.removeHandler('sessions:history');
+      ipcMain.handle('sessions:history', async (_event, id) => {
         await new Promise((done) => setTimeout(done, id === samples[0].session.id ? 600 : 10));
-        globalThis.snapshotQa.push(id); return samples.find((sample) => sample.session.id === id);
+        globalThis.snapshotQa.push(id); return { ...samples.find((sample) => sample.session.id === id), has_more: false, next_before_sequence: null };
       });
     }, samples);
     await instance.page.getByRole('button', { name: '会话与事件', exact: true }).click();

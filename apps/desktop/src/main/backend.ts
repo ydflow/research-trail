@@ -472,6 +472,12 @@ export class BackendManager extends EventEmitter {
   }
   cancelRun(id: unknown, runId: unknown) { return this.business<RunDTO>(`/sessions/${this.id(id)}/runs/${this.id(runId)}/cancel`, 'POST'); }
   sessionSnapshot(id: unknown) { return this.business<SessionSnapshot>(`/sessions/${this.id(id)}/snapshot`); }
+  sessionHistory(id: unknown, before: unknown = undefined, limit: unknown = 10) {
+    const sessionId = this.id(id);
+    if (typeof limit !== 'number' || !Number.isSafeInteger(limit) || limit < 1 || limit > 10 ||
+        (before !== undefined && (typeof before !== 'number' || !Number.isSafeInteger(before) || before < 1))) throw new Error('历史分页参数无效。');
+    return this.business<import('../conversation-types').SessionHistoryPage>(`/sessions/${sessionId}/history?limit=${limit}${before === undefined ? '' : `&before_sequence=${before}`}`);
+  }
   subscribeRun(key: unknown, id: unknown, runId: unknown, after: unknown, update: (value: RunStreamUpdate) => void) {
     const subscriptionId = this.id(key), sessionId = this.id(id), run = this.id(runId);
     if (typeof after !== 'number' || !Number.isSafeInteger(after) || after < 0) throw new Error('事件游标必须是非负整数。');

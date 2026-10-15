@@ -89,6 +89,9 @@ class ReportService:
                 validate_forecast_time(synthesis,work.bundle,self.store.get(work.identity).started_at)
                 document=ReportDocument(**work.bundle,synthesis=synthesis)
                 self.research.validate_checkpoint(work.bundle['source_run_id'])
+                # Validation and checkpoint IO also consume the original budget.
+                if time.monotonic() >= deadline:
+                    self.store.finish(work.identity,'failed','REPORT_TIMEOUT',requests_started=self.requests(work)); return
                 self.store.finish(work.identity,'completed',document=document,requests_started=self.requests(work),request_uncertain=False)
         except ResearchError as error:
             with self.lock: self.store.finish(work.identity,'failed',error.code,requests_started=self.requests(work),request_uncertain=False)

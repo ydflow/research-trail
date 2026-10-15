@@ -1,6 +1,6 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import type { ReportCandidate, SessionDTO, SessionSnapshot } from '../conversation-types';
-import { applySessionEvent, eventDetail, messageView, runStatus, toolViews } from './session-adapter';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import type { ReportCandidate, SessionDTO, SessionHistoryPage } from '../conversation-types';
+import { applySessionEvent, eventDetail, mergeHistory, messageView, runStatus, toolViews } from './session-adapter';
 import { ToolResultCards } from './ToolResultCards';
 import { ToolActivity } from './ToolActivity';
 import { SectionHeader, StateNotice } from './ui/Primitives';
@@ -12,13 +12,15 @@ export function SessionPanel({ available, compact = false, reportContext, onClea
   const [sessions, setSessions] = useState<SessionDTO[]>([]);
   const [initialSelection] = useState(() => sessionStorage.getItem('research-trail.session') || '');
   const [selected, setSelected] = useState('');
-  const [snapshot, setSnapshot] = useState<SessionSnapshot>();
+  const [snapshot, setSnapshot] = useState<SessionHistoryPage>();
+  const snapshotRef = useRef(snapshot); snapshotRef.current = snapshot;
   const [runId, setRunId] = useState(() => sessionStorage.getItem('research-trail.run') || '');
   const [title, setTitle] = useState('');
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const [revision, setRevision] = useState(0);
   const [stream, setStream] = useState('等待数据库快照');
   const [scenario, setScenario] = useState<'normal' | 'delayed' | 'timeout'>('normal');
@@ -26,6 +28,8 @@ export function SessionPanel({ available, compact = false, reportContext, onClea
   const contextKey = `${selected}:${reportContext?.report_id ?? ''}:${reportContext?.source_run_id ?? ''}`;
   const scope = useRef(contextKey); scope.current = contextKey;
   const mounted = useRef(true);
+  const historyGeneration = useRef(0);
+  useEffect(() => { historyGeneration.current++; setHistoryLoading(false); }, [selected]);
   const boundRun = useRef<{ sessionId: string; runId: string; key: string } | undefined>(undefined);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => {
@@ -63,17 +67,18 @@ export function SessionPanel({ available, compact = false, reportContext, onClea
     setStream(available ? '读取数据库快照…' : '后端断开，已显示内容保留；请重试启动');
     if (available && selected && window.researchTrail) {
       const bridge = window.researchTrail;
-      void bridge.sessionSnapshot(selected).then((saved) => {
+      void bridge.sessionHistory(selected).then((saved) => {
         if (!active) return;
-        setSnapshot(saved);
-        setRunId((previous) => saved.runs.some((item) => item.id === previous) ? previous : saved.runs[0]?.id || '');
+        const selection = snapshotRef.current?.session.id === selected ? mergeHistory(snapshotRef.current, saved, true) : saved;
+        setSnapshot(previous => previous?.session.id === selected ? mergeHistory(previous, saved, true) : saved);
+        setRunId((previous) => selection.runs.some((item) => item.id === previous) ? previous : saved.runs[0]?.id || '');
         setLoading(false); setStream('历史已同步');
         // Events committed between snapshot and subscription are replayed by SSE.
         for (const record of saved.runs.filter((item) => item.status === 'running')) {
           unsubscribe.push(bridge.subscribeRun(selected, record.id, record.last_sequence, (update) => {
             if (!active) return;
             if (update.kind === 'connection') { setStream(update.detail); return; }
-            setSnapshot((previous) => previous?.session.id === selected ? applySessionEvent(previous, update.event) : previous);
+            setSnapshot((previous) => previous?.session.id === selected ? { ...previous, ...applySessionEvent(previous, update.event) } : previous);
             if (update.event.type === 'run_completed') {
               // Python determines the terminal state; UI refreshes its cache.
               setRevision((value) => value + 1);
@@ -90,7 +95,18 @@ export function SessionPanel({ available, compact = false, reportContext, onClea
   const messages = current ? snapshot!.messages : [];
   const runs = current ? snapshot!.runs : [];
   const run = runs.find((item) => item.id === runId);
-  const events = current ? snapshot!.events.filter((event) => event.run_id === runId) : [];
+  const events = useMemo(() => snapshot?.session.id === selected ? snapshot.events.filter(event => event.run_id === runId) : [], [snapshot, selected, runId]);
+  const loadEarlier = async () => {
+    if (!snapshot?.has_more || snapshot.next_before_sequence == null || historyLoading) return;
+    const ticket = scope.current, sessionId = selected, cursor = snapshot.next_before_sequence;
+    const generation = ++historyGeneration.current;
+    setHistoryLoading(true); setError('');
+    try {
+      const page = await window.researchTrail!.sessionHistory(sessionId, cursor);
+      if (mounted.current && scope.current === ticket && historyGeneration.current === generation) setSnapshot(previous => previous?.session.id === sessionId ? mergeHistory(previous, page) : previous);
+    } catch (error) { if (mounted.current && scope.current === ticket) setError((error as Error).message); }
+    finally { if (mounted.current && historyGeneration.current === generation) setHistoryLoading(false); }
+  };
   const perform = async (work: () => Promise<void>) => {
     const ticket = scope.current;
     setBusy(true); setError('');
@@ -150,6 +166,7 @@ export function SessionPanel({ available, compact = false, reportContext, onClea
             })}>删除当前会话</button>
           </div>
           <div className="chat-transcript" aria-label="研究对话内容">
+            {snapshot?.has_more && <button className="secondary" disabled={disabled || historyLoading} onClick={() => void loadEarlier()}>{historyLoading ? '读取更早历史…' : '加载更早历史'}</button>}
             <div className="message-history" data-testid="message-history" aria-label="消息历史">
               {messages.length === 0 && <StateNotice kind="empty">暂无消息。试试“查询AAPL.US行情”或“查看NVDA.US的K线”。</StateNotice>}
               {messages.map(messageView).map((message) => <article key={message.id} className={`message ${message.role}`} data-message-id={message.id}>

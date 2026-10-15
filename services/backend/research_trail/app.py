@@ -10,7 +10,7 @@ from fastapi import Path as ApiPath
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel
-from .conversation import CreateSession, SessionDTO, MessageDTO, StartRun, RunDTO, EventPage, SessionSnapshot
+from .conversation import CreateSession, SessionDTO, MessageDTO, StartRun, RunDTO, EventPage, SessionSnapshot, SessionHistoryPage
 from .database import Database, default_database_path
 from .store import Store, MissingRecord, ActiveRun
 from .lifecycle import DatabaseLease, RunManager
@@ -632,6 +632,16 @@ def create_app(token: str, market_provider: MarketProvider | None = None, *,
     @app.get("/sessions/{session_id}", response_model=SessionDTO, dependencies=protected)
     def session(session_id: str):
         return app.state.store.session(session_id)
+
+    @app.get('/sessions/{session_id}/history', response_model=SessionHistoryPage, dependencies=protected)
+    def session_history(request: Request, session_id: UUID,
+                        before_sequence: int | None = Query(default=None, ge=1, le=9007199254740991),
+                        limit: int = Query(default=10, ge=1, le=10)):
+        if set(request.query_params) - {'before_sequence', 'limit'} or any(
+                len(request.query_params.getlist(key)) != 1 or not request.query_params[key].isascii() or
+                not request.query_params[key].isdigit() for key in request.query_params):
+            raise HTTPException(status_code=422, detail='历史分页参数无效。')
+        return app.state.store.history(str(session_id), before_sequence, limit)
 
     @app.get("/sessions/{session_id}/snapshot", response_model=SessionSnapshot, dependencies=protected)
     def session_snapshot(session_id: str):

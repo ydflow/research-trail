@@ -8,8 +8,8 @@ import type { Kline } from '../../market-types';
 import { StateNotice } from '../ui/Primitives';
 import './financial-kline.css';
 
-export type ChartPeriod = '1m' | '5m' | '15m' | '1h' | '1d' | '1w';
-export const periodNames: Record<ChartPeriod, string> = { '1m': '1分钟', '5m': '5分钟', '15m': '15分钟', '1h': '1小时', '1d': '日K线', '1w': '周K线' };
+import { periodNames, type ChartPeriod } from './chart-periods';
+export { periodNames, type ChartPeriod } from './chart-periods';
 
 // Display-boundary validation only; prices and indicators remain Python/library owned.
 function prepare(bars: Kline[]) {

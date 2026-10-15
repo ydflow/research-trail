@@ -1,5 +1,49 @@
 # 研迹：来源、个人动作与验收证据
 
+## 85. P2-09 Draft首次CI失败诊断与最小测试同步修正（2026-10-15）
+
+按授权提交35文件至16d11a056f9f310645c14ea0a9c89203ba99db32、普通推送并创建[Draft #37](https://github.com/ydflow/research-trail/pull/37)，目标main，工作区当时干净，账号ydflow。Push38678287325首次998 Python（479.39秒）/68 Node/92 Electron（605.67秒）=1158成功；PR38678309838首次Python997通过/1失败（606.22秒），后续Node/Electron未执行，前置Pi Node24通过。失败为旧Pi test_timeout_layers_keep_correct_error_and_discard_late_results[run]的gate.aborted.wait(1)，不是旧respond。qa/wrapup/ci/两run的attempt-1.zip/.log均完整保留，没有重跑。
+
+源码与受控调度证明测试先release模型响应、再断言必须CancelledError存在竞争。延后真实HTTP watchdog观察、保持exchange可运行后，原测试在同一行确定性失败：stop=true、响应先返回、aborted=false；业务仍RUN_TIMEOUT、Provider调用0、工具执行0、Work0。首次探针未能进入请求（原预算合法耗尽）与后续同断言失败、纳秒轨迹均保留，不混计成功复现。新增test_timeout_abort_assertion_precedes_response_release_under_deferred_watchdog，修前同断言1 failed；最小修正只移动gate.release到原abort断言之后，修后独立原用例探针1 passed/2.91秒，Pi/runtime+稳定性组合53 passed/34.18秒。原1秒abort/finished断言、1.5秒Run和2/0.2/0.15秒model/tool预算及所有终态/事件/零调用断言保持，不改生产Pi/OpenAI/Manager/Worker。新Event受控探针5秒为失败护栏，原通过条件未延长。
+
+原CI没有HTTP调度轨迹；该确定性反例定位错误测试前提，不能逐纳秒还原当次或解释旧respond。正进行旧Pi用例正常/轻量干扰、新受控交错各20次独立重复，33源码/测试/契约/脚本冻结、累计36变更文件（3文档），完整verify实际结果完成后追加。原1127均保留，新增回归后预计1159但尚不写通过；完成本机门禁后提交/普通推送修正并核对新Head双CI，保持Draft，不合并/P2-10/真实服务/Release。
+
+重复实录与探针修订：旧Pi正常20/20、轻量干扰20/20；新增受控初版19/20，第7次gate.entered未进入，未保存完整启动轨迹，不能认定具体冷启动耗时。为只验证HTTP进行中的取消，新回归局部冻结四模块deadline时钟、停放测试Timer，真实HTTP进入后推进1.6秒跨过原1.5秒预算，通过原Manager.timeout结算；原三个真实层次时限、3秒进入/1秒abort与所有旧断言不变。新时钟回归在旧释放顺序下同断言失败，修后与原场景4 passed/7.45秒、独立20/20。pi-repeat-deferred-clock保存新批，旧19/20汇总和失败不覆盖。初版完整到999 Python/68 Node通过后为固定新增回归停止自有PID12184及9子进程，Electron未完成，wrapup-pi-fixed-verify.log与中止JSON保留；最终重新冻结，另跑wrapup-pi-clock-verify.log，结果待完成。
+
+第85节最终本机回执：wrapup-pi-clock-verify.log完整退出0，999 Python（310.86秒）+68 Node（24+44）+92实际Electron（569.14秒）=1159通过，失败/取消/跳过/todo0，原1127+新增32保留；契约/生成TS、离线真实Pi、工程/历史样例、迁移/一致性、三端构建通过。33源码/测试/契约/脚本冻结哈希完全一致，累计36文件（3文档），旧测试函数缺失0，敏感文件/令牌特征无命中；相对首个Head仅Pi测试及三文档改变。200/102消息用例再次通过，生产/UI/Worker/公开契约/容量与已认可版本一致，验收后按项目路径检索Python/Electron/Pi Node无残留。qa/wrapup/P2-09-pi-fixed-acceptance.json登记源码与新全量截图、首次CI ZIP/log、修前确定性失败、初版19/20、中止及最终重复的哈希，均保留仓库外。后续按授权提交/普通推送同步修正并另核对新Head Push/PR CI，回执以PR checks和qa/wrapup/pr-delivery.json为准；不点击无诊断重跑，不合并/P2-10/真实服务/Release。旧respond CI根因仍未定位，不以新的Pi测试修正冒充旧问题永久修复。
+
+## 84. P2-09最后专项诊断、完整复验与独立Draft准备（2026-10-15）
+
+用户已认可实际Electron分页/UI截图，本轮明确授权完整验收且无已知阻塞性生产问题后提交、普通推送当前feature并创建main目标独立Draft，等待当前Head Push/PR CI；不合并/发布/P2-10。第83节仅本地/待截图审核为上一轮事实。
+
+新增scripts/diagnose-agent-timing.py只在独立诊断进程包裹真实AgentRunner/RunManager/Database.write/Store/Thread，记录纳秒单调时间、线程ID及实际事务commit返回，运行原respond pytest。Windows11 26100/Python3.12.14/32CPU，正常、四个主动让出计算线程干扰、受控SQLite写锁各20/20，共60新进程通过，加前轮240共300，独立于1158套件计数。受控锁用Event等待真实终态BEGIN，再由WAL读取running并释放写锁；全部60次最终唯一终态/有序事件、worker/Timer/Work/连接checkedout均0。正常Runner→commit间隔2.737–3.446ms、干扰2.710–4.511ms、受控锁19.112–42.745ms，commit后worker退出、测试才GET failed。qa/wrapup/diagnostic-*保留timeline/event/pytest/summary，wrapup-audit.json逐项验证顺序；首探针cwd错误日志保留。此实验不能倒推旧CI原因，P2-08首次975通过/2失败原始ZIP/log仍保留，精确根因**未定位**，不声明永久修复。已知两条独立生产deadline问题修复证据保持。
+
+同批补测全量/首页/完整分页，固定SQLite/内容/时间、零外网，tracemalloc启用，每路径7次；只对全量预热2次，分页沿同一热库测，伴随诊断进程，非隔离实验室对照。1000 Run全量2000消息/7000事件读取中位663.90ms[509.75–673.24]、响应序列化208.53ms；首页20消息/70事件读取含容量检查16.26ms[15.28–20.74]；100页完整累计2074.50ms[1676.84–2176.66]、响应序列化187.63ms，ID集合无重复/遗漏。完整分页更慢，不把首读不同工作量写成全量加速；内存是Python分配、累计分页只保留当前页/ID，不是全UI或RSS。新数据qa/wrapup/three-reading-paths/performance.json，旧前后数据保留，实际主chunk由最终构建再次核对。
+
+权限/IPC sender/参数/稳定游标/完整Run响应限额/WAL并发/旧页与头刷新/SSE/切换代次逐项复核，原OpenAPI全部paths/schema变化0，只增已批准history/SessionHistoryPage，131072/98304/262144、数据库/依赖/Pi默认边界不改。资源结论限于实际路径：诊断线程等归零、实际SSE请求释放、主进程runs:subscribe监听数恒定；preload移除runs:changed与React取消/卸载、图表disconnect/dispose由源码复核，非任意第三方无限阻塞线程可强制清理证明。截图、200/102消息及长报告原证据保留，最终verify另采实际Electron全套。
+
+最终本机回执：完整bun.cmd run verify退出0，998 Python（364.12秒）+68 Node（24+44）+92实际Electron（663.78秒）=1158通过，失败/取消/跳过/todo0，原1127全部保留。32个源码/测试/契约/诊断脚本验收前后SHA256一致，35变更文件（含3文档），原Python和Node/Electron测试名称缺失0、敏感文件/令牌特征扫描无命中。200/102消息专项再次通过，产品/UI源码与认可截图时相同；结束后按项目路径检索Python/Electron进程无残留。主chunk实际317250字节（Vite 317.25kB/gzip97.33），独立图表229629字节；Vite压缩口径与其他运行时级别不混用。契约/生成TS、离线真实Pi CLI、工程/历史样例、重复迁移/一致性及构建全部通过。
+
+qa/wrapup-verify.log及qa/wrapup/P2-09-wrapup-acceptance.json保留本轮计数、32文件哈希与344份证据哈希（新全量Electron截图、轨迹及原始CI/失败/压力/性能数据）；32文件中新增诊断脚本，原有基准脚本补全三路径，其余非文档产品/测试源码与前次验收一致。三文档45个相对文件链接有效。已满足本机Draft门禁，按授权提交/普通推送/独立Draft，当前Head Push与PR CI另核验并记录PR checks和qa/wrapup/pr-delivery.json；不以本机或旧Head成功代替，不无诊断重跑。P2-10仅交接Windows/Pi许可、安装卸载/签名/进程树、真实数据权限，不实施下一阶段。
+
+## 83. P2-09稳定性、历史分页与性能（2026-10-15）
+
+**最终本地回执**：完整`bun.cmd run verify`退出0，998 Python（388.70秒）+68 Node（24+44）+92实际Electron（712.03秒）=1158通过，失败/取消/跳过/todo0；原1127和新增31保留。31个源码/测试/契约验收前后SHA256一致，仓库34文件（3文档），旧测试函数名缺失0，暂存为空。最终主chunk317.25kB/gzip97.33（起始545.35/gzip156.55），没有提高阈值或删图表。原始verify-final.log、P2-09-delivery.json、CI attempt1/2 ZIP/log、240次独立重复及全部中止/失败证据位于仓库外qa。精确native1440×900/1000×700/600×700图由浏览器原生clip/scale截图并核PNG头；测试scale=css图在150%DPI可能相差1px，实际尺寸不美化。补充全面16步/122事实长报告展开/滚动/末条原始证据读取/三尺寸通过，模型请求0，前后采集记录相等。旧CI精确根因仍未定位，本阶段状态代码完成/待用户审核，不声称永久修复或直接验收通过；没有提交/推送/PR/合并/发布，P2-10未执行。下文保留实施及中间记录。
+
+用户正式授权P2-09本地开发/离线验收，不提交/推送/PR/合并/发布、不执行P2-10。现场main/origin/main/远程main均ad228980816a5add6232c8ae158fba7a6c1d62bc，工作区干净，main CI38600321966 attempt2 success，基线977 Python/61 Node/89 Electron共1127。已创建feat/phase2-stability-performance并保留旧分支；从GitHub只读下载attempt1/2原始ZIP/log，不隐藏首次975通过/2失败及同Head重跑事实。
+
+旧Agent respond与Report timeout在改前正常/轻量调度干扰各20次、最终版本各20次均通过；中间版本额外80次也通过，总共240进程结果保留。Agent原5秒GET轮询改为同5秒owned worker join后真实GET/原状态与事件强断言；报告仍0.15秒预算，局部虚拟时钟先确认真实MockTransport进入再推进截止，另明确测试请求前超时0请求。CI无线程栈/锁等待日志，精确根因仍未定位，不能声称永久修复。另用受控时钟实际复现生产Timer迟调度及报告最终校验跨deadline两缺陷，修前2 failed/5 passed，最小deadline边界保护后相关组合61 passed；初始新增测试准备错误5 failed/2 passed日志保留。详情见[技术说明](PHASE2-STABILITY-PERFORMANCE.md)。
+
+确定性100次fixture历史200消息/700事件339491 UTF-16超过262144，先提交最小分页方案并取得用户逐项明确批准，才新增只读/session history、独立SessionHistoryPage、sessions:history及显式加载旧历史。按Run首消息序号稳定向前分页，同一WAL读事务、完整Run不截断、实际JSON/UTF-16响应大小、token/UUID/limit/游标/未知和重复参数检查；头页/SSE与旧页按身份去重且迟到隔离，不增加第二状态源。旧OpenAPI schema/paths逐项变化0；新增仅SessionHistoryPage和/sessions/{session_id}/history。数据库Schema、容量常量、默认Python AgentRunner、工具/Pi边界及真实服务不变。
+
+先测再改批量读取/正常路径一次预算序列化；SSE连续8次无进展后关闭请求/退避Timer/槽，正常事件继续原续读；图表lazy按需加载、轻量周期模块，保留KLineCharts全部功能。相关Python170 passed/94.00秒，Node新增6 passed，实际Electron图表/分页/真实重连/迟到快照组合11 passed/79.26秒。首轮Electron URL相对/绝对判断错误3通过/1失败已修，原日志保留；UTF-8契约检查脚本读取错误及初期测量脚本未刷新列表的失败也保留。
+
+环境Windows11 26100/Ryzen9 7945HX/32逻辑CPU/Python3.12/Node24.19/Bun1.4.2；1/10/25/50/100及独立1000 Run，固定ID/时间/内容、隔离SQLite/Fake/Fixture/MockTransport与离线护栏。预热2次/测7次/min-max及tracemalloc记录完整；1000 Run全量读取717.03ms[598.48–774.60]、首分页含校验18.81ms[17.23–24.73]，3395093→34204 UTF-16。小会话分页增加校验成本，旧snapshot本身未提速。50 Run真实Electron切换中位67.52→62.51ms且波动重叠，不宣称稳定百分比；GC后JS堆仅样本，非进程RSS。主chunk545.35→316.83kB，独立图表229.62kB，不等于首屏总下载等比下降。
+
+实际native1440×900/1000×700/600×700验证innerWidth/Height，P2-09图用scale=css，保留三栏/15入口；200消息全加载200/200唯一、滚动、原容量错误不新建Run、重开最新页相等、只读历史不调用模型/金融工具。窗口退出自有Python PID、切换后真实SSE request=0、IPC监听数量恒定、图表Observer/dispose、SQL连接checkedout=0均有证据；未发现这些已测路径持续泄漏，非协作同步Provider/任意进程树不能强清仍保留边界。Browser plugin not available，沿用Playwright实际Electron，无依赖安装。
+
+最终静态复核又发现头刷新与旧尾部之间的消息缺口可能使中段无法继续加载；新增Node修前确定性失败，修后不相邻的头部重建游标；连续刷新保留已加载历史和选中旧Run。新增实际Electron用后端显式补写25 Run验证52消息全可达/唯一/旧Run刷新选择不丢失，Node新增总数7、Electron新增总数3。首次完整verify在Python阶段发现问题后只停止自有PID42520及子进程，原日志verify-interrupted-for-gap-audit.log保留，明确不是通过。修后重跑完整，预期原1127+新增31=1158，结束后才补实际计数/哈希。最终主chunk317.14kB（前述316.83为补强前记录）。全部日志、负载库、三尺寸/容量图、性能JSON在仓库外research-trail-p2-09-qa，不上传私人数据。现有Starlette/httpx弃用及Pi/原生分发许可缺口保留；Windows新包、干净安装/卸载/签名、数据地域/再分发授权属于P2-10独立核验，当前未执行。旧CI精确时序根因未定位，不宣布阶段永久稳定或直接验收通过。
+
 ## 82. P2-08最终审查、局部视觉收尾与独立Draft交付（2026-10-14启动，2026-10-15收尾）
 
 用户已认可四张实际Electron图，本轮单独授权最终审查/必要局部精修/完整verify后提交、普通推送及目标main的独立Draft PR；不自动合并/发布或进入P2-09/10。现场feature分支正确，HEAD/main/origin/main/远程main仍d51476757e508b2054942478bfb19fe6deb0b0c0；main CI38382422780成功且对应同一Head，GitHub账号ydflow，同分支暂无PR。第81节的仅本地及待视觉审核是上一轮事实。

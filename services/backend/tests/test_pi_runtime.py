@@ -297,12 +297,73 @@ def test_timeout_layers_keep_correct_error_and_discard_late_results(env, scope):
         result, events = terminal(env, sid, record, 'timed_out')
         assert result.error.code == {'run': 'RUN_TIMEOUT', 'model': 'MODEL_TIMEOUT', 'tool': 'TOOL_TIMEOUT'}[scope]
         assert not any(e.type == 'tool_result' for e in events)
-        released.set(); gate.release.set()
+        # Keep the model response blocked until its cooperative abort is seen.
+        # Releasing it first permits a valid response/cancellation race, which
+        # cannot promise CancelledError even though the late result is ignored.
+        released.set()
         if scope == 'tool': assert finished.wait(1)
         else: assert gate.aborted.wait(1) and env.provider.calls == []
+        gate.release.set()
         assert env.store.events(sid, record.id).events == events
         assert env.manager.cancel(sid, record.id) == result
     finally: released.set(); gate.release.set()
+
+
+def test_timeout_abort_assertion_precedes_response_release_under_deferred_watchdog(env, monkeypatch):
+    from research_trail import lifecycle, openai_provider, pi_bridge, pi_model_bridge
+    resume = threading.Event()
+    gates = []
+    # This case isolates cancellation AFTER real HTTP entry. A slow Node cold
+    # start can legitimately exhaust a run before HTTP, covered by other tests.
+    # Freeze only these local deadline clocks, park the overall Timer, then
+    # consume the unchanged 1.5-second budget when the real transport enters.
+    clock = SimpleNamespace(value=time.monotonic())
+    controlled = SimpleNamespace(monotonic=lambda: clock.value)
+    for module in (lifecycle, openai_provider, pi_bridge, pi_model_bridge):
+        monkeypatch.setattr(module, 'time', controlled)
+    work_ref = []
+    original_timer = env.manager.timer
+    def parked_timer(work, seconds, code):
+        if code != 'RUN_TIMEOUT': return original_timer(work, seconds, code)
+        timer = threading.Timer(seconds, lambda: None)
+        work.timers.append(timer); work_ref.append(work)
+        return timer
+    monkeypatch.setattr(env.manager, 'timer', parked_timer)
+    original_init, original_wait = ModelGate.__init__, asyncio.wait
+
+    def controlled_gate(self, *args, **kwargs):
+        original_init(self, *args, **kwargs)
+        gates.append(self)
+        release, aborted_wait, entered = self.release.set, self.aborted.wait, self.entered.set
+        def enter_request():
+            clock.value += 1.6
+            env.manager.timeout(work_ref[0], 'RUN_TIMEOUT')
+            entered()
+        def release_response():
+            release(); resume.set()
+        def await_abort(timeout=None):
+            resume.set(); return aborted_wait(timeout)
+        monkeypatch.setattr(self.release, 'set', release_response)
+        monkeypatch.setattr(self.aborted, 'wait', await_abort)
+        monkeypatch.setattr(self.entered, 'set', enter_request)
+
+    async def deferred_wait(tasks, **kwargs):
+        if threading.current_thread().name != 'pi-python-model':
+            return await original_wait(tasks, **kwargs)
+        # Pause only the HTTP watchdog, while its real exchange task continues.
+        # Resume when the test either releases the response or awaits abort.
+        assert await asyncio.to_thread(resume.wait, 5)
+        if gates[0].release.is_set():
+            # Reproduce a response winning the pending cancellation check.
+            # The original abort assertion still has its unchanged one second.
+            return await original_wait(tasks, timeout=5)
+        return await original_wait(tasks, **kwargs)
+
+    monkeypatch.setattr(ModelGate, '__init__', controlled_gate)
+    monkeypatch.setattr(openai_provider, 'asyncio', SimpleNamespace(
+        **{**asyncio.__dict__, 'wait': deferred_wait}))
+    # Reuse every original timeout, terminal/event and zero-provider assertion.
+    test_timeout_layers_keep_correct_error_and_discard_late_results(env, 'run')
 
 
 def test_provider_deadline_winning_model_timer_is_still_model_timeout(env, monkeypatch):

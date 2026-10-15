@@ -252,21 +252,31 @@ def test_real_configuration_failure_does_not_silently_generate_fixed_report(api)
         assert c.get('/research/reports').json()==[]
 
 @pytest.mark.parametrize('action',['cancel','timeout'])
-def test_real_transport_cancel_timeout_keep_failure_without_fallback(api,action):
+def test_real_transport_cancel_timeout_keep_failure_without_fallback(api,action,monkeypatch):
     import asyncio
+    from research_trail import reports, openai_provider
+    # Freeze only the two production deadline clocks until HTTP has entered.
+    # Advance past the SAME 0.15-second budget explicitly; scheduler/commit time
+    # cannot turn this in-flight cancellation test into a pre-request timeout.
+    clock=SimpleNamespace(value=time.monotonic())
+    controlled=SimpleNamespace(monotonic=lambda: clock.value)
+    monkeypatch.setattr(reports,'time',controlled)
+    monkeypatch.setattr(openai_provider,'time',controlled)
     entered=threading.Event(); stopped=threading.Event()
     async def handler(_request):
         entered.set()
-        try: await asyncio.sleep(5)
+        try: await asyncio.Event().wait()
         finally: stopped.set()
         raise AssertionError('Should be cancelled')
     with api(timeout=0.15 if action=='timeout' else 120,transport=httpx.MockTransport(handler)) as (c,app):
         configure(c); identity=collected(c,strategy='value')
         current=report(c,identity,'real'); assert entered.wait(1)
         if action=='cancel': c.post(f'/research/reports/{current}/cancel')
+        else: clock.value+=0.16
         job=finished(c,current)
         assert job['status']==('cancelled' if action=='cancel' else 'failed')
         assert job['requests_started']==1 and job['document'] is None
+        if action=='timeout': assert job['code'] in ('REPORT_TIMEOUT','RUN_TIMEOUT')
         assert stopped.wait(1)
         app.state.reports.work.thread.join(1)
         assert c.get('/research/reports/'+current).json()==job

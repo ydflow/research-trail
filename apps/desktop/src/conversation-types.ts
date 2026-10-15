@@ -5,6 +5,7 @@ export type MessageDTO = components['schemas']['MessageDTO'];
 export type RunDTO = components['schemas']['RunDTO'];
 export type StreamEvent = components['schemas']['EventPage']['events'][number];
 export type SessionSnapshot = components['schemas']['SessionSnapshot'];
+export type SessionHistoryPage = components['schemas']['SessionHistoryPage'];
 export type ReportContextRef = components['schemas']['ReportContextRef'];
 export type ReportReadToolData = components['schemas']['ReportReadToolData'];
 export interface ReportCandidate extends ReportContextRef { symbol: string; version: number }
