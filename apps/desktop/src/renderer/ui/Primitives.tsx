@@ -3,7 +3,7 @@ import type { HTMLAttributes, ReactNode } from 'react';
 export type StatusTone = 'success' | 'warning' | 'error' | 'neutral';
 
 export function SectionHeader({ title, children }: { title: string; children?: ReactNode }) {
-  return <div className="section-header"><h2>{title}</h2>{children && <div className="section-header-actions">{children}</div>}</div>;
+  return <div className="section-header page-header"><h2>{title}</h2>{children && <div className="section-header-actions">{children}</div>}</div>;
 }
 
 export function SurfaceCard({ className = '', ...props }: HTMLAttributes<HTMLElement>) {

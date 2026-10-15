@@ -94,3 +94,38 @@ test('P2-09 permanent event gap exhausts bounded reconnects and releases the sub
     t.mock.timers.tick(60000);assert.equal(requests,8);subscription.stop();assert.equal(closed,1);
   } finally {t.mock.timers.reset();subscription.stop();agent.destroy();server.closeAllConnections();await new Promise(r=>server.close(r));}
 });
+
+const { SecuritySnapshots } = load('apps/desktop/src/renderer/securities/security-snapshots.ts');
+test('P2-09.6 full snapshot identity and in-flight configuration invalidation never mix real and simulated data', async()=>{
+  const cache=new SecuritySnapshots();cache.version('longbridge',1,true,true);
+  const query={symbol:'AAPL.US',provider:'longbridge',mode:'real',view:'quote',period:'1d',kind:'ALL',report:'annual',offset:0};
+  const key=cache.key(query);
+  for(const [field,value] of Object.entries({symbol:'MSFT.US',provider:'massive',mode:'simulated',view:'kline',period:'1w',kind:'IS',report:'quarter',offset:4})) assert.notEqual(cache.key({...query,[field]:value}),key);
+  let release,calls=0;
+  global.window={researchTrail:{securityPage:()=>{calls++;return new Promise(r=>release=r);}}};
+  try {
+    const first=cache.read(query,key),second=cache.read(query,key);assert.equal(calls,1);
+    cache.version('longbridge',2,true,true);
+    release({...query,status:'ready',blocks:[]});
+    await assert.rejects(first,/Configuration changed/);await assert.rejects(second,/Configuration changed/);
+    assert.equal(cache.get(key),undefined);assert.notEqual(cache.key(query),key);
+    const nextKey=cache.key(query),third=cache.read(query,nextKey);
+    cache.invalidate('massive');release({...query,status:'ready',blocks:[]});
+    await third;assert.ok(cache.get(nextKey),'Changing another provider must not invalidate this response');
+  }finally{delete global.window;}
+});
+
+test('P2-09.6 failed refresh retains each successful block and records a scoped failure until recovery', async()=>{
+  const cache=new SecuritySnapshots(),query={symbol:'AAPL.US',provider:'longbridge',mode:'real',view:'overview'};
+  const good={...query,status:'ready',blocks:[{capability:'company.profile',symbol:'AAPL.US',status:'ready',metrics:[{label:'名称',value:'original'}],provenance:{fetched_at:'2024-01-16'}}]};
+  let calls=0,fail=false;
+  global.window={researchTrail:{securityPage:async()=>{calls++;return fail?{...good,status:'failed',blocks:[{...good.blocks[0],status:'failed',metrics:[]}]}:structuredClone(good);}}};
+  try {
+    const key=cache.key(query);await cache.read(query,key);fail=true;
+    await assert.rejects(cache.read(query,key,true),/刷新失败/);
+    assert.deepEqual(cache.get(key).blocks,good.blocks);assert.match(cache.error(key),/刷新失败/);
+    await cache.read(query,key);assert.equal(calls,2);
+    fail=false;await cache.read(query,key,true);assert.equal(cache.error(key),undefined);assert.equal(calls,3);
+    cache.clear();assert.equal(cache.get(key),undefined);
+  }finally{delete global.window;}
+});

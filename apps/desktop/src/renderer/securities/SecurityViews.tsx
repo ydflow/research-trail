@@ -17,7 +17,7 @@ const sources = { fixture: '自主编写的模拟样例', sdk: '官方Python SDK
 export function Source({ block }: { block: SecurityBlock }) {
   const p = block.provenance;
   return <div className="security-source" data-testid="security-source">
-    <p>{p ? `${names[p.provider]} · ${p.data_label} · ${sources[p.transport]} · ${p.cached ? '缓存命中' : '本次获取'} · ${timing[p.timeliness]}` : '数据来源：—'}</p>
+    <p>{p ? `${names[p.provider]} · ${p.data_label} · ${sources[p.transport]} · ${p.cached ? '原始记录：Provider缓存命中' : '原始记录：获取快照'} · ${timing[p.timeliness]}` : '数据来源：—'}</p>
     <p>市场时间：{time(p?.market_time)} · 获取时间：{time(p?.fetched_at)} · 服务时间：{time(p?.served_at)}</p>
     {p?.mode === 'real' && <p>时效依据：{p.timeliness_basis === 'user-declared' ? '本机配置声明' : p.timeliness_basis === 'historical-request' ? '历史请求' : '未知'}；成功仅证明本次能力请求。</p>}
   </div>;
@@ -30,16 +30,17 @@ export function BlockFrame({ block, children }: { block: SecurityBlock; children
     {children}<Source block={block} />
   </SurfaceCard>;
 }
-function Metrics({ block }: { block: SecurityBlock }) {
+function Metrics({ block, compact = false }: { block: SecurityBlock; compact?: boolean }) {
   const metrics = block.metrics ?? [];
   const present = metrics.filter(m => m.value != null && m.value !== '');
   const missing = metrics.filter(m => m.value == null || m.value === '');
-  return <><dl className="security-metrics">{present.map(m => <div key={m.label}><dt>{m.label}</dt><dd>{display(m.value)}{m.unit ? ` ${m.unit}` : ''}</dd></div>)}</dl>
+  return <><dl className="security-metrics">{(compact ? present.slice(0, 4) : present).map(m => <div key={m.label}><dt>{m.label}</dt><dd>{display(m.value)}{m.unit ? ` ${m.unit}` : ''}</dd></div>)}</dl>
+    {compact && present.length > 4 && <details><summary>展开详情（{present.length - 4} 项）</summary><dl className="security-metrics">{present.slice(4).map(m => <div key={m.label}><dt>{m.label}</dt><dd>{display(m.value)} {m.unit}</dd></div>)}</dl></details>}
     {missing.length > 0 && <p className="unprovided-metrics">未提供 · —：{missing.map(m => m.label).join('、')}</p>}</>;
 }
 // OverviewView's metric blocks, without its original portfolio or estimated year range.
-export function OverviewView({ page }: { page: SecurityPage }) {
-  return <div className="security-grid">{page.blocks.map((block, i) => <BlockFrame key={i} block={block}><Metrics block={block} /></BlockFrame>)}</div>;
+export function OverviewView({ page, compact = false }: { page: SecurityPage; compact?: boolean }) {
+  return <div className="security-grid">{page.blocks.map((block, i) => <BlockFrame key={i} block={block}><Metrics block={block} compact={compact} /></BlockFrame>)}</div>;
 }
 // SecurityHeader/QuoteCard's last price and supporting statistics.
 export function QuoteView({ page }: { page: SecurityPage }) {
@@ -54,23 +55,27 @@ export function ChartView({ page, period }: { page: SecurityPage; period: Securi
   </BlockFrame>)}</>;
 }
 // FinancialsView's table/card layout; extended with the Python statement DTO.
-export function FinancialsView({ page }: { page: SecurityPage }) {
+export function FinancialsView({ page, compact = false }: { page: SecurityPage; compact?: boolean }) {
+  const [expanded, setExpanded] = useState(false);
   return <>{page.blocks.map((block, i) => <BlockFrame key={i} block={block}>
-    <div className="security-table-scroll"><table><caption>供应商返回报表；缺失值为 —，不补零、不跨币种合计。</caption>
+    {compact && (block.financials?.length ?? 0) > 4 && <button className="secondary" aria-expanded={expanded} onClick={() => setExpanded(v => !v)}>{expanded ? '收起报表' : `查看全部（${block.financials!.length} 行）`}</button>}
+    <div className="security-table-scroll" tabIndex={0} aria-label="财务报表数据"><table><caption>供应商返回报表；缺失值为 —，不补零、不跨币种合计。</caption>
       <thead><tr><th>报表</th><th>指标</th><th>报告期</th><th>币种</th><th>数值</th></tr></thead>
-      <tbody>{block.financials?.length ? block.financials.map((r, j) => <tr key={j}><td>{{ IS: '利润表', BS: '资产负债表', CF: '现金流量表' }[r.statement]}</td><td>{r.label}</td><td>{display(r.period)}</td><td>{display(r.currency)}</td><td>{display(r.value)}</td></tr>) : <tr><td colSpan={5}>暂无财务报表 · —</td></tr>}</tbody>
+      <tbody>{block.financials?.length ? (compact && !expanded ? block.financials.slice(0, 4) : block.financials).map((r, j) => <tr key={j}><td>{{ IS: '利润表', BS: '资产负债表', CF: '现金流量表' }[r.statement]}</td><td>{r.label}</td><td>{display(r.period)}</td><td>{display(r.currency)}</td><td>{display(r.value)}</td></tr>) : <tr><td colSpan={5}>暂无财务报表 · —</td></tr>}</tbody>
     </table></div>
   </BlockFrame>)}</>;
 }
 // NewsView's source-linked list; no invented timestamp, URL, summary or HTML rendering.
-export function NewsView({ page }: { page: SecurityPage }) {
+export function NewsView({ page, compact = false }: { page: SecurityPage; compact?: boolean }) {
+  const [expanded, setExpanded] = useState(false);
   const [linkError, setLinkError] = useState('');
   return <>{page.blocks.map((block, i) => <BlockFrame key={i} block={block}>
-    <ul className="security-news">{block.news?.length ? block.news.map((n, j) => <li key={`${n.id}-${j}`}>
+    {compact && (block.news?.length ?? 0) > 3 && <button className="secondary" aria-expanded={expanded} onClick={() => setExpanded(v => !v)}>{expanded ? '收起新闻' : `查看全部（${block.news!.length} 条）`}</button>}
+    <ul className="security-news">{block.news?.length ? (compact && !expanded ? block.news.slice(0, 3) : block.news).map((n, j) => <li key={`${n.id}-${j}`}>
       {n.url ? <a href={n.url} target="_blank" rel="noopener noreferrer" onClick={e => {
         e.preventDefault(); setLinkError(''); void window.researchTrail!.openNewsSource(n.url!).catch(() => setLinkError('无法打开原始来源链接。'));
       }}>{display(n.title)}</a> : <strong>{display(n.title)}</strong>}
-      <p>{display(n.summary)}</p><small>原始来源：{display(n.source)} · 发布时间：{time(n.published_at)}{n.url ? '' : ' · 来源链接：—'}</small>
+      <details className="news-summary"><summary>展开摘要</summary><p>{display(n.summary)}</p></details><small>原始来源：{display(n.source)} · 发布时间：{time(n.published_at)}{n.url ? '' : ' · 来源链接：—'}</small>
     </li>) : <li>暂无新闻 · —</li>}</ul>
     {linkError ? <p role="alert">{linkError}</p> : null}
   </BlockFrame>)}</>;

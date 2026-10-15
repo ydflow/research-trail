@@ -33,22 +33,6 @@ footer { color: var(--muted); font-size: 15px; margin-top: auto; padding: 20px 6
 .workbench-navigation .view-tabs { display: grid; gap: 6px; }
 .workbench-navigation .view-tabs button { min-width: 0; width: 100%; text-align: left; padding: 8px; font-size: 13px; }
 .workbench-copilot { min-width: 0; border-left: 1px solid var(--border); padding-left: 16px; }
-.compact-session .session-layout { grid-template-columns: minmax(0, 1fr); }
-.compact-session .session-form, .compact-session .run-form { display: grid; grid-template-columns: minmax(0, 1fr); }
-.compact-session .session-list { display: flex; overflow-x: auto; gap: 6px; }
-.compact-session .session-list button { flex: 0 0 140px; }
-.compact-session h2 { font-size: 18px; }
-.compact-session button { min-width: 0; padding: 7px 10px; font-size: 12px; }
-.compact-session .market-heading { flex-wrap: wrap; }
-.compact-session input, .compact-session select, .compact-session textarea { min-width: 0; width: 100%; }
-.compact-session .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.compact-session .price-line strong { font-size: 28px; }
-.asset-strip { min-width: 0; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px; }
-.asset-strip nav { display: flex; gap: 6px; overflow-x: auto; }
-.asset-strip button { flex: 0 0 auto; min-width: 100px; padding: 6px 10px; background: white; color: var(--accent); font-size: 12px; }
-.asset-strip button[aria-pressed="true"] { background: var(--accent); color: white; }
-.asset-strip small { display: block; margin-top: 3px; }
-.asset-strip p { color: var(--muted); font-size: 12px; }
 .message .message-markdown { display: block; color: inherit; overflow-wrap: anywhere; font-size: 13px; }
 .message-markdown pre { overflow-x: auto; padding: 12px; background: #edf3ef; }
 .message-markdown table { display: block; overflow-x: auto; max-width: 100%; border-collapse: collapse; }
@@ -131,16 +115,6 @@ h2, h3 { margin: 0; font-size: 20px; }
 .view-tabs button { background: #fff; color: var(--accent); }
 .view-tabs button[aria-pressed="true"] { background: var(--accent); color: #fff; }
 .view-tabs.settings-tabs button[aria-pressed="true"]:hover { background: var(--accent); color: #fff; }
-.session-panel { padding-top: 30px; }
-.session-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 22px 0; font-size: 13px; }
-.session-panel input, .session-panel textarea, .session-panel select { font: inherit; border: 1px solid #bccbc4; border-radius: 5px; padding: 9px; max-width: 100%; min-width: 0; background: #fff; color: #163e39; }
-.session-layout { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 24px; }
-.session-list button { width: 100%; text-align: left; background: #fff; color: #163e39; border-color: var(--border); margin-bottom: 8px; overflow-wrap: anywhere; }
-.session-list button strong, .session-list button span { display: block; }
-.session-list button span { font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 8px; }
-.session-list button[aria-pressed="true"] { border-color: var(--accent); background: #eef7f3; }
-.session-panel .secondary { background: #fff; color: var(--accent); }
-.session-list button:hover:not(:disabled), .view-tabs button:hover:not(:disabled), .session-panel .secondary:hover:not(:disabled) { background: #eef7f3; color: var(--accent); }
 .message-history { margin: 22px 0; }
 .message { border-top: 1px solid var(--border); padding: 16px 0; }
 .message div { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
@@ -165,7 +139,6 @@ h2, h3 { margin: 0; font-size: 20px; }
 .tool-activity li { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; line-height: 1.8; overflow-wrap: anywhere; }
 .event-details { margin-top: 18px; }
 .event-details summary { cursor: pointer; color: var(--muted); }
-@media (max-width: 760px) { .session-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; } .session-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }
 @media (max-width: 660px) { header { margin: 0 16px; padding: 24px 12px 20px; } main { width: calc(100% - 56px); margin-top: 28px; } footer { padding: 20px 28px 28px; } .health-row { font-size: 16px; } .stock-list { grid-template-columns: repeat(2, 1fr); } .metrics { grid-template-columns: repeat(3, 1fr); row-gap: 18px; } .chart-canvas { height: 270px; } }
 .security-workspace { margin-top: 28px; min-width: 0; font-size: 13px; }
 .security-workspace h2 { font-size: 22px; margin: 0 0 12px; }
