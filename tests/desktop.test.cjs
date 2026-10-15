@@ -514,7 +514,7 @@ test('P2-05 grouped navigation preserves all fifteen panels and saved assistant 
       await nav.getByRole('button', { name: label, exact: true }).click();
       await expect(nav.getByRole('button', { name: label, exact: true })).toHaveAttribute('aria-pressed', 'true');
       await expect(nav.locator('button[aria-pressed="true"]')).toHaveCount(1);
-      await expect(page.getByRole('main').getByRole('heading', { name: heading, exact: true })).toBeVisible();
+      await expect((label === '会话与事件' ? page.getByLabel('完整研究会话', { exact: true }) : page.getByRole('main')).getByRole('heading', { name: heading, exact: true })).toBeVisible();
       await expect(page.getByLabel('常驻资产页签', { exact: true })).toBeVisible();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
       if (label === '会话与事件') await expect(assistant.getByLabel('测试输入', { exact: true })).toHaveCount(0);
@@ -2731,6 +2731,7 @@ test('P2-09 late older page cannot pollute a newly selected session or retain IP
     const assistant=page.getByLabel('常驻研究助手',{exact:true});
     await assistant.getByLabel('会话标题',{exact:true}).fill('另一会话');await assistant.getByRole('button',{name:'创建会话',exact:true}).click();
     await expect(assistant.getByTestId('current-session')).toHaveText('另一会话');
+    await assistant.getByRole('button',{name:'历史记录',exact:true}).click();
     await assistant.getByRole('button',{name:/离线长期会话/}).click();await expect(assistant.locator('.message-history article')).toHaveCount(20);
     await instance.app.evaluate(({ipcMain})=>{
       const original=ipcMain._invokeHandlers.get('sessions:history');globalThis.historyHeld=false;
@@ -2742,6 +2743,7 @@ test('P2-09 late older page cannot pollute a newly selected session or retain IP
     });
     await assistant.getByRole('button',{name:'加载更早历史',exact:true}).click();
     await expect.poll(()=>instance.app.evaluate(()=>globalThis.historyHeld)).toBe(true);
+    await assistant.getByRole('button',{name:'历史记录',exact:true}).click();
     await assistant.getByRole('button',{name:/另一会话/}).click();await expect(assistant.getByTestId('current-session')).toHaveText('另一会话');
     await instance.app.evaluate(()=>globalThis.releaseHistory());
     await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
@@ -3730,3 +3732,327 @@ for(const [scenario,status,code] of [['empty','empty',null],['permission','restr
       await screenshot(page,`p2-07-injected-${scenario}-1440.png`);
     } finally {await instance.app.close();}
   });
+async function productWindow(instance,width,height) {
+  const cdp=await instance.page.context().newCDPSession(instance.page);
+  await cdp.send('Emulation.clearDeviceMetricsOverride');await cdp.detach();
+  await overviewWindow(instance,width,height);
+}
+const fs2096 = require('node:fs');
+async function productInstance() {
+  const dir=mkdtempSync(resolve(tmpdir(),'research-trail-product-'));
+  fs2096.writeFileSync(resolve(dir,'sitecustomize.py'),`import runpy,sys\nsys.path.insert(0,${JSON.stringify(resolve(root,'services/backend'))})\nrunpy.run_path(${JSON.stringify(resolve(root,'scripts/offline/sitecustomize.py'))})\nrunpy.run_path(${JSON.stringify(resolve(root,'tests/product-experience-fixture.py'))})\n`);
+  return launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_DB_PATH:resolve(dir,'test.sqlite3'),PYTHONPATH:dir});
+}
+function providerCalls(instance) {
+  const path=instance.databasePath+'.calls';
+  return fs2096.existsSync(path)?fs2096.readFileSync(path,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse):[];
+}
+test('P2-09.6 real-mode snapshots, compact cards and session layout in actual Electron', {timeout:90000}, async()=>{
+  const instance=await productInstance(); const errors=[];
+  try {
+    const {page}=instance;page.on('pageerror',e=>errors.push(e.message));
+    await productWindow(instance,1440,900);
+    await waitForBackend(page);
+    await page.evaluate(()=>window.researchTrail.saveProvider('longbridge',{enabled:true,cache_ttl_seconds:0}));
+    const workspace=await openSecurity(page),nav=page.getByLabel('工作区',{exact:true});
+    await workspace.getByLabel('证券数据模式',{exact:true}).selectOption('real');
+    await expect(workspace.getByTestId('security-overview-price')).toHaveCount(0);
+    assert.equal(providerCalls(instance).length,0);
+    await workspace.getByRole('button',{name:'查询当前视图真实数据',exact:true}).click();
+    await expect(workspace.getByTestId('security-overview-price')).toHaveText('321.23');
+    await expect.poll(()=>providerCalls(instance).length).toBe(6);
+    await expect(workspace.locator('.security-overview-financials')).toContainText('模拟营业收入');
+    assert.equal(await workspace.locator('.security-overview-financials tbody tr').count(),4);
+    assert.equal(await workspace.locator('.security-overview-news .security-news li').count(),3);
+    const financialHeight=await workspace.locator('.security-overview-financials').evaluate(el=>el.getBoundingClientRect().height);
+    await p209Screenshot(page,'p2-09.6-security-1440.png');
+    await nav.getByRole('button',{name:'模拟行情',exact:true}).click();
+    await nav.getByRole('button',{name:'证券工作台',exact:true}).click();
+    const restored=await workspace.getByLabel('证券数据模式',{exact:true}).inputValue();
+    assert.equal(restored,'real');
+    await expect(workspace.getByTestId('security-overview-price')).toHaveText('321.23');
+    await expect(workspace).toContainText('上次查询快照');assert.equal(providerCalls(instance).length,6);
+    assert.ok(financialHeight<650);
+    await workspace.getByRole('button',{name:'新闻',exact:true}).click();
+    await expect(workspace.locator('.security-news')).toHaveCount(1);assert.equal(providerCalls(instance).length,6);
+    await workspace.getByRole('button',{name:'证券概览',exact:true}).click();
+    await expect(workspace.getByTestId('security-overview-price')).toHaveText('321.23');assert.equal(providerCalls(instance).length,6);
+    fs2096.writeFileSync(instance.databasePath+'.fail','fail');
+    await workspace.getByRole('button',{name:'查询当前视图真实数据',exact:true}).click();
+    await expect(workspace).toContainText('刷新失败');
+    await expect(workspace.getByTestId('security-overview-price')).toHaveText('321.23');
+    await expect.poll(()=>providerCalls(instance).length).toBe(12);
+    fs2096.unlinkSync(instance.databasePath+'.fail');
+    await workspace.getByRole('button',{name:'查询当前视图真实数据',exact:true}).click();
+    await expect.poll(()=>providerCalls(instance).length).toBe(18);
+    await expect(workspace.locator('.state-error')).toHaveCount(0);
+    await workspace.getByLabel('证券数据模式',{exact:true}).selectOption('simulated');
+    await expect(workspace.getByTestId('security-overview-price')).toHaveText('189.43');
+    await workspace.getByLabel('证券数据模式',{exact:true}).selectOption('real');
+    await expect(workspace.getByTestId('security-overview-price')).toHaveText('321.23');assert.equal(providerCalls(instance).length,18);
+    await page.getByLabel('常驻资产页签',{exact:true}).getByRole('button',{name:/MSFT.US/}).click();
+    await expect(workspace).toContainText('等待显式查询');
+    await expect(workspace.getByTestId('security-overview-price')).toHaveCount(0);assert.equal(providerCalls(instance).length,18);
+    await page.getByLabel('常驻资产页签',{exact:true}).getByRole('button',{name:/AAPL.US/}).click();
+    await expect(workspace.getByTestId('security-overview-price')).toHaveText('321.23');assert.equal(providerCalls(instance).length,18);
+    await workspace.locator('.security-overview-financials').scrollIntoViewIfNeeded();
+    await p209Screenshot(page,'p2-09.6-compact-cards-1440.png');
+    await workspace.locator('.security-overview-financials').getByRole('button',{name:/查看全部/}).click();
+    assert.equal(await workspace.locator('.security-overview-financials tbody tr').count(),120);
+    await workspace.locator('.security-overview-news').getByRole('button',{name:/查看全部/}).click();
+    assert.equal(await workspace.locator('.security-overview-news .security-news li').count(),20);
+    assert.equal(await workspace.locator('.security-overview-news a').count(),20);
+    assert.equal(providerCalls(instance).length,18);
+    for(const width of [1440,1000,600]){
+      await productWindow(instance,width,width===1440?900:700);
+      await p209Screenshot(page,`p2-09.6-security-${width}.png`);
+      await nav.getByRole('button',{name:'会话与事件',exact:true}).click();
+      await expect(page.getByLabel('常驻研究助手',{exact:true})).toHaveCount(0);
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+      await p209Screenshot(page,`p2-09.6-sessions-${width}.png`);
+      await nav.getByRole('button',{name:'证券工作台',exact:true}).click();
+    }
+    await page.evaluate(()=>window.researchTrail.saveProvider('longbridge',{enabled:true,cache_ttl_seconds:0,timeliness:'delayed'}));
+    await nav.getByRole('button',{name:'模拟行情',exact:true}).click();await nav.getByRole('button',{name:'证券工作台',exact:true}).click();
+    await expect(workspace).toContainText('等待显式查询');await expect(workspace.getByTestId('security-overview-price')).toHaveCount(0);
+    assert.equal(providerCalls(instance).length,18);assert.deepEqual(errors,[]);
+    fs2096.writeFileSync(resolve(process.env.RESEARCH_TRAIL_QA_DIR||tmpdir(),'p2-09.6-provider-counts.json'),JSON.stringify({calls:providerCalls(instance),errors},null,2));
+  } finally {await instance.app.close();}
+});
+
+test('P2-09.6 conversation scroll follows only at bottom and keeps one live session across layouts', {timeout:90000}, async()=>{
+  const data=seedLongHistory(12),instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_DB_PATH:data.database});
+  try {
+    const {page}=instance;await waitForBackend(page);await productWindow(instance,1440,900);
+    const nav=page.getByLabel('工作区',{exact:true}),assistant=page.getByLabel('常驻研究助手',{exact:true});
+    await expect(assistant.locator('.message-history article')).toHaveCount(20);
+    const thread=page.locator('.chat-transcript');
+    await thread.evaluate(el=>{el.scrollTop=el.scrollHeight;el.dispatchEvent(new Event('scroll'));});
+    await assistant.getByLabel('测试输入',{exact:true}).fill('查询AAPL.US行情');
+    await assistant.getByRole('button',{name:'运行规则演示',exact:true}).click();
+    await expect(assistant.getByTestId('run-state')).toContainText('已完成');
+    await expect.poll(()=>thread.evaluate(el=>el.scrollHeight-el.scrollTop-el.clientHeight)).toBeLessThan(50);
+    await revealAdvanced(page);await page.getByLabel('模拟工具时序',{exact:true}).selectOption('delayed');
+    await assistant.getByLabel('测试输入',{exact:true}).fill('查询MSFT.US行情');
+    await assistant.getByRole('button',{name:'运行规则演示',exact:true}).click();
+    await expect(assistant.getByTestId('run-state')).toContainText('运行中');
+    await thread.evaluate(el=>{el.scrollTop=0;el.dispatchEvent(new Event('scroll'));});
+    await expect(assistant.getByTestId('run-state')).toContainText('已完成');
+    assert.ok(await thread.evaluate(el=>el.scrollTop)<80);
+    await assistant.getByRole('button',{name:'执行轨迹',exact:true}).click();
+    await expect(assistant.getByTestId('tool-activity')).toBeVisible();
+    await page.getByText(/已保存的过程事件/).click();
+    await expect(page.getByTestId('event-list')).toContainText('tool_started');
+    await expect(page.getByTestId('event-list')).toContainText('tool_result');
+    await page.locator('.event-details').evaluate(el=>el.open=false);
+    await assistant.locator('.message-history article').last().evaluate(el=>{const thread=el.closest('.chat-transcript');thread.scrollTop+=el.getBoundingClientRect().top-thread.getBoundingClientRect().top-80;});
+    await p209Screenshot(page,'p2-09.6-chat-bubbles-1440.png');
+    // Switch layouts during a real persisted run, then cancel from the full view.
+    const runCountBefore=await page.evaluate(async id=>(await window.researchTrail.sessionRuns(id)).length,data.session_id);
+    await assistant.getByLabel('测试输入',{exact:true}).fill('查询NVDA.US行情');
+    await assistant.getByRole('button',{name:'运行规则演示',exact:true}).click();
+    await expect(assistant.getByTestId('run-state')).toContainText('运行中');
+    await nav.getByRole('button',{name:'会话与事件',exact:true}).click();
+    await expect(page.getByTestId('run-state')).toContainText('运行中');
+    await page.getByRole('button',{name:'取消运行',exact:true}).click();
+    await expect(page.getByTestId('run-state')).toContainText('已取消');
+    await nav.getByRole('button',{name:'模拟行情',exact:true}).click();
+    await expect(assistant.getByTestId('run-state')).toContainText('已取消');
+    assert.equal(await page.evaluate(async id=>(await window.researchTrail.sessionRuns(id)).length,data.session_id),runCountBefore+1);
+    const original=await page.evaluate(id=>window.researchTrail.sessionHistory(id),data.session_id);
+    await page.locator('.event-details').evaluate(el=>el.open=false);
+    for(const [width,height] of [[1440,900],[1000,700],[600,700]]){
+      await productWindow(instance,width,height);
+      await nav.getByRole('button',{name:'会话与事件',exact:true}).click();
+      const full=page.getByLabel('完整研究会话',{exact:true});
+      await expect(full.getByLabel('测试输入',{exact:true})).toBeVisible();
+      await expect(page.getByLabel('常驻研究助手',{exact:true})).toHaveCount(0);
+      assert.equal(await page.locator('.session-panel').count(),1);
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+      await full.locator('.chat-advanced').evaluate(el=>el.open=false);
+      await full.locator('.chat-transcript').evaluate(el=>el.scrollTop=el.scrollHeight);
+      await p209Screenshot(page,`p2-09.6-full-chat-${width}.png`);
+      await nav.getByRole('button',{name:'模拟行情',exact:true}).click();
+      await expect(assistant.getByTestId('current-session')).toHaveText('离线长期会话');
+      await assistant.locator('.chat-composer').scrollIntoViewIfNeeded();
+      const controls = await assistant.locator('.chat-composer').boundingBox();
+      if (width===1440) { assert.ok(controls.y+controls.height<=height+1); await expect(assistant.getByRole('button',{name:'历史记录',exact:true})).toBeVisible(); }
+      await assistant.locator('.message-history article').last().evaluate(el=>{const thread=el.closest('.chat-transcript');thread.scrollTop+=el.getBoundingClientRect().top-thread.getBoundingClientRect().top-90;});
+      await p209Screenshot(page,`p2-09.6-assistant-${width}.png`);
+    }
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.sessionHistory(id),data.session_id),original);
+  }finally{await instance.app.close();}
+});
+test('P2-09.6 delayed real response is isolated after symbol and configuration changes', {timeout:60000}, async()=>{
+  const instance=await productInstance();
+  try{
+    const {page}=instance;await waitForBackend(page);
+    await page.evaluate(()=>window.researchTrail.saveProvider('longbridge',{enabled:true,cache_ttl_seconds:0}));
+    const workspace=await openSecurity(page),nav=page.getByLabel('工作区',{exact:true});
+    await instance.app.evaluate(({ipcMain})=>{
+      const original=ipcMain._invokeHandlers.get('workspace:page');globalThis.p2096held=false;
+      ipcMain.removeHandler('workspace:page');ipcMain.handle('workspace:page',async(...args)=>{
+        const result=await original(...args);
+        if(args[1].mode==='real'&&args[1].symbol==='AAPL.US'&&args[1].view==='quote'){
+          globalThis.p2096held=true;await new Promise(r=>{globalThis.p2096release=r;});
+        }return result;
+      });
+    });
+    await workspace.getByLabel('证券数据模式',{exact:true}).selectOption('real');
+    await workspace.getByRole('button',{name:'查询当前视图真实数据',exact:true}).click();
+    await expect.poll(()=>instance.app.evaluate(()=>globalThis.p2096held)).toBe(true);
+    await page.getByLabel('常驻资产页签',{exact:true}).getByRole('button',{name:/MSFT.US/}).click();
+    await expect(workspace.getByTestId('security-overview-price')).toHaveCount(0);
+    await page.evaluate(()=>window.researchTrail.saveProvider('longbridge',{enabled:true,cache_ttl_seconds:0,timeliness:'delayed'}));
+    await nav.getByRole('button',{name:'模拟行情',exact:true}).click();await nav.getByRole('button',{name:'证券工作台',exact:true}).click();
+    await expect(workspace).toContainText('等待显式查询');
+    await instance.app.evaluate(()=>globalThis.p2096release());
+    await page.getByLabel('常驻资产页签',{exact:true}).getByRole('button',{name:/AAPL.US/}).click();
+    await expect(workspace).toContainText('等待显式查询');
+    await expect(workspace.getByTestId('security-overview-price')).toHaveCount(0);
+    assert.equal(providerCalls(instance).length,6);
+  }finally{await instance.app.evaluate(()=>globalThis.p2096release?.()).catch(()=>{});await instance.app.close();}
+});
+test('P2-09.6 deleting and recreating the same provider revision invalidates application snapshots', {timeout:60000}, async()=>{
+  const instance=await productInstance();
+  try {
+    const {page}=instance;await waitForBackend(page);
+    await page.evaluate(()=>window.researchTrail.saveProvider('longbridge',{enabled:true,cache_ttl_seconds:0}));
+    const workspace=await openSecurity(page),nav=page.getByLabel('工作区',{exact:true});
+    await workspace.getByLabel('证券数据模式',{exact:true}).selectOption('real');
+    await workspace.getByRole('button',{name:'查询当前视图真实数据',exact:true}).click();
+    await expect(workspace.getByTestId('security-overview-price')).toHaveText('321.23');
+    await expect.poll(()=>providerCalls(instance).length).toBe(6);
+    await nav.getByRole('button',{name:'数据与只读账户',exact:true}).click();
+    const editor=page.getByTestId('provider-editor');
+    await editor.getByRole('button',{name:'删除提供商配置',exact:true}).click();
+    await expect(editor).toContainText('未配置');
+    await editor.getByRole('button',{name:'保存提供商配置',exact:true}).click();
+    await expect(editor).toContainText('配置：已保存');
+    assert.equal(await page.evaluate(async()=>(await window.researchTrail.providerProfiles()).find(p=>p.provider==='longbridge').revision),1);
+    await nav.getByRole('button',{name:'证券工作台',exact:true}).click();
+    await expect(workspace).toContainText('等待显式查询');
+    await expect(workspace.getByTestId('security-overview-price')).toHaveCount(0);
+    assert.equal(providerCalls(instance).length,6);
+  }finally{await instance.app.close();}
+});
+test('P2-09.6 pending real snapshot becomes visible after leaving and returning before delivery without another read', {timeout:60000}, async()=>{
+  const instance=await productInstance();
+  try {
+    const {page}=instance;await waitForBackend(page);
+    await page.evaluate(()=>window.researchTrail.saveProvider('longbridge',{enabled:true,cache_ttl_seconds:0}));
+    const workspace=await openSecurity(page),nav=page.getByLabel('工作区',{exact:true});
+    await instance.app.evaluate(({ipcMain,BrowserWindow})=>{
+      // Keep the health-monitor timer from incidentally repainting the parent.
+      const contents=BrowserWindow.getAllWindows()[0].webContents,send=contents.send.bind(contents);
+      contents.send=(channel,...args)=>{if(channel!=='backend:changed')send(channel,...args);};
+      const original=ipcMain._invokeHandlers.get('workspace:page');globalThis.p2096pendingHeld=false;
+      ipcMain.removeHandler('workspace:page');ipcMain.handle('workspace:page',async(...args)=>{
+        const result=await original(...args);
+        if(args[1].mode==='real'&&args[1].view==='quote'){
+          globalThis.p2096pendingHeld=true;await new Promise(r=>{globalThis.p2096pendingRelease=r;});
+        }return result;
+      });
+    });
+    await workspace.getByLabel('证券数据模式',{exact:true}).selectOption('real');
+    await workspace.getByRole('button',{name:'查询当前视图真实数据',exact:true}).click();
+    await expect.poll(()=>instance.app.evaluate(()=>globalThis.p2096pendingHeld)).toBe(true);
+    await expect.poll(()=>providerCalls(instance).length).toBe(6);
+    await nav.getByRole('button',{name:'模拟行情',exact:true}).click();await nav.getByRole('button',{name:'证券工作台',exact:true}).click();
+    await expect(workspace.getByLabel('证券数据模式',{exact:true})).toHaveValue('real');
+    await expect(workspace.getByTestId('security-overview-price')).toHaveCount(0);
+    await instance.app.evaluate(()=>globalThis.p2096pendingRelease());
+    await expect(workspace.getByTestId('security-overview-price')).toHaveText('321.23');
+    assert.equal(providerCalls(instance).length,6);
+  }finally{await instance.app.evaluate(()=>globalThis.p2096pendingRelease?.()).catch(()=>{});await instance.app.close();}
+});
+
+test('UI polish unified asset rail and two-column conversation remain usable in native windows', {timeout:90000}, async()=>{
+  const data=seedLongHistory(3), instance=await launch({RESEARCH_TRAIL_OFFLINE:'1',RESEARCH_TRAIL_DB_PATH:data.database});
+  const errors=[];
+  try {
+    const {page}=instance; page.on('pageerror',e=>errors.push(e.message)); await waitForBackend(page);
+    const nav=page.getByLabel('工作区',{exact:true});
+    await productWindow(instance,1440,900);
+    await openSecurity(page);
+    const assistant=page.getByLabel('常驻研究助手',{exact:true});
+    await expect(assistant.getByTestId('current-session')).toHaveText('离线长期会话');
+    await assistant.getByLabel('测试输入',{exact:true}).fill('查询AAPL.US行情');
+    await assistant.getByRole('button',{name:'运行规则演示',exact:true}).click();
+    await expect(assistant.getByTestId('tool-result')).toContainText('189.43');
+    await expect(assistant.getByTestId('run-state')).toContainText('已完成');
+    const runs=await page.evaluate(id=>window.researchTrail.sessionRuns(id),data.session_id);
+    await page.locator('.session-panel').evaluate(el=>window.polishConversation=el);
+    for(const [width,height] of [[1440,900],[1000,700],[600,700]]) {
+      await productWindow(instance,width,height);
+      await nav.getByRole('button',{name:'证券工作台',exact:true}).click();
+      const rail=page.getByLabel('常驻资产页签',{exact:true});
+      await expect(rail.locator('nav button')).toHaveCount(4);
+      const geometry=await rail.evaluate(el=>({height:el.clientHeight,border:getComputedStyle(el).borderRadius,buttons:[...el.querySelectorAll('button')].map(b=>b.getBoundingClientRect().height)}));
+      assert.ok(geometry.height<85 && geometry.border==='8px');
+      assert.deepEqual([...new Set(geometry.buttons)],[46]);
+      const context=assistant.locator('.chat-context');
+      await context.locator('summary').click();
+      const note=await context.locator('p').boundingBox(), assistantBox=await assistant.boundingBox();
+      assert.ok(note.x>=assistantBox.x && note.x+note.width<=assistantBox.x+assistantBox.width,'Data explanation stays within the assistant');
+      await context.locator('summary').click();
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+      await page.evaluate(()=>window.scrollTo(0,0));
+      await p209Screenshot(page,`ui-polish-security-${width}.png`);
+      await nav.getByRole('button',{name:'会话与事件',exact:true}).click();
+      const full=page.getByLabel('完整研究会话',{exact:true});
+      await expect(full.getByTestId('current-session')).toHaveText('离线长期会话');
+      await full.locator('.chat-context summary').click();
+      const fullNote=await full.locator('.chat-context p').boundingBox(), fullBox=await full.boundingBox();
+      assert.ok(fullNote.x>=fullBox.x && fullNote.x+fullNote.width<=fullBox.x+fullBox.width);
+      await full.locator('.chat-context summary').click();
+      assert.equal(await page.locator('.session-panel').evaluate(el=>el===window.polishConversation),true,'Layout switches preserve the mounted conversation');
+      await expect(page.locator('.workbench-copilot')).toHaveCount(0);
+      const boxes=await page.evaluate(()=>{
+        const rect=s=>{const r=document.querySelector(s).getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom,right:r.right};};
+        return {rail:rect('.asset-strip'),main:rect('.workbench-content'),host:rect('.full-session-host'),sidebar:rect('.session-sidebar'),content:rect('.chat-content'),composer:rect('.chat-composer'),thread:rect('.chat-transcript')};
+      });
+      assert.ok(boxes.host.y-boxes.rail.bottom<=17,'No empty reserved band before the conversation');
+      assert.ok(boxes.composer.bottom<=height+1,'Composer stays inside the native window');
+      assert.ok(boxes.thread.height>=45,'Conversation retains a readable viewport');
+      if(width>760) assert.ok(boxes.sidebar.right<=boxes.content.x+1 && boxes.sidebar.width>=190,'History and details form two columns');
+      else {
+        await full.getByRole('button',{name:'历史记录',exact:true}).click();
+        await expect(full.getByLabel('会话列表',{exact:true})).toBeVisible();
+        await full.getByRole('button',{name:'历史记录',exact:true}).click();
+      }
+      const overflow=await page.evaluate(()=>({width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,shell:document.querySelector('.shell').getBoundingClientRect().toJSON(),workbench:document.querySelector('.workbench').getBoundingClientRect().toJSON()}));
+      assert.ok(overflow.scrollWidth<=width+1 && overflow.scrollHeight<=height+1,JSON.stringify(overflow));
+      await full.getByRole('button',{name:'执行轨迹',exact:true}).click();
+      await expect(full.getByTestId('run-state')).toContainText('已完成');
+      await p209Screenshot(page,`ui-polish-trace-${width}.png`);
+      await full.locator('.message.assistant').last().evaluate(el=>{const thread=el.closest('.chat-transcript');thread.scrollTop+=el.getBoundingClientRect().top-thread.getBoundingClientRect().top;});
+      await p209Screenshot(page,`ui-polish-sessions-${width}.png`);
+    }
+    assert.deepEqual(await page.evaluate(id=>window.researchTrail.sessionRuns(id),data.session_id),runs);
+    assert.deepEqual(errors,[]);
+  }finally{await instance.app.close();}
+});
+
+test('UI polish empty conversation presents a clear start state without a reserved blank panel', {timeout:60000},async()=>{
+  const instance=await launch({RESEARCH_TRAIL_OFFLINE:'1'});
+  try {
+    const {page}=instance;await waitForBackend(page);
+    await page.getByLabel('工作区',{exact:true}).getByRole('button',{name:'会话与事件',exact:true}).click();
+    const full=page.getByLabel('完整研究会话',{exact:true});
+    for(const [width,height] of [[1440,900],[1000,700],[600,700]]){
+      await productWindow(instance,width,height);
+      await expect(full.getByRole('heading',{name:'开始一次研究会话',exact:true})).toBeVisible();
+      await expect(full.locator('.chat-transcript')).toHaveCount(0);
+      await expect(full.locator('.chat-composer')).toHaveCount(0);
+      await expect(full.getByLabel('会话标题',{exact:true})).toBeVisible();
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+      await p209Screenshot(page,`ui-polish-empty-${width}.png`);
+    }
+    await full.getByLabel('会话标题',{exact:true}).fill('从空态开始研究');
+    await full.getByRole('button',{name:'创建会话',exact:true}).click();
+    await expect(full.getByTestId('current-session')).toHaveText('从空态开始研究');
+    await expect(full.locator('.chat-empty')).toHaveCount(0);
+    await expect(full.getByLabel('测试输入',{exact:true})).toBeVisible();
+  }finally{await instance.app.close();}
+});

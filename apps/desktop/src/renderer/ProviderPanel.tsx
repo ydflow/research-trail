@@ -4,14 +4,14 @@ import type { CapabilityView, ProviderConfiguration, ProviderCredentials, Provid
 const names = { longbridge: 'Longbridge 行情', 'longbridge-account': 'Longbridge 只读账户', massive: 'Massive 美股' };
 const states = { unverified: '未验证', simulated: '模拟通过', real: '真实查询通过', restricted: '权限受限', failed: '失败' };
 
-function ProviderEditor({ profile, refresh }: { profile: ProviderProfile; refresh: () => Promise<void> }) {
+function ProviderEditor({ profile, refresh, onChanged }: { profile: ProviderProfile; onChanged?: () => void; refresh: () => Promise<void> }) {
   const [config, setConfig] = useState<ProviderConfiguration>({ enabled: profile.enabled, region: profile.region,
     timeout_seconds: profile.timeout_seconds, cache_ttl_seconds: profile.cache_ttl_seconds, timeliness: profile.timeliness, cli_path: profile.cli_path });
   const [secrets, setSecrets] = useState<ProviderCredentials>({});
   const [busy, setBusy] = useState(false), [notice, setNotice] = useState('');
   async function action(work: () => Promise<unknown>) {
     setBusy(true); setNotice('');
-    try { await work(); await refresh(); setNotice('已保存当前操作。'); }
+    try { await work(); onChanged?.(); await refresh(); setNotice('已保存当前操作。'); }
     catch { setNotice('操作失败，请检查配置或系统凭证存储。'); }
     finally { setSecrets({}); setBusy(false); }
   }
@@ -40,7 +40,7 @@ function ProviderEditor({ profile, refresh }: { profile: ProviderProfile; refres
   </section>;
 }
 
-export function ProviderPanel({ available }: { available: boolean }) {
+export function ProviderPanel({ available, onConfigurationChange }: { available: boolean; onConfigurationChange?: (provider: ProviderId) => void }) {
   const [provider, setProvider] = useState<ProviderId>('longbridge');
   const [profiles, setProfiles] = useState<ProviderProfile[]>([]), [caps, setCaps] = useState<CapabilityView[]>([]);
   const [capability, setCapability] = useState<ReadQuery['capability']>('market.quote');
@@ -74,7 +74,7 @@ export function ProviderPanel({ available }: { available: boolean }) {
     <h2>数据与只读账户</h2>
     <p>默认使用自主编写的模拟数据。真实模式失败会直接显示错误；此入口不提供下单功能。现有会话行情工具仍使用模拟数据。</p>
     <label>数据提供商<select aria-label="数据提供商" disabled={!available || busy} value={provider} onChange={e => { clear(); const p = e.target.value as ProviderId; setProvider(p); setCapability(p === 'longbridge-account' ? 'account.positions' : 'market.quote'); }}>{Object.entries(names).map(([p, name]) => <option key={p} value={p}>{name}</option>)}</select></label>
-    {selected && <ProviderEditor key={`${provider}-${selected.revision}-${selected.configured}`} profile={selected} refresh={async () => { clear(); await refresh(); }} />}
+    {selected && <ProviderEditor key={`${provider}-${selected.revision}-${selected.configured}`} profile={selected} onChanged={() => onConfigurationChange?.(provider)} refresh={async () => { clear(); await refresh(); }} />}
     <section className="connection">
       <h3>只读查询验收</h3>
       <label>查询模式<select aria-label="查询模式" disabled={busy} value={mode} onChange={e => { clear(); setMode(e.target.value as 'simulated' | 'real'); }}><option value="simulated">模拟响应（不请求服务商）</option><option value="real">真实查询（需要本机凭证与权限）</option></select></label>

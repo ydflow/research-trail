@@ -1,9 +1,9 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import type { SecurityPage, SecurityQuery } from '../../workspace-types';
+import { type ReactNode } from 'react';
+import type { SecurityPage } from '../../workspace-types';
 import { FinancialKLineChart } from '../market/LazyFinancialKLineChart';
 import { periodNames, type ChartPeriod } from '../market/chart-periods';
 import { SurfaceCard, StateNotice } from '../ui/Primitives';
-import { BlockFrame, OverviewView, FinancialsView, NewsView, Source, display } from './SecurityViews';
+import { OverviewView, FinancialsView, NewsView, Source, display } from './SecurityViews';
 import './security-overview.css';
 import { ChartPeriodBar } from './ChartPeriodBar';
 
@@ -13,27 +13,10 @@ type ReadState = { page?: SecurityPage; error?: string };
 
 // Compose only existing DTO reads. No financial calculations or new API.
 // Each response belongs to the full symbol/provider/mode/revision context.
-export function SecurityOverview({ page, requestKey, period, onPeriodChange, allowReal, navigation }: {
-  page: SecurityPage; requestKey: string; period: ChartPeriod; onPeriodChange: (value: ChartPeriod) => void; allowReal: boolean; navigation: ReactNode;
+export function SecurityOverview({ page, data, period, onPeriodChange, allowReal, navigation }: {
+  page: SecurityPage; data: Partial<Record<ReadView, ReadState>>; period: ChartPeriod; onPeriodChange: (value: ChartPeriod) => void; allowReal: boolean; navigation: ReactNode;
 }) {
-  const [data, setData] = useState<Partial<Record<ReadView, ReadState>>>({});
-  const symbol = page.symbol, provider = page.provider, mode = page.mode;
-  const requestedAt = page.requested_at;
-  useEffect(() => {
-    let active = true;
-    setData({});
-    if (!symbol || mode === 'real' && !allowReal) return;
-    for (const view of reads) {
-      const body: SecurityQuery = { symbol, provider, mode, view, period, kind: 'ALL', report: 'annual', offset: 0 };
-      void window.researchTrail!.securityPage(body).then(next => {
-        if (!active) return;
-        if (next.symbol !== symbol || next.provider !== provider || next.mode !== mode || next.view !== view) throw new Error('Context mismatch');
-        setData(previous => ({ ...previous, [view]: { page: next } }));
-      }).catch(() => { if (active) setData(previous => ({ ...previous, [view]: { error: '读取未完成，请刷新重试。' } })); });
-    }
-    return () => { active = false; };
-  }, [symbol, provider, mode, requestedAt, requestKey, period, allowReal]);
-
+  const symbol = page.symbol, mode = page.mode;
   const quote = data.quote?.page?.blocks[0];
   const metric = (label: string) => quote?.metrics?.find(m => m.label === label);
   const change = metric('涨跌额');
@@ -72,9 +55,9 @@ export function SecurityOverview({ page, requestKey, period, onPeriodChange, all
       <div className="security-overview-facts"><OverviewView page={{ ...page, blocks: page.blocks.filter(block => block.capability === 'company.valuation') }} /></div>
     </div>
     <div className="security-overview-secondary">
-      <SurfaceCard className="security-overview-financials"><h3>财务报表</h3>{data.financials?.page ? <FinancialsView page={data.financials.page} /> : pending('financials')}</SurfaceCard>
-      <SurfaceCard className="security-overview-news"><h3>新闻线索</h3>{data.news?.page ? <NewsView page={data.news.page} /> : pending('news')}</SurfaceCard>
-      <div className="security-overview-profile"><OverviewView page={{ ...page, blocks: page.blocks.filter(block => block.capability !== 'company.valuation') }} /></div>
+      <SurfaceCard className="security-overview-financials"><h3>财务报表</h3>{data.financials?.page ? <FinancialsView page={data.financials.page} compact /> : pending('financials')}</SurfaceCard>
+      <SurfaceCard className="security-overview-news"><h3>新闻线索</h3>{data.news?.page ? <NewsView page={data.news.page} compact /> : pending('news')}</SurfaceCard>
+      <div className="security-overview-profile"><OverviewView compact page={{ ...page, blocks: page.blocks.filter(block => block.capability !== 'company.valuation') }} /></div>
     </div>
   </div>;
 }

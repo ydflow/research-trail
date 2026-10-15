@@ -1,5 +1,30 @@
 # 研迹：路线、功能对照与当前进度
 
+## 2026-10-16 P2-09.6 与 UI 整理：提交及合并进行中
+
+用户已授权将 `fix/pre-release-product-experience` 的累计本地改动提交PR并合并。完整本地 `bun.cmd run verify` 1168项通过（999 Python/70 Node/99实际Electron），313文件哈希核验一致；远程PR与合并后CI待核验。此前“仅本地/等待审核”段落为历史交付边界。失败、布局修复与间歇窗口事件记录见 [UI验收说明](UI-POLISH-ACCEPTANCE.md)。不发布、不打包、不执行P2-10。
+
+<!-- RT-UI-POLISH-LOCAL START -->
+## 桌面UI结构整理：代码完成/待用户审核
+
+完整本地1168项通过（999 Python/70 Node/99实际Electron），原基线与既有测试正文保留，本轮新增2项UI回归；313源码/配置/资源哈希一致。资产栏统一容器、会话标题工具栏/说明/输入分层、完整页历史与详情双栏、600历史抽屉、明确空态、清理重复CSS和旧预留间距。三种原生尺寸12张UI截图与完整日志位于仓库外research-trail-ui-polish-qa/verify、verify.log、delivery-manifest.json。先前开发失败与一次主动中止记录均保留，不计通过。
+
+与本轮开始时相比没有新增后端/Agent/数据库/IPC/Provider授权/Pi或依赖变更；延续同一个SessionPanel与Python/SQLite事实源，分页容量不变。受控Provider初次6/跨页0/失败6/恢复6，外部API0。无需新契约审批。分支fix/pre-release-product-experience、HEAD仍1f26d5a；所有改动只在本地，未暂存/提交/推送/PR/合并/发布/P2-10，等待用户审核。
+
+修改清单、结构与截图索引见[本轮说明](UI-POLISH-ACCEPTANCE.md)。
+<!-- RT-UI-POLISH-LOCAL END -->
+
+<!-- RT-P2-09.6-LOCAL START -->
+## P2-09.6：代码完成/待用户审核（本机1166项完整通过）
+
+从已验证main合并提交1f26d5a创建fix/pre-release-product-experience，起点干净；现场核验main CI38712234097成功。完成运行期间证券快照保留、紧凑财报/新闻/资料、助手历史/滚动/真实轨迹、同一会话组件的宽屏布局。完整bun.cmd run verify退出0：999 Python/70 Node/97实际Electron，共1166通过，失败/取消/跳过/todo0；原1159保留，新增7。14源码/测试/验收脚本哈希前后一致，三种原生尺寸与原始PNG核验，Provider受控初读6、跨页增量0、失败刷新6、恢复6，外部API0。
+
+根因、完整修改清单、缓存生命周期/失效、17文件范围、性能及失败记录见[技术说明](PHASE2-PRE-RELEASE-PRODUCT-EXPERIENCE.md)；证据在仓库外research-trail-p2-09.6-qa，最终日志verify-delivery.log/清单delivery-manifest.json/截图verify-delivery。之前中止、5项布局失败和用户中断日志2个无详情旧失败标记均保留；后两项精确原因仍未知，独立原断言及完整门禁通过不等同永久修复。
+
+无新公开契约/数据库/IPC/依赖，默认Python AgentRunner、Pi实验边界及容量限制不变；无需额外契约审批。真实模式为实际Python Provider链的离线SDK/CLI替身计数，无外部金融/模型请求；未验证真实Longbridge权限或安装包。仅本地，未暂存、提交、推送、PR、合并、发布或执行P2-10。用户代码/视觉审核待完成，下方Draft/运行中等为当轮历史。
+<!-- RT-P2-09.6-LOCAL END -->
+
+
 更新时间：2026-10-15（Asia/Shanghai）。本文件记录计划与阶段状态，不代表未来步骤已经获得执行或发布授权。
 
 ## 当前执行边界

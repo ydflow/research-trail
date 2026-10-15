@@ -13,7 +13,7 @@ class SecurityWorkspace:
     def _block(self,body,symbol,cap,title):
         market={'SH':'CN','SZ':'CN','HAS':'CN'}.get(symbol.split('.')[-1],symbol.split('.')[-1])
         result=self.providers.query(body.provider,ReadQuery(capability=cap,mode=body.mode,
-            symbol=None if cap=='market.status' else symbol,period=body.period,
+            use_cache=False, symbol=None if cap=='market.status' else symbol,period=body.period,
             kind=body.kind if cap=='company.financials' else 'ALL',
             report=body.report if cap=='company.financials' else None,count=260 if cap=='market.kline' else 20,market=market),
             chart_history=cap=='market.kline')

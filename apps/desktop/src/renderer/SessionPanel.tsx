@@ -1,14 +1,17 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useLayoutEffect, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReportCandidate, SessionDTO, SessionHistoryPage } from '../conversation-types';
 import { applySessionEvent, eventDetail, mergeHistory, messageView, runStatus, toolViews } from './session-adapter';
 import { ToolResultCards } from './ToolResultCards';
 import { ToolActivity } from './ToolActivity';
-import { SectionHeader, StateNotice } from './ui/Primitives';
-import './ui/chat.css';
+import { StateNotice } from './ui/Primitives';
 
 const MarkdownContent = lazy(() => import('./MarkdownContent').then(m => ({ default: m.MarkdownContent })));
 
 export function SessionPanel({ available, compact = false, reportContext, onClearContext }: { available: boolean; compact?: boolean; reportContext?: ReportCandidate; onClearContext?: () => void }) {
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const transcript = useRef<HTMLDivElement>(null);
+  const following = useRef(true);
+  const scrollMemory = useRef({ session: '', height: 0, top: 0 });
   const [sessions, setSessions] = useState<SessionDTO[]>([]);
   const [initialSelection] = useState(() => sessionStorage.getItem('research-trail.session') || '');
   const [selected, setSelected] = useState('');
@@ -50,11 +53,11 @@ export function SessionPanel({ available, compact = false, reportContext, onClea
     let active = true;
     if (available && window.researchTrail) {
       void window.researchTrail.listSessions().then((items) => {
-        if (active) { setSessions(items); setSelected((previous) => items.some((item) => item.id === (previous || initialSelection)) ? previous || initialSelection : items[0]?.id || ''); }
+        if (active) { setSessions(items); setRevision(value => value + 1); setSelected((previous) => items.some((item) => item.id === (previous || initialSelection)) ? previous || initialSelection : items[0]?.id || ''); }
       }).catch((e: Error) => { if (active) setError(e.message); });
     }
     return () => { active = false; };
-  }, [available, initialSelection]);
+  }, [available, initialSelection, compact]);
 
   useEffect(() => { if (selected) sessionStorage.setItem('research-trail.session', selected); }, [selected]);
   useEffect(() => { sessionStorage.setItem('research-trail.run', runId); }, [runId]);
@@ -96,14 +99,31 @@ export function SessionPanel({ available, compact = false, reportContext, onClea
   const runs = current ? snapshot!.runs : [];
   const run = runs.find((item) => item.id === runId);
   const events = useMemo(() => snapshot?.session.id === selected ? snapshot.events.filter(event => event.run_id === runId) : [], [snapshot, selected, runId]);
+  useLayoutEffect(() => {
+    const el = transcript.current;
+    if (!el) return;
+    const previous = scrollMemory.current;
+    if (previous.session !== selected) { following.current = true; el.scrollTop = el.scrollHeight; }
+    else if (following.current) el.scrollTop = el.scrollHeight;
+    scrollMemory.current = { session: selected, height: el.scrollHeight, top: el.scrollTop };
+    // Observe streamed Markdown / lazy tool layout too, without stealing a reader's position.
+    const observer = new ResizeObserver(() => { if (following.current) el.scrollTop = el.scrollHeight; });
+    for (const child of el.children) observer.observe(child);
+    return () => observer.disconnect();
+  }, [selected, messages, events, compact]);
   const loadEarlier = async () => {
     if (!snapshot?.has_more || snapshot.next_before_sequence == null || historyLoading) return;
     const ticket = scope.current, sessionId = selected, cursor = snapshot.next_before_sequence;
+    following.current = false;
+    const scroll = transcript.current; const oldHeight = scroll?.scrollHeight ?? 0, oldTop = scroll?.scrollTop ?? 0;
     const generation = ++historyGeneration.current;
     setHistoryLoading(true); setError('');
     try {
       const page = await window.researchTrail!.sessionHistory(sessionId, cursor);
-      if (mounted.current && scope.current === ticket && historyGeneration.current === generation) setSnapshot(previous => previous?.session.id === sessionId ? mergeHistory(previous, page) : previous);
+      if (mounted.current && scope.current === ticket && historyGeneration.current === generation) {
+        setSnapshot(previous => previous?.session.id === sessionId ? mergeHistory(previous, page) : previous);
+        requestAnimationFrame(() => { if (transcript.current === scroll && scope.current === ticket && scroll) scroll.scrollTop = oldTop + scroll.scrollHeight - oldHeight; });
+      }
     } catch (error) { if (mounted.current && scope.current === ticket) setError((error as Error).message); }
     finally { if (mounted.current && historyGeneration.current === generation) setHistoryLoading(false); }
   };
@@ -126,11 +146,24 @@ export function SessionPanel({ available, compact = false, reportContext, onClea
   });
 
   return <section className={`session-panel chat-session${compact ? ' compact-session' : ''}`} aria-label="持久化会话">
-    <SectionHeader title="研究会话"><span className={modelKind === 'fake_agent' ? 'mock-badge' : 'real-badge'}>{modelKind === 'fake_agent' ? '规则演示／假模型' : 'OpenAI兼容／真实模型'}</span></SectionHeader>
+    <div className="chat-header page-header">
+      <div className="chat-title"><span className="assistant-mark" aria-hidden="true" style={{backgroundImage: "url('./brand/research-trail.png')"}} /><div><h2>{compact ? 'AI 研究助手' : '研究会话'}</h2><p>会话、工具与证据</p></div></div>
+    <div className="chat-top-actions" aria-label="会话操作">
+      <button type="button" className="secondary" onClick={() => document.getElementById('session-title')?.focus()}>＋ 新会话</button>
+      <button type="button" className="secondary" aria-expanded={historyOpen} onClick={() => setHistoryOpen(v => !v)}>历史记录</button>
+      <button type="button" className="secondary" onClick={() => { const el = transcript.current?.querySelector<HTMLElement>('.chat-research-card'); if (el && transcript.current) transcript.current.scrollTop += el.getBoundingClientRect().top - transcript.current.getBoundingClientRect().top; following.current = false; }}>执行轨迹</button>
+    </div>
+    </div>
+    <div className="chat-meta">
+    <span className={modelKind === 'fake_agent' ? 'mock-badge' : 'real-badge'}>{modelKind === 'fake_agent' ? '规则演示／假模型' : 'OpenAI兼容／真实模型'}</span>
     <details className="chat-context"><summary>模型与数据说明</summary><p className="market-note">模型共用Python只读工具，行情仍为模拟数据。先读数据库快照，再订阅事件；查看历史不会重新执行。</p></details>
     <p className="stream-state" role="status" data-testid="stream-state">事件连接：{stream}</p>
+    </div>
     {error && <StateNotice kind="error">{error}</StateNotice>}
     {reportContext && <section className="report-context" aria-label="关联研究上下文" data-testid="assistant-report-context"><strong>{reportContext.symbol} · 报告版本 {reportContext.version}</strong><p>显式发送后才核验并绑定到本次会话运行；只读模拟报告，未发送不执行。</p><details><summary>查看候选报告身份</summary><p>候选报告 {reportContext.report_id}<br/>采集任务 {reportContext.source_run_id}</p></details><button type="button" disabled={disabled || !current} onClick={() => setInput('读取已关联研究报告，说明资料来源与缺口')}>准备报告问题</button><button type="button" className="secondary" onClick={onClearContext}>解除报告关联</button></section>}
+    <div className="session-layout">
+      <div className={`session-sidebar${historyOpen ? ' history-open' : ''}`}>
+      <div className="session-sidebar-heading"><h3>会话历史</h3><span>{sessions.length} 个会话</span></div>
     <form className="session-form" onSubmit={(e) => {
       e.preventDefault();
       void perform(async () => {
@@ -146,16 +179,17 @@ export function SessionPanel({ available, compact = false, reportContext, onClea
       <input id="session-title" maxLength={80} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="新会话标题" disabled={disabled} />
       <button disabled={disabled}>创建会话</button>
     </form>
-    <div className="session-layout">
-      <aside className="session-list" aria-label="会话列表">
+      <aside className={`session-list${historyOpen ? ' history-open' : ''}`} aria-label="会话列表">
         {sessions.length === 0 && <StateNotice kind="empty">还没有会话。</StateNotice>}
         {sessions.map((item) => <button key={item.id} aria-pressed={selected === item.id} disabled={busy || !available}
-          onClick={() => { scope.current = `${item.id}:`; onClearContext?.(); setSelected(item.id); setInput(''); setError(''); setRunId(''); }}>
+          onClick={() => { scope.current = `${item.id}:`; onClearContext?.(); setSelected(item.id); setHistoryOpen(false); setInput(''); setError(''); setRunId(''); }}>
           <strong>{item.title}</strong><span>{item.message_count} 条消息</span>
         </button>)}
       </aside>
+      </div>
       <div className="session-content chat-content">
         {loading && <StateNotice kind="loading">读取历史…</StateNotice>}
+        {!current && !loading && <div className="chat-empty" role="status"><span className="assistant-mark" aria-hidden="true" style={{backgroundImage: "url('./brand/research-trail.png')"}} /><h3>开始一次研究会话</h3><p>填写会话标题并创建会话，即可提问、查看工具轨迹与保存的证据。</p></div>}
         {current && <>
           <div className="chat-thread-heading"><h3 data-testid="current-session">{current.title}</h3>
             <button className="secondary" disabled={disabled} onClick={() => void perform(async () => {
@@ -165,12 +199,12 @@ export function SessionPanel({ available, compact = false, reportContext, onClea
               const items = await bridge.listSessions(); if (!mounted.current || scope.current !== ticket) return; onClearContext?.(); setSessions(items); setSelected(items[0]?.id || ''); setRunId('');
             })}>删除当前会话</button>
           </div>
-          <div className="chat-transcript" aria-label="研究对话内容">
+          <div className="chat-transcript" ref={transcript} onScroll={e => { const el = e.currentTarget; following.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48; }} aria-label="研究对话内容" tabIndex={0}>
             {snapshot?.has_more && <button className="secondary" disabled={disabled || historyLoading} onClick={() => void loadEarlier()}>{historyLoading ? '读取更早历史…' : '加载更早历史'}</button>}
             <div className="message-history" data-testid="message-history" aria-label="消息历史">
               {messages.length === 0 && <StateNotice kind="empty">暂无消息。试试“查询AAPL.US行情”或“查看NVDA.US的K线”。</StateNotice>}
               {messages.map(messageView).map((message) => <article key={message.id} className={`message ${message.role}`} data-message-id={message.id}>
-                <div>{message.label}<time>{new Date(message.timestamp).toLocaleString('zh-CN', { hour12: false })}</time></div>
+                <div><span className="message-author">{message.role === 'assistant' && <span className="message-assistant-icon" role="img" aria-label="研迹助手" style={{ backgroundImage: "url('./brand/research-trail.png')" }} />}{message.label}</span><time>{new Date(message.timestamp).toLocaleString('zh-CN', { hour12: false })}</time></div>
                 {message.role === 'assistant' && message.content ? <Suspense fallback={<p>{message.content}</p>}>
                   <MarkdownContent content={message.content} />
                 </Suspense> : <p>{message.content || '等待运行结果…'}</p>}
@@ -199,7 +233,7 @@ export function SessionPanel({ available, compact = false, reportContext, onClea
                 <details className="event-details">
                   <summary>已保存的过程事件（{events.length}）</summary>
                   <ol className="event-list" data-testid="event-list">
-                    {events.map((event) => <li key={`${event.run_id}:${event.sequence}`}><span>#{event.sequence} {event.type}</span><p>{eventDetail(event)}</p></li>)}
+                    {events.map((event) => <li key={`${event.run_id}:${event.sequence}`}><span>#{event.sequence} {event.type}</span><p>{eventDetail(event)}</p><details><summary>完整持久化事件</summary><pre>{JSON.stringify(event, null, 2)}</pre></details></li>)}
                   </ol>
                 </details>
               </div>

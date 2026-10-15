@@ -56,6 +56,6 @@ for (const operation of [['upgrade', 'head'], ['upgrade', 'head'], ['current'], 
 run('Node offline / SSE / adapter / packaged launch / Markdown / notice / asynchronous readiness tests', process.execPath, ['--test', 'tests/offline.test.cjs', 'tests/stream.test.cjs', 'tests/packaging.test.cjs', 'tests/markdown.test.cjs', 'tests/ui-notices.test.cjs', 'tests/backend-ready.test.cjs', 'tests/market-overview.test.cjs', 'tests/report-context.test.cjs', 'tests/stability.test.cjs']);
 run('Electron main / preload build', process.execPath, ['scripts/build.mjs']);
 run('Renderer build', process.execPath, [join(desktopRequire.resolve('vite/package.json'), '..', 'bin/vite.js'), 'build'], resolve(root, 'apps/desktop'));
-run('Real Electron integration', process.execPath, ['--test', 'tests/desktop.test.cjs']);
+run('Real Electron integration', process.execPath, ['--test', '--test-reporter=tap', 'tests/desktop.test.cjs']);
 console.log('\n[verify] PASS: fake model / fixture data only. No real provider calls.');
 console.log(`[verify] Isolated migration data: ${work} (outside source control).`);
