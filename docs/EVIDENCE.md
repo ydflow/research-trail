@@ -1,5 +1,17 @@
 # 研迹：来源、个人动作与验收证据
 
+## 85. P2-09 Draft首次CI失败诊断与最小测试同步修正（2026-10-15）
+
+按授权提交35文件至16d11a056f9f310645c14ea0a9c89203ba99db32、普通推送并创建[Draft #37](https://github.com/ydflow/research-trail/pull/37)，目标main，工作区当时干净，账号ydflow。Push38678287325首次998 Python（479.39秒）/68 Node/92 Electron（605.67秒）=1158成功；PR38678309838首次Python997通过/1失败（606.22秒），后续Node/Electron未执行，前置Pi Node24通过。失败为旧Pi test_timeout_layers_keep_correct_error_and_discard_late_results[run]的gate.aborted.wait(1)，不是旧respond。qa/wrapup/ci/两run的attempt-1.zip/.log均完整保留，没有重跑。
+
+源码与受控调度证明测试先release模型响应、再断言必须CancelledError存在竞争。延后真实HTTP watchdog观察、保持exchange可运行后，原测试在同一行确定性失败：stop=true、响应先返回、aborted=false；业务仍RUN_TIMEOUT、Provider调用0、工具执行0、Work0。首次探针未能进入请求（原预算合法耗尽）与后续同断言失败、纳秒轨迹均保留，不混计成功复现。新增test_timeout_abort_assertion_precedes_response_release_under_deferred_watchdog，修前同断言1 failed；最小修正只移动gate.release到原abort断言之后，修后独立原用例探针1 passed/2.91秒，Pi/runtime+稳定性组合53 passed/34.18秒。原1秒abort/finished断言、1.5秒Run和2/0.2/0.15秒model/tool预算及所有终态/事件/零调用断言保持，不改生产Pi/OpenAI/Manager/Worker。新Event受控探针5秒为失败护栏，原通过条件未延长。
+
+原CI没有HTTP调度轨迹；该确定性反例定位错误测试前提，不能逐纳秒还原当次或解释旧respond。正进行旧Pi用例正常/轻量干扰、新受控交错各20次独立重复，33源码/测试/契约/脚本冻结、累计36变更文件（3文档），完整verify实际结果完成后追加。原1127均保留，新增回归后预计1159但尚不写通过；完成本机门禁后提交/普通推送修正并核对新Head双CI，保持Draft，不合并/P2-10/真实服务/Release。
+
+重复实录与探针修订：旧Pi正常20/20、轻量干扰20/20；新增受控初版19/20，第7次gate.entered未进入，未保存完整启动轨迹，不能认定具体冷启动耗时。为只验证HTTP进行中的取消，新回归局部冻结四模块deadline时钟、停放测试Timer，真实HTTP进入后推进1.6秒跨过原1.5秒预算，通过原Manager.timeout结算；原三个真实层次时限、3秒进入/1秒abort与所有旧断言不变。新时钟回归在旧释放顺序下同断言失败，修后与原场景4 passed/7.45秒、独立20/20。pi-repeat-deferred-clock保存新批，旧19/20汇总和失败不覆盖。初版完整到999 Python/68 Node通过后为固定新增回归停止自有PID12184及9子进程，Electron未完成，wrapup-pi-fixed-verify.log与中止JSON保留；最终重新冻结，另跑wrapup-pi-clock-verify.log，结果待完成。
+
+第85节最终本机回执：wrapup-pi-clock-verify.log完整退出0，999 Python（310.86秒）+68 Node（24+44）+92实际Electron（569.14秒）=1159通过，失败/取消/跳过/todo0，原1127+新增32保留；契约/生成TS、离线真实Pi、工程/历史样例、迁移/一致性、三端构建通过。33源码/测试/契约/脚本冻结哈希完全一致，累计36文件（3文档），旧测试函数缺失0，敏感文件/令牌特征无命中；相对首个Head仅Pi测试及三文档改变。200/102消息用例再次通过，生产/UI/Worker/公开契约/容量与已认可版本一致，验收后按项目路径检索Python/Electron/Pi Node无残留。qa/wrapup/P2-09-pi-fixed-acceptance.json登记源码与新全量截图、首次CI ZIP/log、修前确定性失败、初版19/20、中止及最终重复的哈希，均保留仓库外。后续按授权提交/普通推送同步修正并另核对新Head Push/PR CI，回执以PR checks和qa/wrapup/pr-delivery.json为准；不点击无诊断重跑，不合并/P2-10/真实服务/Release。旧respond CI根因仍未定位，不以新的Pi测试修正冒充旧问题永久修复。
+
 ## 84. P2-09最后专项诊断、完整复验与独立Draft准备（2026-10-15）
 
 用户已认可实际Electron分页/UI截图，本轮明确授权完整验收且无已知阻塞性生产问题后提交、普通推送当前feature并创建main目标独立Draft，等待当前Head Push/PR CI；不合并/发布/P2-10。第83节仅本地/待截图审核为上一轮事实。

@@ -1,6 +1,62 @@
 # P2-09：稳定性、长期会话与性能
 
-日期：2026-10-15（Asia/Shanghai）。状态：代码完成/待验收（用户已认可实际 Electron 截图，本轮完整复验 1158 项通过；最终代码审核前保持 Draft，旧 CI 精确根因仍未定位）。
+日期：2026-10-15（Asia/Shanghai）。状态：代码完成/待验收（用户已认可实际 Electron 截图；首次 PR CI 失败经诊断作最小测试同步修正，本机完整 1159 项通过，新 Head 双 CI 以 PR checks 另核对；旧 respond CI 根因仍未定位）。
+
+## Draft 首次 CI 失败与修正
+
+首个 Head `16d11a056f9f310645c14ea0a9c89203ba99db32` 已普通推送并创建
+[Draft PR #37](https://github.com/ydflow/research-trail/pull/37)，目标 main，未合并。
+[Push 38678287325](https://github.com/ydflow/research-trail/actions/runs/38678287325)
+首次完整通过 998 Python（479.39 秒）/68 Node/92 Electron（605.67 秒），共 1158。
+[PR 38678309838](https://github.com/ydflow/research-trail/actions/runs/38678309838)
+首次在 Python 为 997 passed/1 failed（606.22 秒），失败是旧
+`test_timeout_layers_keep_correct_error_and_discard_late_results[run]`，后续 Node/Electron
+未运行；前置 Pi Node 24 项通过。不是旧 respond 用例，没有触发 CI 重跑。
+两次原始 ZIP 和完整日志在 qa/wrapup/ci/*-attempt-1，保留失败，不用 Push 成功抹去 PR 失败。
+
+失败断言为 `gate.aborted.wait(1)`。原测试先 `gate.release.set()` 放行响应，再要求
+它一定通过 CancelledError 取消；这是两个竞争结果，已经正常返回的 exchange 不能
+保证再出现 aborted。新确定性回归只延后 HTTP watchdog 的观察，真实 exchange 任务
+继续运行，原终态/事件/超时断言全部复用。修前在同一行失败，轨迹中 stop=true、
+响应先释放、HTTP 正常返回且 aborted=false；同时 RUN_TIMEOUT 终态、Provider 调用 0、
+工具执行 0、Work 0。首次探针在请求进入前耗尽原预算，未作为该交错证明，日志也保留。
+
+最小修正仅调整测试先后：先以原 `aborted.wait(1)` 确认协作取消，再释放响应；
+工具场景仍先释放工具 gate、以原 finished.wait(1) 检查结束。保留原 1.5 秒 Run、
+2 秒 model/0.2 秒 model/0.15 秒 tool 层次、所有终态/事件/零调用断言及 finally 清理。
+不修改生产 OpenAI/Pi/Manager/Worker、不增加 sleep 或扩大既有时限。
+新增回归用 Event 解除受控 watchdog；其 5 秒只是调度探针失败护栏，原取消断言仍仅
+1 秒，不借它延长通过条件。修前 `pi-regression-before.log` 为 1 failed；修后同交错
+HTTP aborted=true 后才释放响应，独立探针 1 passed（2.91 秒），Pi/runtime/稳定性组合
+53 passed（34.18 秒），原日志与纳秒轨迹均在 qa/wrapup。
+
+此交错确定性证明原测试同步前提错误，与新 PR CI 的失败断言一致；CI 没有保存 HTTP
+调度轨迹，不能逐纳秒还原当次，也不能拿它解释 P2-08 respond 的旧失败。
+旧 Pi Run 超时正常/轻量干扰各 20/20；受控回归初版 19/20，第 7 次没有进入 HTTP，
+不是原 aborted 断言失败。该次没有完整启动时间线，不确定具体启动耗时；请求前可
+合法耗尽整体预算，不能要求所有超时都进入 HTTP。初版日志与汇总全部保留。
+新回归只对自己的四个模块 deadline 时钟做局部冻结，停放测试 Timer；真实 HTTP
+进入后精确推进 1.6 秒跨过原 1.5 秒预算，经原 Manager.timeout 结算。原三个层次
+超时用例仍用原真实时限，没有改动；新回归仍保留原 entered.wait(3)/aborted.wait(1)。
+新时钟回归在旧释放顺序下仍同断言失败（pi-clock-regression-before.log），修正顺序
+后与原三个场景 4 passed（7.45 秒），独立 20/20 通过。完整初版曾到 999 Python
+（327.06 秒）/68 Node，通过后为固定新回归停止自有 PID12184 和 9 个子进程，
+Electron 未完成；日志 wrapup-pi-fixed-verify.log 与中止回执保留，不算完整通过。
+最终冻结 33 个
+源码/测试/契约/脚本、累计 36 个变更文件（3 文档），重新执行完整 verify 后才提交
+修正并普通推送，重新等待新 Head 的两路 CI。前次 1158 本机/Push 成功均仅对应首个 Head。
+
+最终本机完整 `bun.cmd run verify` 退出 0（wrapup-pi-clock-verify.log）：999 Python
+（310.86 秒）+68 Node（24+44）+92 实际 Electron（569.14 秒）= **1159 项通过**，
+失败/取消/跳过/todo 0，原 1127 与新增 32 保留。契约/生成 TS、离线真实 Pi 往返、
+工程/历史样例、迁移/一致性及构建全部通过；200/102 消息专项再次通过。
+33 个冻结文件前后 SHA256 一致，累计 36 文件（3 文档），旧测试函数名缺失 0；
+本次相对首个 Head 仅测试/文档变动，生产/API/UI/Worker/依赖/schema/容量不变。
+验收后按项目路径检索 Python/Electron/Pi Node 无残留；资源结论仍限已测路径。
+qa/wrapup/P2-09-pi-fixed-acceptance.json 登记本轮源码、实际截图、重复结果、首次 CI
+ZIP/log、修前失败和中止日志哈希，初版 19/20 与最终受控 20/20 分开保存。
+新 Head 的 Push/PR CI 另以 PR checks 和 qa/wrapup/pr-delivery.json 核验；本轮没有
+点击 CI 重跑，不自动合并，停止于最终代码审核，P2-10 未执行。
 
 ## 本轮最终收尾与 Draft 授权
 
