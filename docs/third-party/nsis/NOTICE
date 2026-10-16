@@ -1,0 +1,22 @@
+ResearchTrail Windows installer packaging provenance, 2026-10-16
+
+NSIS is a third-party installer system, not ResearchTrail-authored code.
+The existing Electron Builder 26.15.3 toolset selects these unmodified assets:
+
+https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-3.0.4.1/nsis-3.0.4.1.7z
+SHA256 9877df902530f96357d13a7a31ae2b9df67f48b11ffc9a1700a7c961574ec5fa
+https://github.com/electron-userland/electron-builder-binaries/releases/download/nsis-resources-3.4.1/nsis-resources-3.4.1.7z
+SHA256 593a9a92ef958321293ac6a2ee61e64bf1bd543142a5bd6b3d310709cc924103
+
+Both local archive hashes match the locked builder's toolset checksums.
+COPYING is copied byte-for-byte from the first archive, Copyright 1999-2018
+Contributors; SHA256 3c8de989f6504d52f5f8dfafedb6668cd47201f5d01f1319570727c091425dd6.
+It includes zlib/libpng, bzip2, CPL-1.0 and the NSIS LZMA linking exception.
+Official license explanation: https://nsis.sourceforge.io/License
+Source project: https://sourceforge.net/projects/nsis/files/NSIS%203/
+
+This records the actual build tool archives, not a claim that every resource
+plugin is distributed. The exact embedded installer plugin/source/notice closure
+has not been independently completed. Do not infer a license for the full
+resources archive from core NSIS COPYING. Public binary distribution remains
+on hold; see ../../P2-10-LICENSE-AUDIT.md. No installer framework was replaced.

@@ -6,7 +6,7 @@
   "workspaces": ["apps/desktop", "packages/pi-worker"],
   "scripts": {
     "dev": "node scripts/contracts.mjs && node scripts/dev.mjs",
-    "build": "node scripts/build.mjs && bun run --cwd apps/desktop build",
+    "build": "node scripts/build.mjs",
     "check": "node scripts/contracts.mjs --check && bun run --cwd apps/desktop check",
     "contracts:generate": "node scripts/contracts.mjs",
     "contracts:check": "node scripts/contracts.mjs --check",

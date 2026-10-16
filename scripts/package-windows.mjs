@@ -7,23 +7,33 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { collectUiNotices } from './ui-notices.mjs';
 import { auditNative } from './native-audit.mjs';
+import { sourceIdentity, fileInventory, validateRelease, validateAppFiles } from './package-policy.mjs';
+import { auditAppArchive } from './package-archive.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const stage = mkdtempSync(join(root, 'build/windows/app-'));
-const notices = join(root, 'build/windows/notices');
+const notices = mkdtempSync(join(root, 'build/windows/notices-app-'));
 const desktopRequire = createRequire(join(root, 'apps/desktop/package.json'));
 const version = process.argv[2] ?? '1.0.0-internal.24';
-if (!/^1\.0\.0(?:-[a-z0-9.]+)?$/.test(version)) throw new Error('Expected explicit reviewed 1.0.0 version');
 const output = version==='1.0.0-internal.24' ? join(root,'release/windows-internal') : join(root,'release/windows',version);
 function git(args) { const r=spawnSync('git',args,{cwd:root,encoding:'utf8',windowsHide:true});if(r.status!==0)throw new Error('Cannot record source identity');return r.stdout.trim(); }
 const sourceCommit=git(['rev-parse','HEAD']);const sourceTree=git(['rev-parse','HEAD^{tree}']);
 const dirty=git(['status','--porcelain'])!=='';
-if(version==='1.0.0' && dirty) throw new Error('Commit reviewed sources before building the formal candidate');
+// Both supported stable versions have exactly the same release gates.
 if (process.platform !== 'win32' || process.arch !== 'x64') throw new Error('Windows x64 build required');
 if (!existsSync(join(root,'build/windows/python/backend/research-trail-backend.exe'))) throw new Error('Build Python backend first');
 auditNative(root,join(root,'build/windows/python/backend/_internal'));
 const backendIdentity=JSON.parse(readFileSync(join(root,'build/windows/backend-source.json'),'utf8'));
-if(version==='1.0.0' && (backendIdentity.source_commit!==sourceCommit || backendIdentity.source_tree!==sourceTree || backendIdentity.source_dirty))throw new Error('Python build does not match the clean reviewed source');
+const desktopIdentity=JSON.parse(readFileSync(join(root,'build/windows/desktop-source.json'),'utf8'));
+const identity={source_commit:sourceCommit,source_tree:sourceTree,source_dirty:dirty};
+validateRelease(version,identity,backendIdentity,desktopIdentity);
+const desktopFiles=fileInventory(join(root,'apps/desktop/dist'));
+validateAppFiles(desktopFiles);
+if(JSON.stringify(desktopFiles)!==JSON.stringify(desktopIdentity.files)) throw new Error('Desktop bytes changed after build');
+if(!resolve(backendIdentity.notice_directory).startsWith(join(root,'build/windows')+'\\')) throw new Error('Invalid Python notices directory');
+cpSync(backendIdentity.notice_directory,notices,{recursive:true});
+const {notice_directory,...backendSource}=backendIdentity;
+writeFileSync(join(notices,'build-source.json'),JSON.stringify({version,...identity,backend:backendSource,desktop:desktopIdentity},null,2)+'\n');
 mkdirSync(stage, {recursive:true}); mkdirSync(output, {recursive:true});
 cpSync(join(root,'apps/desktop/dist'), join(stage,'dist'), {recursive:true});
 writeFileSync(join(stage,'package.json'), JSON.stringify({name:'research-trail-desktop',version,
@@ -36,7 +46,7 @@ writeFileSync(join(notices,'ui-dependencies.json'),JSON.stringify(ui,null,2)+'\n
 const sourceDocs = readdirSync(join(root,'docs')).filter(f=>/^SOURCES.*\.json$/.test(f));
 mkdirSync(join(notices,'sources'),{recursive:true});
 for (const f of sourceDocs) cpSync(join(root,'docs',f),join(notices,'sources',f));
-for (const f of ['BUNDLE-NOTICE.md','WINDOWS-INSTALL.md']) cpSync(join(root,'docs',f),join(notices,f));
+for (const f of ['BUNDLE-NOTICE.md','WINDOWS-INSTALL.md','P2-10-LICENSE-AUDIT.md']) cpSync(join(root,'docs',f),join(notices,f));
 cpSync(join(root,'docs/third-party'),join(notices,'third-party'),{recursive:true});
 // Fail rather than retaining unreviewed stale app files from an earlier build.
 const allowed = new Set(['dist','package.json']);
@@ -64,7 +74,12 @@ function walk(folder) {for(const name of readdirSync(folder)) {const path=join(f
   else manifest.push({path:path.slice(join(output,'win-unpacked').length+1).replaceAll('\\','/'),bytes:statSync(path).size,
     sha256:createHash('sha256').update(readFileSync(path)).digest('hex')});}}
 walk(join(output,'win-unpacked'));
+if(JSON.stringify(identity)!==JSON.stringify(sourceIdentity(root))) throw new Error('Source changed during Windows packaging');
+const archive=auditAppArchive(join(output,'win-unpacked/resources/app.asar'),desktopIdentity);
+writeFileSync(join(output,'app-file-list.json'),JSON.stringify(archive,null,2)+'\n');
+writeFileSync(join(output,'SOURCE-COMMIT.txt'),sourceCommit+'\n');
+writeFileSync(join(output,'bundle-file-list.txt'),manifest.map(f=>f.path).join('\n')+'\n');
 if(manifest.some(f=>f.path !== 'resources/backend/_internal/certifi/cacert.pem' && /(^|\/)(runtime|user-data|\.env|\.git|node_modules)(\/|$)|\.(sqlite3?|db|log|csv|pem|key)$/i.test(f.path))) throw new Error('Disallowed runtime/private file in bundle');
 writeFileSync(join(output,'bundle-manifest.json'),JSON.stringify({version,installer,sha256:sha,source_commit:sourceCommit,
-  source_tree:sourceTree,source_dirty:dirty,built_at:new Date().toISOString(),files:manifest},null,2)+'\n');
+  source_tree:sourceTree,source_dirty:dirty,pi_worker_included:false,app_files:archive.files,built_at:new Date().toISOString(),files:manifest},null,2)+'\n');
 console.log(`[package] ${installer}\nSHA256 ${sha}\nSource ${sourceCommit}; candidate pending explicit installer acceptance; no publication.`);

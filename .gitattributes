@@ -5,6 +5,7 @@
 /docs/third-party/longbridge/native/** -text -whitespace
 # Supplemental pi notices retain the upstream bytes used by the offline audit.
 /packages/pi-worker/notices/** -text -whitespace
+/docs/third-party/nsis/COPYING -text -whitespace
 apps/desktop/public/brand/research-trail.png -text
 apps/desktop/assets/research-trail.ico -text
 docs/assets/features/*.png -text
