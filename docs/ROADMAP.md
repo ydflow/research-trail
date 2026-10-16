@@ -1,10 +1,12 @@
 # 研迹：路线、功能对照与当前进度
 
-## 2026-10-16 P2-10：进行中（最小 Windows 1.1.0）
+## 2026-10-16 P2-10：本地验收通过（Windows 1.1.0 内部候选；公开分发受阻）
 
 P2-09.6 / UI PR [#38](https://github.com/ydflow/research-trail/pull/38) 已普通合并，main `2d14a53bcbeedbff1b446a6bfac5115403aeb48c` 的 [CI 38786288117](https://github.com/ydflow/research-trail/actions/runs/38786288117) 成功，1168 项基线。当前用户授权发布分支 `release/phase2-windows-v1.1.0` 复用原 NSIS / PyInstaller 系统，完整本地验收后自动 PR、核对双 CI、普通 Merge Commit、最终 main 重建验收；无需逐步批准。公开二进制仍受实际许可门禁约束，原 v1.0.0 保持原样，第三阶段不执行。
 
 Python AgentRunner 为正式执行器；Pi Worker / 实验依赖须以实际包清单证明排除。开发机受限环境与独立干净 Windows、模拟验收与真实模型/金融权限严格区分。最新结果见 [P2-10 验收](ACCEPTANCE-v1.1.0.md) 与 [许可审核](P2-10-LICENSE-AUDIT.md)。下方“当前”“等待审核”“不执行 P2-10”均保留为此前各轮历史。
+
+本地完整 1171 项（999 Python / 73 Node / 99 Electron），失败/取消/跳过 0。干净提交 08a6eaf 的 1.1.0 候选已完成 20 项真实 NSIS 安装专项，含实际 v1.0.0 升级、全部安装文件哈希、原生 1440/600、Fake Agent / 研究证据 / 10+3 分页 / SSE、退出重启、卸载保留数据库。Pi Worker、84 个仅实验 Node 依赖及五个 Pi Python 模块排除；3 个共享前端依赖按实际用途保留。Folio 适配代码二进制授权范围与 NSIS 插件声明闭包未确认，按用户明确允许的路径仅推进源码 PR / 合并，保留内部安装包，不公开新二进制 Release。远程 CI、Merge SHA 与最终 main 重建/安装回执在实际发生后由 GitHub checks 和仓库外交付清单确认，不以本地结果替代。
 
 ## 2026-10-16 P2-09.6 与 UI 整理：提交及合并进行中
 
