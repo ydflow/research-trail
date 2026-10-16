@@ -3,6 +3,58 @@ const assert = require('node:assert/strict');
 const {resolve,join} = require('node:path');
 const {buildSync} = require('esbuild');
 const Module = require('node:module');
+
+test('all reviewed stable versions reject dirty or mismatched Python and Electron sources',async()=>{
+  const {validateRelease,sourceIdentity}=await import('../scripts/package-policy.mjs');
+  const clean={source_commit:'a'.repeat(40),source_tree:'b'.repeat(40),source_dirty:false};
+  for(const version of ['1.0.0','1.1.0','1.1.0-rc.1','1.1.0-rc-internal.fixture']) {
+    validateRelease(version,clean,clean,clean);
+    assert.throws(()=>validateRelease(version,{...clean,source_dirty:true},clean,clean),/clean committed/);
+    for(const bad of [{...clean,source_dirty:true},{...clean,source_dirty:undefined},{...clean,source_commit:'c'.repeat(40)},{...clean,source_tree:'d'.repeat(40)}]) {
+      assert.throws(()=>validateRelease(version,clean,bad,clean),/Python and Electron/);
+      assert.throws(()=>validateRelease(version,clean,clean,bad),/Python and Electron/);
+    }
+    assert.throws(()=>validateRelease(version,clean,clean),/Python and Electron/);
+  }
+  for(const invalid of ['../../1.1.0','2.0.0','1.1.0/escape']) assert.throws(()=>validateRelease(invalid,clean,clean,clean),/reviewed/);
+  const exported=require('node:fs').mkdtempSync(join(require('node:os').tmpdir(),'research-trail-unversioned-'));
+  assert.throws(()=>sourceIdentity(exported),/identify build source/);
+  const unversioned=sourceIdentity(exported,{allowUnversioned:true});
+  assert.deepEqual(unversioned,{source_commit:null,source_tree:null,source_dirty:true});
+  assert.throws(()=>validateRelease('1.1.0',unversioned,unversioned,unversioned),/clean committed/);
+  assert.throws(()=>validateRelease('1.1.0',{...unversioned,source_dirty:false},clean,clean),/clean committed/);
+});
+
+test('desktop payload permits compiled app only and rejects Pi, maps and private files',async()=>{
+  const {validateAppFiles}=await import('../scripts/package-policy.mjs');
+  const app=['main.cjs','preload.cjs','renderer/index.html','renderer/assets/app.js','renderer/assets/app.css','renderer/brand/research-trail.png'].map(path=>({path}));
+  validateAppFiles(app);
+  for(const path of ['pi-worker/index.mjs','node_modules/proxy-agent-negotiate/index.js','renderer/assets/app.js.map','runtime/user.sqlite3','.env','renderer/private.png']) assert.throws(()=>validateAppFiles([...app,{path}]),/payload|Experimental/);
+  assert.throws(()=>validateAppFiles(app.slice(1)),/Missing/);
+});
+
+test('actual ASAR inventory detects unlisted experimental files and changed compiled bytes',async()=>{
+  const {auditAppArchive}=await import('../scripts/package-archive.mjs');
+  const {fileInventory}=await import('../scripts/package-policy.mjs');
+  const {mkdtempSync,mkdirSync,writeFileSync,unlinkSync}=require('node:fs');
+  const {createRequire}=require('node:module');
+  const builder=createRequire(require.resolve('electron-builder'));
+  const asar=createRequire(builder.resolve('app-builder-lib'))('@electron/asar');
+  const directory=mkdtempSync(join(require('node:os').tmpdir(),'research-trail-asar-test-'));
+  const stage=join(directory,'app');mkdirSync(join(stage,'dist/renderer'),{recursive:true});
+  for(const name of ['main.cjs','preload.cjs','renderer/index.html']) writeFileSync(join(stage,'dist',name),'original compiled fixture');
+  writeFileSync(join(stage,'package.json'),JSON.stringify({main:'dist/main.cjs'}));
+  const desktop={files:fileInventory(join(stage,'dist'))};
+  const good=join(directory,'good.asar');await asar.createPackage(stage,good);
+  assert.equal(auditAppArchive(good,desktop).files.length,4);
+  writeFileSync(join(stage,'dist/pi-worker.mjs'),'experimental fixture');
+  const extra=join(directory,'extra.asar');await asar.createPackage(stage,extra);
+  assert.throws(()=>auditAppArchive(extra,desktop),/payload/);
+  unlinkSync(join(stage,'dist/pi-worker.mjs'));
+  writeFileSync(join(stage,'dist/main.cjs'),'changed bytes');
+  const changed=join(directory,'changed.asar');await asar.createPackage(stage,changed);
+  assert.throws(()=>auditAppArchive(changed,desktop),/differs/);
+});
 test('authored notices tolerate CRLF checkout only and reject content changes',async()=>{
   const {sameAuthoredNotice}=await import('../scripts/authored-notice.mjs');
   const original=Buffer.from('研迹说明\n保留来源。\n');

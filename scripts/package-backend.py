@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import tempfile
 from packaging.requirements import Requirement
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -13,7 +14,7 @@ BACKEND = ROOT / 'services/backend'
 BUILD = ROOT / 'build/windows'
 
 
-def notices():
+def notices(directory):
     runtime = set()
     def add(name):
         dist = metadata.distribution(name)
@@ -33,7 +34,6 @@ def notices():
         for module in modules:
             for name in packages.get(module, []): add(name)
     rows = []
-    directory = BUILD / 'notices'
     directory.mkdir(parents=True, exist_ok=True)
     for name in sorted(runtime | {'pyinstaller', 'pyinstaller-hooks-contrib'}):
         dist = metadata.distribution(name)
@@ -66,7 +66,8 @@ def main():
     if sys.platform != 'win32' or sys.version_info[:2] != (3, 12):
         raise SystemExit('Windows x64 / Python 3.12 required')
     BUILD.mkdir(parents=True, exist_ok=True)
-    notices()
+    notice_directory = Path(tempfile.mkdtemp(prefix='notices-python-', dir=BUILD))
+    notices(notice_directory)
     def git(*args):
         return subprocess.check_output(['git', *args],cwd=ROOT,text=True).strip()
     identity=dict(source_commit=git('rev-parse','HEAD'),source_tree=git('rev-parse','HEAD^{tree}'),
@@ -83,9 +84,11 @@ datas, binaries, hidden = collect_all('longbridge')
 datas += {datas!r}
 for name in ('fastapi','uvicorn','sqlalchemy','alembic','httpx','longbridge','tzdata'):
     datas += copy_metadata(name, recursive=True)
-hidden += collect_submodules('research_trail') + collect_submodules('uvicorn') + ['sqlalchemy.dialects.sqlite']
+experimental = ['research_trail.pi_bridge','research_trail.pi_model_bridge','research_trail.pi_runtime',
+                'research_trail.verify_pi','research_trail.verify_pi_model']
+hidden += collect_submodules('research_trail', filter=lambda name: name not in experimental) + collect_submodules('uvicorn') + ['sqlalchemy.dialects.sqlite']
 a = Analysis([{str(BACKEND/'frozen_entry.py')!r}], pathex=[{str(BACKEND)!r}], binaries=binaries,
-    datas=datas, hiddenimports=hidden, excludes=['pytest','tkinter','unittest'])
+    datas=datas, hiddenimports=hidden, excludes=['pytest','tkinter','unittest'] + experimental)
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, [('u',None,'OPTION'),('X utf8',None,'OPTION')], exclude_binaries=True,
     name='research-trail-backend', console=True, upx=False)
@@ -95,11 +98,14 @@ coll = COLLECT(exe, a.binaries, a.datas, name='backend', upx=False)
     target.write_text(spec, encoding='utf-8')
     subprocess.run([sys.executable, '-m', 'PyInstaller', '--noconfirm', '--distpath', str(BUILD/'python'),
                     '--workpath', str(BUILD/'pyinstaller'), str(target)], cwd=BACKEND, check=True)
-    notices()
+    notices(notice_directory)
     if identity != dict(source_commit=git('rev-parse','HEAD'),source_tree=git('rev-parse','HEAD^{tree}'),
                         source_dirty=bool(git('status','--porcelain'))):
         raise RuntimeError('Source changed during Python build; rebuild from reviewed sources')
-    (BUILD/'backend-source.json').write_text(json.dumps(identity,indent=2)+'\n',encoding='utf-8')
+    modules = sorted(row[0] for row in ast.literal_eval((BUILD/'pyinstaller/backend/PYZ-00.toc').read_text(encoding='utf-8'))[1])
+    if any(name.startswith(('research_trail.pi_', 'research_trail.verify_pi')) for name in modules):
+        raise RuntimeError('Experimental Pi module in production backend')
+    (BUILD/'backend-source.json').write_text(json.dumps({**identity, 'notice_directory':str(notice_directory), 'modules':modules},indent=2)+'\n',encoding='utf-8')
 
 
 if __name__ == '__main__': main()

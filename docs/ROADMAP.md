@@ -1,5 +1,11 @@
 # 研迹：路线、功能对照与当前进度
 
+## 2026-10-16 P2-10：进行中（最小 Windows 1.1.0）
+
+P2-09.6 / UI PR [#38](https://github.com/ydflow/research-trail/pull/38) 已普通合并，main `2d14a53bcbeedbff1b446a6bfac5115403aeb48c` 的 [CI 38786288117](https://github.com/ydflow/research-trail/actions/runs/38786288117) 成功，1168 项基线。当前用户授权发布分支 `release/phase2-windows-v1.1.0` 复用原 NSIS / PyInstaller 系统，完整本地验收后自动 PR、核对双 CI、普通 Merge Commit、最终 main 重建验收；无需逐步批准。公开二进制仍受实际许可门禁约束，原 v1.0.0 保持原样，第三阶段不执行。
+
+Python AgentRunner 为正式执行器；Pi Worker / 实验依赖须以实际包清单证明排除。开发机受限环境与独立干净 Windows、模拟验收与真实模型/金融权限严格区分。最新结果见 [P2-10 验收](ACCEPTANCE-v1.1.0.md) 与 [许可审核](P2-10-LICENSE-AUDIT.md)。下方“当前”“等待审核”“不执行 P2-10”均保留为此前各轮历史。
+
 ## 2026-10-16 P2-09.6 与 UI 整理：提交及合并进行中
 
 用户已授权将 `fix/pre-release-product-experience` 的累计本地改动提交PR并合并。完整本地 `bun.cmd run verify` 1168项通过（999 Python/70 Node/99实际Electron），313文件哈希核验一致；远程PR与合并后CI待核验。此前“仅本地/等待审核”段落为历史交付边界。失败、布局修复与间歇窗口事件记录见 [UI验收说明](UI-POLISH-ACCEPTANCE.md)。不发布、不打包、不执行P2-10。

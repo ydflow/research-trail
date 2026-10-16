@@ -10,6 +10,7 @@ const root = resolve(__dirname, '..');
 const out = resolve(root,process.argv[2]??'release/windows-internal');
 assert.ok(out.startsWith(join(root,'release')+require('node:path').sep));
 const installer = join(out, JSON.parse(readFileSync(join(out,'bundle-manifest.json'),'utf8')).installer);
+const oldInstaller=resolve(root,process.argv[3]??'release/windows/1.0.0/ResearchTrail-1.0.0-windows-x64-setup.exe');
 const qa = mkdtempSync(join(tmpdir(), 'research-trail package QA-'));
 const install = join(qa, 'installed app');
 const data = join(qa, 'user data');
@@ -53,13 +54,53 @@ async function close(instance, force=false) {
   if(force) {instance.app.process().kill();await instance.app.close().catch(()=>{});}else await instance.app.close();
   for(const child of children)await expect.poll(()=>alive(child.ProcessId),{timeout:12000}).toBe(false);
 }
+async function resize(instance,width,height=900) {
+  const cdp=await instance.page.context().newCDPSession(instance.page);
+  await cdp.send('Emulation.clearDeviceMetricsOverride');await cdp.detach();
+  await instance.app.evaluate(({BrowserWindow},size)=>BrowserWindow.getAllWindows()[0].setContentSize(...size),[width,height]);
+  await expect.poll(()=>instance.page.evaluate(()=>[innerWidth,innerHeight])).toEqual([width,height]);
+  assert.deepEqual(await instance.app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].getContentSize()),[width,height]);
+}
 async function main() {
   assert.equal(process.platform,'win32');
   const existing=ps("@(Get-ChildItem HKCU:/Software/Microsoft/Windows/CurrentVersion/Uninstall | ForEach-Object {Get-ItemProperty $_.PSPath} | Where-Object {$_.DisplayName -match '^ResearchTrail(?: |$)'}) | ConvertTo-Json -Compress");
   assert.ok(!existing || existing==='[]','Existing ResearchTrail installation: stop rather than overwrite it');
   const manifest=JSON.parse(readFileSync(join(out,'bundle-manifest.json'),'utf8'));
   assert.equal(createHash('sha256').update(readFileSync(installer)).digest('hex'),manifest.sha256);
-  runInstaller(installer,`/S /D=${install}`);assert.ok(existsSync(exe));check('actual NSIS first installation',install);
+  assert.equal(createHash('sha256').update(readFileSync(oldInstaller)).digest('hex'),'a630d520d40efe6a901fb6fc87e5a572508a13b3dde5eaf59ca06a451b3315cd','Use the preserved published v1.0.0 installer');
+  const upgradeData=join(qa,'v1 upgrade data');
+  runInstaller(oldInstaller,`/S /D=${install}`);
+  let legacy=await launch(upgradeData), legacySession, legacySnapshot, legacyResearch, legacyReport;
+  try {
+    assert.equal(await legacy.app.evaluate(({app})=>app.getVersion()),'1.0.0');
+    legacySession=await legacy.page.evaluate(()=>window.researchTrail.createSession('v1.0.0 升级保留验收'));
+    const run=await legacy.page.evaluate(id=>window.researchTrail.startAgentRun(id,'查询AAPL.US行情'),legacySession.id);
+    await expect.poll(()=>legacy.page.evaluate(({s,r})=>window.researchTrail.getRun(s,r).then(v=>v.status),{s:legacySession.id,r:run.id}),{timeout:15000}).toBe('completed');
+    legacySnapshot=await legacy.page.evaluate(id=>window.researchTrail.sessionSnapshot(id),legacySession.id);
+    legacyResearch=await legacy.page.evaluate(()=>window.researchTrail.startResearch({symbol:'AAPL.US',strategy:'comprehensive',mode:'simulated',provider:'longbridge'}));
+    await expect.poll(()=>legacy.page.evaluate(id=>window.researchTrail.researchRun(id).then(v=>v.status),legacyResearch.id),{timeout:30000}).toBe('collected');
+    legacyReport=await legacy.page.evaluate(id=>window.researchTrail.generateReport(id,'fixed'),legacyResearch.id);
+    await expect.poll(()=>legacy.page.evaluate(id=>window.researchTrail.report(id).then(v=>v.status),legacyReport.id),{timeout:15000}).toBe('completed');
+    legacyReport=await legacy.page.evaluate(id=>window.researchTrail.report(id),legacyReport.id);
+  } finally {await close(legacy);}
+  check('published v1.0.0 installation created original offline session research and report');
+  runInstaller(installer,`/S /D=${install}`);assert.ok(existsSync(exe));check('actual candidate NSIS installation over v1.0.0',install);
+  const {fileInventory}=await import('../scripts/package-policy.mjs');
+  const installedFiles=fileInventory(install);
+  for(const file of manifest.files) {
+    assert.ok(installedFiles.some(actual=>actual.path===file.path&&actual.sha256===file.sha256),'Installed bytes differ: '+file.path);
+  }
+  const extras=installedFiles.filter(actual=>!manifest.files.some(file=>file.path===actual.path));
+  assert.ok(extras.every(file=>/^Uninstall.*\.exe$|^uninstallerIcon\.ico$/i.test(file.path)),'Unreviewed installed file');
+  check('actual installed files match every bundle manifest hash',{files:manifest.files.length,nsis_files:extras.map(file=>file.path)});
+  legacy=await launch(upgradeData);
+  try {
+    assert.equal(await legacy.app.evaluate(({app})=>app.getVersion()),manifest.version);
+    assert.deepEqual(await legacy.page.evaluate(id=>window.researchTrail.sessionSnapshot(id),legacySession.id),legacySnapshot);
+    assert.deepEqual(await legacy.page.evaluate(id=>window.researchTrail.report(id),legacyReport.id),legacyReport);
+    assert.equal((await legacy.page.evaluate(id=>window.researchTrail.researchRun(id),legacyResearch.id)).status,'collected');
+    check('actual published v1.0.0 to candidate NSIS upgrade preserves exact session events and research report',{from:'1.0.0',to:manifest.version});
+  } finally {await close(legacy);}
   const backendExe=join(install,'resources/backend/research-trail-backend.exe');
   const bundle=spawnSync(backendExe,['--bundle-check'],{env,encoding:'utf8',timeout:15000,windowsHide:true});
   assert.equal(bundle.status,0,bundle.stderr);const bundleInfo=JSON.parse(bundle.stdout);assert.equal(bundleInfo.frozen,true);assert.ok(bundleInfo.skill_files>=29);
@@ -67,7 +108,7 @@ async function main() {
   const worker=spawnSync(backendExe,['--provider-worker'],{env,input:JSON.stringify({provider:'longbridge',configuration:{},credentials:{},query:{capability:'market.quote',symbol:'AAPL.US',mode:'real'}}),encoding:'utf8',timeout:15000,windowsHide:true});
   assert.equal(worker.status,0,worker.stderr);assert.equal(JSON.parse(worker.stdout).code,'CREDENTIAL_MISSING');
   check('frozen SDK worker rejects missing credentials without starting HTTP server or connecting',JSON.parse(worker.stdout));
-  let instance=await launch();let snapshot,session,research,report,experiment,comparison;
+  let instance=await launch();let snapshot,session,research,report,experiment,comparison,agentSession,agentSnapshot;
   try {
     const page=instance.page;
     const second=spawnSync(exe,[`--research-trail-data-dir=${data}`],{cwd:qa,env,encoding:'utf8',windowsHide:true,timeout:15000});
@@ -94,6 +135,27 @@ async function main() {
     await expect.poll(()=>page.evaluate(id=>window.researchTrail.researchRun(id).then(v=>v.status),research.id),{timeout:30000}).toBe('collected');
     report=await page.evaluate(id=>window.researchTrail.generateReport(id,'fixed'),research.id);
     await expect.poll(()=>page.evaluate(id=>window.researchTrail.report(id).then(v=>v.status),report.id),{timeout:15000}).toBe('completed');
+    agentSession=await page.evaluate(()=>window.researchTrail.createSession('安装版 Fake Agent 分页与证据验收'));
+    for(let index=0;index<12;index++) {
+      const run=await page.evaluate(({id,index})=>window.researchTrail.startAgentRun(id,`查询AAPL.US行情`),{id:agentSession.id,index});
+      await expect.poll(()=>page.evaluate(({s,r})=>window.researchTrail.getRun(s,r).then(v=>v.status),{s:agentSession.id,r:run.id}),{timeout:15000}).toBe('completed');
+    }
+    const reportRun=await page.evaluate(({s,r,c})=>window.researchTrail.startAgentRun(s,'读取已保存报告','normal','fake_agent',{report_id:r,source_run_id:c}),{s:agentSession.id,r:report.id,c:research.id});
+    await page.evaluate(({s,r})=>{window.packageUpdates=[];window.packageUnsubscribe=window.researchTrail.subscribeRun(s,r,0,u=>window.packageUpdates.push(u));},{s:agentSession.id,r:reportRun.id});
+    await expect.poll(()=>page.evaluate(()=>window.packageUpdates.filter(u=>u.kind==='event').some(u=>u.event.type==='run_completed')),{timeout:15000}).toBe(true);
+    const streamed=await page.evaluate(()=>{window.packageUnsubscribe();return window.packageUpdates.filter(u=>u.kind==='event').map(u=>u.event);});
+    const stored=await page.evaluate(({s,r})=>window.researchTrail.runEvents(s,r),{s:agentSession.id,r:reportRun.id});
+    assert.deepEqual(streamed,stored);assert.ok(stored.some(e=>e.type==='tool_started'&&e.payload.name==='research.report.read'));
+    const first=await page.evaluate(id=>window.researchTrail.sessionHistory(id),agentSession.id);
+    assert.equal(first.has_more,true);assert.equal(first.runs.length,10);
+    const earlier=await page.evaluate(({id,before})=>window.researchTrail.sessionHistory(id,before),{id:agentSession.id,before:first.next_before_sequence});
+    assert.equal(earlier.runs.length,3);assert.equal(earlier.has_more,false);
+    assert.equal(new Set([...first.runs,...earlier.runs].map(r=>r.id)).size,13);
+    const document=await page.evaluate(id=>window.researchTrail.report(id),report.id);
+    const evidence=await page.evaluate(({r,e})=>window.researchTrail.reportEvidence(r,e),{r:report.id,e:document.document.evidence[0].id});
+    assert.ok(evidence);
+    agentSnapshot=await page.evaluate(id=>window.researchTrail.sessionSnapshot(id),agentSession.id);
+    check('installed Python Fake Agent, exact SSE replay, whole-run history pagination and persisted report evidence',{runs:13,pages:[10,3],sse_events:streamed.length,report_id:report.id});
     const cases=await page.evaluate(()=>window.researchTrail.evaluationCases());assert.equal(cases.length,12);
     experiment=await page.evaluate(()=>window.researchTrail.createExperiment({request_id:crypto.randomUUID(),name:'安装包离线正常错误恢复回归',case_ids:['quote-aapl','model-shape','restart-interrupted','minimal-redaction'],profile:'baseline'}));
     await page.evaluate(id=>window.researchTrail.startExperiment(id),experiment.id);
@@ -111,7 +173,22 @@ async function main() {
     await expect(page.getByTestId('research-comparison')).toHaveAttribute('data-status','completed');
     await page.screenshot({path:join(qa,'installed-research-comparison.png'),fullPage:false});
     check('packaged frozen A/B reports preserve no-score and zero-request offline boundary',comparison.source_hash);
-    await page.getByRole('button',{name:'会话与事件',exact:true}).click();await expect(page.getByTestId('message-history')).toContainText('AAPL.US');
+    await page.getByRole('button',{name:'会话与事件',exact:true}).click();
+    await page.getByRole('button',{name:/安装版 Fake Agent 分页与证据验收/}).click();
+    await expect(page.getByTestId('message-history')).toContainText('AAPL.US');
+    await page.getByRole('button',{name:'加载更早历史',exact:true}).click();
+    await expect(page.getByTestId('message-history').locator('article')).toHaveCount(26);
+    for(const width of [1440,600]) {
+      await resize(instance,width);
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
+      await page.screenshot({path:join(qa,`installed-sessions-${width}.png`),fullPage:false});
+      await page.getByRole('button',{name:'证券工作台',exact:true}).click();
+      await expect(page.getByTestId('chart-canvas')).toHaveAttribute('data-loaded-count','260');
+      await page.screenshot({path:join(qa,`installed-security-${width}.png`),fullPage:false});
+      await page.getByRole('button',{name:'会话与事件',exact:true}).click();
+    }
+    check('actual installed security Kline and sessions at native 1440 and 600 content widths',{widths:[1440,600],native_content_size_asserted:true});
+    await resize(instance,1440);
     await page.screenshot({path:join(qa,'installed-session-wide.png'),fullPage:true});
     await page.getByRole('button',{name:'投资结果',exact:true}).click();await expect(page.getByTestId('outcome-panel')).toContainText('工具正确率不代表盈利能力');
     await page.getByTestId('outcome-opinions').getByRole('button').first().click();
@@ -135,6 +212,8 @@ async function main() {
   check('graceful close removes owned backend/desktop child processes');
   instance=await launch();try {
     assert.deepEqual(await instance.page.evaluate(id=>window.researchTrail.sessionSnapshot(id),session.id),snapshot);
+    assert.deepEqual(await instance.page.evaluate(id=>window.researchTrail.sessionSnapshot(id),agentSession.id),agentSnapshot);
+    assert.equal((await instance.page.evaluate(id=>window.researchTrail.report(id),report.id)).status,'completed');
     assert.equal((await instance.page.evaluate(()=>window.researchTrail.researchRuns())).length,1);
     assert.equal((await instance.page.evaluate(()=>window.researchTrail.evaluationExperiments())).length,1);
     assert.equal((await instance.page.evaluate(()=>window.researchTrail.outcomeOpinions())).length,1);
@@ -165,7 +244,7 @@ async function main() {
   const leftover=ps("@(Get-ChildItem HKCU:/Software/Microsoft/Windows/CurrentVersion/Uninstall | ForEach-Object {Get-ItemProperty $_.PSPath} | Where-Object {$_.DisplayName -match '^ResearchTrail(?: |$)'}) | ConvertTo-Json -Compress");
   assert.ok(!leftover || leftover==='[]');
   assert.deepEqual(errors,[]);check('page and console errors',errors);
-  writeFileSync(join(qa,'acceptance.json'),JSON.stringify({time:new Date().toISOString(),installer,sha256:manifest.sha256,host:'development Windows; NOT clean Windows',browser:'existing Playwright Electron',qa,checks,errors,warnings,cleanWindows:'user explicitly waived; unverified',realConnections:'not executed in this installer run'},null,2)+'\n');
+  writeFileSync(join(qa,'acceptance.json'),JSON.stringify({time:new Date().toISOString(),installer,sha256:manifest.sha256,source_commit:manifest.source_commit,host:'development Windows with restricted PATH; NOT independent clean Windows',browser:'existing Playwright Electron',qa,checks,errors,warnings,cleanWindows:'unverified',realConnections:'not executed in this installer run'},null,2)+'\n');
   console.log('PASS local installer acceptance. Evidence: '+qa);
 }
 main().catch(error=>{writeFileSync(join(qa,'failure.json'),JSON.stringify({checks,errors,warnings,error:String(error),stack:error.stack},null,2));console.error(error);console.error('Evidence: '+qa);process.exitCode=1;});

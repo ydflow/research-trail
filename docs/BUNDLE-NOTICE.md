@@ -1,5 +1,9 @@
 # 研迹 Windows 内部候选包来源声明
 
+P2-10 / 1.1.0：正式执行器保持 Python AgentRunner。Pi 源码与开发 Worker 留在仓库，打包仅复制前端构建、冻结 Python、技能和本声明。新门禁检查 ASAR 全文件、生产 Node 构建输入、Python PYZ 模块图与外层逐文件哈希；不分发 Pi Worker、pi-agent-core、pi-ai 或 proxy-agent-negotiate。后者在开发图的许可缺口不因排除而被虚报为已解决。
+
+Folio 实际适配仍包括早期 Watchlist / QuoteCard / FinancialKLineChart 及后续证券视图；EVIDENCE 第10节的用户复用授权确认保留，但尚未独立核实覆盖新版公开 Windows 二进制的原始授权文件。skills 的 MIT 不自动覆盖上述 UI。当前新包仅内部自测，公开安装包上传暂缓，详见 P2-10-LICENSE-AUDIT.md；不撤销或覆盖原 v1.0.0。
+
 研迹以 Python 管理本地业务和存储，以 Electron 管理桌面与所属后端进程。应用代码为各步骤记录的个人新增实现与修复；不将上游作者的代码、案例、截图或测试计入个人成果。
 
 功能参考：helsome/folio，固定版本 `ba5dcdfd31b162f5edb8b908f7f099a560389326`。本包保留 `notices/sources/SOURCES*.json` 中的逐文件来源与 SHA256。两个技能目录及原资源/版权声明保留，`resources/skills/LICENSE` 是已核实的 MIT 授权；尚未独立取得 Folio 整体适用许可，不给研迹整仓附加 MIT 标识。以项目证据里的实际复用确认确定公开范围，本内部候选包不是新增公开二进制授权或 Release。
@@ -10,7 +14,7 @@ Python清单由声明依赖及实际PyInstaller PYZ模块图生成，也包含�
 
 Longbridge SDK 5.2.0 的 wheel 未携带许可文件或 License 元数据；第10步保留官方源码仓库的 LICENSE-MIT / LICENSE-APACHE 及核实边界 NOTICE。第24步补核精确 v5.2.0 标签：对应提交 b2f749a3c68cc4f05642b37fc790fb711d2dfb13，Python原生包声明 MIT OR Apache-2.0，两份已保留许可文本与标签版本逐字节一致。PyPI提供该Windows wheel的SHA256及发布声明；读取声明不等于密码学验证，更不证明原生传递依赖许可已全部闭环，公开二进制仍有此缺口。详细hash与来源在 notices/third-party/longbridge/NOTICE。KLineChart 与内含 Lightweight Charts 声明也原样保留。本包不包含账户、个人持仓、运行数据库、日志、凭证或开发仓库；certifi/cacert.pem 是公开 TLS 根证书资源，不是个人私钥。
 
-本轮会话Markdown新增react-markdown与remark-gfm。前端许可收集改为遍历锁定安装的全部生产依赖及传递依赖，逐名称/版本保留原许可文本，不再只列四个包；缺少文本时构建失败。此源码修复尚未进入原内部安装包，须重新构建和核对新清单。
+会话 Markdown 使用 react-markdown 与 remark-gfm。新版前端许可收集遍历锁定安装的全部生产依赖及传递依赖，逐名称/版本保留原许可文本；缺少文本时构建失败。每轮使用独立声明目录，避免旧包的声明或实验依赖残留。Python 清单按本次实际 PYZ 图补核。
 
 默认真实服务未配置，固定模拟行情显著标记。安装包离线可启动与固定测试通过不等于真实行情、账户权限、真实模型质量或投资收益验证。
 

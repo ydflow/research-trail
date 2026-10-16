@@ -6,6 +6,8 @@ import { createHash } from 'node:crypto';
 import { auditNative } from './native-audit.mjs';
 import { sameAuthoredNotice } from './authored-notice.mjs';
 import { auditPublicAssets } from './public-assets.mjs';
+import { auditAppArchive } from './package-archive.mjs';
+import { fileInventory, validateRelease } from './package-policy.mjs';
 const root=resolve(import.meta.dirname,'..');
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const listing=spawnSync('git',['ls-files','--cached','--others','--exclude-standard','-z'],{cwd:root,encoding:'utf8',windowsHide:true});
@@ -35,6 +37,16 @@ if(!out.startsWith(join(root,'release')+sep))throw new Error('Bundle must stay u
 const manifest=JSON.parse(readFileSync(join(out,'bundle-manifest.json'),'utf8'));
 if(sha(readFileSync(join(out,manifest.installer)))!==manifest.sha256)throw new Error('Installer SHA mismatch');
 const bundle=join(out,'win-unpacked');
+const actual=fileInventory(bundle);
+if(JSON.stringify([...manifest.files].sort((a,b)=>a.path.localeCompare(b.path)))!==JSON.stringify([...actual].sort((a,b)=>a.path.localeCompare(b.path)))) throw new Error('Unlisted, missing or changed bundle file');
+const buildSource=JSON.parse(readFileSync(join(bundle,'resources/notices/build-source.json'),'utf8'));
+validateRelease(manifest.version,manifest,buildSource.backend,buildSource.desktop);
+if(buildSource.source_commit!==manifest.source_commit || buildSource.source_tree!==manifest.source_tree) throw new Error('Bundled source identity mismatch');
+const archive=auditAppArchive(join(bundle,'resources/app.asar'),buildSource.desktop);
+if(archive.version!==manifest.version || buildSource.version!==manifest.version) throw new Error('Packaged version mismatch');
+if(buildSource.backend.modules.some(m=>m.startsWith('research_trail.pi_')||m.startsWith('research_trail.verify_pi'))) throw new Error('Pi backend module included');
+const ui=JSON.parse(readFileSync(join(bundle,'resources/notices/ui-dependencies.json'),'utf8'));
+if(ui.some(p=>/pi-agent-core|pi-ai|proxy-agent-negotiate/.test(p.name)) || actual.some(f=>/pi-worker|proxy-agent-negotiate|pi-agent-core/.test(f.path))) throw new Error('Experimental dependency in Windows payload');
 const native=auditNative(root,join(bundle,'resources/backend/_internal'));
 for(const f of manifest.files.filter(f=>f.path.startsWith('resources/notices/third-party/longbridge/native/'))) {
   const original=join(root,'docs',f.path.slice('resources/notices/'.length));
@@ -63,6 +75,8 @@ for(const path of ['third-party/longbridge/LICENSE-MIT','third-party/longbridge/
 const python=JSON.parse(readFileSync(join(bundle,'resources/notices/python-dependencies.json'),'utf8'));
 const receipt={source_files:files.length,bundle_files:manifest.files.length,original_skill_license_files:sources.length,
   public_assets:publicAssets.size,
+  source_commit:manifest.source_commit,source_tree:manifest.source_tree,source_dirty:manifest.source_dirty,
+  app_archive:archive,pi_python_modules_included:false,production_ui_dependencies:ui.length,
   authored_notice_eol_normalized:3,
   native,
   hash_source_files:hashFiles.length,ignore_probes:probes.length,installer:manifest.installer,sha256:manifest.sha256,

@@ -14,4 +14,10 @@ if errorlevel 1 exit /b 1
 services\backend\.venv\Scripts\python.exe scripts\package-backend.py
 if errorlevel 1 exit /b 1
 node scripts\package-windows.mjs "%RT_PACKAGE_VERSION%"
+if errorlevel 1 exit /b 1
+if "%RT_PACKAGE_VERSION%"=="1.0.0-internal.24" (
+  node scripts\audit-windows.mjs release/windows-internal
+) else (
+  node scripts\audit-windows.mjs "release/windows/%RT_PACKAGE_VERSION%"
+)
 exit /b %errorlevel%
